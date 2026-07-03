@@ -2,143 +2,129 @@
 
 Version: 1.0
 
-Status: Active
+Status: Sprint 1
 
 Last Updated: 2026-07-03
 
 ---
 
+# Назначение
+
+Этот документ содержит только задачи текущего спринта.
+
+Roadmap проекта хранится отдельно в docs/ROADMAP.md.
+
+После завершения задачи Cursor обязан остановиться и дождаться следующего задания.
+
+Cursor никогда самостоятельно не выбирает следующую задачу.
+
+---
+
 # Правила
 
-- Каждая задача должна быть законченной.
 - Один Commit = одна задача.
-- После выполнения задача отмечается как выполненная.
-- Cursor не имеет права переходить к следующей задаче без явного разрешения.
-- После выполнения каждой задачи Cursor обязан предоставить отчёт:
-  - что сделано;
-  - какие файлы изменены;
-  - какие решения приняты;
-  - как проверить результат.
+- Один Pull Request = одна законченная задача.
+- Каждая задача должна быть полностью завершена.
+- Не допускается переход к следующей задаче без подтверждения Product Owner.
+- После выполнения задачи Cursor предоставляет полный отчёт.
 
 ---
 
-# Milestone 1 — Foundation
+# Sprint 1 — Backend Foundation
 
-## Epic 1. Infrastructure
+## TH-0001 — Backend Skeleton
 
-- [ ] T1. Создать Backend Skeleton
-- [ ] T2. Настроить Docker для Backend
-- [ ] T3. Подключить PostgreSQL
-- [ ] T4. Настроить Alembic
-- [ ] T5. Настроить конфигурацию приложения (Pydantic Settings)
-- [ ] T6. Настроить логирование
-- [ ] T7. Настроить middleware
-- [ ] T8. Настроить обработку ошибок
-- [ ] T9. Healthcheck `/health`
-- [ ] T10. Базовые тесты Backend
+Статус:
 
-## Epic 2. Authentication
-
-- [ ] T11. Модуль auth
-- [ ] T12. JWT
-- [ ] T13. RBAC (Guest / Instructor / Verified Instructor / Admin)
-
-## Epic 3. Organizations
-
-- [ ] T14. Organization
-- [ ] T15. Membership пользователя в организации
-
-## Epic 4. Projects
-
-- [ ] T16. Создание проекта
-- [ ] T17. Dashboard проекта
-- [ ] T18. Жизненный цикл проекта
+🟡 Ready
 
 ---
 
-# Milestone 2 — Food Domain
+### Цель
 
-## Epic 5. Products
-
-- [ ] T19. Product
-- [ ] T20. Package
-- [ ] T21. Purchase Option
-
-## Epic 6. Recipes
-
-- [ ] T22. Dish
-- [ ] T23. Recipe
-- [ ] T24. Versioning рецептов
-- [ ] T25. Ingredient
-- [ ] T26. Calculation Strategy
-
-## Epic 7. Meal Planner
-
-- [ ] T27. Planner Wizard
-- [ ] T28. Любимые блюда
-- [ ] T29. Исключённые блюда
-- [ ] T30. Генерация меню
+Создать минимальный полностью работоспособный Backend проекта TourHub.
 
 ---
 
-# Milestone 3 — Engines
+### Что необходимо реализовать
 
-## Epic 8. Engines
-
-- [ ] T31. Planner Engine
-- [ ] T32. Calculation Engine
-- [ ] T33. Package Engine
-- [ ] T34. Equipment Engine
-
-## Epic 9. Processes
-
-- [ ] T35. Prepare Project Process
-- [ ] T36. Shopping Process
-- [ ] T37. Export Process
-
----
-
-# Milestone 4 — Documents
-
-## Epic 10. Documents
-
-- [ ] T38. PDF
-- [ ] T39. Excel
-- [ ] T40. Print View
+- структура backend согласно ARCHITECTURE.md;
+- FastAPI приложение;
+- app/main.py;
+- централизованная регистрация Router;
+- lifespan;
+- config.py;
+- logging.py;
+- middleware.py;
+- exceptions.py;
+- dependencies.py;
+- router.py;
+- health endpoint;
+- Dockerfile;
+- .dockerignore;
+- pyproject.toml;
+- requirements;
+- requirements-dev;
+- базовая структура tests.
 
 ---
 
-# Milestone 5 — Warehouse
+### Что НЕ реализовывать
 
-## Epic 11. Equipment
+Не создавать:
 
-- [ ] T41. Equipment
-- [ ] T42. Warehouse
-- [ ] T43. Equipment Reservation
+- пользователей;
+- авторизацию;
+- JWT;
+- SQLAlchemy модели;
+- Alembic миграции;
+- бизнес-логику;
+- Engine;
+- Process;
+- Contracts;
+- Repository;
+- Service;
+- DTO.
+
+Это будет реализовано отдельными задачами.
 
 ---
 
-# Milestone 6 — Knowledge
+### Definition of Done
 
-## Epic 12. Knowledge Base
+Backend запускается.
 
-- [ ] T44. Comments
-- [ ] T45. Notes
-- [ ] T46. Attachments
-- [ ] T47. Object History
+GET /
+
+↓
+
+{
+    "status": "ok",
+    "project": "TourHub"
+}
+
+GET /health
+
+↓
+
+{
+    "status": "healthy"
+}
+
+Swagger доступен.
+
+/redoc доступен.
+
+Docker собирается.
+
+Тест проходит.
 
 ---
 
-# Milestone 7 — ERP
+### После выполнения
 
-## Epic 13. Routes
+Cursor обязан остановиться.
 
-- [ ] T48. Route Cards
-- [ ] T49. Contractors
-- [ ] T50. GPX
+Не выполнять TH-0002.
 
-## Epic 14. Analytics
-
-- [ ] T51. Reports
-- [ ] T52. Statistics
-- [ ] T53. Budget
+Ждать следующего задания Product Owner.
