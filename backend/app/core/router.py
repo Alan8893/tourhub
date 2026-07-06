@@ -1,7 +1,10 @@
 from fastapi import APIRouter
+from app.modules.api.meal_router import router as meal_router
 
-router = APIRouter(tags=["System"])
+router = APIRouter()
 
+
+router.include_router(meal_router)
 
 @router.get("/")
 async def root() -> dict[str, str]:

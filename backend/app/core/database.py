@@ -1,12 +1,9 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
+from app.models.base import Base
 
-
-# =========================
-# Engine
-# =========================
 
 engine = create_engine(
     settings.database.url,
@@ -15,35 +12,8 @@ engine = create_engine(
 )
 
 
-# =========================
-# Session Factory
-# =========================
-
 SessionLocal = sessionmaker(
+    bind=engine,
     autocommit=False,
     autoflush=False,
-    bind=engine,
 )
-
-
-# =========================
-# Base (ORM foundation)
-# =========================
-
-class Base(DeclarativeBase):
-    """
-    Base class for all ORM models.
-    """
-    pass
-
-
-# =========================
-# Dependency
-# =========================
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
