@@ -1,0 +1,25 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class DatabaseSettings(BaseSettings):
+    url: str = "postgresql+psycopg2://tourhub:tourhub@localhost:5432/tourhub"
+
+
+class RedisSettings(BaseSettings):
+    url: str = "redis://localhost:6379/0"
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore"
+    )
+
+    app_name: str = "TourHub"
+    environment: str = "dev"
+
+    database: DatabaseSettings = DatabaseSettings()
+    redis: RedisSettings = RedisSettings()
+
+
+settings = Settings()

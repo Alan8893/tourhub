@@ -1,1 +1,1 @@
-"""Core application components."""
+# core package

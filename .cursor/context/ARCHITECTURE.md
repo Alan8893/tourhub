@@ -210,7 +210,7 @@ backend/app/
 contracts/
 processes/
 
-добавляются после завершения Foundation.
+добавляются после завершения Foundation
 
 ## Database
 

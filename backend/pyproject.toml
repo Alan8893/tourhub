@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "tourhub-backend"
 version = "0.1.0"
 description = "Backend for TourHub ERP"
-readme = "../README.md"
 requires-python = ">=3.13"
 
 authors = [
@@ -62,4 +61,9 @@ strict = true
 ignore_missing_imports = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/app"]
+packages = ["app"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+pydantic-settings = "^2.2.1"

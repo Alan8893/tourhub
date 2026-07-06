@@ -1,30 +1,24 @@
 FROM python:3.13-slim
 
+WORKDIR /app
+
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN addgroup --system app \
-    && adduser --system --ingroup app app
+# copy only backend project files
+COPY pyproject.toml /app/
+COPY app /app/app
 
-COPY pyproject.toml ./
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir hatch
 
-RUN pip install --no-cache-dir --upgrade pip
-
-COPY src ./src
-
-RUN pip install --no-cache-dir -e .
-
-USER app
+RUN pip install --no-cache-dir .
 
 EXPOSE 8000
 
-CMD [
-    "uvicorn",
-    "app.main:app",
-    "--host",
-    "0.0.0.0",
-    "--port",
-    "8000"
-]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
