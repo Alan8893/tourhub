@@ -5,46 +5,63 @@ services:
     container_name: tourhub-backend
     ports:
       - "8000:8000"
+
     environment:
-      - DATABASE_URL=postgresql+psycopg2://tourhub:tourhub@postgres:5432/tourhub
-      - REDIS_URL=redis://redis:6379/0
+      DATABASE__URL: postgresql+psycopg://tourhub:tourhub@postgres:5432/tourhub
+      REDIS__URL: redis://redis:6379/0
+
     depends_on:
       - postgres
       - redis
+
     volumes:
       - ./backend/app:/app/app
+
 
   postgres:
     image: postgres:16
     container_name: tourhub-postgres
+
     restart: always
+
     environment:
       POSTGRES_USER: tourhub
       POSTGRES_PASSWORD: tourhub
       POSTGRES_DB: tourhub
+
     ports:
       - "5432:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
 
   redis:
     image: redis:7
     container_name: tourhub-redis
+
     restart: always
+
     ports:
       - "6379:6379"
-      
+
+
   frontend:
     build:
       context: ./frontend
+
     container_name: tourhub-frontend
+
     ports:
       - "5173:5173"
+
     depends_on:
       - backend
+
     volumes:
       - ./frontend:/app
       - /app/node_modules
+
 
 volumes:
   postgres_data:

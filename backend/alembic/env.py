@@ -5,7 +5,19 @@ from sqlalchemy import create_engine
 from sqlalchemy import pool
 
 from app.core.config import settings
-from app.core.database import Base
+from app.models import (
+    Base,
+    ProductORM,
+    IngredientORM,
+    RecipeORM,
+    DishORM,
+)
+
+# Ensure SQLAlchemy registers all models
+_ = ProductORM
+_ = IngredientORM
+_ = RecipeORM
+_ = DishORM
 
 # Alembic Config object
 config = context.config

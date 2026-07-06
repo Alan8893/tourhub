@@ -1,10 +1,13 @@
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
 
 class DishORM(Base):
+    """
+    Dish used in meal plan.
+    """
 
     __tablename__ = "dishes"
 
@@ -14,11 +17,15 @@ class DishORM(Base):
     )
 
     name: Mapped[str] = mapped_column(
-        String,
+        String(255),
         nullable=False
     )
 
     recipe_id: Mapped[str] = mapped_column(
-        String,
+        ForeignKey("recipes.id"),
         nullable=False
+    )
+
+    recipe = relationship(
+        "RecipeORM"
     )

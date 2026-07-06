@@ -1,10 +1,16 @@
-from sqlalchemy import String, JSON
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
 
 class RecipeORM(Base):
+    """
+    Recipe composition.
+
+    Example:
+    "Camp pilaf"
+    """
 
     __tablename__ = "recipes"
 
@@ -14,11 +20,12 @@ class RecipeORM(Base):
     )
 
     name: Mapped[str] = mapped_column(
-        String,
-        nullable=False
+        String(255),
+        nullable=False,
+        unique=True
     )
 
-    ingredients: Mapped[dict] = mapped_column(
-        JSON,
-        nullable=False
+    ingredients = relationship(
+        "IngredientORM",
+        cascade="all, delete-orphan"
     )
