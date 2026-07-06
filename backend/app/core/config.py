@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class DatabaseSettings(BaseSettings):
-    url: str = "postgresql+psycopg2://tourhub:tourhub@localhost:5432/tourhub"
+    url: str = "postgresql+psycopg://tourhub:tourhub@localhost:5432/tourhub"
 
 
 class RedisSettings(BaseSettings):
