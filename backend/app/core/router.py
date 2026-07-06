@@ -1,24 +1,19 @@
 from fastapi import APIRouter
 
-router = APIRouter()
+router = APIRouter(tags=["System"])
 
 
-@router.get("/", tags=["System"])
+@router.get("/")
 async def root() -> dict[str, str]:
-    """
-    Root endpoint.
-    """
     return {
-        "status": "ok",
-        "project": "TourHub",
+        "name": "TourHub",
+        "environment": "development",
+        "status": "running",
     }
 
 
-@router.get("/health", tags=["System"])
+@router.get("/health")
 async def health() -> dict[str, str]:
-    """
-    Healthcheck endpoint.
-    """
     return {
         "status": "healthy",
     }

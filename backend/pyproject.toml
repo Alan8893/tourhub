@@ -66,4 +66,3 @@ packages = ["app"]
 [tool.hatch.metadata]
 allow-direct-references = true
 
-pydantic-settings = "^2.2.1"

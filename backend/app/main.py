@@ -1,7 +1,13 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="TourHub")
+from app.core.config import settings
+from app.core.lifespan import lifespan
+from app.core.router import router
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+
+app = FastAPI(
+    title=settings.app_name,
+    lifespan=lifespan,
+)
+
+app.include_router(router)
