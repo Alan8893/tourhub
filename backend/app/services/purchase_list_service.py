@@ -25,26 +25,17 @@ class PurchaseListService:
         self.shopping_service = shopping_service
         self.document_mapper = document_mapper or PurchaseDocumentMapper()
 
-    def create_from_meal_plan_id(
-        self,
-        meal_plan_id: str,
-    ) -> PurchaseListORM:
+    def create_from_meal_plan_id(self, meal_plan_id: str) -> PurchaseListORM:
         if not self.meal_plan_repository:
             raise ValueError("Meal plan repository is required")
-
         meal_plan = self.meal_plan_repository.get_with_details(meal_plan_id)
-
         if not meal_plan:
             raise ValueError("Meal plan not found")
-
         if not self.shopping_service:
             raise ValueError("Shopping service is required")
-
-        packaged_result = self.shopping_service.calculate_packaged(meal_plan)
-
         return self.create_from_packaged_shopping(
             meal_plan_id,
-            packaged_result,
+            self.shopping_service.calculate_packaged(meal_plan),
         )
 
     def create_from_packaged_shopping(
@@ -57,47 +48,40 @@ class PurchaseListService:
             meal_plan_id=meal_plan_id,
             status="prepared",
         )
-
         self.repository.add(purchase_list)
-
         for item in shopping_result.items:
-            self.repository.add_item(
-                PurchaseListItemORM(
-                    id=str(uuid4()),
-                    purchase_list=purchase_list,
-                    product_id=self._resolve_product_id(item.product_name),
-                    required_quantity=item.amount,
-                    required_unit=item.unit,
-                    package_size=item.package_size,
-                    package_unit=item.unit,
-                    packages_count=item.packages,
-                )
-            )
-
+            self.repository.add_item(PurchaseListItemORM(
+                id=str(uuid4()),
+                purchase_list=purchase_list,
+                product_id=self._resolve_product_id(item.product_name),
+                required_quantity=item.amount,
+                required_unit=item.unit,
+                package_size=item.package_size,
+                package_unit=item.unit,
+                packages_count=item.packages,
+            ))
         self.repository.commit()
         return purchase_list
 
-    def get(
-        self,
-        purchase_list_id: str,
-    ) -> PurchaseListORM | None:
+    def get(self, purchase_list_id: str) -> PurchaseListORM | None:
         return self.repository.get_by_id(purchase_list_id)
 
-    def create_document_dto(
-        self,
-        purchase_list: PurchaseListORM,
-    ) -> PurchaseDocumentDTO:
+    def get_summary(self, purchase_list_id: str) -> dict:
+        purchase_list = self.get(purchase_list_id)
+        if not purchase_list:
+            raise ValueError("Purchase list not found")
+        return {
+            "id": purchase_list.id,
+            "status": purchase_list.status,
+            "items_total": len(purchase_list.items),
+            "packages_total": sum(item.packages_count for item in purchase_list.items),
+        }
+
+    def create_document_dto(self, purchase_list: PurchaseListORM) -> PurchaseDocumentDTO:
         return self.document_mapper.to_dto(purchase_list)
 
-    def _resolve_product_id(
-        self,
-        product_name: str,
-    ) -> str:
+    def _resolve_product_id(self, product_name: str) -> str:
         product = self.repository.get_product_by_name(product_name)
-
         if not product:
-            raise ValueError(
-                f"Product not found: {product_name}"
-            )
-
+            raise ValueError(f"Product not found: {product_name}")
         return product.id
