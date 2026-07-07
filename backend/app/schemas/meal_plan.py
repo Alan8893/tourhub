@@ -54,3 +54,40 @@ class MealPlanResponse(BaseModel):
     items: list[MealPlanItemResponse]
 
     warnings: list[str] = []
+
+
+class ShoppingListItemResponse(BaseModel):
+    """
+    Single product required for purchase.
+    """
+
+    product_name: str
+
+    amount: float
+
+    unit: str
+
+
+class ShoppingListResponse(BaseModel):
+    """
+    Generated shopping list response.
+    """
+
+    items: list[ShoppingListItemResponse]
+
+
+class MealPlanGenerateResponse(BaseModel):
+    """
+    Full meal plan generation result.
+
+    Contains:
+
+    MealPlan
+        +
+    ShoppingList
+    """
+
+    meal_plan: MealPlanResponse
+
+    shopping_list: ShoppingListResponse
+

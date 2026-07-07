@@ -1,8 +1,13 @@
 import pytest
+
 from fastapi.testclient import TestClient
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 
+from app.models.base import Base
 from app.models.dish import DishORM
 
 from app.modules.api.meal_plan_router import (
@@ -12,6 +17,27 @@ from app.modules.api.meal_plan_router import (
 from app.services.meal_plan_service import (
     MealPlanService,
 )
+
+
+test_engine = create_engine(
+    "sqlite:///:memory:",
+)
+
+TestingSessionLocal = sessionmaker(
+    bind=test_engine,
+    autocommit=False,
+    autoflush=False,
+)
+
+
+def setup_database():
+    """
+    Create test database schema.
+    """
+
+    Base.metadata.create_all(
+        bind=test_engine
+    )
 
 
 class FakeDishRepository:
@@ -79,6 +105,27 @@ def fake_dish_repository():
 @pytest.fixture
 def fake_meal_plan_repository():
     return FakeMealPlanRepository()
+
+
+@pytest.fixture
+def db_session():
+    """
+    SQLAlchemy test session.
+    """
+
+    setup_database()
+
+    session = TestingSessionLocal()
+
+    try:
+        yield session
+
+    finally:
+        session.close()
+
+        Base.metadata.drop_all(
+            bind=test_engine
+        )
 
 
 @pytest.fixture

@@ -8,10 +8,18 @@ from app.repositories.meal_plan_repository import MealPlanRepository
 
 from app.services.meal_plan_service import MealPlanService
 from app.services.meal_plan_mapper import MealPlanMapper
+from app.services.meal_plan_shopping_service import (
+    MealPlanShoppingService,
+)
+from app.services.shopping_list_service import (
+    ShoppingListService,
+)
 
 from app.schemas.meal_plan import (
     MealPlanGenerateRequest,
-    MealPlanResponse,
+    MealPlanGenerateResponse,
+    ShoppingListItemResponse,
+    ShoppingListResponse,
 )
 
 
@@ -30,14 +38,27 @@ def get_meal_plan_service(
     )
 
 
+def get_meal_plan_shopping_service(
+    session: Session = Depends(get_session),
+) -> MealPlanShoppingService:
+    return MealPlanShoppingService(
+        shopping_list_service=ShoppingListService(
+            session
+        )
+    )
+
+
 @router.post(
     "/generate",
-    response_model=MealPlanResponse,
+    response_model=MealPlanGenerateResponse,
 )
 def generate_meal_plan(
     request: MealPlanGenerateRequest,
     service: MealPlanService = Depends(
         get_meal_plan_service
+    ),
+    shopping_service: MealPlanShoppingService = Depends(
+        get_meal_plan_shopping_service
     ),
 ):
     meal_plan = service.generate_and_save(
@@ -47,6 +68,22 @@ def generate_meal_plan(
         meals_per_day=request.meals_per_day,
     )
 
-    return MealPlanMapper.to_response(
+    shopping_list = shopping_service.calculate(
         meal_plan
     )
+
+    return {
+        "meal_plan": MealPlanMapper.to_response(
+            meal_plan
+        ),
+        "shopping_list": ShoppingListResponse(
+            items=[
+                ShoppingListItemResponse(
+                    product_name=item.product_name,
+                    amount=item.amount,
+                    unit=item.unit,
+                )
+                for item in shopping_list.items
+            ]
+        ),
+    }

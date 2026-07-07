@@ -19,7 +19,15 @@ def test_generate_meal_plan_endpoint(
 
     data = response.json()
 
-    assert data["name"] == "Altai Trip"
-    assert data["participants"] == 10
-    assert data["days_count"] == 2
-    assert len(data["items"]) == 4
+    meal_plan = data["meal_plan"]
+    shopping_list = data["shopping_list"]
+
+    assert meal_plan["name"] == "Altai Trip"
+
+    assert meal_plan["participants"] == 10
+
+    assert meal_plan["days_count"] == 2
+
+    assert len(meal_plan["items"]) == 4
+
+    assert "items" in shopping_list
