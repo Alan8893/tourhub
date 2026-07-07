@@ -7,7 +7,7 @@ from app.repositories.purchase_checklist_repository import PurchaseChecklistRepo
 from app.services.purchase_checklist_service import PurchaseChecklistService
 
 
-def test_update_item_marks_checklist_completed(session):
+def test_update_item_marks_checklist_completed(db_session):
     product = ProductORM(
         id=str(uuid4()),
         name="Рис",
@@ -32,11 +32,11 @@ def test_update_item_marks_checklist_completed(session):
         is_checked=False,
     )
 
-    session.add_all([product, checklist, item])
-    session.commit()
+    db_session.add_all([product, checklist, item])
+    db_session.commit()
 
     service = PurchaseChecklistService(
-        PurchaseChecklistRepository(session)
+        PurchaseChecklistRepository(db_session)
     )
 
     updated = service.update_item(
