@@ -4,23 +4,33 @@ from fastapi.testclient import TestClient
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.main import app
-from app.models.base import Base
-from app.models.dish import DishORM
+from app.models import (
+    Base,
+    ProductORM,
+    IngredientORM,
+    RecipeORM,
+    DishORM,
+    MealPlanORM,
+    MealPlanDayORM,
+    MealPlanItemORM,
+    PurchaseChecklistORM,
+    PurchaseChecklistItemORM,
+    PurchaseListORM,
+    PurchaseListItemORM,
+)
 from app.core.session import get_session
 
-from app.modules.api.meal_plan_router import (
-    get_meal_plan_service,
-)
-
-from app.services.meal_plan_service import (
-    MealPlanService,
-)
+from app.modules.api.meal_plan_router import get_meal_plan_service
+from app.services.meal_plan_service import MealPlanService
 
 
 test_engine = create_engine(
     "sqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 
 TestingSessionLocal = sessionmaker(
@@ -31,29 +41,15 @@ TestingSessionLocal = sessionmaker(
 
 
 def setup_database():
-    Base.metadata.create_all(
-        bind=test_engine
-    )
+    Base.metadata.create_all(bind=test_engine)
 
 
 class FakeDishRepository:
     def list(self):
         return [
-            DishORM(
-                id="dish-1",
-                name="Pilaf",
-                recipe_id="recipe-1",
-            ),
-            DishORM(
-                id="dish-2",
-                name="Soup",
-                recipe_id="recipe-2",
-            ),
-            DishORM(
-                id="dish-3",
-                name="Oatmeal",
-                recipe_id="recipe-3",
-            ),
+            DishORM(id="dish-1", name="Pilaf", recipe_id="recipe-1"),
+            DishORM(id="dish-2", name="Soup", recipe_id="recipe-2"),
+            DishORM(id="dish-3", name="Oatmeal", recipe_id="recipe-3"),
         ]
 
 
@@ -82,26 +78,20 @@ class FakeMealPlanRepository:
 
 
 @pytest.fixture
-def override_database_session():
+def client():
     setup_database()
-
-    def factory():
-        session = TestingSessionLocal()
-        try:
-            yield session
-        finally:
-            session.close()
-
-    app.dependency_overrides[get_session] = factory
-
-    yield
-
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
-def client(override_database_session):
+    app.dependency_overrides[get_session] = override_session
     yield TestClient(app)
+    app.dependency_overrides.clear()
+    Base.metadata.drop_all(bind=test_engine)
+
+
+def override_session():
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
 
 
 @pytest.fixture
@@ -118,12 +108,19 @@ def fake_meal_plan_repository():
 def db_session():
     setup_database()
     session = TestingSessionLocal()
-
     try:
         yield session
     finally:
         session.close()
         Base.metadata.drop_all(bind=test_engine)
+
+
+@pytest.fixture
+def override_database_session():
+    setup_database()
+    app.dependency_overrides[get_session] = override_session
+    yield
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -138,7 +135,5 @@ def override_meal_plan_service(
         )
 
     app.dependency_overrides[get_meal_plan_service] = factory
-
     yield
-
     app.dependency_overrides.clear()
