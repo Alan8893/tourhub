@@ -19,7 +19,7 @@ from app.services.meal_plan_service import (
 )
 
 
- test_engine = create_engine(
+test_engine = create_engine(
     "sqlite:///:memory:",
 )
 
