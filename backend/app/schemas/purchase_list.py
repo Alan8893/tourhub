@@ -24,3 +24,10 @@ class PurchaseListResponse(BaseModel):
     meal_plan_id: str
     status: str
     items: list[PurchaseListItemResponse]
+
+
+class PurchaseListSummaryResponse(BaseModel):
+    id: str
+    status: str
+    items_total: int
+    packages_total: int
