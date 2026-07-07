@@ -19,19 +19,13 @@ class PurchaseChecklistService:
         self.repository = repository
         self.shopping_service = shopping_service
 
-    def create_from_meal_plan(
-        self,
-        meal_plan: MealPlanORM,
-    ) -> PurchaseChecklistORM:
+    def create_from_meal_plan(self, meal_plan: MealPlanORM) -> PurchaseChecklistORM:
         if not self.shopping_service:
             raise ValueError("Shopping service is required")
 
         shopping_list = self.shopping_service.calculate(meal_plan)
 
-        return self.create_from_shopping_list(
-            meal_plan_id=meal_plan.id,
-            shopping_list=shopping_list,
-        )
+        return self.create_from_shopping_list(meal_plan.id, shopping_list)
 
     def create_from_shopping_list(
         self,
@@ -48,37 +42,51 @@ class PurchaseChecklistService:
 
         for item in shopping_list.items:
             product = self.repository.get_product_by_name(item.product_name)
-
             if not product:
-                raise ValueError(
-                    f"Product not found: {item.product_name}"
-                )
+                raise ValueError(f"Product not found: {item.product_name}")
 
-            checklist_item = PurchaseChecklistItemORM(
-                id=str(uuid4()),
-                checklist=checklist,
-                product_id=product.id,
-                required_quantity=item.amount,
-                purchased_quantity=0,
-                unit=item.unit,
-                is_checked=False,
+            self.repository.add_item(
+                PurchaseChecklistItemORM(
+                    id=str(uuid4()),
+                    checklist=checklist,
+                    product_id=product.id,
+                    required_quantity=item.amount,
+                    purchased_quantity=0,
+                    unit=item.unit,
+                    is_checked=False,
+                )
             )
-            self.repository.add_item(checklist_item)
 
         self.repository.commit()
-
         return checklist
 
-    def get(
-        self,
-        checklist_id: str,
-    ) -> PurchaseChecklistORM | None:
+    def get(self, checklist_id: str) -> PurchaseChecklistORM | None:
         return self.repository.get_by_id(checklist_id)
 
-    def check_item(
+    def update_item(
         self,
-        item: PurchaseChecklistItemORM,
-        checked: bool,
+        item_id: str,
+        checked: bool | None = None,
+        purchased_quantity: float | None = None,
     ) -> PurchaseChecklistItemORM:
-        item.is_checked = checked
+        item = self.repository.get_item_by_id(item_id)
+
+        if not item:
+            raise ValueError("Checklist item not found")
+
+        if checked is not None:
+            item.is_checked = checked
+
+        if purchased_quantity is not None:
+            item.purchased_quantity = purchased_quantity
+
+        checklist = item.checklist
+        if all(current.is_checked for current in checklist.items):
+            checklist.status = "completed"
+        elif any(current.is_checked for current in checklist.items):
+            checklist.status = "in_progress"
+        else:
+            checklist.status = "draft"
+
+        self.repository.commit()
         return item
