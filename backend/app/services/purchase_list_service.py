@@ -3,7 +3,9 @@ from uuid import uuid4
 from app.engines.packaging import PackagedShoppingResult
 from app.models.purchase_list import PurchaseListORM
 from app.models.purchase_list_item import PurchaseListItemORM
+from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.services.meal_plan_shopping_service import MealPlanShoppingService
 
 
 class PurchaseListService:
@@ -12,8 +14,36 @@ class PurchaseListService:
     def __init__(
         self,
         repository: PurchaseListRepository,
+        meal_plan_repository: MealPlanRepository | None = None,
+        shopping_service: MealPlanShoppingService | None = None,
     ):
         self.repository = repository
+        self.meal_plan_repository = meal_plan_repository
+        self.shopping_service = shopping_service
+
+    def create_from_meal_plan_id(
+        self,
+        meal_plan_id: str,
+    ) -> PurchaseListORM:
+        if not self.meal_plan_repository:
+            raise ValueError("Meal plan repository is required")
+
+        meal_plan = self.meal_plan_repository.get_with_details(meal_plan_id)
+
+        if not meal_plan:
+            raise ValueError("Meal plan not found")
+
+        if not self.shopping_service:
+            raise ValueError("Shopping service is required")
+
+        packaged_result = self.shopping_service.calculate_packaged(
+            meal_plan
+        )
+
+        return self.create_from_packaged_shopping(
+            meal_plan_id,
+            packaged_result,
+        )
 
     def create_from_packaged_shopping(
         self,
