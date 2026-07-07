@@ -9,6 +9,8 @@ from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_plan_item import MealPlanItemORM
 from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
+from app.models.purchase_list import PurchaseListORM
+from app.models.purchase_list_item import PurchaseListItemORM
 
 
 __all__ = [
@@ -22,4 +24,6 @@ __all__ = [
     "MealPlanItemORM",
     "PurchaseChecklistORM",
     "PurchaseChecklistItemORM",
+    "PurchaseListORM",
+    "PurchaseListItemORM",
 ]
