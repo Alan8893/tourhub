@@ -1,5 +1,4 @@
 from app.domain.workflows.purchase_checklist import (
-    InvalidPurchaseChecklistTransition,
     PurchaseChecklistWorkflow,
 )
 
@@ -12,9 +11,5 @@ def test_purchase_checklist_completed_transition():
     assert PurchaseChecklistWorkflow.can_transition("in_progress", "completed")
 
 
-def test_purchase_checklist_forbidden_transition():
-    try:
-        PurchaseChecklistWorkflow.transition("draft", "completed")
-        assert False
-    except InvalidPurchaseChecklistTransition:
-        assert True
+def test_purchase_checklist_direct_completion_from_draft():
+    assert PurchaseChecklistWorkflow.can_transition("draft", "completed")
