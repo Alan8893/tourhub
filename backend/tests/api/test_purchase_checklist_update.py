@@ -1,6 +1,6 @@
 def test_update_purchase_checklist_item_not_found(client):
     response = client.patch(
-        "/purchase-checklists/items/not-existing",
+        "/api/v1/purchase-checklists/items/not-existing",
         json={
             "is_checked": True,
         },
