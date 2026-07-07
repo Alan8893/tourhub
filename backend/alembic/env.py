@@ -11,6 +11,11 @@ from app.models import (
     IngredientORM,
     RecipeORM,
     DishORM,
+    MealPlanORM,
+    MealPlanDayORM,
+    MealPlanItemORM,
+    PurchaseChecklistORM,
+    PurchaseChecklistItemORM,
 )
 
 # Ensure SQLAlchemy registers all models
@@ -18,23 +23,21 @@ _ = ProductORM
 _ = IngredientORM
 _ = RecipeORM
 _ = DishORM
+_ = MealPlanORM
+_ = MealPlanDayORM
+_ = MealPlanItemORM
+_ = PurchaseChecklistORM
+_ = PurchaseChecklistItemORM
 
-# Alembic Config object
 config = context.config
 
-# Logging config (alembic internal logging)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Target metadata for autogenerate
 target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """
-    Run migrations in 'offline' mode.
-    """
-
     url = settings.database.url
 
     context.configure(
@@ -50,10 +53,6 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """
-    Run migrations in 'online' mode.
-    """
-
     connectable = create_engine(
         settings.database.url,
         poolclass=pool.NullPool,
