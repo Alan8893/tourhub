@@ -54,3 +54,8 @@ class PurchaseListItemORM(Base):
         "PurchaseListORM",
         back_populates="items",
     )
+
+    product = relationship(
+        "ProductORM",
+        back_populates="purchase_list_items",
+    )
