@@ -3,6 +3,7 @@ from uuid import uuid4
 from app.engines.shopping_list import ShoppingListResult
 from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
+from app.models.purchase_list import PurchaseListORM
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
@@ -20,6 +21,34 @@ class PurchaseChecklistService:
         self.repository = repository
         self.meal_plan_repository = meal_plan_repository
         self.shopping_service = shopping_service
+
+    def create_from_purchase_list(
+        self,
+        purchase_list: PurchaseListORM,
+    ) -> PurchaseChecklistORM:
+        checklist = PurchaseChecklistORM(
+            id=str(uuid4()),
+            meal_plan_id=purchase_list.meal_plan_id,
+            status="draft",
+        )
+
+        self.repository.add(checklist)
+
+        for item in purchase_list.items:
+            self.repository.add_item(
+                PurchaseChecklistItemORM(
+                    id=str(uuid4()),
+                    checklist=checklist,
+                    product_id=item.product_id,
+                    required_quantity=item.required_quantity,
+                    purchased_quantity=0,
+                    unit=item.required_unit,
+                    is_checked=False,
+                )
+            )
+
+        self.repository.commit()
+        return checklist
 
     def create_from_meal_plan_id(
         self,
