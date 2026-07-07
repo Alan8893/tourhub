@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     app_name: str = "TourHub"
     environment: str = "dev"
 
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+    ]
+
     database: DatabaseSettings = DatabaseSettings()
     redis: RedisSettings = RedisSettings()
 
