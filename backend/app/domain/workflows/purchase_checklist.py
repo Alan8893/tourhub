@@ -17,6 +17,7 @@ class PurchaseChecklistWorkflow:
     _transitions = {
         PurchaseChecklistStatus.DRAFT: {
             PurchaseChecklistStatus.IN_PROGRESS,
+            PurchaseChecklistStatus.COMPLETED,
         },
         PurchaseChecklistStatus.IN_PROGRESS: {
             PurchaseChecklistStatus.COMPLETED,
