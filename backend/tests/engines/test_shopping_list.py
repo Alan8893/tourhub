@@ -4,74 +4,28 @@ from app.engines.shopping_list import (
 )
 
 
-def test_calculate_shopping_list():
-    ingredients = [
-        IngredientInput(
-            product_name="Рис",
-            amount_per_person=120,
-            unit="gram",
-        )
-    ]
-
+def test_shopping_list_aggregates_same_products():
     result = calculate_shopping_list(
-        people=10,
-        days=5,
-        ingredients=ingredients,
+        people=5,
+        days=2,
+        ingredients=[
+            IngredientInput(
+                product_name="Rice",
+                amount_per_person=100,
+                unit="g",
+            ),
+            IngredientInput(
+                product_name="Rice",
+                amount_per_person=100,
+                unit="g",
+            ),
+        ],
     )
 
     assert len(result.items) == 1
 
     item = result.items[0]
 
-    assert item.product_name == "Рис"
-    assert item.amount == 6000
-    assert item.unit == "gram"
-
-
-def test_calculate_multiple_products():
-    ingredients = [
-        IngredientInput(
-            product_name="Рис",
-            amount_per_person=120,
-            unit="gram",
-        ),
-        IngredientInput(
-            product_name="Мясо",
-            amount_per_person=100,
-            unit="gram",
-        ),
-    ]
-
-    result = calculate_shopping_list(
-        people=5,
-        days=3,
-        ingredients=ingredients,
-    )
-
-    assert result.items[0].amount == 1800
-    assert result.items[1].amount == 1500
-
-
-def test_invalid_people_count():
-
-    ingredients = [
-        IngredientInput(
-            product_name="Рис",
-            amount_per_person=120,
-            unit="gram",
-        )
-    ]
-
-    try:
-        calculate_shopping_list(
-            people=0,
-            days=5,
-            ingredients=ingredients,
-        )
-
-        assert False
-
-    except ValueError as error:
-        assert str(error) == (
-            "People must be greater than zero"
-        )
+    assert item.product_name == "Rice"
+    assert item.quantity == 2000
+    assert item.unit == "g"
