@@ -2,6 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from app.domain.workflows.purchase_checklist import PurchaseChecklistStatus
+
 
 class PurchaseChecklistItemUpdate(BaseModel):
     is_checked: bool | None = None
@@ -28,13 +30,13 @@ class PurchaseChecklistResponse(BaseModel):
 
     id: UUID
     meal_plan_id: UUID
-    status: str
+    status: PurchaseChecklistStatus
     items: list[PurchaseChecklistItemResponse]
 
 
 class PurchaseChecklistProgressResponse(BaseModel):
     id: UUID
-    status: str
+    status: PurchaseChecklistStatus
     total_items: int
     checked_items: int
     progress_percent: float
