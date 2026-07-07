@@ -1,127 +1,59 @@
 from pydantic import BaseModel, Field
+from uuid import UUID
 
 
 class MealPlanGenerateRequest(BaseModel):
-    """
-    Request for automatic meal plan generation.
-    """
+    """Request for automatic meal plan generation."""
 
-    name: str = Field(
-        min_length=1,
-        max_length=255,
-    )
-
-    participants: int = Field(
-        gt=0,
-    )
-
-    days: int = Field(
-        gt=0,
-    )
-
-    meals_per_day: list[str] = Field(
-        min_length=1,
-    )
+    name: str = Field(min_length=1, max_length=255)
+    participants: int = Field(gt=0)
+    days: int = Field(gt=0)
+    meals_per_day: list[str] = Field(min_length=1)
 
 
 class MealPlanItemResponse(BaseModel):
-    """
-    Single generated meal.
-    """
+    """Single generated meal."""
 
     day_number: int
-
     meal_type: str
-
-    dish_id: str
-
+    dish_id: UUID
     dish_name: str
 
 
 class MealPlanResponse(BaseModel):
-    """
-    Generated meal plan response.
-    """
+    """Generated meal plan response."""
 
-    id: str
-
+    id: UUID
     name: str
-
     participants: int
-
     days_count: int
-
     items: list[MealPlanItemResponse]
-
     warnings: list[str] = []
 
 
 class ShoppingListItemResponse(BaseModel):
-    """
-    Single required product quantity.
-    """
-
     product_name: str
-
     amount: float
-
     unit: str
 
 
 class ShoppingListResponse(BaseModel):
-    """
-    Required products list.
-    """
-
     items: list[ShoppingListItemResponse]
 
 
 class PackagedShoppingItemResponse(BaseModel):
-    """
-    Product purchase information.
-
-    Example:
-
-    Rice:
-        need 6000 g
-        package 900 g
-        buy 7 packages
-    """
-
     product_name: str
-
     amount: float
-
     unit: str
-
     package_size: float
-
     packages: int
 
 
 class PackagedShoppingResponse(BaseModel):
-    """
-    Shopping list with package calculation.
-    """
-
     items: list[PackagedShoppingItemResponse]
 
 
 class MealPlanGenerateResponse(BaseModel):
-    """
-    Full meal plan generation result.
-
-    Contains:
-
-    MealPlan
-        +
-    ShoppingList
-        +
-    PurchaseList
-    """
-
     meal_plan: MealPlanResponse
-
     shopping_list: ShoppingListResponse
-
     purchase_list: PackagedShoppingResponse
