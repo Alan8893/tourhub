@@ -14,7 +14,7 @@ class PurchaseChecklistService:
     def __init__(
         self,
         repository: PurchaseChecklistRepository,
-        meal_plan_repository: MealPlanRepository,
+        meal_plan_repository: MealPlanRepository | None = None,
         shopping_service: MealPlanShoppingService | None = None,
     ):
         self.repository = repository
@@ -25,6 +25,9 @@ class PurchaseChecklistService:
         self,
         meal_plan_id: str,
     ) -> PurchaseChecklistORM:
+        if not self.meal_plan_repository:
+            raise ValueError("Meal plan repository is required")
+
         meal_plan = self.meal_plan_repository.get_with_details(meal_plan_id)
 
         if not meal_plan:
@@ -37,7 +40,6 @@ class PurchaseChecklistService:
             raise ValueError("Shopping service is required")
 
         shopping_list = self.shopping_service.calculate(meal_plan)
-
         return self.create_from_shopping_list(meal_plan.id, shopping_list)
 
     def create_from_shopping_list(
