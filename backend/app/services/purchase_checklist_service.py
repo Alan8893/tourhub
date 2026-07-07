@@ -31,10 +31,19 @@ class PurchaseChecklistService:
         self.repository.add(checklist)
 
         for item in shopping_list.items:
+            product = self.repository.get_product_by_name(
+                item.product_name
+            )
+
+            if not product:
+                raise ValueError(
+                    f"Product not found: {item.product_name}"
+                )
+
             checklist_item = PurchaseChecklistItemORM(
                 id=str(uuid4()),
                 checklist=checklist,
-                product_id=item.product_name,
+                product_id=product.id,
                 required_quantity=item.amount,
                 purchased_quantity=0,
                 unit=item.unit,
