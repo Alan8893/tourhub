@@ -26,7 +26,6 @@ def test_create_document_dto(db_session):
     item = PurchaseListItemORM(
         id="item-1",
         purchase_list=purchase_list,
-        product=product,
         product_id=product.id,
         required_quantity=Decimal("2000"),
         required_unit="gram",

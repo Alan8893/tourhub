@@ -2,7 +2,7 @@ from app.engines.documents.dto import (
     GeneratedDocument,
     PurchaseDocumentDTO,
 )
-
+from datetime import datetime, timezone
 
 class PrintDocumentGenerator:
     """Generate printable text representation."""
@@ -21,6 +21,6 @@ class PrintDocumentGenerator:
         return GeneratedDocument(
             filename="purchase_list.txt",
             content_type="text/plain",
-            generated_at=__import__("datetime").datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             content="\n".join(lines),
         )
