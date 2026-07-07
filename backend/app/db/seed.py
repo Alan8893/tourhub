@@ -1,63 +1,41 @@
-from sqlalchemy.orm import Session
+from app.core.database import SessionLocal
 
-from app.models.dish import DishORM
-from app.models.recipe import RecipeORM
+from app.db.seed_products import seed_products
+from app.db.seed_recipes import seed_recipes
+from app.db.seed_dishes import seed_dishes
 
 
-def run_seed(session: Session):
+def run_seed() -> None:
     """
-    Seed initial test data for development.
+    Execute database seed.
+
+    Order:
+    1. Products
+    2. Recipes and ingredients
+    3. Dishes
     """
 
-    # -------------------
-    # RECIPES
-    # -------------------
-    recipes = [
-        RecipeORM(
-            id="r1",
-            name="Pasta",
-            ingredients={
-                "pasta": 100,
-                "cheese": 20
-            }
-        ),
-        RecipeORM(
-            id="r2",
-            name="Soup",
-            ingredients={
-                "water": 300,
-                "potato": 150
-            }
-        ),
-    ]
+    session = SessionLocal()
 
-    # -------------------
-    # DISHES
-    # -------------------
-    dishes = [
-        DishORM(
-            id="d1",
-            name="Pasta Dish",
-            recipe_id="r1"
-        ),
-        DishORM(
-            id="d2",
-            name="Soup Dish",
-            recipe_id="r2"
-        ),
-    ]
+    try:
+        print("Seeding products...")
+        seed_products(session)
 
-    # -------------------
-    # INSERT (idempotent)
-    # -------------------
-    for recipe in recipes:
-        exists = session.get(RecipeORM, recipe.id)
-        if not exists:
-            session.add(recipe)
+        print("Seeding recipes...")
+        seed_recipes(session)
 
-    for dish in dishes:
-        exists = session.get(DishORM, dish.id)
-        if not exists:
-            session.add(dish)
+        print("Seeding dishes...")
+        seed_dishes(session)
 
-    session.commit()
+        print("Seed completed successfully.")
+
+    except Exception:
+        session.rollback()
+        raise
+
+    finally:
+        session.close()
+
+
+if __name__ == "__main__":
+    run_seed()
