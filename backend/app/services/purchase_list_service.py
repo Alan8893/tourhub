@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from app.domain.workflows.purchase_list import PurchaseListStatus
 from app.engines.packaging import PackagedShoppingResult
 from app.engines.documents.dto import PurchaseDocumentDTO
 from app.models.purchase_list import PurchaseListORM
@@ -33,20 +34,13 @@ class PurchaseListService:
             raise ValueError("Meal plan not found")
         if not self.shopping_service:
             raise ValueError("Shopping service is required")
-        return self.create_from_packaged_shopping(
-            meal_plan_id,
-            self.shopping_service.calculate_packaged(meal_plan),
-        )
+        return self.create_from_packaged_shopping(meal_plan_id, self.shopping_service.calculate_packaged(meal_plan))
 
-    def create_from_packaged_shopping(
-        self,
-        meal_plan_id: str,
-        shopping_result: PackagedShoppingResult,
-    ) -> PurchaseListORM:
+    def create_from_packaged_shopping(self, meal_plan_id: str, shopping_result: PackagedShoppingResult) -> PurchaseListORM:
         purchase_list = PurchaseListORM(
             id=str(uuid4()),
             meal_plan_id=meal_plan_id,
-            status="prepared",
+            status=PurchaseListStatus.PREPARED.value,
         )
         self.repository.add(purchase_list)
         for item in shopping_result.items:
