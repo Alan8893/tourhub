@@ -18,6 +18,8 @@ setup_logging()
 
 app = FastAPI(
     title=settings.app_name,
+    description="TourHub ERP API for hiking preparation workflow.",
+    version="0.1.0",
     lifespan=lifespan,
 )
 
