@@ -4,7 +4,7 @@ from zipfile import ZipFile
 
 def test_purchase_list_pdf_export_not_found(client):
     response = client.get(
-        "/purchase-lists/missing/export/pdf"
+        "/api/v1/purchase-lists/missing/export/pdf"
     )
 
     assert response.status_code == 404
@@ -12,7 +12,7 @@ def test_purchase_list_pdf_export_not_found(client):
 
 def test_purchase_list_excel_export_not_found(client):
     response = client.get(
-        "/purchase-lists/missing/export/excel"
+        "/api/v1/purchase-lists/missing/export/excel"
     )
 
     assert response.status_code == 404
