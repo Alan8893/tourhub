@@ -3,7 +3,7 @@ def test_generate_meal_plan_endpoint(
     override_meal_plan_service,
 ):
     response = client.post(
-        "/meal-plans/generate",
+        "/api/v1/meal-plans/generate",
         json={
             "name": "Altai Trip",
             "participants": 10,
