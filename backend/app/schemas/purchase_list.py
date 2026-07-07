@@ -2,6 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
+from app.domain.workflows.purchase_list import PurchaseListStatus
+
 
 class PurchaseListItemResponse(BaseModel):
     model_config = ConfigDict(
@@ -24,12 +26,12 @@ class PurchaseListResponse(BaseModel):
 
     id: UUID
     meal_plan_id: UUID
-    status: str
+    status: PurchaseListStatus
     items: list[PurchaseListItemResponse]
 
 
 class PurchaseListSummaryResponse(BaseModel):
     id: UUID
-    status: str
+    status: PurchaseListStatus
     items_total: int
     packages_total: int
