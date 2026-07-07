@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from app.domain.workflows.purchase_checklist import PurchaseChecklistWorkflow, PurchaseChecklistStatus
 from app.engines.shopping_list import ShoppingListResult
 from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
@@ -24,10 +25,8 @@ class PurchaseChecklistService:
         checklist = self.get(checklist_id)
         if not checklist:
             raise ValueError("Purchase checklist not found")
-
         total_items = len(checklist.items)
         checked_items = sum(1 for item in checklist.items if item.is_checked)
-
         return {
             "id": checklist.id,
             "status": checklist.status,
@@ -37,7 +36,7 @@ class PurchaseChecklistService:
         }
 
     def create_from_purchase_list(self, purchase_list: PurchaseListORM) -> PurchaseChecklistORM:
-        checklist = PurchaseChecklistORM(id=str(uuid4()), meal_plan_id=purchase_list.meal_plan_id, status="draft")
+        checklist = PurchaseChecklistORM(id=str(uuid4()), meal_plan_id=purchase_list.meal_plan_id, status=PurchaseChecklistStatus.DRAFT.value)
         self.repository.add(checklist)
         for item in purchase_list.items:
             self.repository.add_item(PurchaseChecklistItemORM(id=str(uuid4()), checklist=checklist, product_id=item.product_id, required_quantity=item.required_quantity, purchased_quantity=0, unit=item.required_unit, is_checked=False))
@@ -58,7 +57,7 @@ class PurchaseChecklistService:
         return self.create_from_shopping_list(meal_plan.id, self.shopping_service.calculate(meal_plan))
 
     def create_from_shopping_list(self, meal_plan_id: str, shopping_list: ShoppingListResult) -> PurchaseChecklistORM:
-        checklist = PurchaseChecklistORM(id=str(uuid4()), meal_plan_id=meal_plan_id, status="draft")
+        checklist = PurchaseChecklistORM(id=str(uuid4()), meal_plan_id=meal_plan_id, status=PurchaseChecklistStatus.DRAFT.value)
         self.repository.add(checklist)
         for item in shopping_list.items:
             product = self.repository.get_product_by_name(item.product_name)
@@ -77,11 +76,14 @@ class PurchaseChecklistService:
         if purchased_quantity is not None:
             item.purchased_quantity = purchased_quantity
         checklist = item.checklist
+        current_status = checklist.status
         if all(current.is_checked for current in checklist.items):
-            checklist.status = "completed"
+            target_status = PurchaseChecklistStatus.COMPLETED.value
         elif any(current.is_checked for current in checklist.items):
-            checklist.status = "in_progress"
+            target_status = PurchaseChecklistStatus.IN_PROGRESS.value
         else:
-            checklist.status = "draft"
+            target_status = PurchaseChecklistStatus.DRAFT.value
+        if current_status != target_status:
+            checklist.status = PurchaseChecklistWorkflow.transition(current_status, target_status)
         self.repository.commit()
         return item
