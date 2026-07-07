@@ -123,4 +123,15 @@ class MealPlanService:
 
         self.meal_plan_repository.commit()
 
-        return meal_plan
+        loaded_meal_plan = (
+            self.meal_plan_repository.get_with_details(
+                meal_plan.id
+            )
+        )
+
+        if loaded_meal_plan is None:
+            raise ValueError(
+                f"Meal plan not found after save: {meal_plan.id}"
+            )
+
+        return loaded_meal_plan

@@ -19,9 +19,11 @@ class ShoppingListService:
     - executing calculation
     """
 
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+    ):
         self.session = session
-
 
     def calculate_for_recipe(
         self,
@@ -30,7 +32,7 @@ class ShoppingListService:
         days: int,
     ) -> ShoppingListResult:
         """
-        Calculate required products for recipe.
+        Calculate required products for one recipe.
         """
 
         recipe = (
@@ -46,17 +48,41 @@ class ShoppingListService:
                 f"Recipe not found: {recipe_id}"
             )
 
-        ingredients = []
+        return self.calculate_for_recipes(
+            recipes=[recipe],
+            people=people,
+            days=days,
+        )
 
-        for ingredient in recipe.ingredients:
+    def calculate_for_recipes(
+        self,
+        recipes: list[RecipeORM],
+        people: int,
+        days: int,
+    ) -> ShoppingListResult:
+        """
+        Calculate required products for multiple recipes.
+        """
 
-            ingredients.append(
-                IngredientInput(
-                    product_name=ingredient.product.name,
-                    amount_per_person=ingredient.amount_per_person,
-                    unit=ingredient.product.unit,
+        ingredients: list[IngredientInput] = []
+
+        for recipe in recipes:
+
+            for ingredient in recipe.ingredients:
+
+                ingredients.append(
+                    IngredientInput(
+                        product_name=(
+                            ingredient.product.name
+                        ),
+                        amount_per_person=(
+                            ingredient.amount_per_person
+                        ),
+                        unit=(
+                            ingredient.product.unit
+                        ),
+                    )
                 )
-            )
 
         return calculate_shopping_list(
             people=people,

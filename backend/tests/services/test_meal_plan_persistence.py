@@ -34,9 +34,11 @@ class FakeMealPlanRepository:
         self.days = []
         self.items = []
         self.committed = False
+        self.meal_plan = None
 
     def add(self, meal_plan):
         self.meal_plans.append(meal_plan)
+        self.meal_plan = meal_plan
 
     def add_day(self, day):
         self.days.append(day)
@@ -46,6 +48,12 @@ class FakeMealPlanRepository:
 
     def commit(self):
         self.committed = True
+
+    def get_with_details(
+        self,
+        meal_plan_id: str,
+    ):
+        return self.meal_plan
 
 
 def test_generate_and_save_meal_plan():

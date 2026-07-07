@@ -2,16 +2,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.core.session import get_session
 
 from app.models.dish import DishORM
-from app.repositories.dish_repository import DishRepository
-from app.repositories.meal_plan_repository import MealPlanRepository
+
 from app.modules.api.meal_plan_router import (
     get_meal_plan_service,
 )
-from app.services.meal_plan_service import MealPlanService
 
+from app.services.meal_plan_service import (
+    MealPlanService,
+)
 
 
 class FakeDishRepository:
@@ -40,9 +40,11 @@ class FakeMealPlanRepository:
         self.meal_plans = []
         self.days = []
         self.items = []
+        self.meal_plan = None
 
     def add(self, meal_plan):
         self.meal_plans.append(meal_plan)
+        self.meal_plan = meal_plan
 
     def add_day(self, day):
         self.days.append(day)
@@ -52,6 +54,12 @@ class FakeMealPlanRepository:
 
     def commit(self):
         pass
+
+    def get_with_details(
+        self,
+        meal_plan_id: str,
+    ):
+        return self.meal_plan
 
 
 @pytest.fixture
@@ -71,6 +79,7 @@ def fake_dish_repository():
 @pytest.fixture
 def fake_meal_plan_repository():
     return FakeMealPlanRepository()
+
 
 @pytest.fixture
 def override_meal_plan_service(
