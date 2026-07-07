@@ -31,10 +31,6 @@ TestingSessionLocal = sessionmaker(
 
 
 def setup_database():
-    """
-    Create test database schema.
-    """
-
     Base.metadata.create_all(
         bind=test_engine
     )
@@ -86,7 +82,25 @@ class FakeMealPlanRepository:
 
 
 @pytest.fixture
-def client():
+def override_database_session():
+    setup_database()
+
+    def factory():
+        session = TestingSessionLocal()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_session] = factory
+
+    yield
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client(override_database_session):
     yield TestClient(app)
 
 
@@ -109,27 +123,7 @@ def db_session():
         yield session
     finally:
         session.close()
-        Base.metadata.drop_all(
-            bind=test_engine
-        )
-
-
-@pytest.fixture
-def override_database_session():
-    setup_database()
-
-    def factory():
-        session = TestingSessionLocal()
-        try:
-            yield session
-        finally:
-            session.close()
-
-    app.dependency_overrides[get_session] = factory
-
-    yield
-
-    app.dependency_overrides.clear()
+        Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture
@@ -143,9 +137,7 @@ def override_meal_plan_service(
             meal_plan_repository=fake_meal_plan_repository,
         )
 
-    app.dependency_overrides[
-        get_meal_plan_service
-    ] = factory
+    app.dependency_overrides[get_meal_plan_service] = factory
 
     yield
 
