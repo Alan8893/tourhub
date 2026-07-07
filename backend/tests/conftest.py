@@ -27,6 +27,14 @@ from app.modules.api.meal_plan_router import get_meal_plan_service
 from app.services.meal_plan_service import MealPlanService
 
 
+DISH_1_ID = "550e8400-e29b-41d4-a716-446655440001"
+DISH_2_ID = "550e8400-e29b-41d4-a716-446655440002"
+DISH_3_ID = "550e8400-e29b-41d4-a716-446655440003"
+RECIPE_1_ID = "660e8400-e29b-41d4-a716-446655440001"
+RECIPE_2_ID = "660e8400-e29b-41d4-a716-446655440002"
+RECIPE_3_ID = "660e8400-e29b-41d4-a716-446655440003"
+
+
 test_engine = create_engine(
     "sqlite:///:memory:",
     connect_args={"check_same_thread": False},
@@ -47,9 +55,9 @@ def setup_database():
 class FakeDishRepository:
     def list(self):
         return [
-            DishORM(id="dish-1", name="Pilaf", recipe_id="recipe-1"),
-            DishORM(id="dish-2", name="Soup", recipe_id="recipe-2"),
-            DishORM(id="dish-3", name="Oatmeal", recipe_id="recipe-3"),
+            DishORM(id=DISH_1_ID, name="Pilaf", recipe_id=RECIPE_1_ID),
+            DishORM(id=DISH_2_ID, name="Soup", recipe_id=RECIPE_2_ID),
+            DishORM(id=DISH_3_ID, name="Oatmeal", recipe_id=RECIPE_3_ID),
         ]
 
 
