@@ -1,34 +1,86 @@
+from collections import OrderedDict
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class IngredientInput:
     """
-    Ingredient consumption rule.
+    Ingredient required for calculation.
 
-    Example:
-    Rice = 120 gram/person
+    amount_per_person:
+        quantity required for one person.
+
+    unit:
+        measurement unit (g, kg, ml, l, pcs, etc.)
     """
 
     product_name: str
-    amount_per_person: int
+    amount_per_person: float
     unit: str
 
 
 @dataclass(frozen=True)
-class ShoppingItem:
-    """
-    Calculated shopping item.
-    """
-
+class ShoppingListItem:
     product_name: str
-    amount: int
+    amount: float
     unit: str
+
+    @property
+    def quantity(self) -> float:
+        """
+        Backward compatible alias.
+        """
+        return self.amount
 
 
 @dataclass(frozen=True)
 class ShoppingListResult:
-    items: list[ShoppingItem]
+    items: list[ShoppingListItem]
+
+
+def aggregate_products(
+    items: list[ShoppingListItem],
+) -> list[ShoppingListItem]:
+    """
+    Merge products with the same name and unit.
+
+    Example:
+
+    Rice 500 g
+    Rice 500 g
+
+    becomes:
+
+    Rice 1000 g
+    """
+
+    aggregated: OrderedDict[
+        tuple[str, str],
+        float,
+    ] = OrderedDict()
+
+    for item in items:
+        key = (
+            item.product_name,
+            item.unit,
+        )
+
+        aggregated[key] = (
+            aggregated.get(key, 0)
+            + item.quantity
+        )
+
+    return [
+        ShoppingListItem(
+            product_name=product_name,
+            amount=quantity,
+            unit=unit,
+        )
+        for (
+            product_name,
+            unit,
+        ), quantity in aggregated.items()
+    ]
 
 
 def calculate_shopping_list(
@@ -37,40 +89,29 @@ def calculate_shopping_list(
     ingredients: list[IngredientInput],
 ) -> ShoppingListResult:
     """
-    Calculate total products required.
-
-    Formula:
-
-    amount_per_person × people × days
+    Calculate total products required
+    for a hiking group.
     """
 
-    if people <= 0:
-        raise ValueError(
-            "People must be greater than zero"
-        )
+    calculated_items: list[ShoppingListItem] = []
 
-    if days <= 0:
-        raise ValueError(
-            "Days must be greater than zero"
-        )
-
-    items = []
+    multiplier = people * days
 
     for ingredient in ingredients:
-        total_amount = (
-            ingredient.amount_per_person
-            * people
-            * days
-        )
 
-        items.append(
-            ShoppingItem(
+        calculated_items.append(
+            ShoppingListItem(
                 product_name=ingredient.product_name,
-                amount=total_amount,
+                amount=(
+                    ingredient.amount_per_person
+                    * multiplier
+                ),
                 unit=ingredient.unit,
             )
         )
 
     return ShoppingListResult(
-        items=items
+        items=aggregate_products(
+            calculated_items
+        )
     )
