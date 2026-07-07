@@ -1,7 +1,7 @@
 
 
 def test_purchase_list_not_found_error_contract(client):
-    response = client.get("/purchase-lists/not-existing-id")
+    response = client.get("/api/v1/purchase-lists/not-existing-id")
 
     assert response.status_code == 404
 
@@ -11,7 +11,7 @@ def test_purchase_list_not_found_error_contract(client):
 
 
 def test_purchase_checklist_not_found_error_contract(client):
-    response = client.get("/purchase-checklists/not-existing-id")
+    response = client.get("/api/v1/purchase-checklists/not-existing-id")
 
     assert response.status_code == 404
 
@@ -22,7 +22,7 @@ def test_purchase_checklist_not_found_error_contract(client):
 
 def test_validation_error_contract(client):
     response = client.patch(
-        "/purchase-checklists/items/test",
+        "/api/v1/purchase-checklists/items/test",
         json={"purchased_quantity": "invalid"},
     )
 
