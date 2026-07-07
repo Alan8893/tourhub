@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -6,8 +8,8 @@ class PurchaseListItemResponse(BaseModel):
         from_attributes=True,
     )
 
-    id: str
-    product_id: str
+    id: UUID
+    product_id: UUID
     required_quantity: float
     required_unit: str
     package_size: float
@@ -20,14 +22,14 @@ class PurchaseListResponse(BaseModel):
         from_attributes=True,
     )
 
-    id: str
-    meal_plan_id: str
+    id: UUID
+    meal_plan_id: UUID
     status: str
     items: list[PurchaseListItemResponse]
 
 
 class PurchaseListSummaryResponse(BaseModel):
-    id: str
+    id: UUID
     status: str
     items_total: int
     packages_total: int
