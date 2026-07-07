@@ -1,9 +1,9 @@
 from uuid import uuid4
 
 from app.engines.shopping_list import ShoppingListResult
-from app.models.meal_plan import MealPlanORM
 from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
+from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
 
@@ -14,12 +14,25 @@ class PurchaseChecklistService:
     def __init__(
         self,
         repository: PurchaseChecklistRepository,
+        meal_plan_repository: MealPlanRepository,
         shopping_service: MealPlanShoppingService | None = None,
     ):
         self.repository = repository
+        self.meal_plan_repository = meal_plan_repository
         self.shopping_service = shopping_service
 
-    def create_from_meal_plan(self, meal_plan: MealPlanORM) -> PurchaseChecklistORM:
+    def create_from_meal_plan_id(
+        self,
+        meal_plan_id: str,
+    ) -> PurchaseChecklistORM:
+        meal_plan = self.meal_plan_repository.get_with_details(meal_plan_id)
+
+        if not meal_plan:
+            raise ValueError("Meal plan not found")
+
+        return self.create_from_meal_plan(meal_plan)
+
+    def create_from_meal_plan(self, meal_plan):
         if not self.shopping_service:
             raise ValueError("Shopping service is required")
 
@@ -42,6 +55,7 @@ class PurchaseChecklistService:
 
         for item in shopping_list.items:
             product = self.repository.get_product_by_name(item.product_name)
+
             if not product:
                 raise ValueError(f"Product not found: {item.product_name}")
 
@@ -81,6 +95,7 @@ class PurchaseChecklistService:
             item.purchased_quantity = purchased_quantity
 
         checklist = item.checklist
+
         if all(current.is_checked for current in checklist.items):
             checklist.status = "completed"
         elif any(current.is_checked for current in checklist.items):
