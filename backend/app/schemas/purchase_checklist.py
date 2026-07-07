@@ -28,3 +28,11 @@ class PurchaseChecklistResponse(BaseModel):
     meal_plan_id: str
     status: str
     items: list[PurchaseChecklistItemResponse]
+
+
+class PurchaseChecklistProgressResponse(BaseModel):
+    id: str
+    status: str
+    total_items: int
+    checked_items: int
+    progress_percent: float
