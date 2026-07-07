@@ -35,4 +35,5 @@ class MealPlanRepository:
         self.session.add(item)
 
     def commit(self) -> None:
+        self.session.flush()
         self.session.commit()

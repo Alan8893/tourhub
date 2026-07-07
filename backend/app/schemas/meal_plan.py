@@ -1,23 +1,56 @@
-from pydantic import BaseModel
-from typing import List, Dict
+from pydantic import BaseModel, Field
 
 
-class MealPlanRequest(BaseModel):
+class MealPlanGenerateRequest(BaseModel):
     """
-    Request DTO for meal plan generation.
+    Request for automatic meal plan generation.
     """
 
-    dish_ids: List[str]
-    days: int
-    participants: int
+    name: str = Field(
+        min_length=1,
+        max_length=255,
+    )
+
+    participants: int = Field(
+        gt=0,
+    )
+
+    days: int = Field(
+        gt=0,
+    )
+
+    meals_per_day: list[str] = Field(
+        min_length=1,
+    )
+
+
+class MealPlanItemResponse(BaseModel):
+    """
+    Single generated meal.
+    """
+
+    day_number: int
+
+    meal_type: str
+
+    dish_id: str
+
+    dish_name: str
 
 
 class MealPlanResponse(BaseModel):
     """
-    Response DTO for meal plan generation.
+    Generated meal plan response.
     """
 
-    days: int
+    id: str
+
+    name: str
+
     participants: int
-    dishes: List[str]
-    shopping_list: Dict[str, float]
+
+    days_count: int
+
+    items: list[MealPlanItemResponse]
+
+    warnings: list[str] = []
