@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.session import get_session
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.schemas.errors import ErrorResponse, ValidationErrorResponse
 from app.schemas.purchase_dashboard import PurchaseDashboardResponse
 from app.services.purchase_dashboard_service import PurchaseDashboardService
 
@@ -26,6 +27,11 @@ def get_purchase_dashboard_service(
 @router.get(
     "/{meal_plan_id}/purchase-dashboard",
     response_model=PurchaseDashboardResponse,
+    responses={
+        404: {"model": ErrorResponse},
+        422: {"model": ValidationErrorResponse},
+        500: {"model": ErrorResponse},
+    },
 )
 def get_purchase_dashboard(
     meal_plan_id: str,
