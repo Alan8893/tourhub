@@ -6,9 +6,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.main import app
-
 from app.models.base import Base
 from app.models.dish import DishORM
+from app.core.session import get_session
 
 from app.modules.api.meal_plan_router import (
     get_meal_plan_service,
@@ -19,7 +19,7 @@ from app.services.meal_plan_service import (
 )
 
 
-test_engine = create_engine(
+ test_engine = create_engine(
     "sqlite:///:memory:",
 )
 
@@ -81,19 +81,12 @@ class FakeMealPlanRepository:
     def commit(self):
         pass
 
-    def get_with_details(
-        self,
-        meal_plan_id: str,
-    ):
+    def get_with_details(self, meal_plan_id: str):
         return self.meal_plan
 
 
 @pytest.fixture
 def client():
-    """
-    FastAPI test client.
-    """
-
     yield TestClient(app)
 
 
@@ -109,23 +102,34 @@ def fake_meal_plan_repository():
 
 @pytest.fixture
 def db_session():
-    """
-    SQLAlchemy test session.
-    """
-
     setup_database()
-
     session = TestingSessionLocal()
 
     try:
         yield session
-
     finally:
         session.close()
-
         Base.metadata.drop_all(
             bind=test_engine
         )
+
+
+@pytest.fixture
+def override_database_session():
+    setup_database()
+
+    def factory():
+        session = TestingSessionLocal()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_session] = factory
+
+    yield
+
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
