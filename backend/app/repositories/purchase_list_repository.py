@@ -44,6 +44,16 @@ class PurchaseListRepository:
             .first()
         )
 
+    def get_product_by_name(
+        self,
+        product_name: str,
+    ) -> ProductORM | None:
+        return (
+            self.session.query(ProductORM)
+            .filter(ProductORM.name == product_name)
+            .first()
+        )
+
     def commit(self) -> None:
         self.session.flush()
         self.session.commit()
