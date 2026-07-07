@@ -3,9 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.session import get_session
 from app.repositories.meal_plan_repository import MealPlanRepository
-from app.repositories.purchase_checklist_repository import (
-    PurchaseChecklistRepository,
-)
+from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.schemas.purchase_checklist import (
     PurchaseChecklistItemResponse,
     PurchaseChecklistItemUpdate,
@@ -27,6 +25,7 @@ def get_purchase_checklist_service(
 ) -> PurchaseChecklistService:
     return PurchaseChecklistService(
         repository=PurchaseChecklistRepository(session),
+        meal_plan_repository=MealPlanRepository(session),
         shopping_service=MealPlanShoppingService(
             shopping_list_service=ShoppingListService(session)
         ),
@@ -42,17 +41,14 @@ def create_purchase_checklist(
     service: PurchaseChecklistService = Depends(
         get_purchase_checklist_service
     ),
-    session: Session = Depends(get_session),
 ):
-    meal_plan = MealPlanRepository(session).get_with_details(meal_plan_id)
-
-    if not meal_plan:
+    try:
+        return service.create_from_meal_plan_id(meal_plan_id)
+    except ValueError as error:
         raise HTTPException(
             status_code=404,
-            detail="Meal plan not found",
+            detail=str(error),
         )
-
-    return service.create_from_meal_plan(meal_plan)
 
 
 @router.get(
