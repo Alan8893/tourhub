@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class PurchaseChecklistItemUpdate(BaseModel):
@@ -7,6 +7,10 @@ class PurchaseChecklistItemUpdate(BaseModel):
 
 
 class PurchaseChecklistItemResponse(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
     id: str
     product_id: str
     required_quantity: float
@@ -14,15 +18,13 @@ class PurchaseChecklistItemResponse(BaseModel):
     unit: str
     is_checked: bool
 
-    class Config:
-        from_attributes = True
-
 
 class PurchaseChecklistResponse(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
     id: str
     meal_plan_id: str
     status: str
     items: list[PurchaseChecklistItemResponse]
-
-    class Config:
-        from_attributes = True
