@@ -27,5 +27,6 @@ class RecipeORM(Base):
 
     ingredients = relationship(
         "IngredientORM",
-        cascade="all, delete-orphan"
+        back_populates="recipe",
+        cascade="all, delete-orphan",
     )

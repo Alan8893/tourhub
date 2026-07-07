@@ -41,3 +41,8 @@ class IngredientORM(Base):
     product = relationship(
         "ProductORM"
     )
+
+    recipe = relationship(
+        "RecipeORM",
+        back_populates="ingredients",
+    )
