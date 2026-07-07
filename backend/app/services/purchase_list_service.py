@@ -57,7 +57,7 @@ class PurchaseListService:
         self,
         product_name: str,
     ) -> str:
-        product = self.repository.get_product_by_id(product_name)
+        product = self.repository.get_product_by_name(product_name)
 
         if not product:
             raise ValueError(
