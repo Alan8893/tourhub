@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.models.product import ProductORM
 from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
 
@@ -25,14 +26,24 @@ class PurchaseChecklistRepository:
     ) -> None:
         self.session.add(item)
 
+    def get_product_by_name(
+        self,
+        product_name: str,
+    ) -> ProductORM | None:
+        return (
+            self.session.query(ProductORM)
+            .filter(
+                ProductORM.name == product_name
+            )
+            .first()
+        )
+
     def get_by_id(
         self,
         checklist_id: str,
     ) -> PurchaseChecklistORM | None:
         return (
-            self.session.query(
-                PurchaseChecklistORM
-            )
+            self.session.query(PurchaseChecklistORM)
             .filter(
                 PurchaseChecklistORM.id == checklist_id
             )
@@ -44,12 +55,9 @@ class PurchaseChecklistRepository:
         meal_plan_id: str,
     ) -> PurchaseChecklistORM | None:
         return (
-            self.session.query(
-                PurchaseChecklistORM
-            )
+            self.session.query(PurchaseChecklistORM)
             .filter(
-                PurchaseChecklistORM.meal_plan_id
-                == meal_plan_id
+                PurchaseChecklistORM.meal_plan_id == meal_plan_id
             )
             .first()
         )
