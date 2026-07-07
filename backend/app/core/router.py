@@ -7,7 +7,7 @@ from app.modules.api.purchase_dashboard_router import router as purchase_dashboa
 from app.modules.api.purchase_list_router import router as purchase_list_router
 
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 router.include_router(meal_router)
