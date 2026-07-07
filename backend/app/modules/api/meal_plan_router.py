@@ -20,6 +20,8 @@ from app.schemas.meal_plan import (
     MealPlanGenerateResponse,
     ShoppingListItemResponse,
     ShoppingListResponse,
+    PackagedShoppingItemResponse,
+    PackagedShoppingResponse,
 )
 
 
@@ -72,6 +74,10 @@ def generate_meal_plan(
         meal_plan
     )
 
+    packaged_list = shopping_service.calculate_packaged(
+        meal_plan
+    )
+
     return {
         "meal_plan": MealPlanMapper.to_response(
             meal_plan
@@ -84,6 +90,18 @@ def generate_meal_plan(
                     unit=item.unit,
                 )
                 for item in shopping_list.items
+            ]
+        ),
+        "purchase_list": PackagedShoppingResponse(
+            items=[
+                PackagedShoppingItemResponse(
+                    product_name=item.product_name,
+                    amount=item.amount,
+                    unit=item.unit,
+                    package_size=item.package_size,
+                    packages=item.packages,
+                )
+                for item in packaged_list.items
             ]
         ),
     }

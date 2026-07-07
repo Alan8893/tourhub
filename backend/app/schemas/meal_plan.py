@@ -58,7 +58,7 @@ class MealPlanResponse(BaseModel):
 
 class ShoppingListItemResponse(BaseModel):
     """
-    Single product required for purchase.
+    Single required product quantity.
     """
 
     product_name: str
@@ -70,10 +70,41 @@ class ShoppingListItemResponse(BaseModel):
 
 class ShoppingListResponse(BaseModel):
     """
-    Generated shopping list response.
+    Required products list.
     """
 
     items: list[ShoppingListItemResponse]
+
+
+class PackagedShoppingItemResponse(BaseModel):
+    """
+    Product purchase information.
+
+    Example:
+
+    Rice:
+        need 6000 g
+        package 900 g
+        buy 7 packages
+    """
+
+    product_name: str
+
+    amount: float
+
+    unit: str
+
+    package_size: float
+
+    packages: int
+
+
+class PackagedShoppingResponse(BaseModel):
+    """
+    Shopping list with package calculation.
+    """
+
+    items: list[PackagedShoppingItemResponse]
 
 
 class MealPlanGenerateResponse(BaseModel):
@@ -85,9 +116,12 @@ class MealPlanGenerateResponse(BaseModel):
     MealPlan
         +
     ShoppingList
+        +
+    PurchaseList
     """
 
     meal_plan: MealPlanResponse
 
     shopping_list: ShoppingListResponse
 
+    purchase_list: PackagedShoppingResponse

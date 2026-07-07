@@ -6,6 +6,12 @@ from app.engines.shopping_list import (
     calculate_shopping_list,
 )
 
+from app.engines.packaging import (
+    PackagingInput,
+    PackagedShoppingResult,
+    calculate_packages,
+)
+
 from app.models.recipe import RecipeORM
 
 
@@ -61,7 +67,85 @@ class ShoppingListService:
         days: int,
     ) -> ShoppingListResult:
         """
-        Calculate required products for multiple recipes.
+        Calculate required products
+        for multiple recipes.
+        """
+
+        ingredients = (
+            self._build_ingredient_inputs(
+                recipes
+            )
+        )
+
+        return calculate_shopping_list(
+            people=people,
+            days=days,
+            ingredients=ingredients,
+        )
+
+    def calculate_packaged_for_recipes(
+        self,
+        recipes: list[RecipeORM],
+        people: int,
+        days: int,
+    ) -> PackagedShoppingResult:
+        """
+        Calculate shopping list with packaging.
+
+        Products without package_size
+        are skipped from packaging calculation.
+        """
+
+        ingredient_inputs = (
+            self._build_ingredient_inputs(
+                recipes
+            )
+        )
+
+        base_result = calculate_shopping_list(
+            people=people,
+            days=days,
+            ingredients=ingredient_inputs,
+        )
+
+        package_sizes: dict[str, int] = (
+            self._collect_package_sizes(
+                recipes
+            )
+        )
+
+        packaging_inputs: list[
+            PackagingInput
+        ] = []
+
+        for item in base_result.items:
+
+            package_size = package_sizes.get(
+                item.product_name
+            )
+
+            if not package_size:
+                continue
+
+            packaging_inputs.append(
+                PackagingInput(
+                    product_name=item.product_name,
+                    amount=item.amount,
+                    unit=item.unit,
+                    package_size=package_size,
+                )
+            )
+
+        return calculate_packages(
+            packaging_inputs
+        )
+
+    def _build_ingredient_inputs(
+        self,
+        recipes: list[RecipeORM],
+    ) -> list[IngredientInput]:
+        """
+        Convert recipes into engine DTO.
         """
 
         ingredients: list[IngredientInput] = []
@@ -84,8 +168,27 @@ class ShoppingListService:
                     )
                 )
 
-        return calculate_shopping_list(
-            people=people,
-            days=days,
-            ingredients=ingredients,
-        )
+        return ingredients
+
+    def _collect_package_sizes(
+        self,
+        recipes: list[RecipeORM],
+    ) -> dict[str, int]:
+        """
+        Collect product package sizes.
+        """
+
+        package_sizes: dict[str, int] = {}
+
+        for recipe in recipes:
+
+            for ingredient in recipe.ingredients:
+
+                product = ingredient.product
+
+                if product.package_size:
+                    package_sizes[
+                        product.name
+                    ] = product.package_size
+
+        return package_sizes
