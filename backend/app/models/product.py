@@ -1,5 +1,5 @@
 from sqlalchemy import String, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
@@ -42,4 +42,9 @@ class ProductORM(Base):
     package_size: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True
+    )
+
+    purchase_list_items = relationship(
+        "PurchaseListItemORM",
+        back_populates="product",
     )
