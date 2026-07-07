@@ -6,7 +6,11 @@ from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import (
     PurchaseChecklistRepository,
 )
-from app.schemas.purchase_checklist import PurchaseChecklistResponse
+from app.schemas.purchase_checklist import (
+    PurchaseChecklistItemResponse,
+    PurchaseChecklistItemUpdate,
+    PurchaseChecklistResponse,
+)
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
 from app.services.purchase_checklist_service import PurchaseChecklistService
 from app.services.shopping_list_service import ShoppingListService
@@ -40,9 +44,7 @@ def create_purchase_checklist(
     ),
     session: Session = Depends(get_session),
 ):
-    meal_plan = MealPlanRepository(session).get_with_details(
-        meal_plan_id
-    )
+    meal_plan = MealPlanRepository(session).get_with_details(meal_plan_id)
 
     if not meal_plan:
         raise HTTPException(
@@ -72,3 +74,27 @@ def get_purchase_checklist(
         )
 
     return checklist
+
+
+@router.patch(
+    "/items/{item_id}",
+    response_model=PurchaseChecklistItemResponse,
+)
+def update_purchase_checklist_item(
+    item_id: str,
+    payload: PurchaseChecklistItemUpdate,
+    service: PurchaseChecklistService = Depends(
+        get_purchase_checklist_service
+    ),
+):
+    try:
+        return service.update_item(
+            item_id=item_id,
+            checked=payload.is_checked,
+            purchased_quantity=payload.purchased_quantity,
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=404,
+            detail=str(error),
+        )
