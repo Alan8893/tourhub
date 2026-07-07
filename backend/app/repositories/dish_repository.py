@@ -17,4 +17,6 @@ class DishRepository:
 
     def add(self, dish: DishORM) -> None:
         self.session.add(dish)
+        
+    def commit(self) -> None:
         self.session.commit()
