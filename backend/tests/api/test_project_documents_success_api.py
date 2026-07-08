@@ -87,3 +87,21 @@ def test_project_purchase_print_document(client, db_session):
     assert response.headers["content-type"].startswith("text/plain")
 
     app.dependency_overrides.clear()
+
+
+
+def test_project_purchase_excel_document(client, db_session):
+    app.dependency_overrides[get_db] = override_test_db(db_session)
+
+    project_id = create_project_with_purchase_list(db_session)
+
+    response = client.get(
+        f"/api/v1/projects/{project_id}/documents/purchase/excel"
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    app.dependency_overrides.clear()
