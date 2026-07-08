@@ -4,7 +4,7 @@ def test_project_document_not_found(client):
     )
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Project not found"
+    assert response.json()["error"] == "Project not found"
 
 
 def test_project_document_unsupported_format(client):
@@ -13,4 +13,4 @@ def test_project_document_unsupported_format(client):
     )
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Project not found"
+    assert response.json()["error"] == "Project not found"
