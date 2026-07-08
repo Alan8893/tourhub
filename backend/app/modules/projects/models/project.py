@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
@@ -24,4 +24,10 @@ class ProjectORM(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+
+    meal_plans = relationship(
+        "MealPlanORM",
+        back_populates="project",
+        cascade="all, delete-orphan",
     )
