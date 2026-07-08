@@ -36,28 +36,33 @@ class PurchaseChecklistService:
         }
 
     def create_from_purchase_list(self, purchase_list: PurchaseListORM) -> PurchaseChecklistORM:
-        checklist = PurchaseChecklistORM(id=str(uuid4()), meal_plan_id=purchase_list.meal_plan_id, status=PurchaseChecklistStatus.DRAFT.value)
+        checklist = PurchaseChecklistORM(
+            id=str(uuid4()),
+            project_id=purchase_list.project_id,
+            meal_plan_id=purchase_list.meal_plan_id,
+            status=PurchaseChecklistStatus.DRAFT.value,
+        )
         self.repository.add(checklist)
         for item in purchase_list.items:
             self.repository.add_item(PurchaseChecklistItemORM(id=str(uuid4()), checklist=checklist, product_id=item.product_id, required_quantity=item.required_quantity, purchased_quantity=0, unit=item.required_unit, is_checked=False))
         self.repository.commit()
         return checklist
 
-    def create_from_meal_plan_id(self, meal_plan_id: str) -> PurchaseChecklistORM:
+    def create_from_meal_plan_id(self, meal_plan_id: str, project_id: int | None = None) -> PurchaseChecklistORM:
         if not self.meal_plan_repository:
             raise ValueError("Meal plan repository is required")
         meal_plan = self.meal_plan_repository.get_with_details(meal_plan_id)
         if not meal_plan:
             raise ValueError("Meal plan not found")
-        return self.create_from_meal_plan(meal_plan)
+        return self.create_from_meal_plan(meal_plan, project_id=project_id)
 
-    def create_from_meal_plan(self, meal_plan):
+    def create_from_meal_plan(self, meal_plan, project_id: int | None = None):
         if not self.shopping_service:
             raise ValueError("Shopping service is required")
-        return self.create_from_shopping_list(meal_plan.id, self.shopping_service.calculate(meal_plan))
+        return self.create_from_shopping_list(meal_plan.id, self.shopping_service.calculate(meal_plan), project_id=project_id or meal_plan.project_id)
 
-    def create_from_shopping_list(self, meal_plan_id: str, shopping_list: ShoppingListResult) -> PurchaseChecklistORM:
-        checklist = PurchaseChecklistORM(id=str(uuid4()), meal_plan_id=meal_plan_id, status=PurchaseChecklistStatus.DRAFT.value)
+    def create_from_shopping_list(self, meal_plan_id: str, shopping_list: ShoppingListResult, project_id: int | None = None) -> PurchaseChecklistORM:
+        checklist = PurchaseChecklistORM(id=str(uuid4()), project_id=project_id, meal_plan_id=meal_plan_id, status=PurchaseChecklistStatus.DRAFT.value)
         self.repository.add(checklist)
         for item in shopping_list.items:
             product = self.repository.get_product_by_name(item.product_name)
