@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 from app.core.session import get_session
 from app.engines.documents.excel import ExcelDocumentGenerator
 from app.engines.documents.pdf import PDFDocumentGenerator
+from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
-from app.repositories.projects_repository import ProjectRepository
 from app.schemas.errors import ErrorResponse, ValidationErrorResponse
 from app.schemas.purchase_list import PurchaseListResponse, PurchaseListSummaryResponse
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
@@ -40,11 +40,7 @@ def create_purchase_list(meal_plan_id: str, service: PurchaseListService = Depen
 
 
 @router.post("/project/{project_id}/generate", response_model=PurchaseListResponse)
-def create_project_purchase_list(
-    project_id: int,
-    service: PurchaseListService = Depends(get_purchase_list_service),
-    session: Session = Depends(get_session),
-):
+def create_project_purchase_list(project_id: int, service: PurchaseListService = Depends(get_purchase_list_service), session: Session = Depends(get_session)):
     project = ProjectRepository(session).get_by_id(project_id)
 
     if not project:
@@ -65,10 +61,7 @@ def create_project_purchase_list(
 
 
 @router.get("/project/{project_id}", response_model=PurchaseListResponse)
-def get_project_purchase_list(
-    project_id: int,
-    session: Session = Depends(get_session),
-):
+def get_project_purchase_list(project_id: int, session: Session = Depends(get_session)):
     purchase_list = PurchaseListRepository(session).get_by_project_id(project_id)
 
     if not purchase_list:
