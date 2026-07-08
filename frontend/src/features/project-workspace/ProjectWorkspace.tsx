@@ -2,6 +2,7 @@ import { Button, Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
 
 import { ProjectHeader, usePrepareProject, useProject } from "@/features/project";
+import { ProjectWorkflowProvider } from "@/features/project-workflow";
 
 import ProjectWorkflowPanel from "./components/ProjectWorkflowPanel";
 import WorkflowModules from "./components/WorkflowModules";
@@ -18,7 +19,7 @@ export default function ProjectWorkspace() {
   }
 
   return (
-    <>
+    <ProjectWorkflowProvider projectId={projectId}>
       <ProjectHeader project={project} />
 
       <Typography variant="body1" sx={{ mt: 1 }}>
@@ -48,6 +49,6 @@ export default function ProjectWorkspace() {
 
       <ProjectWorkflowPanel />
       <WorkflowModules />
-    </>
+    </ProjectWorkflowProvider>
   );
 }
