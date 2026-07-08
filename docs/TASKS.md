@@ -1000,3 +1000,42 @@ Result:
 ✅ Feature boundaries created
 ✅ Import coupling reduced
 ✅ Build successful
+
+---
+
+# TH-0050.4 — Environment + Build Hardening
+
+Status:
+
+DONE
+
+## Goal
+
+Prepare frontend environment configuration for production workflow.
+
+## Implemented
+
+Added:
+
+- frontend/.env.example;
+- frontend/src/shared/config/env.ts.
+
+Updated:
+
+- frontend/src/shared/api/client.ts.
+
+## Verification
+
+npm run build
+
+Result:
+
+✅ TypeScript compilation passed  
+✅ Vite production build passed
+
+## Acceptance Criteria
+
+✅ Environment template created  
+✅ Centralized config layer created  
+✅ API client uses config layer  
+✅ Production build successful
