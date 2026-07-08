@@ -1039,3 +1039,64 @@ Result:
 ✅ Centralized config layer created  
 ✅ API client uses config layer  
 ✅ Production build successful
+
+---
+
+# TH-0051 — Frontend Application Shell
+
+Status:
+
+DONE
+
+## Goal
+
+Create frontend ERP application shell.
+
+## Implemented
+
+Added:
+
+- frontend/src/app/layout/AppLayout.tsx;
+- frontend/src/app/layout/Header.tsx;
+- frontend/src/app/layout/Sidebar.tsx.
+
+Updated:
+
+- frontend/src/app/router/routes.tsx.
+
+## Architecture
+
+Application
+
+↓
+
+AppLayout
+
+↓
+
+Router Outlet
+
+↓
+
+Pages
+
+↓
+
+Features
+
+
+## Verification
+
+npm run build
+
+Result:
+
+✅ TypeScript compilation passed
+✅ Vite production build passed
+
+## Acceptance Criteria
+
+✅ Application shell created
+✅ Layout integrated with router
+✅ Navigation foundation created
+✅ Production build successful
