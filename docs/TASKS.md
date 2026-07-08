@@ -962,3 +962,41 @@ Result:
 ✅ Routes configuration created
 ✅ Existing workspace flow preserved
 ✅ Production build successful
+
+# TH-0050.3 — Feature Structure Normalization
+
+Status:
+
+DONE
+
+## Goal
+
+Normalize frontend feature boundaries.
+
+## Implemented
+
+Added:
+
+- feature barrel exports;
+- shared feature entry points;
+- TypeScript/Vite path alias.
+
+Updated:
+
+- project imports;
+- project-workspace imports.
+
+## Verification
+
+npm run build
+
+Result:
+
+✅ TypeScript compilation passed
+✅ Vite production build passed
+
+## Acceptance Criteria
+
+✅ Feature boundaries created
+✅ Import coupling reduced
+✅ Build successful
