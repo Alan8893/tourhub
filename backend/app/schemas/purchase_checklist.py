@@ -29,6 +29,7 @@ class PurchaseChecklistResponse(BaseModel):
     )
 
     id: UUID
+    project_id: int | None
     meal_plan_id: UUID
     status: PurchaseChecklistStatus
     items: list[PurchaseChecklistItemResponse]
