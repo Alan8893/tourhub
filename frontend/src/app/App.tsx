@@ -1,11 +1,11 @@
 import { Container } from "@mui/material";
 
-import ProjectWorkspacePage from "../pages/ProjectWorkspacePage";
+import AppRouter from "./router";
 
 export default function App() {
   return (
     <Container>
-      <ProjectWorkspacePage />
+      <AppRouter />
     </Container>
   );
 }
