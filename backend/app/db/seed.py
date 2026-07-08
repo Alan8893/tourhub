@@ -3,6 +3,7 @@ from app.core.database import SessionLocal
 from app.db.seed_products import seed_products
 from app.db.seed_recipes import seed_recipes
 from app.db.seed_dishes import seed_dishes
+from app.db.seed_projects import seed_projects
 
 
 def run_seed() -> None:
@@ -13,6 +14,7 @@ def run_seed() -> None:
     1. Products
     2. Recipes and ingredients
     3. Dishes
+    4. Projects
     """
 
     session = SessionLocal()
@@ -26,6 +28,9 @@ def run_seed() -> None:
 
         print("Seeding dishes...")
         seed_dishes(session)
+
+        print("Seeding projects...")
+        seed_projects(session)
 
         print("Seed completed successfully.")
 
