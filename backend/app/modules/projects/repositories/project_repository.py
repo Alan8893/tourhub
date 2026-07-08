@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.modules.projects.models.project import ProjectORM
 
@@ -10,5 +10,7 @@ class ProjectRepository:
 
     def get_by_id(self, project_id: int) -> ProjectORM | None:
         return self.session.scalar(
-            select(ProjectORM).where(ProjectORM.id == project_id)
+            select(ProjectORM)
+            .options(selectinload(ProjectORM.purchase_lists))
+            .where(ProjectORM.id == project_id)
         )
