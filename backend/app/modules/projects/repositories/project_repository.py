@@ -11,6 +11,10 @@ class ProjectRepository:
     def get_by_id(self, project_id: int) -> ProjectORM | None:
         return self.session.scalar(
             select(ProjectORM)
-            .options(selectinload(ProjectORM.purchase_lists))
+            .options(
+                selectinload(ProjectORM.meal_plans),
+                selectinload(ProjectORM.purchase_lists),
+                selectinload(ProjectORM.purchase_checklists),
+            )
             .where(ProjectORM.id == project_id)
         )
