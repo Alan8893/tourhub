@@ -67,16 +67,46 @@ def prepare_project(project_id: int, db: Session = Depends(get_db)) -> ProjectPr
 @router.get("/{project_id}/documents/purchase/{format}")
 def generate_purchase_document(project_id: int, format: str, db: Session = Depends(get_db)) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
+
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
-    document = ProjectDocumentService().generate(project, format)
-    return Response(content=document.content, media_type=document.content_type)
+
+    service = ProjectDocumentService()
+
+    generators = {
+        "pdf": service.generate_purchase_pdf,
+        "excel": service.generate_purchase_excel,
+        "print": service.generate_purchase_print,
+    }
+
+    generator = generators.get(format)
+
+    if generator is None:
+        raise HTTPException(status_code=400, detail="Unsupported document format")
+
+    try:
+        document = generator(project)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error))
+
+    return Response(
+        content=document.content,
+        media_type=document.content_type,
+        headers={"Content-Disposition": f'attachment; filename="{document.filename}"'},
+    )
 
 
 @router.get("/{project_id}/documents/package")
 def generate_project_document_package(project_id: int, db: Session = Depends(get_db)) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
+
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
+
     document = ProjectDocumentPackageService().generate_package(project)
-    return Response(content=document.content, media_type=document.content_type)
+
+    return Response(
+        content=document.content,
+        media_type=document.content_type,
+        headers={"Content-Disposition": f'attachment; filename="{document.filename}"'},
+    )
