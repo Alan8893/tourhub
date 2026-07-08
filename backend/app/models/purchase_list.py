@@ -33,6 +33,7 @@ class PurchaseListORM(Base):
 
     project = relationship(
         "ProjectORM",
+        back_populates="purchase_lists",
     )
 
     items = relationship(
