@@ -68,9 +68,13 @@ class MealPlanService:
         participants: int,
         days: int,
         meals_per_day: list[str],
+        project_id: int | None = None,
     ) -> MealPlanORM:
         """
         Generate meal plan and persist it.
+
+        project_id connects the meal plan with the project workflow.
+        It remains optional during migration period to preserve compatibility.
         """
 
         if self.meal_plan_repository is None:
@@ -85,6 +89,7 @@ class MealPlanService:
 
         meal_plan = MealPlanORM(
             id=str(uuid4()),
+            project_id=project_id,
             name=name,
             participants=participants,
             days_count=days,
