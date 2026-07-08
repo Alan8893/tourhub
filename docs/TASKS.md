@@ -1218,3 +1218,71 @@ Result:
 ✅ Backend unchanged  
 ✅ Production build successful
 
+---
+
+# TH-0053.2 — Workflow Feature Integration
+
+Status:
+
+DONE
+
+## Goal
+
+Integrate workflow feature widgets into Project Workspace.
+
+## Implemented
+
+Updated:
+
+- frontend/src/features/project-workspace/components/WorkflowModules.tsx
+
+
+Integrated:
+
+- MealPlanWidget
+- ShoppingWidget
+- PurchaseWidget
+- DocumentsWidget
+
+
+Added feature public exports:
+
+- frontend/src/features/meal-plan/index.ts
+- frontend/src/features/shopping/index.ts
+- frontend/src/features/purchase/index.ts
+- frontend/src/features/documents/index.ts
+
+
+## Architecture
+
+ProjectWorkspace
+
+↓
+
+WorkflowModules
+
+↓
+
+Feature Widgets
+
+↓
+
+Domain Features
+
+
+## Verification
+
+npm run build
+
+Result:
+
+✅ TypeScript compilation passed
+✅ Vite production build passed
+
+
+## Acceptance Criteria
+
+✅ Workflow widgets integrated
+✅ Feature public API created
+✅ Workspace remains orchestration layer
+✅ Production build successful
