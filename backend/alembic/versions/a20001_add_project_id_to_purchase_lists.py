@@ -1,7 +1,7 @@
 """add project id to purchase lists
 
 Revision ID: a20001
-Revises: a10001
+Revises: a15001
 Create Date: 2026-07-08
 """
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 revision = "a20001"
-down_revision = "a10001"
+down_revision = "a15001"
 branch_labels = None
 depends_on = None
 
