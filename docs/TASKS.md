@@ -902,3 +902,63 @@ Result:
 ✅ API error handling foundation created  
 ✅ Vite typings configured  
 ✅ Production build successful
+
+# TH-0050.2 — Router Foundation
+
+Status:
+
+DONE
+
+## Goal
+
+Create frontend routing foundation.
+
+## Implemented
+
+Added:
+
+frontend/src/app/router/routes.tsx
+
+Responsibilities:
+
+- centralized route configuration;
+- application navigation foundation.
+
+
+Added:
+
+frontend/src/app/router/index.tsx
+
+Responsibilities:
+
+- router entry point;
+- route rendering.
+
+
+Updated:
+
+frontend/src/app/App.tsx
+
+Responsibilities:
+
+- connect application router.
+
+
+## Verification
+
+Frontend build:
+
+npm run build
+
+Result:
+
+✅ TypeScript compilation passed
+✅ Vite production build passed
+
+
+## Acceptance Criteria
+
+✅ Router layer created
+✅ Routes configuration created
+✅ Existing workspace flow preserved
+✅ Production build successful
