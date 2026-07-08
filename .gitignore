@@ -9,3 +9,22 @@ __pycache__/
 # coverage
 .coverage
 htmlcov/
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project archives
+tourhub.zip
