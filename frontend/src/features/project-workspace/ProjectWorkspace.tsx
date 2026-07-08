@@ -2,24 +2,25 @@ import { Button, Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
 
 import { ProjectHeader, usePrepareProject, useProject } from "@/features/project";
-import { ProjectWorkflowProvider } from "@/features/project-workflow";
+import {
+  ProjectWorkflowProvider,
+  useProjectWorkflow,
+} from "@/features/project-workflow";
 
 import ProjectWorkflowPanel from "./components/ProjectWorkflowPanel";
 import WorkflowModules from "./components/WorkflowModules";
 
-export default function ProjectWorkspace() {
-  const { id } = useParams();
-  const projectId = Number(id ?? 1);
-
-  const { data: project, isLoading } = useProject(projectId);
+function ProjectWorkspaceContent({ projectId }: { projectId: number }) {
+  const { setPreparationResult } = useProjectWorkflow();
   const prepareProject = usePrepareProject();
+  const { data: project, isLoading } = useProject(projectId);
 
   if (isLoading || !project) {
     return <Typography>Loading project...</Typography>;
   }
 
   return (
-    <ProjectWorkflowProvider projectId={projectId}>
+    <>
       <ProjectHeader project={project} />
 
       <Typography variant="body1" sx={{ mt: 1 }}>
@@ -29,7 +30,11 @@ export default function ProjectWorkspace() {
       <Button
         variant="contained"
         sx={{ mt: 2 }}
-        onClick={() => prepareProject.mutate(projectId)}
+        onClick={() =>
+          prepareProject.mutate(projectId, {
+            onSuccess: (result) => setPreparationResult(result),
+          })
+        }
         disabled={prepareProject.isPending}
       >
         {prepareProject.isPending ? "Preparing..." : "Prepare project"}
@@ -49,6 +54,17 @@ export default function ProjectWorkspace() {
 
       <ProjectWorkflowPanel />
       <WorkflowModules />
+    </>
+  );
+}
+
+export default function ProjectWorkspace() {
+  const { id } = useParams();
+  const projectId = Number(id ?? 1);
+
+  return (
+    <ProjectWorkflowProvider projectId={projectId}>
+      <ProjectWorkspaceContent projectId={projectId} />
     </ProjectWorkflowProvider>
   );
 }
