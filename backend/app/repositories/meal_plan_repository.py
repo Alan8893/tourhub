@@ -41,6 +41,24 @@ class MealPlanRepository:
         self.session.flush()
         self.session.commit()
 
+    def get_by_project_id(
+        self,
+        project_id: int,
+    ) -> MealPlanORM | None:
+        """
+        Get meal plan linked to a project.
+
+        Project is the aggregate root for the preparation workflow.
+        """
+
+        return (
+            self.session.query(MealPlanORM)
+            .filter(
+                MealPlanORM.project_id == project_id
+            )
+            .first()
+        )
+
     def get_with_details(
         self,
         meal_plan_id: str,
