@@ -2,6 +2,9 @@ from app.models.meal_plan import MealPlanORM
 from app.modules.projects.models.project import ProjectORM
 
 
+MEAL_PLAN_ID = "ea557e05-d89b-4403-9822-5bc3a95c8f2c"
+
+
 def test_get_project_meal_plan_endpoint(client, db_session):
     project = ProjectORM(
         id=1,
@@ -12,7 +15,7 @@ def test_get_project_meal_plan_endpoint(client, db_session):
     )
 
     meal_plan = MealPlanORM(
-        id="test-meal-plan-1",
+        id=MEAL_PLAN_ID,
         project_id=1,
         name="Altai Trip 2026",
         participants=10,
