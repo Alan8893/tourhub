@@ -38,6 +38,13 @@ class PurchaseChecklistRepository:
             .first()
         )
 
+    def get_by_project_id(self, project_id: int) -> PurchaseChecklistORM | None:
+        return (
+            self.session.query(PurchaseChecklistORM)
+            .filter(PurchaseChecklistORM.project_id == project_id)
+            .first()
+        )
+
     def get_item_by_id(self, item_id: str) -> PurchaseChecklistItemORM | None:
         return (
             self.session.query(PurchaseChecklistItemORM)
