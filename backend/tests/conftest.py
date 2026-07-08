@@ -22,6 +22,7 @@ from app.models import (
     PurchaseListItemORM,
 )
 from app.core.session import get_session
+from app.core.database import get_db
 
 from app.modules.api.meal_plan_router import get_meal_plan_service
 from app.services.meal_plan_service import MealPlanService
@@ -89,6 +90,7 @@ class FakeMealPlanRepository:
 def client():
     setup_database()
     app.dependency_overrides[get_session] = override_session
+    app.dependency_overrides[get_db] = override_session
     yield TestClient(app)
     app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=test_engine)
@@ -127,6 +129,7 @@ def db_session():
 def override_database_session():
     setup_database()
     app.dependency_overrides[get_session] = override_session
+    app.dependency_overrides[get_db] = override_session
     yield
     app.dependency_overrides.clear()
 
