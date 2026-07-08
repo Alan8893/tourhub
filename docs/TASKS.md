@@ -746,3 +746,96 @@ Coverage:
 Verification:
 
 68 passed
+
+# TH-0043 — Project Document Package Workflow
+
+Status:
+
+DONE
+
+## Goal
+
+Create unified project document package export.
+
+## Implemented
+
+Added:
+
+backend/app/services/project_document_package_service.py
+
+Responsibilities:
+
+- aggregate project documents;
+- create ZIP package;
+- reuse existing document generators.
+
+
+## API
+
+Added:
+
+GET /api/v1/projects/{project_id}/documents/package
+
+
+Response:
+
+application/zip
+
+
+## Package Content
+
+Included:
+
+- purchase_list.pdf
+- purchase_list.xlsx
+- purchase_list.txt
+
+
+## Architecture
+
+Project
+
+↓
+
+ProjectDocumentPackageService
+
+↓
+
+ProjectDocumentService
+
+↓
+
+Document Engine
+
+↓
+
+ZIP Package
+
+
+## Tests
+
+Added:
+
+backend/tests/api/test_project_document_package_api.py
+
+
+Coverage:
+
+✅ package generation  
+✅ ZIP content validation  
+✅ API success response  
+✅ API error contract
+
+
+## Acceptance Criteria
+
+✅ Project package generated  
+✅ ZIP export works  
+✅ Existing document workflow reused  
+✅ Regression tests passed
+
+
+Verification:
+
+70 passed
+
