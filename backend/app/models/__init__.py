@@ -11,6 +11,7 @@ from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
 from app.models.purchase_list import PurchaseListORM
 from app.models.purchase_list_item import PurchaseListItemORM
+from app.modules.projects.models.project import ProjectORM
 
 
 __all__ = [
@@ -26,4 +27,5 @@ __all__ = [
     "PurchaseChecklistItemORM",
     "PurchaseListORM",
     "PurchaseListItemORM",
+    "ProjectORM",
 ]
