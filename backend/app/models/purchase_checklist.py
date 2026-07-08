@@ -18,6 +18,12 @@ class PurchaseChecklistORM(Base):
         primary_key=True,
     )
 
+    project_id: Mapped[int | None] = mapped_column(
+        ForeignKey("projects.id"),
+        nullable=True,
+        index=True,
+    )
+
     meal_plan_id: Mapped[str] = mapped_column(
         ForeignKey("meal_plans.id"),
         nullable=False,
@@ -27,6 +33,11 @@ class PurchaseChecklistORM(Base):
         String(50),
         nullable=False,
         default="draft",
+    )
+
+    project = relationship(
+        "ProjectORM",
+        back_populates="purchase_checklists",
     )
 
     items = relationship(
