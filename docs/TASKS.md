@@ -574,8 +574,175 @@ First complete user scenario:
 Generate hiking food plan
 
 ---
+# Tasks
 
-После замены:
+## Completed
 
-```powershell
-git status
+### TH-0033
+Frontend Foundation
+
+Status:
+DONE
+
+
+### TH-0034
+Purchase Workflow Dashboard
+
+Status:
+DONE
+
+
+### TH-0035
+Environment Stabilization
+
+Status:
+DONE
+
+
+---
+
+# Current
+
+## TH-0036
+Project Workspace ERP UI
+
+
+Goal:
+
+Создать рабочее место инструктора.
+
+
+Structure:
+
+Project Workspace
+
+├── Project Info
+├── Meal Plan
+├── Shopping List
+├── Packaging
+├── Purchase Checklist
+└── Documents
+
+
+---
+
+# Future
+
+TH-0037 Authentication
+
+TH-0038 User Roles
+
+TH-0039 Club Management
+
+TH-0040 Route Cards
+
+---
+
+# TH-0042 — Documents Workflow Integration
+
+Status:
+
+DONE
+
+## Goal
+
+Connect Project workflow with document generation.
+
+Workflow:
+
+Project
+ |
+ +-- MealPlan
+ |
+ +-- PurchaseList
+ |
+ +-- PurchaseChecklist
+ |
+ +-- Documents
+
+
+## Implemented
+
+Added:
+
+backend/app/services/project_document_service.py
+
+Responsibilities:
+
+- project document orchestration;
+- purchase document generation;
+- connection between Project workflow and Document Engine.
+
+
+## API
+
+Added endpoints:
+
+GET /api/v1/projects/{project_id}/documents/purchase/pdf
+
+GET /api/v1/projects/{project_id}/documents/purchase/excel
+
+GET /api/v1/projects/{project_id}/documents/purchase/print
+
+
+## Architecture
+
+Implemented:
+
+Project
+ ↓
+ProjectDocumentService
+ ↓
+Document Engine
+ ↓
+PDF / Excel / Print
+
+
+## Repository Changes
+
+Updated:
+
+backend/app/modules/projects/repositories/project_repository.py
+
+Added loading:
+
+Project
+ |
+ purchase_lists
+
+to support document generation workflow.
+
+
+## Tests
+
+Added:
+
+backend/tests/services/test_project_document_service.py
+
+backend/tests/api/test_project_documents_api.py
+
+backend/tests/api/test_project_documents_success_api.py
+
+
+Coverage:
+
+✅ PDF generation  
+✅ Excel generation  
+✅ Print generation  
+✅ Error contract validation  
+✅ Project document workflow
+
+
+## Acceptance Criteria
+
+✅ Project can generate purchase documents  
+✅ PDF export works  
+✅ Excel export works  
+✅ Print export works  
+✅ API endpoints tested  
+✅ Regression tests passed
+
+
+Verification:
+
+68 passed
