@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -9,12 +9,6 @@ class MealPlanORM(Base):
     Meal plan for a hiking project.
 
     Represents generated menu for a trip.
-
-    Example:
-
-    Altai trip
-    10 participants
-    5 days
     """
 
     __tablename__ = "meal_plans"
@@ -22,6 +16,12 @@ class MealPlanORM(Base):
     id: Mapped[str] = mapped_column(
         String,
         primary_key=True,
+    )
+
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id"),
+        nullable=False,
+        index=True,
     )
 
     name: Mapped[str] = mapped_column(
@@ -37,6 +37,11 @@ class MealPlanORM(Base):
     days_count: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
+    )
+
+    project = relationship(
+        "ProjectORM",
+        back_populates="meal_plans",
     )
 
     days = relationship(
