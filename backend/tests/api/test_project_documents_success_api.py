@@ -4,6 +4,7 @@ from app.models.purchase_list import PurchaseListORM
 from app.models.purchase_list_item import PurchaseListItemORM
 
 
+
 def create_project_with_purchase_list(db_session):
     product = ProductORM(
         id="product-doc-test",
@@ -19,9 +20,12 @@ def create_project_with_purchase_list(db_session):
         status="prepared",
     )
 
+    db_session.add(project)
+    db_session.flush()
+
     purchase_list = PurchaseListORM(
         id="purchase-doc-test",
-        project=project,
+        project_id=project.id,
         meal_plan_id="meal-plan-doc-test",
         status="ready",
     )
@@ -37,10 +41,11 @@ def create_project_with_purchase_list(db_session):
         packages_count=1,
     )
 
-    db_session.add_all([product, project, purchase_list, item])
+    db_session.add_all([product, purchase_list, item])
     db_session.commit()
 
     return project.id
+
 
 
 def test_project_purchase_pdf_document(client, db_session):
@@ -52,6 +57,7 @@ def test_project_purchase_pdf_document(client, db_session):
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
+
 
 
 def test_project_purchase_print_document(client, db_session):
