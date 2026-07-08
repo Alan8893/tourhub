@@ -24,6 +24,7 @@ class MealPlanResponse(BaseModel):
     """Generated meal plan response."""
 
     id: UUID
+    project_id: int | None = None
     name: str
     participants: int
     days_count: int
