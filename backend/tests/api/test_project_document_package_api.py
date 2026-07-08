@@ -42,6 +42,6 @@ def test_project_document_package_not_found(client, db_session):
     )
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Project not found"
+    assert response.json()["error"] == "Project not found"
 
     app.dependency_overrides.clear()
