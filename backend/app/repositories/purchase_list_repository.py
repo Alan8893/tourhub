@@ -24,6 +24,16 @@ class PurchaseListRepository:
             .first()
         )
 
+    def get_by_project_id(
+        self,
+        project_id: int,
+    ) -> PurchaseListORM | None:
+        return (
+            self.session.query(PurchaseListORM)
+            .filter(PurchaseListORM.project_id == project_id)
+            .first()
+        )
+
     def get_by_meal_plan_id(
         self,
         meal_plan_id: str,
