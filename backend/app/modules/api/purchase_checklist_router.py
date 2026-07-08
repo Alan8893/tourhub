@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
+from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.schemas.errors import ErrorResponse, ValidationErrorResponse
@@ -27,6 +28,30 @@ def create_purchase_checklist(meal_plan_id: str, service: PurchaseChecklistServi
         return service.create_from_meal_plan_id(meal_plan_id)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error))
+
+
+@router.post("/project/{project_id}/generate", response_model=PurchaseChecklistResponse)
+def create_project_purchase_checklist(project_id: int, service: PurchaseChecklistService = Depends(get_purchase_checklist_service), session: Session = Depends(get_session)):
+    project = ProjectRepository(session).get_by_id(project_id)
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if not project.meal_plans:
+        raise HTTPException(status_code=404, detail="Meal plan not found")
+
+    try:
+        return service.create_from_meal_plan_id(str(project.meal_plans[0].id), project_id=project.id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error))
+
+
+@router.get("/project/{project_id}", response_model=PurchaseChecklistResponse)
+def get_project_purchase_checklist(project_id: int, session: Session = Depends(get_session)):
+    checklist = PurchaseChecklistRepository(session).get_by_project_id(project_id)
+    if not checklist:
+        raise HTTPException(status_code=404, detail="Purchase checklist not found")
+    return checklist
 
 
 @router.get("/{checklist_id}", response_model=PurchaseChecklistResponse, responses={404: {"model": ErrorResponse}, 422: {"model": ValidationErrorResponse}, 500: {"model": ErrorResponse}})
