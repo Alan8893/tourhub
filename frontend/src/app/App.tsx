@@ -1,11 +1,11 @@
 import { Container } from "@mui/material";
 
-import PurchaseDashboardPage from "../pages/PurchaseDashboardPage";
+import ProjectWorkspacePage from "../pages/ProjectWorkspacePage";
 
 export default function App() {
   return (
     <Container>
-      <PurchaseDashboardPage />
+      <ProjectWorkspacePage />
     </Container>
   );
 }
