@@ -1,11 +1,15 @@
 import { Button, Typography } from "@mui/material";
+import { useParams } from "react-router-dom";
 
 import { ProjectHeader, usePrepareProject, useProject } from "@/features/project";
 
+import ProjectWorkflowPanel from "./components/ProjectWorkflowPanel";
 import WorkflowModules from "./components/WorkflowModules";
 
 export default function ProjectWorkspace() {
-  const projectId = 1;
+  const { id } = useParams();
+  const projectId = Number(id ?? 1);
+
   const { data: project, isLoading } = useProject(projectId);
   const prepareProject = usePrepareProject();
 
@@ -42,6 +46,7 @@ export default function ProjectWorkspace() {
         </Typography>
       )}
 
+      <ProjectWorkflowPanel />
       <WorkflowModules />
     </>
   );
