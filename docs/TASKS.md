@@ -88,7 +88,6 @@ Create first business domain.
 
 ## Implemented Entities
 
-
 Product
 
 Recipe
@@ -97,13 +96,11 @@ Ingredient
 
 Dish
 
-
 ---
 
 ## Database Schema
 
 Created:
-
 
 products
 
@@ -113,12 +110,9 @@ ingredients
 
 dishes
 
-
 Migration:
 
-
 initial nutrition schema
-
 
 ---
 
@@ -147,21 +141,15 @@ Implemented:
 
 Products:
 
-
 11 records
-
 
 Recipes:
 
-
 5 records
-
 
 Dishes:
 
-
 5 records
-
 
 ---
 
@@ -187,9 +175,7 @@ Implement pure calculation engine.
 
 Location:
 
-
 app/engines/shopping_list.py
-
 
 ---
 
@@ -197,18 +183,15 @@ app/engines/shopping_list.py
 
 DTO:
 
-
 IngredientInput
 
 ShoppingListItem
 
 ShoppingListResult
 
-
 ---
 
 Algorithm:
-
 
 amount per person
 ×
@@ -218,22 +201,17 @@ days
 =
 required amount
 
-
 ---
 
 ## Tests
 
 Created:
 
-
 tests/engines/test_shopping_list.py
-
 
 Result:
 
-
 3 passed
-
 
 ---
 
@@ -251,7 +229,6 @@ Connect database models with calculation engine.
 
 Architecture:
 
-
 ORM
 
 ↓
@@ -266,16 +243,13 @@ Engine
 
 Result
 
-
 ---
 
 ## Implemented
 
 Service:
 
-
 app/services/shopping_list_service.py
-
 
 ---
 
@@ -283,15 +257,11 @@ app/services/shopping_list_service.py
 
 Created:
 
-
 tests/services/test_shopping_list_service.py
-
 
 Result:
 
-
 1 passed
-
 
 ---
 
@@ -309,19 +279,15 @@ Improve SQLAlchemy relationship mapping.
 
 Implemented:
 
-
 Recipe.ingredients
 
 ↕
 
 Ingredient.recipe
 
-
 using:
 
-
 back_populates
-
 
 ---
 
@@ -349,18 +315,15 @@ Instructor creates hiking preparation:
 
 Input:
 
-
 participants
 
 days
 
 start meal
 
-
 ---
 
 System generates:
-
 
 meal plan
 
@@ -376,7 +339,6 @@ recipes
 
 shopping list
 
-
 ---
 
 # TH-0020.1 — Meal Plan Domain Model
@@ -391,13 +353,11 @@ PLANNED
 
 Possible model:
 
-
 MealPlan
 
 MealPlanDay
 
 MealPlanItem
-
 
 ---
 
@@ -444,9 +404,7 @@ Create API endpoints.
 
 Expected:
 
-
 POST /meal-plans/generate
-
 
 Input:
 
@@ -455,13 +413,17 @@ Input:
   "participants": 10,
   "days": 5
 }
+```
 
 Output:
 
+```json
 {
   "menu": [],
   "shopping_list": []
 }
+```
+
 Future Tasks
 TH-0030 — User Authentication
 
@@ -512,6 +474,7 @@ Formats:
 PDF;
 Excel;
 print templates.
+
 Definition of Done
 
 A task is completed only when:
@@ -528,6 +491,7 @@ Required:
 
 business logic tests;
 integration tests where required.
+
 Documentation
 
 Updated:
@@ -535,6 +499,7 @@ Updated:
 architecture;
 domain;
 task status.
+
 Git
 
 Required:
@@ -548,6 +513,7 @@ Examples:
 feat(nutrition): add meal plan model
 
 test(service): add shopping service tests
+
 Current Project Position
 
 Completed:
@@ -584,20 +550,17 @@ Frontend Foundation
 Status:
 DONE
 
-
 ### TH-0034
 Purchase Workflow Dashboard
 
 Status:
 DONE
 
-
 ### TH-0035
 Environment Stabilization
 
 Status:
 DONE
-
 
 ---
 
@@ -606,11 +569,9 @@ DONE
 ## TH-0036
 Project Workspace ERP UI
 
-
 Goal:
 
 Создать рабочее место инструктора.
-
 
 Structure:
 
@@ -622,7 +583,6 @@ Project Workspace
 ├── Packaging
 ├── Purchase Checklist
 └── Documents
-
 
 ---
 
@@ -648,104 +608,11 @@ DONE
 
 Connect Project workflow with document generation.
 
-Workflow:
-
-Project
- |
- +-- MealPlan
- |
- +-- PurchaseList
- |
- +-- PurchaseChecklist
- |
- +-- Documents
-
-
-## Implemented
-
-Added:
-
-backend/app/services/project_document_service.py
-
-Responsibilities:
-
-- project document orchestration;
-- purchase document generation;
-- connection between Project workflow and Document Engine.
-
-
-## API
-
-Added endpoints:
-
-GET /api/v1/projects/{project_id}/documents/purchase/pdf
-
-GET /api/v1/projects/{project_id}/documents/purchase/excel
-
-GET /api/v1/projects/{project_id}/documents/purchase/print
-
-
-## Architecture
-
-Implemented:
-
-Project
- ↓
-ProjectDocumentService
- ↓
-Document Engine
- ↓
-PDF / Excel / Print
-
-
-## Repository Changes
-
-Updated:
-
-backend/app/modules/projects/repositories/project_repository.py
-
-Added loading:
-
-Project
- |
- purchase_lists
-
-to support document generation workflow.
-
-
-## Tests
-
-Added:
-
-backend/tests/services/test_project_document_service.py
-
-backend/tests/api/test_project_documents_api.py
-
-backend/tests/api/test_project_documents_success_api.py
-
-
-Coverage:
-
-✅ PDF generation  
-✅ Excel generation  
-✅ Print generation  
-✅ Error contract validation  
-✅ Project document workflow
-
-
-## Acceptance Criteria
-
-✅ Project can generate purchase documents  
-✅ PDF export works  
-✅ Excel export works  
-✅ Print export works  
-✅ API endpoints tested  
-✅ Regression tests passed
-
-
 Verification:
 
 68 passed
+
+---
 
 # TH-0043 — Project Document Package Workflow
 
@@ -757,85 +624,66 @@ DONE
 
 Create unified project document package export.
 
-## Implemented
-
-Added:
-
-backend/app/services/project_document_package_service.py
-
-Responsibilities:
-
-- aggregate project documents;
-- create ZIP package;
-- reuse existing document generators.
-
-
-## API
-
-Added:
-
-GET /api/v1/projects/{project_id}/documents/package
-
-
-Response:
-
-application/zip
-
-
-## Package Content
-
-Included:
-
-- purchase_list.pdf
-- purchase_list.xlsx
-- purchase_list.txt
-
-
-## Architecture
-
-Project
-
-↓
-
-ProjectDocumentPackageService
-
-↓
-
-ProjectDocumentService
-
-↓
-
-Document Engine
-
-↓
-
-ZIP Package
-
-
-## Tests
-
-Added:
-
-backend/tests/api/test_project_document_package_api.py
-
-
-Coverage:
-
-✅ package generation  
-✅ ZIP content validation  
-✅ API success response  
-✅ API error contract
-
-
-## Acceptance Criteria
-
-✅ Project package generated  
-✅ ZIP export works  
-✅ Existing document workflow reused  
-✅ Regression tests passed
-
-
 Verification:
 
 70 passed
 
+---
+
+# TH-0050.1 — Frontend API Foundation
+
+Status:
+
+DONE
+
+## Goal
+
+Create frontend API foundation layer.
+
+## Implemented
+
+Added:
+
+frontend/src/shared/api/client.ts
+
+Responsibilities:
+
+- centralized Axios client;
+- API base URL configuration;
+- HTTP interceptor foundation.
+
+Added:
+
+frontend/src/shared/api/errors.ts
+
+Responsibilities:
+
+- API error contract;
+- error normalization.
+
+Added:
+
+frontend/src/vite-env.d.ts
+
+Responsibilities:
+
+- Vite environment typings;
+- TypeScript support for import.meta.env.
+
+## Verification
+
+Frontend build:
+
+npm run build
+
+Result:
+
+✅ TypeScript compilation passed  
+✅ Vite production build passed
+
+## Acceptance Criteria
+
+✅ Shared API client created  
+✅ API error handling foundation created  
+✅ Vite typings configured  
+✅ Production build successful
