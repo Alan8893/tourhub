@@ -1,7 +1,9 @@
 import axios from "axios";
 
+import { env } from "@/shared/config/env";
+
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "/api",
+  baseURL: env.apiUrl,
   headers: {
     "Content-Type": "application/json",
   },
