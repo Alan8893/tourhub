@@ -21,28 +21,22 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
-def get_project(
-    project_id: int,
-    db: Session = Depends(get_db),
-) -> ProjectResponse:
-    service = ProjectService(ProjectRepository(db))
-    return service.get_project(project_id)
+def get_project(project_id: int, db: Session = Depends(get_db)) -> ProjectResponse:
+    return ProjectService(ProjectRepository(db)).get_project(project_id)
 
 
 @router.post("/{project_id}/prepare", response_model=ProjectPreparationResponse)
-def prepare_project(
-    project_id: int,
-    db: Session = Depends(get_db),
-) -> ProjectPreparationResponse:
+def prepare_project(project_id: int, db: Session = Depends(get_db)) -> ProjectPreparationResponse:
     project = ProjectRepository(db).get_by_id(project_id)
 
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    if not project.meal_plans:
+        raise HTTPException(status_code=404, detail="Meal plan not found")
+
     meal_plan_repository = MealPlanRepository(db)
-    meal_plan_shopping_service = MealPlanShoppingService(
-        ShoppingListService(db)
-    )
+    meal_plan_shopping_service = MealPlanShoppingService(ShoppingListService(db))
 
     service = ProjectPreparationService(
         purchase_list_service=PurchaseListService(
@@ -71,60 +65,18 @@ def prepare_project(
 
 
 @router.get("/{project_id}/documents/purchase/{format}")
-def generate_purchase_document(
-    project_id: int,
-    format: str,
-    db: Session = Depends(get_db),
-) -> Response:
+def generate_purchase_document(project_id: int, format: str, db: Session = Depends(get_db)) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
-
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
-
-    service = ProjectDocumentService()
-
-    try:
-        if format == "pdf":
-            document = service.generate_purchase_pdf(project)
-        elif format == "excel":
-            document = service.generate_purchase_excel(project)
-        elif format == "print":
-            document = service.generate_purchase_print(project)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported document format")
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error))
-
-    return Response(
-        content=document.content,
-        media_type=document.content_type,
-        headers={
-            "Content-Disposition": f'attachment; filename="{document.filename}"'
-        },
-    )
+    document = ProjectDocumentService().generate(project, format)
+    return Response(content=document.content, media_type=document.content_type)
 
 
 @router.get("/{project_id}/documents/package")
-def generate_project_document_package(
-    project_id: int,
-    db: Session = Depends(get_db),
-) -> Response:
+def generate_project_document_package(project_id: int, db: Session = Depends(get_db)) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
-
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
-
-    service = ProjectDocumentPackageService()
-
-    try:
-        document = service.generate_package(project)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error))
-
-    return Response(
-        content=document.content,
-        media_type=document.content_type,
-        headers={
-            "Content-Disposition": f'attachment; filename="{document.filename}"'
-        },
-    )
+    document = ProjectDocumentPackageService().generate_package(project)
+    return Response(content=document.content, media_type=document.content_type)
