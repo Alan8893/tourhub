@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiClient } from "../../../api/client";
 
 export interface Project {
   id: number;
@@ -9,8 +9,8 @@ export interface Project {
 }
 
 export async function getProject(projectId: number): Promise<Project> {
-  const response = await axios.get<Project>(
-    `/api/v1/projects/${projectId}`,
+  const response = await apiClient.get<Project>(
+    `/projects/${projectId}`,
   );
 
   return response.data;
