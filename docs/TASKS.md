@@ -839,3 +839,66 @@ Verification:
 
 70 passed
 
+---
+
+# TH-0050.1 — Frontend API Foundation
+
+Status:
+
+DONE
+
+## Goal
+
+Create frontend API foundation layer.
+
+## Implemented
+
+Added:
+
+frontend/src/shared/api/client.ts
+
+Responsibilities:
+
+- centralized Axios client;
+- API base URL configuration;
+- HTTP interceptor foundation.
+
+
+Added:
+
+frontend/src/shared/api/errors.ts
+
+Responsibilities:
+
+- API error contract;
+- error normalization.
+
+
+Added:
+
+frontend/src/vite-env.d.ts
+
+Responsibilities:
+
+- Vite environment typings;
+- TypeScript support for import.meta.env.
+
+
+## Verification
+
+Frontend build:
+
+npm run build
+
+Result:
+
+✅ TypeScript compilation passed  
+✅ Vite production build passed
+
+
+## Acceptance Criteria
+
+✅ Shared API client created  
+✅ API error handling foundation created  
+✅ Vite typings configured  
+✅ Production build successful
