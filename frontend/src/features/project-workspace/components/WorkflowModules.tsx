@@ -1,38 +1,28 @@
 import { Grid } from "@mui/material";
 
-import ModuleCard from "./ModuleCard";
-
-const modules = [
-  {
-    title: "Meal Plan",
-    description: "Manage hike nutrition planning.",
-  },
-  {
-    title: "Shopping List",
-    description: "Prepare products required for the trip.",
-  },
-  {
-    title: "Packaging",
-    description: "Organize products and equipment packages.",
-  },
-  {
-    title: "Purchase Checklist",
-    description: "Track purchase completion.",
-  },
-  {
-    title: "Documents",
-    description: "Generate expedition documents.",
-  },
-];
+import { DocumentsWidget } from "@/features/documents";
+import { MealPlanWidget } from "@/features/meal-plan";
+import { PurchaseWidget } from "@/features/purchase";
+import { ShoppingWidget } from "@/features/shopping";
 
 export default function WorkflowModules() {
   return (
     <Grid container spacing={2} sx={{ mt: 2 }}>
-      {modules.map((module) => (
-        <Grid item xs={12} md={4} key={module.title}>
-          <ModuleCard {...module} />
-        </Grid>
-      ))}
+      <Grid item xs={12} md={6}>
+        <MealPlanWidget />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <ShoppingWidget />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <PurchaseWidget />
+      </Grid>
+
+      <Grid item xs={12} md={6}>
+        <DocumentsWidget />
+      </Grid>
     </Grid>
   );
 }
