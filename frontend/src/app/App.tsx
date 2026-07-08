@@ -1,11 +1,11 @@
-import { Container, Typography } from "@mui/material";
+import { Container } from "@mui/material";
+
+import PurchaseDashboardPage from "../pages/PurchaseDashboardPage";
 
 export default function App() {
   return (
     <Container>
-      <Typography variant="h4" sx={{ mt: 4 }}>
-        TourHub
-      </Typography>
+      <PurchaseDashboardPage />
     </Container>
   );
 }
