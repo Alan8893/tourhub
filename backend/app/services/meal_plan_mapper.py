@@ -39,6 +39,7 @@ class MealPlanMapper:
 
         return MealPlanResponse(
             id=meal_plan.id,
+            project_id=meal_plan.project_id,
             name=meal_plan.name,
             participants=meal_plan.participants,
             days_count=meal_plan.days_count,
