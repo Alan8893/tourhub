@@ -1,8 +1,7 @@
 import { Button, Typography } from "@mui/material";
 
-import { useProject } from "../project/hooks/useProject";
-import { usePrepareProject } from "../project/hooks/usePrepareProject";
-import ProjectHeader from "../project/components/ProjectHeader";
+import { ProjectHeader, usePrepareProject, useProject } from "@/features/project";
+
 import WorkflowModules from "./components/WorkflowModules";
 
 export default function ProjectWorkspace() {
