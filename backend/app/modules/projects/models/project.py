@@ -37,3 +37,9 @@ class ProjectORM(Base):
         back_populates="project",
         cascade="all, delete-orphan",
     )
+
+    purchase_checklists = relationship(
+        "PurchaseChecklistORM",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
