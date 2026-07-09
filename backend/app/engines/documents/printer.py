@@ -4,6 +4,7 @@ from app.engines.documents.dto import (
 )
 from datetime import datetime, timezone
 
+
 class PrintDocumentGenerator:
     """Generate printable text representation."""
 
@@ -14,8 +15,15 @@ class PrintDocumentGenerator:
         lines = [document.title, ""]
 
         for item in document.items:
+            package_text = ""
+            if item.packages_count:
+                package_text = f" (packages: {item.packages_count}"
+                if item.package_size:
+                    package_text += f" x {item.package_size}"
+                package_text += ")"
+
             lines.append(
-                f"{item.product_name}: {item.quantity} {item.unit}"
+                f"{item.product_name}: {item.quantity} {item.unit}{package_text}"
             )
 
         return GeneratedDocument(
