@@ -11,7 +11,7 @@ class DishInput:
 
 @dataclass(frozen=True)
 class MealPlanItemResult:
-    """Generated dish assigned to a meal."""
+    """Legacy generated dish assigned to a meal."""
 
     day_number: int
     meal_type: str
@@ -20,10 +20,20 @@ class MealPlanItemResult:
 
 
 @dataclass(frozen=True)
+class MealSlotResult:
+    """Generated meal slot with one or more dishes."""
+
+    day_number: int
+    meal_type: str
+    dishes: list[DishInput]
+
+
+@dataclass(frozen=True)
 class MealPlanGenerationResult:
     """Result of meal plan generation."""
 
     items: list[MealPlanItemResult]
+    slots: list[MealSlotResult] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
 
@@ -45,15 +55,16 @@ class MealPlanGenerator:
         dishes_per_meal: int = 1,
     ) -> MealPlanGenerationResult:
         """
-        Generate meal plan composition.
+        Generate meal composition.
 
         Backward compatible:
-        dishes_per_meal=1 keeps old behaviour.
+        items are still returned for old consumers.
         """
 
         if not dishes:
             return MealPlanGenerationResult(
                 items=[],
+                slots=[],
                 warnings=["No dishes available"],
             )
 
@@ -74,7 +85,8 @@ class MealPlanGenerator:
             ]
 
         warnings: list[str] = []
-        result: list[MealPlanItemResult] = []
+        items: list[MealPlanItemResult] = []
+        slots: list[MealSlotResult] = []
 
         required_dishes = len(meal_sequence) * dishes_per_meal
 
@@ -84,18 +96,21 @@ class MealPlanGenerator:
         dish_index = 0
 
         for day_number, meal_type in meal_sequence:
+            selected: list[DishInput] = []
             used_for_meal: set[str] = set()
 
             for _ in range(dishes_per_meal):
                 dish = dishes[dish_index % len(dishes)]
-
                 attempts = 0
+
                 while dish.id in used_for_meal and attempts < len(dishes):
                     dish_index += 1
                     dish = dishes[dish_index % len(dishes)]
                     attempts += 1
 
-                result.append(
+                selected.append(dish)
+
+                items.append(
                     MealPlanItemResult(
                         day_number=day_number,
                         meal_type=meal_type,
@@ -107,7 +122,16 @@ class MealPlanGenerator:
                 used_for_meal.add(dish.id)
                 dish_index += 1
 
+            slots.append(
+                MealSlotResult(
+                    day_number=day_number,
+                    meal_type=meal_type,
+                    dishes=selected,
+                )
+            )
+
         return MealPlanGenerationResult(
-            items=result,
+            items=items,
+            slots=slots,
             warnings=warnings,
         )
