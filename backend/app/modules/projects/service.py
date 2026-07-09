@@ -10,6 +10,8 @@ class Project:
     name: str
     participants: int
     days: int
+    start_date: str | None
+    first_meal: str | None
     status: str
 
 
@@ -17,33 +19,40 @@ class ProjectService:
     def __init__(self, repository: ProjectRepository):
         self.repository = repository
 
-    def create_project(self, name: str, participants: int, days: int) -> Project:
+    def create_project(
+        self,
+        name: str,
+        participants: int,
+        days: int,
+        start_date: str | None = None,
+        first_meal: str | None = None,
+    ) -> Project:
         if participants <= 0:
             raise ValueError("Participants must be greater than zero")
-
         if days <= 0:
             raise ValueError("Days must be greater than zero")
 
-        project = self.repository.create(
-            ProjectORM(
-                name=name,
-                participants=participants,
-                days=days,
-                status="draft",
-            )
-        )
+        project = self.repository.create(ProjectORM(
+            name=name,
+            participants=participants,
+            days=days,
+            start_date=start_date,
+            first_meal=first_meal,
+            status="draft",
+        ))
 
         return Project(
             id=project.id,
             name=project.name,
             participants=project.participants,
             days=project.days,
+            start_date=project.start_date,
+            first_meal=project.first_meal,
             status=project.status,
         )
 
     def get_project(self, project_id: int) -> Project:
         project = self.repository.get_by_id(project_id)
-
         if project is None:
             raise ValueError("Project not found")
 
@@ -52,5 +61,7 @@ class ProjectService:
             name=project.name,
             participants=project.participants,
             days=project.days,
+            start_date=project.start_date,
+            first_meal=project.first_meal,
             status=project.status,
         )
