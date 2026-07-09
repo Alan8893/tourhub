@@ -8,11 +8,25 @@ export interface Project {
   status: string;
 }
 
+export interface CreateProjectRequest {
+  name: string;
+  participants: number;
+  days: number;
+}
+
 export interface ProjectPreparationResponse {
   project_id: number;
   meal_plan_id: string;
   purchase_list_id: string;
   purchase_checklist_id: string;
+}
+
+export async function createProject(
+  data: CreateProjectRequest,
+): Promise<Project> {
+  const response = await apiClient.post<Project>("/projects", data);
+
+  return response.data;
 }
 
 export async function getProject(projectId: number): Promise<Project> {
