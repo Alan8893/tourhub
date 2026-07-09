@@ -2,11 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.repositories.meal_plan_repository import MealPlanRepository
+from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
+from app.repositories.purchase_list_repository import PurchaseListRepository
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.modules.projects.schemas import ProjectCreateRequest, ProjectResponse
 from app.modules.projects.service import ProjectService
+from app.services.meal_plan_shopping_service import MealPlanShoppingService
+from app.services.project_preparation_service import ProjectPreparationService
 from app.services.project_document_package_service import ProjectDocumentPackageService
 from app.services.project_document_service import ProjectDocumentService
+from app.services.purchase_checklist_service import PurchaseChecklistService
+from app.services.purchase_list_service import PurchaseListService
+from app.services.shopping_list_service import ShoppingListService
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -33,6 +41,36 @@ def get_project(project_id: int, db: Session = Depends(get_db)) -> ProjectRespon
         return ProjectService(ProjectRepository(db)).get_project(project_id)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error))
+
+
+@router.post("/{project_id}/prepare")
+def prepare_project(project_id: int, db: Session = Depends(get_db)):
+    project = ProjectRepository(db).get_by_id(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    try:
+        shopping_service = ShoppingListService(db)
+        meal_plan_shopping_service = MealPlanShoppingService(shopping_service)
+
+        preparation_service = ProjectPreparationService(
+            PurchaseListService(
+                PurchaseListRepository(db),
+                MealPlanRepository(db),
+                meal_plan_shopping_service,
+            ),
+            PurchaseChecklistService(
+                PurchaseChecklistRepository(db),
+                MealPlanRepository(db),
+                meal_plan_shopping_service,
+            ),
+        )
+
+        result = preparation_service.prepare_project(project)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+
+    return result
 
 
 @router.get("/{project_id}/documents/purchase/{format}")
