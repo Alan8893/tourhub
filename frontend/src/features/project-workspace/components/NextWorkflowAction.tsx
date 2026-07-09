@@ -19,10 +19,20 @@ export default function NextWorkflowAction() {
           </Typography>
           <Button
             variant="contained"
-            onClick={() => generateMealPlan.mutate(projectId)}
+            onClick={() =>
+              generateMealPlan.mutate(projectId, {
+                onSuccess: (result) =>
+                  setPreparationResult({
+                    project_id: projectId,
+                    meal_plan_id: result.id,
+                    purchase_list_id: "",
+                    purchase_checklist_id: "",
+                  }),
+              })
+            }
             disabled={generateMealPlan.isPending}
           >
-            Generate Meal Plan
+            {generateMealPlan.isPending ? "Generating..." : "Generate Meal Plan"}
           </Button>
         </CardContent>
       </Card>
