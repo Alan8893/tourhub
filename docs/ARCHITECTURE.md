@@ -1159,3 +1159,36 @@ One Task → One Commit
 
 Все дальнейшие изменения проекта должны соответствовать принципам, описанным в данном документе.
 
+## Document Generation Architecture
+
+Documents are generated from shared document DTO models.
+
+Current flow:
+
+
+Domain Data
+
+↓
+
+Document DTO
+
+↓
+
+Document Generator
+
+↓
+
+PDF / XLSX / TXT
+
+
+
+Current generators:
+
+- PDF
+- Excel
+- Text
+
+
+Future direction:
+
+Move PDF generation from low-level canvas rendering to structured document rendering using tables and reusable templates.

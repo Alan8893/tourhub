@@ -1421,3 +1421,284 @@ Result:
 ✅ Workflow state updated after preparation  
 ✅ Feature modules can consume workflow state  
 ✅ Production build successful
+
+---
+
+# TH-0053 — Project Workflow Frontend Integration
+
+Status: Completed
+
+## Goal
+
+Complete frontend integration of the hiking preparation workflow:
+
+Project → Preparation → Meal Plan → Shopping → Purchase → Documents
+
+---
+
+## Completed
+
+### TH-0053.1 — Project Workspace Foundation
+
+Status: Completed
+
+Implemented project workspace structure and workflow modules:
+
+- Project workspace page
+- Workflow panel
+- Module cards
+- Preparation status display
+
+---
+
+### TH-0053.2 — Frontend Workflow Modules
+
+Status: Completed
+
+Implemented frontend modules:
+
+- Meal Plan widget
+- Shopping widget
+- Purchase widget
+- Documents widget
+
+Added feature-first module structure.
+
+---
+
+### TH-0053.3 — Workflow State Integration
+
+Status: Completed
+
+Implemented shared workflow state through:
+
+
+ProjectWorkflowProvider
+
+
+Preparation result is stored after project preparation.
+
+Stored data:
+
+- project_id
+- meal_plan_id
+- purchase_list_id
+- purchase_checklist_id
+
+
+Workflow:
+
+
+Prepare Project
+
+    ↓
+
+Backend Preparation API
+
+    ↓
+
+ProjectWorkflowProvider
+
+    ↓
+
+Workflow Widgets
+
+
+---
+
+### TH-0053.3.1 — Preparation Result Binding
+
+Status: Completed
+
+Updated:
+
+
+usePrepareProject
+
+
+Now stores backend preparation response into workflow context.
+
+---
+
+### TH-0053.3.2 — Widget Data Binding
+
+Status: Completed
+
+Connected workflow state to:
+
+- MealPlanWidget
+- ShoppingWidget
+- PurchaseWidget
+
+
+Widgets now receive generated entity identifiers.
+
+---
+
+### TH-0053.3.3 — Documents Widget Integration
+
+Status: Completed
+
+Connected DocumentsWidget with workflow context.
+
+Documents become available only after successful project preparation.
+
+---
+
+### TH-0053.4 — Document Actions Integration
+
+Status: Completed
+
+Implemented frontend document actions:
+
+- Export PDF
+- Export Excel
+- Download Package
+
+
+Added document API client:
+
+
+frontend/src/features/documents/api/documentsApi.ts
+
+
+Fixed API URL duplication issue:
+
+Before:
+
+
+/api/v1/api/v1/projects/...
+
+
+After:
+
+
+/api/v1/projects/...
+
+
+---
+
+# Validation
+
+Completed:
+
+Backend:
+
+
+pytest
+
+70 passed
+
+
+Frontend:
+
+
+npm run build
+
+success
+
+
+Manual UI verification:
+
+Completed:
+
+- Project preparation
+- Meal plan generation
+- Shopping list generation
+- Purchase checklist generation
+- PDF export
+- Excel export
+- ZIP package export
+
+---
+
+# TH-0053.5 — PDF Generator Refactoring
+
+Status: Planned
+
+Priority: Medium
+
+## Problem
+
+Current PDF generator produces a simple line-based document.
+
+Example:
+
+
+Product: quantity unit
+
+
+This works but is not suitable for a production ERP document.
+
+---
+
+## Goal
+
+Replace plain text PDF generation with structured table-based documents.
+
+---
+
+## Planned improvements
+
+Replace:
+
+
+canvas.drawString()
+
+
+with:
+
+
+reportlab.platypus
+
+
+components:
+
+- SimpleDocTemplate
+- Table
+- Paragraph
+- TableStyle
+
+
+---
+
+## Target PDF format
+
+Example:
+
+
+TourHub Purchase List
+
+Project:
+Altai Trip 2026
+
+Participants:
+10
+
++------------+----------+------+----------+------------+
+| Product | Quantity | Unit | Packages | Pack Size |
++------------+----------+------+----------+------------+
+| Гречка | 3600 | gram | 4 | 900 g |
+| Масло | 600 | gram | 3 | 200 g |
++------------+----------+------+----------+------------+
+
+Summary:
+
+Total products
+Total packages
+
+
+---
+
+## Future improvements
+
+- Club logo
+- Header/footer
+- Page numbering
+- Document templates
+- Different PDF layouts:
+
+  - Purchase list
+  - Packing list
+  - Menu
+  - Route card
