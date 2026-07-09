@@ -14,6 +14,7 @@ Detailed task descriptions are stored in separate files.
 | TH-0061.4 | Meal Composition Model | IN PROGRESS | ./active/TH-0061-meal-composition.md |
 | TH-0061.5 | Meal Composition Rules Engine | PLANNED | ./active/TH-0061.5-meal-composition-rules-engine.md |
 | TH-0061.6 | Recipe Components and Recipe Variants Design | ACTIVE | ./active/TH-0061.6-recipe-components-and-variants.md |
+| TH-0061.7 | Recipe Components Implementation | PLANNED | ./active/TH-0061.7-recipe-components-implementation.md |
 
 ---
 
