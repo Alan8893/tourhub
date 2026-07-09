@@ -11,8 +11,9 @@ class MealPlanDayORM(Base):
     Example:
 
     Day 1
-    Day 2
-    Day 3
+    - breakfast
+    - lunch
+    - dinner
     """
 
     __tablename__ = "meal_plan_days"
@@ -42,4 +43,11 @@ class MealPlanDayORM(Base):
         back_populates="day",
         cascade="all, delete-orphan",
         order_by="MealPlanItemORM.meal_type",
+    )
+
+    slots = relationship(
+        "MealSlotORM",
+        back_populates="day",
+        cascade="all, delete-orphan",
+        order_by="MealSlotORM.order",
     )
