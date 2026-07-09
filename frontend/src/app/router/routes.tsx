@@ -2,6 +2,7 @@ import { Navigate, RouteObject } from "react-router-dom";
 
 import AppLayout from "../layout/AppLayout";
 import ProjectWorkspacePage from "../../pages/ProjectWorkspacePage";
+import CreateProjectPage from "../../pages/CreateProjectPage";
 
 export const routes: RouteObject[] = [
   {
@@ -9,7 +10,11 @@ export const routes: RouteObject[] = [
     children: [
       {
         path: "/",
-        element: <Navigate to="/projects" replace />,
+        element: <Navigate to="/projects/new" replace />,
+      },
+      {
+        path: "/projects/new",
+        element: <CreateProjectPage />,
       },
       {
         path: "/projects",
