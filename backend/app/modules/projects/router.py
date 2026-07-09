@@ -28,6 +28,7 @@ def create_project(request: ProjectCreateRequest, db: Session = Depends(get_db))
             days=request.days,
             start_date=request.start_date,
             first_meal=request.first_meal,
+            last_meal=request.last_meal,
         )
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
