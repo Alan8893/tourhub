@@ -2,70 +2,45 @@
 
 Добро пожаловать в документацию TourHub.
 
-## Что такое TourHub
-
 TourHub — модульная ERP-платформа для управления туристическим клубом.
 
----
+## Current Documentation Structure
 
-## Как читать документацию
+```
+docs/
+├── architecture/
+│   └── Architecture decisions and technical design
+│
+├── domain/
+│   └── Business domain documentation
+│
+├── features/
+│   └── Feature descriptions
+│
+├── product/
+│   └── Product vision and user scenarios
+│
+├── roadmap/
+│   ├── ROADMAP.md
+│   ├── MVP.md
+│   └── FUTURE.md
+│
+├── tasks/
+│   ├── TASKS.md
+│   ├── active/
+│   └── completed/
+│
+└── archive/
+    └── Legacy documentation
+```
 
-Если вы новый разработчик:
+## Source of Truth
 
-1. 00_project/01_vision.md
-2. 00_project/02_product_principles.md
-3. 01_domain/01_domain_dictionary.md
-4. 01_domain/02_user_journeys.md
-5. 02_architecture/01_architecture.md
+Development decisions are based on:
 
-После этого можно переходить к коду.
+1. Active task documents;
+2. Architecture decisions (ADR);
+3. Domain documentation;
+4. Current code.
 
----
-
-## Структура документации
-
-00_project
-
-Описание проекта
-
----
-
-01_domain
-
-Предметная область
-
----
-
-02_architecture
-
-Архитектура
-
----
-
-03_database
-
-База данных
-
----
-
-04_api
-
-REST API
-
----
-
-05_ui
-
-Интерфейс
-
----
-
-06_algorithms
-
-Алгоритмы
-
----
-
-07_testing
-
-Тестирование
+Legacy documents are kept only for historical reference.
