@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from app.modules.projects.models.project import ProjectORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
 
 
@@ -15,6 +16,30 @@ class Project:
 class ProjectService:
     def __init__(self, repository: ProjectRepository):
         self.repository = repository
+
+    def create_project(self, name: str, participants: int, days: int) -> Project:
+        if participants <= 0:
+            raise ValueError("Participants must be greater than zero")
+
+        if days <= 0:
+            raise ValueError("Days must be greater than zero")
+
+        project = self.repository.create(
+            ProjectORM(
+                name=name,
+                participants=participants,
+                days=days,
+                status="draft",
+            )
+        )
+
+        return Project(
+            id=project.id,
+            name=project.name,
+            participants=project.participants,
+            days=project.days,
+            status=project.status,
+        )
 
     def get_project(self, project_id: int) -> Project:
         project = self.repository.get_by_id(project_id)
