@@ -33,6 +33,8 @@ class FakeMealPlanRepository:
         self.meal_plans = []
         self.days = []
         self.items = []
+        self.slots = []
+        self.slot_dishes = []
         self.committed = False
         self.meal_plan = None
 
@@ -45,6 +47,12 @@ class FakeMealPlanRepository:
 
     def add_item(self, item):
         self.items.append(item)
+
+    def add_slot(self, slot):
+        self.slots.append(slot)
+
+    def add_slot_dish(self, slot_dish):
+        self.slot_dishes.append(slot_dish)
 
     def commit(self):
         self.committed = True
@@ -75,15 +83,13 @@ def test_generate_and_save_meal_plan():
     )
 
     assert result.name == "Altai Trip"
-
     assert result.participants == 10
-
     assert result.days_count == 2
 
     assert len(meal_plan_repository.meal_plans) == 1
-
     assert len(meal_plan_repository.days) == 2
-
     assert len(meal_plan_repository.items) == 4
+    assert len(meal_plan_repository.slots) == 4
+    assert len(meal_plan_repository.slot_dishes) == 4
 
     assert meal_plan_repository.committed is True
