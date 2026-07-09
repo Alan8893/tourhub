@@ -1,4 +1,4 @@
-import { Button, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
 
 import { ProjectHeader, usePrepareProject, useProject } from "@/features/project";
@@ -9,10 +9,9 @@ import {
 
 import ProjectWorkflowPanel from "./components/ProjectWorkflowPanel";
 import WorkflowModules from "./components/WorkflowModules";
+import NextWorkflowAction from "./components/NextWorkflowAction";
 
 function ProjectWorkspaceContent({ projectId }: { projectId: number }) {
-  const { setPreparationResult } = useProjectWorkflow();
-  const prepareProject = usePrepareProject();
   const { data: project, isLoading } = useProject(projectId);
 
   if (isLoading || !project) {
@@ -27,31 +26,7 @@ function ProjectWorkspaceContent({ projectId }: { projectId: number }) {
         Central workspace for preparing a hiking project.
       </Typography>
 
-      <Button
-        variant="contained"
-        sx={{ mt: 2 }}
-        onClick={() =>
-          prepareProject.mutate(projectId, {
-            onSuccess: (result) => setPreparationResult(result),
-          })
-        }
-        disabled={prepareProject.isPending}
-      >
-        {prepareProject.isPending ? "Preparing..." : "Prepare project"}
-      </Button>
-
-      {prepareProject.isSuccess && (
-        <Typography sx={{ mt: 1 }}>
-          Project preparation completed.
-        </Typography>
-      )}
-
-      {prepareProject.isError && (
-        <Typography color="error" sx={{ mt: 1 }}>
-          Project preparation failed.
-        </Typography>
-      )}
-
+      <NextWorkflowAction />
       <ProjectWorkflowPanel />
       <WorkflowModules />
     </>
