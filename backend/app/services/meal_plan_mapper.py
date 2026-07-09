@@ -20,10 +20,10 @@ class MealPlanMapper:
         warnings: list[str] | None = None,
     ) -> MealPlanResponse:
         items: list[MealPlanItemResponse] = []
-
-        grouped: dict[tuple[int, str], list[MealPlanItemResponse]] = defaultdict(list)
+        meals_map: dict[tuple[int, str], list[MealPlanItemResponse]] = defaultdict(list)
 
         for day in meal_plan.days:
+            # Legacy MealPlanItem support
             for item in day.items:
                 response_item = MealPlanItemResponse(
                     day_number=day.day_number,
@@ -37,7 +37,28 @@ class MealPlanMapper:
                 )
 
                 items.append(response_item)
-                grouped[(day.day_number, item.meal_type)].append(response_item)
+                meals_map[(day.day_number, item.meal_type)].append(response_item)
+
+            # New MealSlot support
+            for slot in day.slots:
+                slot_items: list[MealPlanItemResponse] = []
+
+                for slot_dish in slot.dishes:
+                    response_item = MealPlanItemResponse(
+                        day_number=day.day_number,
+                        meal_type=slot.meal_type,
+                        dish_id=slot_dish.dish_id,
+                        dish_name=(
+                            slot_dish.dish.name
+                            if slot_dish.dish
+                            else slot_dish.dish_id
+                        ),
+                    )
+
+                    slot_items.append(response_item)
+                    items.append(response_item)
+
+                meals_map[(day.day_number, slot.meal_type)] = slot_items
 
         meals = [
             MealSlotResponse(
@@ -45,7 +66,7 @@ class MealPlanMapper:
                 meal_type=meal_type,
                 dishes=dishes,
             )
-            for (day_number, meal_type), dishes in grouped.items()
+            for (day_number, meal_type), dishes in meals_map.items()
         ]
 
         return MealPlanResponse(
