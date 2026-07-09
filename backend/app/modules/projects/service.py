@@ -12,6 +12,7 @@ class Project:
     days: int
     start_date: str | None
     first_meal: str | None
+    last_meal: str | None
     status: str
 
 
@@ -26,6 +27,7 @@ class ProjectService:
         days: int,
         start_date: str | None = None,
         first_meal: str | None = None,
+        last_meal: str | None = None,
     ) -> Project:
         if participants <= 0:
             raise ValueError("Participants must be greater than zero")
@@ -38,6 +40,7 @@ class ProjectService:
             days=days,
             start_date=start_date,
             first_meal=first_meal,
+            last_meal=last_meal,
             status="draft",
         ))
 
@@ -59,5 +62,6 @@ class ProjectService:
             days=project.days,
             start_date=getattr(project, "start_date", None),
             first_meal=getattr(project, "first_meal", None),
+            last_meal=getattr(project, "last_meal", None),
             status=project.status,
         )
