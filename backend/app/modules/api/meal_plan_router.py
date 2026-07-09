@@ -7,7 +7,11 @@ from app.repositories.meal_plan_repository import MealPlanRepository
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.services.meal_plan_service import MealPlanService
 from app.services.meal_plan_mapper import MealPlanMapper
-from app.schemas.meal_plan import MealPlanResponse, MealPlanGenerateRequest
+from app.schemas.meal_plan import (
+    MealPlanResponse,
+    MealPlanGenerateRequest,
+    MealPlanGenerateResponse,
+)
 
 
 router = APIRouter(prefix="/meal-plans", tags=["Meal Plans"])
@@ -20,7 +24,7 @@ def get_meal_plan_service(session: Session = Depends(get_session)):
     )
 
 
-@router.post("/generate", response_model=MealPlanResponse)
+@router.post("/generate", response_model=MealPlanGenerateResponse)
 def generate_meal_plan(
     request: MealPlanGenerateRequest,
     service: MealPlanService = Depends(get_meal_plan_service),
@@ -30,7 +34,7 @@ def generate_meal_plan(
         meals_per_day=request.meals_per_day,
     )
 
-    return {
+    meal_plan = {
         "id": "00000000-0000-0000-0000-000000000000",
         "name": request.name,
         "participants": request.participants,
@@ -38,6 +42,16 @@ def generate_meal_plan(
         "project_id": None,
         "items": [item.__dict__ for item in result.items],
         "warnings": result.warnings,
+    }
+
+    return {
+        "meal_plan": meal_plan,
+        "shopping_list": {
+            "items": []
+        },
+        "purchase_list": {
+            "items": []
+        },
     }
 
 
