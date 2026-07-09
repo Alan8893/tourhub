@@ -11,7 +11,7 @@ class DishInput:
 
 @dataclass(frozen=True)
 class MealPlanItemResult:
-    """Generated meal item."""
+    """Generated dish assigned to a meal."""
 
     day_number: int
     meal_type: str
@@ -42,12 +42,13 @@ class MealPlanGenerator:
         days: int,
         meals_per_day: list[str] | None = None,
         schedule: list[object] | None = None,
+        dishes_per_meal: int = 1,
     ) -> MealPlanGenerationResult:
         """
-        Generate meal plan.
+        Generate meal plan composition.
 
-        Schedule-aware generation is preferred.
-        meals_per_day remains for backward compatibility.
+        Backward compatible:
+        dishes_per_meal=1 keeps old behaviour.
         """
 
         if not dishes:
@@ -55,6 +56,9 @@ class MealPlanGenerator:
                 items=[],
                 warnings=["No dishes available"],
             )
+
+        if dishes_per_meal < 1:
+            raise ValueError("dishes_per_meal must be greater than zero")
 
         if schedule is not None:
             meal_sequence = [
@@ -70,32 +74,38 @@ class MealPlanGenerator:
             ]
 
         warnings: list[str] = []
+        result: list[MealPlanItemResult] = []
 
-        if len(dishes) < len(meal_sequence):
+        required_dishes = len(meal_sequence) * dishes_per_meal
+
+        if len(dishes) < required_dishes:
             warnings.append("Dish database is insufficient")
 
-        result: list[MealPlanItemResult] = []
-        previous_dish_id: str | None = None
         dish_index = 0
 
         for day_number, meal_type in meal_sequence:
-            dish = dishes[dish_index % len(dishes)]
+            used_for_meal: set[str] = set()
 
-            if previous_dish_id == dish.id and len(dishes) > 1:
-                dish_index += 1
+            for _ in range(dishes_per_meal):
                 dish = dishes[dish_index % len(dishes)]
 
-            result.append(
-                MealPlanItemResult(
-                    day_number=day_number,
-                    meal_type=meal_type,
-                    dish_id=dish.id,
-                    dish_name=dish.name,
-                )
-            )
+                attempts = 0
+                while dish.id in used_for_meal and attempts < len(dishes):
+                    dish_index += 1
+                    dish = dishes[dish_index % len(dishes)]
+                    attempts += 1
 
-            previous_dish_id = dish.id
-            dish_index += 1
+                result.append(
+                    MealPlanItemResult(
+                        day_number=day_number,
+                        meal_type=meal_type,
+                        dish_id=dish.id,
+                        dish_name=dish.name,
+                    )
+                )
+
+                used_for_meal.add(dish.id)
+                dish_index += 1
 
         return MealPlanGenerationResult(
             items=result,
