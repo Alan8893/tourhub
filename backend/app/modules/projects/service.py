@@ -41,27 +41,23 @@ class ProjectService:
             status="draft",
         ))
 
-        return Project(
-            id=project.id,
-            name=project.name,
-            participants=project.participants,
-            days=project.days,
-            start_date=project.start_date,
-            first_meal=project.first_meal,
-            status=project.status,
-        )
+        return self._map(project)
 
     def get_project(self, project_id: int) -> Project:
         project = self.repository.get_by_id(project_id)
         if project is None:
             raise ValueError("Project not found")
 
+        return self._map(project)
+
+    @staticmethod
+    def _map(project) -> Project:
         return Project(
             id=project.id,
             name=project.name,
             participants=project.participants,
             days=project.days,
-            start_date=project.start_date,
-            first_meal=project.first_meal,
+            start_date=getattr(project, "start_date", None),
+            first_meal=getattr(project, "first_meal", None),
             status=project.status,
         )
