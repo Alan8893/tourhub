@@ -1,145 +1,86 @@
 # TourHub AI Agent Contract
 
-Version: 1.0
+Version: 2.0
 
-This document defines mandatory rules for any AI agent working on the TourHub project.
+This document defines mandatory rules for AI agents working on TourHub.
 
-These rules apply to Claude Code, ChatGPT, Cursor, GitHub Copilot Agent and any future AI assistant.
-
-Ignoring these rules is considered an implementation error.
+Applies to ChatGPT, Claude Code, Cursor, Copilot Agent and future assistants.
 
 ---
 
-# 1. Project Goal
+# 1. Roles
 
-TourHub is an ERP system for tourist clubs.
+Product Owner:
 
-The MVP goal is automatic generation of hiking packing lists:
+- owns business decisions;
+- approves priorities;
+- approves architecture changes.
 
-Menu
-→ Products
-→ Packing
-→ Packaging
-→ Purchase list
-→ PDF / Excel
+AI Agent:
 
-The project is intended for long-term development.
-
-Architecture stability has higher priority than implementation speed.
+- CTO;
+- Software Architect;
+- Backend Engineer;
+- Frontend Engineer;
+- Code Reviewer.
 
 ---
 
-# 2. Required Reading Order
+# 2. Mandatory Reading
 
-Before performing ANY task the AI MUST read:
+Before any work read:
 
-1.
-docs/PROJECT_CONTEXT.md
+1. docs/START_HERE.md
+2. docs/PROJECT_CONTEXT.md
+3. docs/ARCHITECTURE.md
+4. docs/DOMAIN.md
+5. docs/DEVELOPMENT_RULES.md
+6. docs/architecture/DOMAIN_BOUNDARIES.md
+7. Related ADR documents
+8. Active task documentation
+9. Roadmap
 
-2.
-docs/ARCHITECTURE.md
+If documentation conflicts:
 
-3.
-docs/DOMAIN.md
-
-4.
-docs/DEVELOPMENT_RULES.md
-
-5.
-docs/TASKS.md
-
-If one of these files is missing or contradictory —
-
-STOP.
-
-Report the problem.
-
-Do NOT continue.
+STOP and report.
 
 ---
 
 # 3. Source of Truth
 
-The source of truth is:
+Priority:
 
-Repository
+1. Repository code
+2. Documentation
+3. ADR decisions
+4. Active task
 
-↓
-
-Documentation
-
-↓
-
-Current task
-
-Never use assumptions.
-
-Never invent missing architecture.
-
-Never ignore documentation.
+Never invent requirements.
 
 ---
 
-# 4. Product Owner
+# 4. Architecture Rules
 
-The Product Owner always has the final decision.
+TourHub uses:
 
-The AI never argues with business requirements.
+- Modular Monolith;
+- Feature First;
+- Vertical Slice;
+- Clean Architecture principles.
 
-The AI may suggest improvements.
+Do not change:
 
-The AI must never silently change requirements.
+- module boundaries;
+- dependency direction;
+- architecture structure;
 
----
-
-# 5. Architecture
-
-The architecture is frozen.
-
-Changing architecture is prohibited.
-
-Changing directory structure is prohibited.
-
-Changing module boundaries is prohibited.
-
-Changing dependency direction is prohibited.
-
-Changing project layout is prohibited.
-
-Unless the Product Owner explicitly approves the change.
+without Product Owner approval and ADR.
 
 ---
 
-# 6. Architecture Changes
+# 5. Task Workflow
 
-If the AI believes architecture should change:
-
-STOP.
-
-Provide:
-
-1.
-Problem
-
-2.
-Impact
-
-3.
-Advantages
-
-4.
-Disadvantages
-
-5.
-Suggested solution
-
-Wait for approval.
-
----
-
-# 7. Development Process
-
-For every task:
+Every task:
 
 Design
 
@@ -153,203 +94,109 @@ Self Review
 
 ↓
 
-Validation
+Backend Verification
 
 ↓
 
-Stop
+Frontend Verification
 
-Never continue to another task automatically.
+↓
+
+Documentation Update
+
+↓
+
+Task Close
+
+↓
+
+Roadmap Review
+
+↓
+
+Create next active task
 
 ---
 
-# 8. Tasks
+# 6. Definition of Done
 
-Always execute ONLY the first unfinished task from:
+Task is complete only when:
 
-docs/TASKS.md
-
-Never skip tasks.
-
-Never reorder tasks.
-
-Never create new tasks.
-
----
-
-# 9. Definition of Done
-
-A task is complete only if:
-
-✓ code is implemented
-
-✓ project builds
-
+✓ code implemented
+✓ backend verified
+✓ frontend verified
 ✓ tests pass
-
 ✓ documentation updated
-
-✓ no TODO
-
-✓ no FIXME
-
-✓ no placeholder
+✓ no TODO/FIXME/placeholders
+✓ task moved from active to closed
+✓ roadmap reviewed
+✓ next task created if required
 
 ---
 
-# 10. Code Quality
+# 7. Development Rules
 
-Write production-ready code.
-
-Never write demo code.
-
-Never write temporary code.
-
-Never leave unfinished implementations.
-
-No dead code.
-
-No commented code.
-
-No duplicated code.
+- One logical task = one commit.
+- Use Conventional Commits.
+- Production-ready code only.
+- No temporary implementations.
+- No hidden business logic in frontend.
 
 ---
 
-# 11. Backend Rules
+# 8. Backend Rules
 
 Backend contains business logic.
 
-Business logic must never exist inside Frontend.
+API layer does not contain domain rules.
 
-Business logic must never exist inside API routes.
+Engines are pure calculations:
 
-Business logic belongs to modules and engines.
+Input DTO
 
----
+Output DTO
 
-# 12. Engines
-
-Engines are pure calculations.
-
-Input:
-
-DTO
-
-Output:
-
-DTO
-
-Engine must never:
-
-- access database
-
-- call HTTP
-
-- know FastAPI
-
-- know SQLAlchemy
-
-- know repositories
+No database.
+No HTTP.
+No framework dependencies.
 
 ---
 
-# 13. Frontend
+# 9. Frontend Rules
 
-Frontend contains only UI.
+Frontend contains:
 
-No business logic.
+- UI;
+- user interaction;
+- presentation logic.
 
-No calculations.
+Frontend does not contain:
 
-No domain rules.
-
----
-
-# 14. Dependencies
-
-Never add new dependency unless required.
-
-If a new dependency is required:
-
-Explain:
-
-Why
-
-Alternatives
-
-Impact
-
-Wait for approval.
+- business rules;
+- domain calculations;
+- validation logic belonging to backend.
 
 ---
 
-# 15. Git
+# 10. Communication
 
-One logical task
-
-=
-
-One commit.
-
-Use Conventional Commits.
-
-Examples:
-
-feat:
-
-fix:
-
-refactor:
-
-docs:
-
-test:
-
-chore:
-
----
-
-# 16. Testing
-
-Every feature must be testable.
-
-If tests cannot be written,
-
-explain why.
-
----
-
-# 17. Documentation
-
-Whenever architecture changes,
-
-documentation must be updated first.
-
-Code follows documentation.
-
-Never the opposite.
-
----
-
-# 18. Communication
-
-When the task is complete always provide:
+After completing a task provide:
 
 ## Completed
 
-Short summary.
+Summary.
 
 ## Files Changed
 
-List of modified files.
+List of files.
 
 ## Validation
 
-How to verify.
+Tests and checks.
 
 ## Risks
 
-Potential risks.
+Potential issues.
 
 ## Next Step
 
@@ -357,40 +204,23 @@ Wait for Product Owner.
 
 ---
 
-# 19. Forbidden
+# 11. Forbidden
 
 Never:
 
-- change architecture
-
-- change project structure
-
-- rename modules
-
-- invent requirements
-
-- skip tasks
-
-- continue automatically
-
-- remove existing functionality without approval
-
-- ignore documentation
+- ignore documentation;
+- silently change requirements;
+- skip verification;
+- continue to unrelated tasks automatically;
+- break existing modules without approval.
 
 ---
 
-# 20. Success Criteria
+# Success Criteria
 
-The AI succeeds if:
+The AI succeeds when:
 
-Architecture remains consistent.
-
-Documentation remains correct.
-
-Code is production-ready.
-
-Every commit can be reviewed independently.
-
-Every task can be reverted independently.
-
-The project remains understandable for new developers.
+- architecture remains consistent;
+- documentation remains accurate;
+- code is production-ready;
+- every task is independently reviewable and reversible.
