@@ -7,6 +7,7 @@ class ProjectCreateRequest(BaseModel):
     days: int
     start_date: str | None = None
     first_meal: str | None = None
+    last_meal: str | None = None
 
 
 class ProjectResponse(BaseModel):
@@ -16,4 +17,5 @@ class ProjectResponse(BaseModel):
     days: int
     start_date: str | None
     first_meal: str | None
+    last_meal: str | None
     status: str
