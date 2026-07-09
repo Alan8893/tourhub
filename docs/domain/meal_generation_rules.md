@@ -32,13 +32,19 @@ Trip
 
 # Meal composition rules
 
+Meal templates are recommendations, not strict requirements.
+
+An instructor can override the composition for a specific project or meal.
+
+---
+
 ## Breakfast
 
-Structure:
+Recommended structure:
 
-- main dish (required);
-- snacks/additional food (optional);
-- drinks (required).
+- main dish;
+- snacks/additional food;
+- drinks.
 
 Example:
 
@@ -50,9 +56,9 @@ Example:
 
 ## Lunch
 
-Structure:
+Recommended structure:
 
-- main dish (required);
+- main dish;
 - snacks/additional food;
 - drinks.
 
@@ -77,7 +83,7 @@ Priority:
 3. sweets;
 4. cookies;
 5. energy bars;
-6. sandwiches (rarely).
+6. sandwiches rarely.
 
 Example:
 
@@ -87,9 +93,9 @@ Example:
 
 ## Dinner
 
-Structure:
+Recommended structure:
 
-- main dish (required);
+- main dish;
 - salad/additional food;
 - drinks.
 
@@ -101,42 +107,92 @@ Example:
 
 ---
 
-# Example day
+# Composition override
 
-Breakfast:
+Real hiking scenarios require flexible meal composition.
 
-- porridge;
-- sandwiches;
-- tea and coffee.
+Examples:
 
-Lunch:
+## Last day before departure
 
-- borscht;
-- sandwiches;
-- compote.
+A normal lunch may be replaced by a fast meal:
 
-Snack:
+- salad;
+- cold food;
+- simple snack.
 
-- apple.
+Reason:
 
-Dinner:
+The group must leave on time for transport.
 
-- merchant-style buckwheat;
-- vitamin salad;
-- tea and coffee.
+## One-day trip
+
+A project may contain only:
+
+- snack;
+
+or another minimal meal configuration chosen by the instructor.
+
+The generator must support reduced meal plans.
 
 ---
 
-# Dish selection priority
+# Project meal constraints
 
-Order of priorities:
+Menu generation uses project-level restrictions.
 
-1. Instructor favorite dishes.
-2. Season compatibility.
-3. Product availability.
-4. Menu diversity.
-5. Cooking simplicity.
-6. Weight and transportation convenience.
+Examples:
+
+- forbidden products;
+- unwanted products;
+- preferred dishes;
+- special preparation rules.
+
+Restrictions are applied through:
+
+```
+Dish
+ |
+ Recipe
+ |
+ Ingredients
+ |
+ Products
+```
+
+A dish containing forbidden ingredients cannot be selected.
+
+---
+
+# Generation priority
+
+The generator follows this order:
+
+1. Forbidden products and strict restrictions.
+2. Day scenario constraints.
+3. Instructor manual settings.
+4. Project preferences.
+5. Favorite dishes.
+6. Season compatibility.
+7. Product availability.
+8. Menu diversity.
+9. Cooking simplicity.
+10. Weight and transportation convenience.
+
+---
+
+# Day context
+
+Day context can affect meal generation.
+
+Examples:
+
+- first day;
+- last day;
+- incomplete day;
+- limited preparation time.
+
+Transport logistics are a separate future domain and are not implemented here.
 
 ---
 
@@ -148,6 +204,11 @@ If the database does not contain enough dishes:
 - generate warning;
 - preserve maximum possible diversity.
 
+If restrictions make generation impossible:
+
+- do not silently ignore restrictions;
+- return warnings explaining the problem.
+
 ---
 
 # Domain rule
@@ -156,4 +217,6 @@ The generator works with dishes.
 
 Product calculation is a separate process:
 
-Dish -> Recipe -> Product.
+```
+Dish -> Recipe -> Product
+```
