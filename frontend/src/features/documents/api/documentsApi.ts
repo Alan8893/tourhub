@@ -5,7 +5,7 @@ export async function downloadPurchaseDocument(
   format: "pdf" | "excel" | "print",
 ) {
   const response = await apiClient.get(
-    `/api/v1/projects/${projectId}/documents/purchase/${format}`,
+    `/projects/${projectId}/documents/purchase/${format}`,
     {
       responseType: "blob",
     },
@@ -16,7 +16,7 @@ export async function downloadPurchaseDocument(
 
 export async function downloadDocumentPackage(projectId: number) {
   const response = await apiClient.get(
-    `/api/v1/projects/${projectId}/documents/package`,
+    `/projects/${projectId}/documents/package`,
     {
       responseType: "blob",
     },
