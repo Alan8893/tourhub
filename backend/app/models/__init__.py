@@ -3,6 +3,7 @@ from app.models.base import Base
 from app.models.product import ProductORM
 from app.models.ingredient import IngredientORM
 from app.models.recipe import RecipeORM
+from app.models.recipe_component import RecipeComponentORM
 from app.models.dish import DishORM
 from app.models.meal_plan import MealPlanORM
 from app.models.meal_plan_day import MealPlanDayORM
@@ -19,6 +20,7 @@ __all__ = [
     "ProductORM",
     "IngredientORM",
     "RecipeORM",
+    "RecipeComponentORM",
     "DishORM",
     "MealPlanORM",
     "MealPlanDayORM",
