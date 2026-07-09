@@ -18,7 +18,10 @@ class MealSlotService:
             dish_id=dish_id,
             order=len(slot.dishes),
         )
-        slot.dishes.append(item)
+
+        # SQLAlchemy relationship already attaches the item through slot=slot.
+        # Do not append manually, otherwise the relationship collection receives
+        # the same object twice.
         return item
 
     def remove_dish(self, slot, slot_dish_id: str):
