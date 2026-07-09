@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 
 import { useCreateProject } from "../features/project/hooks/useCreateProject";
 
@@ -24,32 +25,53 @@ export default function CreateProjectPage() {
   }
 
   return (
-    <form onSubmit={submit}>
-      <h1>Create Project</h1>
+    <Paper sx={{ maxWidth: 560, mx: "auto", mt: 5, p: 4 }}>
+      <Typography variant="h4" sx={{ mb: 1 }}>
+        Создание похода
+      </Typography>
 
-      <input
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        placeholder="Project name"
-      />
+      <Typography variant="body2" sx={{ mb: 3 }}>
+        Укажите основные параметры похода. После создания вы сможете
+        сформировать меню, закупку и документы.
+      </Typography>
 
-      <input
-        type="number"
-        value={participants}
-        onChange={(event) => setParticipants(Number(event.target.value))}
-        min={1}
-      />
+      <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <TextField
+          label="Название похода"
+          placeholder="Например: Карелия 2026"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          required
+        />
 
-      <input
-        type="number"
-        value={days}
-        onChange={(event) => setDays(Number(event.target.value))}
-        min={1}
-      />
+        <TextField
+          label="Количество участников"
+          type="number"
+          value={participants}
+          onChange={(event) => setParticipants(Number(event.target.value))}
+          helperText="Сколько человек участвует в походе"
+          inputProps={{ min: 1 }}
+          required
+        />
 
-      <button type="submit" disabled={createProject.isPending}>
-        Create
-      </button>
-    </form>
+        <TextField
+          label="Количество дней"
+          type="number"
+          value={days}
+          onChange={(event) => setDays(Number(event.target.value))}
+          helperText="Продолжительность похода"
+          inputProps={{ min: 1 }}
+          required
+        />
+
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={createProject.isPending}
+        >
+          {createProject.isPending ? "Создание..." : "Создать проект"}
+        </Button>
+      </Box>
+    </Paper>
   );
 }
