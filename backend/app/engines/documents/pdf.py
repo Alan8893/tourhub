@@ -1,5 +1,6 @@
 from io import BytesIO
 from datetime import datetime, timezone
+from pathlib import Path
 
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -15,14 +16,31 @@ class PDFDocumentGenerator:
     """Generate PDF purchase documents."""
 
     def _register_font(self) -> str:
-        font_name = "DejaVuSans"
+        font_name = "TourHubUnicode"
+
         try:
             pdfmetrics.getFont(font_name)
+            return font_name
         except KeyError:
-            pdfmetrics.registerFont(
-                TTFont(font_name, "DejaVuSans.ttf")
-            )
-        return font_name
+            pass
+
+        font_candidates = [
+            Path("C:/Windows/Fonts/arial.ttf"),
+            Path("C:/Windows/Fonts/calibri.ttf"),
+            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+            Path("/usr/share/fonts/dejavu/DejaVuSans.ttf"),
+        ]
+
+        for font_path in font_candidates:
+            if font_path.exists():
+                pdfmetrics.registerFont(
+                    TTFont(font_name, str(font_path))
+                )
+                return font_name
+
+        raise RuntimeError(
+            "Unicode PDF font not found. Install a font with Cyrillic support."
+        )
 
     def generate(
         self,
