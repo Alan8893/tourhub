@@ -10,9 +10,8 @@ from app.engines.meal_schedule import MealScheduleEngine
 from app.models.meal_plan import MealPlanORM
 from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_plan_item import MealPlanItemORM
-
-from app.repositories.dish_repository import DishRepository
-from app.repositories.meal_plan_repository import MealPlanRepository
+from app.models.meal_slot import MealSlotORM
+from app.models.meal_slot_dish import MealSlotDishORM
 
 
 class MealPlanService:
@@ -103,6 +102,34 @@ class MealPlanService:
                     meal_type=item.meal_type,
                 )
             )
+
+        for slot in result.slots:
+            if slot.day_number not in days_map:
+                day = MealPlanDayORM(
+                    id=str(uuid4()),
+                    day_number=slot.day_number,
+                    meal_plan=meal_plan,
+                )
+                days_map[slot.day_number] = day
+                self.meal_plan_repository.add_day(day)
+
+            meal_slot = MealSlotORM(
+                id=str(uuid4()),
+                day=days_map[slot.day_number],
+                meal_type=slot.meal_type,
+            )
+
+            self.meal_plan_repository.add_slot(meal_slot)
+
+            for index, dish in enumerate(slot.dishes):
+                self.meal_plan_repository.add_slot_dish(
+                    MealSlotDishORM(
+                        id=str(uuid4()),
+                        slot=meal_slot,
+                        dish_id=dish.id,
+                        order=index,
+                    )
+                )
 
         self.meal_plan_repository.commit()
 
