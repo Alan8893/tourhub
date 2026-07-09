@@ -19,16 +19,11 @@ class ShoppingListService:
     """
     Service layer for shopping list generation.
 
-    Responsible for:
-    - loading domain data
-    - preparing engine input
-    - executing calculation
+    Uses RecipeComponent as the primary recipe source.
+    Falls back to legacy Ingredient for backward compatibility.
     """
 
-    def __init__(
-        self,
-        session: Session,
-    ):
+    def __init__(self, session: Session):
         self.session = session
 
     def calculate_for_recipe(
@@ -37,22 +32,14 @@ class ShoppingListService:
         people: int,
         days: int,
     ) -> ShoppingListResult:
-        """
-        Calculate required products for one recipe.
-        """
-
         recipe = (
             self.session.query(RecipeORM)
-            .filter(
-                RecipeORM.id == recipe_id
-            )
+            .filter(RecipeORM.id == recipe_id)
             .first()
         )
 
         if not recipe:
-            raise ValueError(
-                f"Recipe not found: {recipe_id}"
-            )
+            raise ValueError(f"Recipe not found: {recipe_id}")
 
         return self.calculate_for_recipes(
             recipes=[recipe],
@@ -66,21 +53,12 @@ class ShoppingListService:
         people: int,
         days: int,
     ) -> ShoppingListResult:
-        """
-        Calculate required products
-        for multiple recipes.
-        """
-
-        ingredients = (
-            self._build_ingredient_inputs(
-                recipes
-            )
-        )
+        components = self._build_ingredient_inputs(recipes)
 
         return calculate_shopping_list(
             people=people,
             days=days,
-            ingredients=ingredients,
+            ingredients=components,
         )
 
     def calculate_packaged_for_recipes(
@@ -89,41 +67,20 @@ class ShoppingListService:
         people: int,
         days: int,
     ) -> PackagedShoppingResult:
-        """
-        Calculate shopping list with packaging.
-
-        Products without package_size
-        are skipped from packaging calculation.
-        """
-
-        ingredient_inputs = (
-            self._build_ingredient_inputs(
-                recipes
-            )
-        )
+        inputs = self._build_ingredient_inputs(recipes)
 
         base_result = calculate_shopping_list(
             people=people,
             days=days,
-            ingredients=ingredient_inputs,
+            ingredients=inputs,
         )
 
-        package_sizes: dict[str, int] = (
-            self._collect_package_sizes(
-                recipes
-            )
-        )
+        package_sizes = self._collect_package_sizes(recipes)
 
-        packaging_inputs: list[
-            PackagingInput
-        ] = []
+        packaging_inputs: list[PackagingInput] = []
 
         for item in base_result.items:
-
-            package_size = package_sizes.get(
-                item.product_name
-            )
-
+            package_size = package_sizes.get(item.product_name)
             if not package_size:
                 continue
 
@@ -136,35 +93,38 @@ class ShoppingListService:
                 )
             )
 
-        return calculate_packages(
-            packaging_inputs
-        )
+        return calculate_packages(packaging_inputs)
 
     def _build_ingredient_inputs(
         self,
         recipes: list[RecipeORM],
     ) -> list[IngredientInput]:
         """
-        Convert recipes into engine DTO.
+        Convert recipe components into engine DTO.
+
+        Legacy ingredients are used only when components are absent.
         """
 
         ingredients: list[IngredientInput] = []
 
         for recipe in recipes:
+            if recipe.components:
+                for component in recipe.components:
+                    ingredients.append(
+                        IngredientInput(
+                            product_name=component.product.name,
+                            amount_per_person=component.amount,
+                            unit=component.unit,
+                        )
+                    )
+                continue
 
             for ingredient in recipe.ingredients:
-
                 ingredients.append(
                     IngredientInput(
-                        product_name=(
-                            ingredient.product.name
-                        ),
-                        amount_per_person=(
-                            ingredient.amount_per_person
-                        ),
-                        unit=(
-                            ingredient.product.unit
-                        ),
+                        product_name=ingredient.product.name,
+                        amount_per_person=ingredient.amount_per_person,
+                        unit=ingredient.product.unit,
                     )
                 )
 
@@ -174,21 +134,20 @@ class ShoppingListService:
         self,
         recipes: list[RecipeORM],
     ) -> dict[str, int]:
-        """
-        Collect product package sizes.
-        """
-
         package_sizes: dict[str, int] = {}
 
         for recipe in recipes:
+            source = recipe.components if recipe.components else []
 
-            for ingredient in recipe.ingredients:
-
-                product = ingredient.product
-
+            for component in source:
+                product = component.product
                 if product.package_size:
-                    package_sizes[
-                        product.name
-                    ] = product.package_size
+                    package_sizes[product.name] = product.package_size
+
+            if not source:
+                for ingredient in recipe.ingredients:
+                    product = ingredient.product
+                    if product.package_size:
+                        package_sizes[product.name] = product.package_size
 
         return package_sizes
