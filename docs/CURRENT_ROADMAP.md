@@ -46,6 +46,40 @@ Completed:
 
 ---
 
+# Technical Debt
+
+## TH-0054 — Document Template Layer
+
+Status: OPEN
+
+Goal:
+
+Create a reusable document template layer for ERP documents.
+
+Problem:
+
+Current document generation works, but document structure is tightly coupled to individual generators.
+
+Impact:
+
+Future document types, club branding and additional export formats will become harder to maintain without a template abstraction.
+
+Planned improvements:
+
+- common document templates;
+- shared document DTO structures;
+- separation of document layout from generation engine;
+- support for PDF/Excel/Print template reuse;
+- preparation for club-specific branding.
+
+Priority:
+
+Medium.
+
+Implementation planned after the first complete user scenario.
+
+---
+
 # Current Milestone
 
 ## TH-0060 — First User Scenario MVP
