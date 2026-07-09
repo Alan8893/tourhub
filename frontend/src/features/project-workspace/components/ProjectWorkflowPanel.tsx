@@ -12,6 +12,11 @@ const workflows = [
 export default function ProjectWorkflowPanel() {
   const { preparationResult } = useProjectWorkflow();
 
+  const documentsReady = Boolean(
+    preparationResult?.purchase_list_id &&
+      preparationResult?.purchase_checklist_id,
+  );
+
   return (
     <Card sx={{ mt: 3 }}>
       <CardContent>
@@ -31,7 +36,9 @@ export default function ProjectWorkflowPanel() {
                   ? preparationResult?.purchase_checklist_id
                     ? "✓ Чек-лист покупок"
                     : "○ Чек-лист покупок"
-                  : "○ Документы"}
+                  : documentsReady
+                    ? "✓ Документы готовы"
+                    : "○ Документы"}
           </Typography>
         ))}
       </CardContent>
