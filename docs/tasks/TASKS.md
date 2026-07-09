@@ -10,6 +10,7 @@ Detailed task descriptions are stored in separate files.
 | TH-0061 | User Project Preparation Wizard | IN PROGRESS | ./active/TH-0061-project-wizard.md |
 | TH-0061.3 | MealPlan Domain Expansion | IN PROGRESS | ./active/TH-0061-meal-plan-domain.md |
 | TH-0061.4 | Meal Composition Model | IN PROGRESS | ./active/TH-0061-meal-composition.md |
+| TH-0061.5 | Meal Composition Rules Engine | PLANNED | ./active/TH-0061.5-meal-composition-rules-engine.md |
 
 ## Completed
 
