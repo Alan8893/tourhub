@@ -12,12 +12,20 @@ class MealPlanGenerateRequest(BaseModel):
 
 
 class MealPlanItemResponse(BaseModel):
-    """Single generated meal."""
+    """Single dish inside a meal."""
 
     day_number: int
     meal_type: str
     dish_id: UUID
     dish_name: str
+
+
+class MealSlotResponse(BaseModel):
+    """A meal slot containing multiple dishes."""
+
+    day_number: int
+    meal_type: str
+    dishes: list[MealPlanItemResponse]
 
 
 class MealPlanResponse(BaseModel):
@@ -29,6 +37,7 @@ class MealPlanResponse(BaseModel):
     participants: int
     days_count: int
     items: list[MealPlanItemResponse]
+    meals: list[MealSlotResponse] = []
     warnings: list[str] = []
 
 
