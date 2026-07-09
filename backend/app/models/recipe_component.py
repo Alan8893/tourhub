@@ -2,6 +2,7 @@ from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+from app.models.recipe_component_type import RecipeComponentType
 
 
 class RecipeComponentORM(Base):
@@ -32,7 +33,7 @@ class RecipeComponentORM(Base):
     component_type: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
-        default="base",
+        default=RecipeComponentType.BASE.value,
     )
 
     amount: Mapped[int] = mapped_column(
