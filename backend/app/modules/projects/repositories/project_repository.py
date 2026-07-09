@@ -18,3 +18,9 @@ class ProjectRepository:
             )
             .where(ProjectORM.id == project_id)
         )
+
+    def create(self, project: ProjectORM) -> ProjectORM:
+        self.session.add(project)
+        self.session.commit()
+        self.session.refresh(project)
+        return project
