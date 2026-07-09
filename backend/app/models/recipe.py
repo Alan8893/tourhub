@@ -30,3 +30,9 @@ class RecipeORM(Base):
         back_populates="recipe",
         cascade="all, delete-orphan",
     )
+
+    components = relationship(
+        "RecipeComponentORM",
+        back_populates="recipe",
+        cascade="all, delete-orphan",
+    )
