@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.modules.projects.repositories.project_repository import ProjectRepository
-from app.modules.projects.schemas import ProjectResponse
+from app.modules.projects.schemas import ProjectCreateRequest, ProjectResponse
 from app.modules.projects.service import ProjectService
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
@@ -18,6 +18,29 @@ from app.services.purchase_list_service import PurchaseListService
 from app.services.shopping_list_service import ShoppingListService
 
 router = APIRouter(prefix="/projects", tags=["projects"])
+
+
+@router.post("", response_model=ProjectResponse)
+def create_project(
+    request: ProjectCreateRequest,
+    db: Session = Depends(get_db),
+) -> ProjectResponse:
+    try:
+        project = ProjectService(ProjectRepository(db)).create_project(
+            name=request.name,
+            participants=request.participants,
+            days=request.days,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        participants=project.participants,
+        days=project.days,
+        status=project.status,
+    )
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
@@ -84,10 +107,7 @@ def generate_purchase_document(project_id: int, format: str, db: Session = Depen
     if generator is None:
         raise HTTPException(status_code=400, detail="Unsupported document format")
 
-    try:
-        document = generator(project)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error))
+    document = generator(project)
 
     return Response(
         content=document.content,
