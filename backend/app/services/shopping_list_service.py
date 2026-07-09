@@ -26,12 +26,7 @@ class ShoppingListService:
     def __init__(self, session: Session):
         self.session = session
 
-    def calculate_for_recipe(
-        self,
-        recipe_id: str,
-        people: int,
-        days: int,
-    ) -> ShoppingListResult:
+    def calculate_for_recipe(self, recipe_id: str, people: int, days: int) -> ShoppingListResult:
         recipe = (
             self.session.query(RecipeORM)
             .filter(RecipeORM.id == recipe_id)
@@ -41,11 +36,7 @@ class ShoppingListService:
         if not recipe:
             raise ValueError(f"Recipe not found: {recipe_id}")
 
-        return self.calculate_for_recipes(
-            recipes=[recipe],
-            people=people,
-            days=days,
-        )
+        return self.calculate_for_recipes([recipe], people, days)
 
     def calculate_for_recipes(
         self,
@@ -53,12 +44,10 @@ class ShoppingListService:
         people: int,
         days: int,
     ) -> ShoppingListResult:
-        components = self._build_ingredient_inputs(recipes)
-
         return calculate_shopping_list(
             people=people,
             days=days,
-            ingredients=components,
+            ingredients=self._build_ingredient_inputs(recipes),
         )
 
     def calculate_packaged_for_recipes(
@@ -67,17 +56,14 @@ class ShoppingListService:
         people: int,
         days: int,
     ) -> PackagedShoppingResult:
-        inputs = self._build_ingredient_inputs(recipes)
-
         base_result = calculate_shopping_list(
             people=people,
             days=days,
-            ingredients=inputs,
+            ingredients=self._build_ingredient_inputs(recipes),
         )
 
-        package_sizes = self._collect_package_sizes(recipes)
-
         packaging_inputs: list[PackagingInput] = []
+        package_sizes = self._collect_package_sizes(recipes)
 
         for item in base_result.items:
             package_size = package_sizes.get(item.product_name)
@@ -99,28 +85,24 @@ class ShoppingListService:
         self,
         recipes: list[RecipeORM],
     ) -> list[IngredientInput]:
-        """
-        Convert recipe components into engine DTO.
-
-        Legacy ingredients are used only when components are absent.
-        """
-
-        ingredients: list[IngredientInput] = []
+        inputs: list[IngredientInput] = []
 
         for recipe in recipes:
             if recipe.components:
                 for component in recipe.components:
-                    ingredients.append(
+                    inputs.append(
                         IngredientInput(
                             product_name=component.product.name,
                             amount_per_person=component.amount,
                             unit=component.unit,
+                            calculation_type=component.calculation_type,
+                            people_count=component.people_count,
                         )
                     )
                 continue
 
             for ingredient in recipe.ingredients:
-                ingredients.append(
+                inputs.append(
                     IngredientInput(
                         product_name=ingredient.product.name,
                         amount_per_person=ingredient.amount_per_person,
@@ -128,7 +110,7 @@ class ShoppingListService:
                     )
                 )
 
-        return ingredients
+        return inputs
 
     def _collect_package_sizes(
         self,
@@ -140,14 +122,12 @@ class ShoppingListService:
             source = recipe.components if recipe.components else []
 
             for component in source:
-                product = component.product
-                if product.package_size:
-                    package_sizes[product.name] = product.package_size
+                if component.product.package_size:
+                    package_sizes[component.product.name] = component.product.package_size
 
             if not source:
                 for ingredient in recipe.ingredients:
-                    product = ingredient.product
-                    if product.package_size:
-                        package_sizes[product.name] = product.package_size
+                    if ingredient.product.package_size:
+                        package_sizes[ingredient.product.name] = ingredient.product.package_size
 
         return package_sizes
