@@ -15,6 +15,7 @@ class ProjectORM(Base):
     days: Mapped[int] = mapped_column(Integer, nullable=False)
     start_date: Mapped[str | None] = mapped_column(String(20), nullable=True)
     first_meal: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    last_meal: Mapped[str | None] = mapped_column(String(20), nullable=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="draft")
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
