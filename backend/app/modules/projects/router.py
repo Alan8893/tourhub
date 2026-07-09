@@ -66,11 +66,11 @@ def prepare_project(project_id: int, db: Session = Depends(get_db)):
             ),
         )
 
-        result = preparation_service.prepare_project(project)
+        return preparation_service.prepare_project(project)
     except ValueError as error:
+        if str(error) == "Meal plan not found":
+            raise HTTPException(status_code=404, detail=str(error))
         raise HTTPException(status_code=400, detail=str(error))
-
-    return result
 
 
 @router.get("/{project_id}/documents/purchase/{format}")
