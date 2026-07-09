@@ -9,6 +9,8 @@ from app.models.dish import DishORM
 from app.models.meal_plan import MealPlanORM
 from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_plan_item import MealPlanItemORM
+from app.models.meal_slot import MealSlotORM
+from app.models.meal_slot_dish import MealSlotDishORM
 from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
 from app.models.purchase_list import PurchaseListORM
@@ -27,6 +29,8 @@ __all__ = [
     "MealPlanORM",
     "MealPlanDayORM",
     "MealPlanItemORM",
+    "MealSlotORM",
+    "MealSlotDishORM",
     "PurchaseChecklistORM",
     "PurchaseChecklistItemORM",
     "PurchaseListORM",
