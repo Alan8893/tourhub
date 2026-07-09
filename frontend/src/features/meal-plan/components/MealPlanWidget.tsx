@@ -3,7 +3,7 @@ import { useProjectWorkflow } from "@/features/project-workflow";
 import { useGenerateMealPlan } from "../hooks/useGenerateMealPlan";
 
 export default function MealPlanWidget() {
-  const { projectId } = useProjectWorkflow();
+  const { projectId, setPreparationResult } = useProjectWorkflow();
   const generateMealPlan = useGenerateMealPlan();
 
   return (
@@ -14,7 +14,18 @@ export default function MealPlanWidget() {
         <Button
           variant="contained"
           sx={{ mt: 1 }}
-          onClick={() => generateMealPlan.mutate(projectId)}
+          onClick={() =>
+            generateMealPlan.mutate(projectId, {
+              onSuccess: (result) => {
+                setPreparationResult({
+                  project_id: projectId,
+                  meal_plan_id: result.id,
+                  purchase_list_id: "",
+                  purchase_checklist_id: "",
+                });
+              },
+            })
+          }
           disabled={generateMealPlan.isPending}
         >
           {generateMealPlan.isPending ? "Generating..." : "Generate Meal Plan"}
