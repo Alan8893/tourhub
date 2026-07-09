@@ -1702,3 +1702,29 @@ Total packages
   - Packing list
   - Menu
   - Route card
+
+  TH-0053.5 — PDF Generator Refactoring
+
+Status:
+DONE
+
+Implemented:
+- migrated from reportlab.pdfgen.canvas
+- SimpleDocTemplate
+- Paragraph
+- Table
+- TableStyle
+- footer
+- page numbers
+- repeat table headers
+
+Verification:
+pytest
+70 passed
+
+Acceptance Criteria:
+✅ ERP document layout
+✅ Unicode support
+✅ Table rendering
+✅ Multi-page support
+✅ Regression tests passed
