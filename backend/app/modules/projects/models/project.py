@@ -13,6 +13,8 @@ class ProjectORM(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     participants: Mapped[int] = mapped_column(Integer, nullable=False)
     days: Mapped[int] = mapped_column(Integer, nullable=False)
+    start_date: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    first_meal: Mapped[str | None] = mapped_column(String(20), nullable=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="draft")
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -26,20 +28,6 @@ class ProjectORM(Base):
         nullable=False,
     )
 
-    meal_plans = relationship(
-        "MealPlanORM",
-        back_populates="project",
-        cascade="all, delete-orphan",
-    )
-
-    purchase_lists = relationship(
-        "PurchaseListORM",
-        back_populates="project",
-        cascade="all, delete-orphan",
-    )
-
-    purchase_checklists = relationship(
-        "PurchaseChecklistORM",
-        back_populates="project",
-        cascade="all, delete-orphan",
-    )
+    meal_plans = relationship("MealPlanORM", back_populates="project", cascade="all, delete-orphan")
+    purchase_lists = relationship("PurchaseListORM", back_populates="project", cascade="all, delete-orphan")
+    purchase_checklists = relationship("PurchaseChecklistORM", back_populates="project", cascade="all, delete-orphan")
