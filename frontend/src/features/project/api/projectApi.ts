@@ -5,6 +5,8 @@ export interface Project {
   name: string;
   participants: number;
   days: number;
+  start_date: string | null;
+  first_meal: string | null;
   status: string;
 }
 
@@ -12,6 +14,8 @@ export interface CreateProjectRequest {
   name: string;
   participants: number;
   days: number;
+  start_date?: string;
+  first_meal?: string;
 }
 
 export interface ProjectPreparationResponse {
