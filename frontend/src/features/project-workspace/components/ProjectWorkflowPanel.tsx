@@ -3,10 +3,10 @@ import { Card, CardContent, Typography } from "@mui/material";
 import { useProjectWorkflow } from "@/features/project-workflow";
 
 const workflows = [
-  "Meal Plan",
-  "Shopping List",
-  "Purchase Checklist",
-  "Documents",
+  "Меню похода",
+  "Закупка продуктов",
+  "Чек-лист покупок",
+  "Документы",
 ];
 
 export default function ProjectWorkflowPanel() {
@@ -15,23 +15,23 @@ export default function ProjectWorkflowPanel() {
   return (
     <Card sx={{ mt: 3 }}>
       <CardContent>
-        <Typography variant="h6">Project Workflow</Typography>
+        <Typography variant="h6">Подготовка проекта</Typography>
 
         {workflows.map((workflow) => (
           <Typography key={workflow} sx={{ mt: 1 }}>
-            {workflow === "Meal Plan"
+            {workflow === "Меню похода"
               ? preparationResult?.meal_plan_id
-                ? "✓ Meal Plan"
-                : "○ Meal Plan"
-              : workflow === "Shopping List"
+                ? "✓ Меню похода"
+                : "○ Меню похода"
+              : workflow === "Закупка продуктов"
                 ? preparationResult?.purchase_list_id
-                  ? "✓ Shopping List"
-                  : "○ Shopping List"
-                : workflow === "Purchase Checklist"
+                  ? "✓ Закупка продуктов"
+                  : "○ Закупка продуктов"
+                : workflow === "Чек-лист покупок"
                   ? preparationResult?.purchase_checklist_id
-                    ? "✓ Purchase Checklist"
-                    : "○ Purchase Checklist"
-                  : "○ Documents"}
+                    ? "✓ Чек-лист покупок"
+                    : "○ Чек-лист покупок"
+                  : "○ Документы"}
           </Typography>
         ))}
       </CardContent>
