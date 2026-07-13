@@ -1,9 +1,11 @@
 import { Card, CardContent, Typography } from "@mui/material";
 
 import { useProjectWorkflow } from "@/features/project-workflow";
+import { MealSlotEditor, useProjectMealPlan } from "@/features/meal-slot";
 
 export default function MealPlanWidget() {
-  const { preparationResult } = useProjectWorkflow();
+  const { projectId, preparationResult } = useProjectWorkflow();
+  const { data: mealPlan, isLoading } = useProjectMealPlan(projectId);
 
   return (
     <Card>
@@ -15,6 +17,21 @@ export default function MealPlanWidget() {
             ? `✓ Meal plan created: ${preparationResult.meal_plan_id}`
             : "Menu has not been generated yet."}
         </Typography>
+
+        {isLoading && <Typography>Loading menu...</Typography>}
+
+        {mealPlan?.meals.map((slot) => (
+          <MealSlotEditor
+            key={`${slot.day_number}-${slot.meal_type}`}
+            slotId={`${slot.day_number}-${slot.meal_type}`}
+            mealType={`${slot.meal_type} (day ${slot.day_number})`}
+            dishes={slot.dishes.map((dish) => ({
+              id: dish.dish_id,
+              dish_id: dish.dish_id,
+              dish_name: dish.dish_name,
+            }))}
+          />
+        ))}
       </CardContent>
     </Card>
   );
