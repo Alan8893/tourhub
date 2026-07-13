@@ -1,6 +1,7 @@
 import { Card, CardContent, Typography } from "@mui/material";
 
-import { MealSlotEditor, useProjectMealPlan } from "@/features/meal-slot";
+import { MealSlotEditor } from "@/features/meal-slot";
+import { useProjectMealPlan } from "@/features/meal-plan";
 import { useProjectWorkflow } from "@/features/project-workflow";
 
 export default function MealPlanWidget() {
