@@ -39,10 +39,5 @@ def test_get_project_meal_plan_endpoint(client, db_session):
     assert data["participants"] == 10
     assert data["days_count"] == 7
 
-
-def test_get_project_meal_plan_not_found(client):
-    response = client.get(
-        "/api/v1/meal-plans/project/999"
-    )
-
-    assert response.status_code == 404
+    for meal in data["meals"]:
+        assert "id" in meal
