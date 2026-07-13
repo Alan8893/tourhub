@@ -5,6 +5,7 @@ import { apiClient } from "@/shared/api/client";
 import type { MealPlan } from "../api/mealPlanApi";
 
 export interface MealSlot {
+  id: string;
   day_number: number;
   meal_type: string;
   dishes: Array<{
