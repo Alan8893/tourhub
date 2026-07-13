@@ -26,7 +26,13 @@ class ShoppingListService:
     def __init__(self, session: Session):
         self.session = session
 
-    def calculate_for_recipe(self, recipe_id: str, people: int, days: int) -> ShoppingListResult:
+    def calculate_for_recipe(
+        self,
+        recipe_id: str,
+        people: int,
+        days: int,
+        include_optional: bool = False,
+    ) -> ShoppingListResult:
         recipe = (
             self.session.query(RecipeORM)
             .filter(RecipeORM.id == recipe_id)
@@ -36,18 +42,25 @@ class ShoppingListService:
         if not recipe:
             raise ValueError(f"Recipe not found: {recipe_id}")
 
-        return self.calculate_for_recipes([recipe], people, days)
+        return self.calculate_for_recipes(
+            [recipe],
+            people,
+            days,
+            include_optional=include_optional,
+        )
 
     def calculate_for_recipes(
         self,
         recipes: list[RecipeORM],
         people: int,
         days: int,
+        include_optional: bool = False,
     ) -> ShoppingListResult:
         return calculate_shopping_list(
             people=people,
             days=days,
             ingredients=self._build_ingredient_inputs(recipes),
+            include_optional=include_optional,
         )
 
     def calculate_packaged_for_recipes(
@@ -97,6 +110,7 @@ class ShoppingListService:
                             unit=component.unit,
                             calculation_type=component.calculation_type,
                             people_count=component.people_count,
+                            component_type=component.component_type,
                         )
                     )
                 continue
