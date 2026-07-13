@@ -36,3 +36,10 @@ class RecipeORM(Base):
         back_populates="recipe",
         cascade="all, delete-orphan",
     )
+
+    notes = relationship(
+        "RecipeNoteORM",
+        back_populates="recipe",
+        cascade="all, delete-orphan",
+        order_by="RecipeNoteORM.priority",
+    )
