@@ -16,6 +16,7 @@ class IngredientInput:
     unit: str
     calculation_type: str = "per_person"
     people_count: int | None = None
+    component_type: str = "base"
 
 
 @dataclass(frozen=True)
@@ -58,15 +59,6 @@ def _calculate_amount(
     people: int,
     days: int,
 ) -> float:
-    """
-    Calculate amount according to component rule.
-
-    Supported modes:
-    - per_person: amount * people * days
-    - fixed_group: amount * days
-    - package_per_people: ceil(people / people_count) * amount * days
-    """
-
     if ingredient.calculation_type == "fixed_group":
         return ingredient.amount_per_person * days
 
@@ -86,10 +78,17 @@ def calculate_shopping_list(
     people: int,
     days: int,
     ingredients: list[IngredientInput],
+    include_optional: bool = False,
 ) -> ShoppingListResult:
     calculated_items: list[ShoppingListItem] = []
 
     for ingredient in ingredients:
+        if (
+            ingredient.component_type in {"optional", "serving_add_on"}
+            and not include_optional
+        ):
+            continue
+
         calculated_items.append(
             ShoppingListItem(
                 product_name=ingredient.product_name,
