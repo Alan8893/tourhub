@@ -24,6 +24,11 @@ Detailed task descriptions are stored in separate files.
 |---|---|---|
 | TH-0060 | MVP Workflow Slice | DONE |
 | TH-0053 | PDF Generator Refactoring | DONE |
+| TH-0063 | MealSlot Integration | DONE |
+
+Details:
+
+- ./closed/TH-0063-meal-slot-integration.md
 
 ---
 
