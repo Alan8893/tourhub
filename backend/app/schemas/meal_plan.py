@@ -23,6 +23,7 @@ class MealPlanItemResponse(BaseModel):
 class MealSlotResponse(BaseModel):
     """A meal slot containing multiple dishes."""
 
+    id: str
     day_number: int
     meal_type: str
     dishes: list[MealPlanItemResponse]
