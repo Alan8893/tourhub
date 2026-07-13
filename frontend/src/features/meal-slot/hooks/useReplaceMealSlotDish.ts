@@ -1,8 +1,10 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { replaceMealSlotDish } from "../api/mealSlotApi";
 
 export function useReplaceMealSlotDish() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       slotId,
@@ -13,5 +15,10 @@ export function useReplaceMealSlotDish() {
       slotDishId: string;
       dishId: string;
     }) => replaceMealSlotDish(slotId, slotDishId, dishId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["meal-plan"],
+      });
+    },
   });
 }
