@@ -1,7 +1,7 @@
 import { Card, CardContent, Typography } from "@mui/material";
 
-import { useProjectWorkflow } from "@/features/project-workflow";
 import { MealSlotEditor, useProjectMealPlan } from "@/features/meal-slot";
+import { useProjectWorkflow } from "@/features/project-workflow";
 
 export default function MealPlanWidget() {
   const { projectId, preparationResult } = useProjectWorkflow();
@@ -22,8 +22,8 @@ export default function MealPlanWidget() {
 
         {mealPlan?.meals.map((slot) => (
           <MealSlotEditor
-            key={`${slot.day_number}-${slot.meal_type}`}
-            slotId={`${slot.day_number}-${slot.meal_type}`}
+            key={slot.id}
+            slotId={slot.id}
             mealType={`${slot.meal_type} (day ${slot.day_number})`}
             dishes={slot.dishes.map((dish) => ({
               id: dish.dish_id,
