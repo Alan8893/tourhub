@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from app.domain.workflows.purchase_checklist import PurchaseChecklistStatus
+from app.models.meal_plan import MealPlanORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
 from app.models.purchase_list_item import PurchaseListItemORM
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
@@ -21,14 +22,12 @@ class MealPlanPurchasingRefreshService:
         self.checklist_repository = checklist_repository
         self.shopping_service = shopping_service
 
-    def refresh(self, meal_plan) -> None:
+    def refresh(self, meal_plan: MealPlanORM) -> None:
         self._refresh_purchase_list(meal_plan)
         self._refresh_checklist(meal_plan)
 
-    def _refresh_purchase_list(self, meal_plan) -> None:
-        purchase_list = self.purchase_list_repository.get_by_meal_plan_id(
-            str(meal_plan.id)
-        )
+    def _refresh_purchase_list(self, meal_plan: MealPlanORM) -> None:
+        purchase_list = self.purchase_list_repository.get_by_meal_plan_id(str(meal_plan.id))
         if purchase_list is None:
             return
 
@@ -36,9 +35,7 @@ class MealPlanPurchasingRefreshService:
         purchase_list.items.clear()
 
         for item in result.items:
-            product = self.purchase_list_repository.get_product_by_name(
-                item.product_name
-            )
+            product = self.purchase_list_repository.get_product_by_name(item.product_name)
             if product is None:
                 raise ValueError(f"Product not found: {item.product_name}")
 
@@ -54,10 +51,8 @@ class MealPlanPurchasingRefreshService:
                 )
             )
 
-    def _refresh_checklist(self, meal_plan) -> None:
-        checklist = self.checklist_repository.get_by_meal_plan_id(
-            str(meal_plan.id)
-        )
+    def _refresh_checklist(self, meal_plan: MealPlanORM) -> None:
+        checklist = self.checklist_repository.get_by_meal_plan_id(str(meal_plan.id))
         if checklist is None:
             return
 
@@ -73,9 +68,7 @@ class MealPlanPurchasingRefreshService:
         checklist.items.clear()
 
         for item in result.items:
-            product = self.checklist_repository.get_product_by_name(
-                item.product_name
-            )
+            product = self.checklist_repository.get_product_by_name(item.product_name)
             if product is None:
                 raise ValueError(f"Product not found: {item.product_name}")
 
