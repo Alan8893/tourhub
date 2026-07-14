@@ -1,4 +1,5 @@
-import { Button, Card, CardContent, Typography } from "@mui/material";
+import { Alert, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import { useState } from "react";
 
 import { useProjectWorkflow } from "@/features/project-workflow";
 
@@ -7,54 +8,86 @@ import {
   downloadPurchaseDocument,
 } from "../api/documentsApi";
 
-function saveBlob(blob: Blob, filename: string) {
+function saveBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
   link.href = url;
   link.download = filename;
+  document.body.appendChild(link);
   link.click();
+  link.remove();
 
   URL.revokeObjectURL(url);
 }
 
 export default function DocumentsWidget() {
   const { projectId, preparationResult } = useProjectWorkflow();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const ready = Boolean(projectId && preparationResult);
+
+  async function runDownload(action: () => Promise<Blob>, filename: string) {
+    setIsDownloading(true);
+    setError(null);
+
+    try {
+      const blob = await action();
+      saveBlob(blob, filename);
+    } catch {
+      setError("Не удалось сформировать документ. Проверьте данные проекта и повторите попытку.");
+    } finally {
+      setIsDownloading(false);
+    }
+  }
 
   async function handleDownload(format: "pdf" | "excel") {
     if (!projectId) return;
 
-    const blob = await downloadPurchaseDocument(projectId, format);
-    saveBlob(blob, `purchase-${format}`);
+    await runDownload(
+      () => downloadPurchaseDocument(projectId, format),
+      format === "pdf" ? "закупка.pdf" : "закупка.xlsx",
+    );
   }
 
   async function handlePackageDownload() {
     if (!projectId) return;
 
-    const blob = await downloadDocumentPackage(projectId);
-    saveBlob(blob, "project-documents.zip");
+    await runDownload(
+      () => downloadDocumentPackage(projectId),
+      "документы-похода.zip",
+    );
   }
 
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6">Documents</Typography>
+        <Stack spacing={1.5}>
+          <Typography variant="h6">Документы</Typography>
 
-        <Typography>
-          {ready
-            ? `Documents ready for project ${projectId}`
-            : "Generate expedition documents."}
-        </Typography>
+          <Typography>
+            {ready
+              ? "Документы готовы к формированию и скачиванию."
+              : "Сначала завершите подготовку проекта."}
+          </Typography>
 
-        {ready && (
-          <>
-            <Button onClick={() => handleDownload("pdf")}>Export PDF</Button>
-            <Button onClick={() => handleDownload("excel")}>Export Excel</Button>
-            <Button onClick={handlePackageDownload}>Download Package</Button>
-          </>
-        )}
+          {error && <Alert severity="error">{error}</Alert>}
+
+          {ready && (
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <Button disabled={isDownloading} onClick={() => handleDownload("pdf")}>
+                Скачать PDF
+              </Button>
+              <Button disabled={isDownloading} onClick={() => handleDownload("excel")}>
+                Скачать Excel
+              </Button>
+              <Button disabled={isDownloading} onClick={handlePackageDownload}>
+                Скачать пакет
+              </Button>
+            </Stack>
+          )}
+        </Stack>
       </CardContent>
     </Card>
   );
