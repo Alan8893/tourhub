@@ -1,7 +1,7 @@
 """add recipe notes table
 
-Revision ID: e10001
-Revises: c10001
+Revision ID: f10001
+Revises: e10001
 Create Date: 2026-07-13
 """
 
@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "e10001"
-down_revision = "c10001"
+revision = "f10001"
+down_revision = "e10001"
 branch_labels = None
 depends_on = None
 
