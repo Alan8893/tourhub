@@ -26,9 +26,10 @@ function getApiErrorMessage(error: unknown): string {
 interface RecipeNotesSectionProps {
   recipeId: string;
   notes: RecipeNote[];
+  readOnly?: boolean;
 }
 
-export default function RecipeNotesSection({ recipeId, notes }: RecipeNotesSectionProps) {
+export default function RecipeNotesSection({ recipeId, notes, readOnly = false }: RecipeNotesSectionProps) {
   const createMutation = useCreateRecipeNote();
   const updateMutation = useUpdateRecipeNote();
   const deleteMutation = useDeleteRecipeNote();
@@ -67,29 +68,18 @@ export default function RecipeNotesSection({ recipeId, notes }: RecipeNotesSecti
   };
 
   const remove = async (note: RecipeNote) => {
-    if (!window.confirm("Удалить эту заметку?")) {
-      return;
-    }
+    if (!window.confirm("Удалить эту заметку?")) return;
     await deleteMutation.mutateAsync({ recipeId, noteId: note.id });
   };
 
   return (
     <Stack spacing={1.5}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        justifyContent="space-between"
-        alignItems={{ xs: "stretch", sm: "center" }}
-      >
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }}>
         <Typography variant="h6">Заметки</Typography>
-        <Button size="small" variant="contained" onClick={openCreate}>
-          Добавить заметку
-        </Button>
+        {!readOnly && <Button size="small" variant="contained" onClick={openCreate}>Добавить заметку</Button>}
       </Stack>
 
-      {deleteMutation.isError && (
-        <Alert severity="error">{getApiErrorMessage(deleteMutation.error)}</Alert>
-      )}
+      {deleteMutation.isError && <Alert severity="error">{getApiErrorMessage(deleteMutation.error)}</Alert>}
 
       {notes.length === 0 ? (
         <Typography color="text.secondary">Заметок пока нет.</Typography>
@@ -102,17 +92,12 @@ export default function RecipeNotesSection({ recipeId, notes }: RecipeNotesSecti
                 <Chip size="small" variant="outlined" label={`Приоритет ${note.priority}`} />
               </Stack>
               <Typography>{note.text}</Typography>
-              <Stack direction="row" spacing={1} justifyContent="flex-end">
-                <Button size="small" onClick={() => openEdit(note)}>Изменить</Button>
-                <Button
-                  size="small"
-                  color="error"
-                  disabled={deleteMutation.isPending}
-                  onClick={() => void remove(note)}
-                >
-                  Удалить
-                </Button>
-              </Stack>
+              {!readOnly && (
+                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                  <Button size="small" onClick={() => openEdit(note)}>Изменить</Button>
+                  <Button size="small" color="error" disabled={deleteMutation.isPending} onClick={() => void remove(note)}>Удалить</Button>
+                </Stack>
+              )}
             </Stack>
           </Paper>
         ))
