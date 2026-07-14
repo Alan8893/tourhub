@@ -1,8 +1,7 @@
-from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
-
 from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 
 
 class RecipeQueryService:
