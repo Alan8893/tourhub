@@ -7,7 +7,8 @@ export function useGenerateMealPlan() {
 
   return useMutation({
     mutationFn: generateProjectMealPlan,
-    onSuccess: (_, projectId) => {
+    onSuccess: (mealPlan, projectId) => {
+      queryClient.setQueryData(["meal-plan", projectId], mealPlan);
       queryClient.invalidateQueries({
         queryKey: ["project", projectId],
       });
