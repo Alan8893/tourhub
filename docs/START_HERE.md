@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This document is the entry point for any new developer, AI agent, or new chat session.
+This document is the entry point for every developer, AI agent, and new chat session.
 
-Before starting work, read this document and all linked documentation.
+Before starting work, read this document and the required linked documentation.
 
 ---
 
@@ -16,7 +16,9 @@ Responsible for:
 
 - business decisions;
 - feature priorities;
-- final approval of architectural changes.
+- changes to MVP scope;
+- approval of technology stack changes;
+- final product acceptance.
 
 ## Development Agent
 
@@ -26,7 +28,10 @@ Works as:
 - Software Architect;
 - Backend Engineer;
 - Frontend Engineer;
-- Code Reviewer.
+- Code Reviewer;
+- Documentation Maintainer.
+
+The Development Agent may independently implement, review, document, and merge technical changes that remain inside the approved product model and technology stack.
 
 ---
 
@@ -34,12 +39,17 @@ Works as:
 
 Priority order:
 
-1. Repository code.
-2. Documentation in docs/.
-3. ADR decisions.
-4. Active tasks.
+1. Accepted product decisions in `docs/PRODUCT_SPEC.md`.
+2. Repository code and executable tests.
+3. `docs/PROJECT_STATUS.md`.
+4. Architecture and domain documentation.
+5. Accepted ADR decisions.
+6. Current active task.
+7. Roadmap documents.
 
-Never invent missing requirements.
+Never invent missing business requirements.
+
+When code and documentation disagree, stop feature work, determine the implemented behavior, and synchronize the documentation before closing the task.
 
 ---
 
@@ -47,15 +57,32 @@ Never invent missing requirements.
 
 Before any implementation:
 
-1. docs/START_HERE.md
-2. docs/PROJECT_CONTEXT.md
-3. docs/ARCHITECTURE.md
-4. docs/DOMAIN.md
-5. docs/DEVELOPMENT_RULES.md
-6. docs/architecture/DOMAIN_BOUNDARIES.md
-7. Relevant ADR documents
-8. Current task from docs/tasks/
-9. Roadmap documents
+1. `docs/START_HERE.md`
+2. `docs/PRODUCT_SPEC.md`
+3. `docs/PROJECT_STATUS.md`
+4. `docs/PROJECT_CONTEXT.md`
+5. `docs/ARCHITECTURE.md`
+6. `docs/DOMAIN.md`
+7. `docs/DEVELOPMENT_RULES.md`
+8. `docs/architecture/DOMAIN_BOUNDARIES.md`
+9. Relevant ADR documents
+10. Current task from `docs/tasks/active/`
+11. `docs/CURRENT_ROADMAP.md`
+12. `docs/TECH_DEBT.md` when the task affects stabilization or quality
+
+---
+
+# Product Boundaries
+
+TourHub is a local ERP system for one tourist club.
+
+- One installation represents one club.
+- Multi-tenant support is out of scope.
+- The application is designed for a closed local environment.
+- Registration is invitation-only.
+- MVP roles are Administrator, Instructor, and Verified Instructor.
+- Alcohol is prohibited without exceptions.
+- Participant personal profiles are a future module; MVP calculations use participant count only.
 
 ---
 
@@ -66,9 +93,12 @@ TourHub uses:
 - Modular Monolith;
 - Feature First;
 - Vertical Slice Architecture;
-- Clean Architecture principles.
+- Clean Architecture principles;
+- evolutionary migrations for existing data models.
 
-The system is designed for long-term modular expansion.
+Frontend contains UI and client state only. Business rules belong to backend domains, services, and engines.
+
+Technology stack changes require Product Owner approval. Microservices are prohibited.
 
 ---
 
@@ -96,43 +126,58 @@ Documentation update
 
 ↓
 
+Technical review
+
+↓
+
+Pull Request
+
+↓
+
+Merge
+
+↓
+
 Move task to closed
 
 ↓
 
-Review roadmap
+Update project status, roadmap, and technical debt
 
 ↓
 
-Create next active task
+Create or activate the next task
+
+A task is not closed merely because code has been written or committed.
 
 ---
 
-# Current Product Direction
+# Definition of Done
 
-TourHub is an internal ERP system for one tourist club.
+A task may be closed only when:
 
-One system instance represents one club.
-
-Future modules may include:
-
-- Participants;
-- Logistics;
-- Routes;
-- Equipment.
-
-Modules are activated and developed independently.
+- all acceptance criteria are satisfied;
+- relevant backend tests pass;
+- relevant frontend checks pass;
+- migrations are valid when persistence changed;
+- no temporary code or TODO remains in task scope;
+- public API contracts are verified;
+- documentation matches the implementation;
+- task status and roadmap are updated;
+- known remaining work is recorded as a separate task or technical debt item.
 
 ---
 
 # Important Rules
 
-- Documentation first.
+- Documentation first and documentation with code.
 - Architecture changes require ADR.
-- One logical task = one commit.
+- One logical task should produce one squash commit in `main`.
 - Existing modules must not be broken by new modules.
-- Frontend contains UI only.
-- Business logic belongs to backend domains and engines.
+- Technical fixes may be merged autonomously after successful verification.
+- Product model, MVP boundaries, and stack changes require Product Owner approval.
+- No paid services for MVP.
+- All runtime services remain local.
 
 ---
 
@@ -142,8 +187,8 @@ Use:
 
 "I am Product Owner.
 
-You work as CTO, Software Architect, Backend Engineer, Frontend Engineer and Code Reviewer.
+You work as CTO, Software Architect, Backend Engineer, Frontend Engineer, Code Reviewer, and Documentation Maintainer.
 
 You have access to the repository.
 
-Before starting, read docs/START_HERE.md and all required linked documentation."
+Before starting, read `docs/START_HERE.md` and all mandatory linked documentation. Continue from the current active task and do not reopen closed tasks without evidence of a regression."
