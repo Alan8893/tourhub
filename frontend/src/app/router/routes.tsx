@@ -1,8 +1,9 @@
 import { Navigate, RouteObject } from "react-router-dom";
 
 import AppLayout from "../layout/AppLayout";
-import ProjectWorkspacePage from "../../pages/ProjectWorkspacePage";
 import CreateProjectPage from "../../pages/CreateProjectPage";
+import ProjectWorkspacePage from "../../pages/ProjectWorkspacePage";
+import RecipesPage from "../../pages/RecipesPage";
 
 export const routes: RouteObject[] = [
   {
@@ -23,6 +24,14 @@ export const routes: RouteObject[] = [
       {
         path: "/projects/:id",
         element: <ProjectWorkspacePage />,
+      },
+      {
+        path: "/recipes",
+        element: <RecipesPage />,
+      },
+      {
+        path: "/recipes/:id",
+        element: <RecipesPage />,
       },
       {
         path: "/login",
