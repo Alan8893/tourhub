@@ -4,7 +4,7 @@ PRODUCTS_CSV = """name;category;unit;package_size
 """
 
 RECIPES_CSV = """recipe_name;product_name;component_type;amount;unit;calculation_type;people_count;note_type;note_text;note_priority
-Походная гречка;Гречка;base;80;gram;per_person;;;Промыть крупу;10
+Походная гречка;Гречка;base;80;gram;per_person;;cooking_tip;Промыть крупу;10
 Походная гречка;Тушёнка;cooking;1;can;package_per_people;4;expedition_tip;Открыть перед подачей;20
 """
 
