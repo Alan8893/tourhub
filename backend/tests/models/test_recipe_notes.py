@@ -14,7 +14,9 @@ def test_recipe_note_model_defaults():
     note = RecipeNoteORM(
         id="note-1",
         recipe_id="recipe-1",
+        type=RecipeNoteType.COOKING_TIP.value,
         text="Add lemon at the end.",
+        priority=100,
     )
 
     assert note.type == RecipeNoteType.COOKING_TIP.value
