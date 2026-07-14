@@ -3,6 +3,7 @@ import { Alert, Card, CardContent, Divider, Stack, Typography } from "@mui/mater
 import { MealSlotEditor } from "@/features/meal-slot";
 import { useProjectMealPlan } from "@/features/meal-plan";
 import type { MealSlot } from "@/features/meal-plan";
+import { getMealPlanViewState } from "@/features/meal-plan/model/mealPlanViewState";
 import { useProjectWorkflow } from "@/features/project-workflow";
 
 const mealTypeLabels: Record<string, string> = {
@@ -15,6 +16,11 @@ const mealTypeLabels: Record<string, string> = {
 export default function MealPlanWidget() {
   const { projectId } = useProjectWorkflow();
   const { data: mealPlan, isError, isLoading } = useProjectMealPlan(projectId);
+  const viewState = getMealPlanViewState({
+    isLoading,
+    isError,
+    hasMealPlan: Boolean(mealPlan),
+  });
 
   const groupedMeals = (mealPlan?.meals ?? []).reduce<Record<number, MealSlot[]>>(
     (acc, slot) => {
@@ -33,15 +39,15 @@ export default function MealPlanWidget() {
         <Stack spacing={2}>
           <Typography variant="h6">Меню похода</Typography>
 
-          {isLoading && <Typography>Загрузка меню…</Typography>}
+          {viewState === "loading" && <Typography>Загрузка меню…</Typography>}
 
-          {isError && (
+          {viewState === "error" && (
             <Alert severity="error">
               Не удалось загрузить меню из-за ошибки сервера. Обновите страницу и повторите попытку.
             </Alert>
           )}
 
-          {!isLoading && !isError && !mealPlan && (
+          {viewState === "empty" && (
             <Typography variant="body2" color="text.secondary">
               Меню ещё не сформировано. Нажмите «Сформировать меню» в блоке следующего действия.
             </Typography>
