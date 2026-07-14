@@ -63,8 +63,8 @@ class CatalogImportService:
             product_rows, errors = self._parse_products(content)
             existing = self._existing_product_names()
             skipped = sum(
-                row.name.casefold() in existing
-                for row in product_rows
+                product_row.name.casefold() in existing
+                for product_row in product_rows
             )
             return CatalogImportResult(
                 kind="products",
@@ -77,7 +77,10 @@ class CatalogImportService:
 
         recipe_rows, errors = self._parse_recipes(content)
         existing_recipes = self._existing_recipe_names()
-        recipe_names = {row.recipe_name.casefold() for row in recipe_rows}
+        recipe_names = {
+            recipe_row.recipe_name.casefold()
+            for recipe_row in recipe_rows
+        }
         for name in sorted(recipe_names & existing_recipes):
             errors.append(
                 CatalogImportError(
@@ -87,19 +90,24 @@ class CatalogImportService:
                 )
             )
         product_names = self._existing_product_names()
-        for row in recipe_rows:
-            if row.product_name.casefold() not in product_names:
+        for recipe_row in recipe_rows:
+            if recipe_row.product_name.casefold() not in product_names:
                 errors.append(
                     CatalogImportError(
-                        row=row.row,
+                        row=recipe_row.row,
                         field="product_name",
-                        message=f"Продукт не найден: {row.product_name}",
+                        message=f"Продукт не найден: {recipe_row.product_name}",
                     )
                 )
         note_keys = {
-            (row.recipe_name.casefold(), row.note_type, row.note_text, row.note_priority)
-            for row in recipe_rows
-            if row.note_text
+            (
+                recipe_row.recipe_name.casefold(),
+                recipe_row.note_type,
+                recipe_row.note_text,
+                recipe_row.note_priority,
+            )
+            for recipe_row in recipe_rows
+            if recipe_row.note_text
         }
         return CatalogImportResult(
             kind="recipes",
@@ -121,16 +129,16 @@ class CatalogImportService:
             if kind == "products":
                 product_rows, _ = self._parse_products(content)
                 existing = self._existing_product_names()
-                for row in product_rows:
-                    if row.name.casefold() in existing:
+                for product_row in product_rows:
+                    if product_row.name.casefold() in existing:
                         continue
                     self.session.add(
                         ProductORM(
                             id=str(uuid4()),
-                            name=row.name,
-                            category=row.category,
-                            unit=row.unit,
-                            package_size=row.package_size,
+                            name=product_row.name,
+                            category=product_row.category,
+                            unit=product_row.unit,
+                            package_size=product_row.package_size,
                         )
                     )
                 self.session.commit()
@@ -143,34 +151,37 @@ class CatalogImportService:
             }
             recipes: dict[str, RecipeORM] = {}
             notes: set[tuple[str, str, str, int]] = set()
-            for row in recipe_rows:
-                recipe_key = row.recipe_name.casefold()
+            for recipe_row in recipe_rows:
+                recipe_key = recipe_row.recipe_name.casefold()
                 recipe = recipes.get(recipe_key)
                 if recipe is None:
-                    recipe = RecipeORM(id=str(uuid4()), name=row.recipe_name)
+                    recipe = RecipeORM(
+                        id=str(uuid4()),
+                        name=recipe_row.recipe_name,
+                    )
                     recipes[recipe_key] = recipe
                     self.session.add(recipe)
 
-                product = products[row.product_name.casefold()]
+                product = products[recipe_row.product_name.casefold()]
                 self.session.add(
                     RecipeComponentORM(
                         id=str(uuid4()),
                         recipe_id=recipe.id,
                         product_id=product.id,
-                        component_type=row.component_type,
-                        amount=row.amount,
-                        unit=row.unit,
-                        calculation_type=row.calculation_type,
-                        people_count=row.people_count,
+                        component_type=recipe_row.component_type,
+                        amount=recipe_row.amount,
+                        unit=recipe_row.unit,
+                        calculation_type=recipe_row.calculation_type,
+                        people_count=recipe_row.people_count,
                     )
                 )
 
-                if row.note_text and row.note_type:
+                if recipe_row.note_text and recipe_row.note_type:
                     note_key = (
                         recipe.id,
-                        row.note_type,
-                        row.note_text,
-                        row.note_priority,
+                        recipe_row.note_type,
+                        recipe_row.note_text,
+                        recipe_row.note_priority,
                     )
                     if note_key not in notes:
                         notes.add(note_key)
@@ -178,9 +189,9 @@ class CatalogImportService:
                             RecipeNoteORM(
                                 id=str(uuid4()),
                                 recipe_id=recipe.id,
-                                type=row.note_type,
-                                text=row.note_text,
-                                priority=row.note_priority,
+                                type=recipe_row.note_type,
+                                text=recipe_row.note_text,
+                                priority=recipe_row.note_priority,
                             )
                         )
             self.session.commit()
