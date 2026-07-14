@@ -1,104 +1,61 @@
+from app.engines.packaging import PackagedShoppingResult
+from app.engines.shopping_list import ShoppingListResult
 from app.models.meal_plan import MealPlanORM
-
-from app.services.shopping_list_service import (
-    ShoppingListService,
-)
-
-from app.engines.shopping_list import (
-    ShoppingListResult,
-)
-
-from app.engines.packaging import (
-    PackagedShoppingResult,
-)
+from app.services.shopping_list_service import ShoppingListService
 
 
 class MealPlanShoppingService:
-    """
-    Generates shopping list from meal plan.
+    """Calculate shopping requirements from the current meal-plan composition."""
 
-    Responsibility:
-
-    MealPlan
-        ↓
-    collect recipes
-        ↓
-    ShoppingListService
-        ↓
-    ShoppingListResult
-    """
-
-    def __init__(
-        self,
-        shopping_list_service: ShoppingListService,
-    ):
+    def __init__(self, shopping_list_service: ShoppingListService):
         self.shopping_list_service = shopping_list_service
 
-    def calculate(
-        self,
-        meal_plan: MealPlanORM,
-    ) -> ShoppingListResult:
-        recipes = self._collect_recipes(meal_plan)
+    def calculate(self, meal_plan: MealPlanORM) -> ShoppingListResult:
+        recipes = self._collect_recipe_occurrences(meal_plan)
 
         return self.shopping_list_service.calculate_for_recipes(
             recipes=recipes,
             people=meal_plan.participants,
-            days=meal_plan.days_count,
+            # Recipe occurrences already encode the exact trip-day frequency.
+            days=1,
         )
 
-    def calculate_packaged(
-        self,
-        meal_plan: MealPlanORM,
-    ) -> PackagedShoppingResult:
-        recipes = self._collect_recipes(meal_plan)
+    def calculate_packaged(self, meal_plan: MealPlanORM) -> PackagedShoppingResult:
+        recipes = self._collect_recipe_occurrences(meal_plan)
 
         return self.shopping_list_service.calculate_packaged_for_recipes(
             recipes=recipes,
             people=meal_plan.participants,
-            days=meal_plan.days_count,
+            # Recipe occurrences already encode the exact trip-day frequency.
+            days=1,
         )
 
-    def _collect_recipes(
-        self,
-        meal_plan: MealPlanORM,
-    ) -> list:
-        """
-        Collect unique recipes from meal plan.
+    def _collect_recipe_occurrences(self, meal_plan: MealPlanORM) -> list:
+        """Collect one recipe entry for every dish occurrence in the menu.
 
-        New source:
-            MealSlot -> MealSlotDish -> Dish -> Recipe
-
-        Legacy fallback:
-            MealPlanItem -> Dish -> Recipe
+        MealSlot is the canonical composition source. Legacy MealPlanItem records
+        are read only for days without slots, preventing double counting during
+        the evolutionary migration.
         """
 
         recipes = []
-        seen_recipe_ids = set()
-
-        def add_recipe(recipe):
-            if not recipe:
-                return
-
-            if recipe.id in seen_recipe_ids:
-                return
-
-            seen_recipe_ids.add(recipe.id)
-            recipes.append(recipe)
 
         for day in meal_plan.days:
-            # New MealSlot based composition
-            for slot in day.slots:
-                for slot_dish in slot.dishes:
-                    if not slot_dish.dish:
-                        continue
+            if day.slots:
+                for slot in day.slots:
+                    for slot_dish in slot.dishes:
+                        dish = slot_dish.dish
+                        if dish and dish.recipe:
+                            recipes.append(dish.recipe)
+                continue
 
-                    add_recipe(slot_dish.dish.recipe)
-
-            # Legacy compatibility
             for item in day.items:
-                if not item.dish:
-                    continue
-
-                add_recipe(item.dish.recipe)
+                if item.dish and item.dish.recipe:
+                    recipes.append(item.dish.recipe)
 
         return recipes
+
+    # Compatibility for existing callers and tests while the old private name is
+    # phased out. It now returns occurrences rather than unique recipes.
+    def _collect_recipes(self, meal_plan: MealPlanORM) -> list:
+        return self._collect_recipe_occurrences(meal_plan)
