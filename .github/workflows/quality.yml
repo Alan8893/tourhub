@@ -37,6 +37,7 @@ jobs:
           python -m ruff check \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
+            app/services/meal_slot_service.py \
             app/services/project_participant_recalculation_service.py \
             app/services/project_preparation_service.py \
             app/services/purchase_list_service.py \
@@ -49,6 +50,7 @@ jobs:
           python -m mypy \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
+            app/services/meal_slot_service.py \
             app/services/project_participant_recalculation_service.py \
             app/services/project_preparation_service.py \
             app/services/purchase_list_service.py \
