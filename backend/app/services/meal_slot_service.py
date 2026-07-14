@@ -1,5 +1,6 @@
 from uuid import uuid4
 
+from app.models.meal_slot import MealSlotORM
 from app.models.meal_slot_dish import MealSlotDishORM
 
 
@@ -11,7 +12,7 @@ class MealSlotService:
     Legacy MealPlanItem remains untouched.
     """
 
-    def add_dish(self, slot, dish_id: str):
+    def add_dish(self, slot: MealSlotORM, dish_id: str) -> MealSlotDishORM:
         item = MealSlotDishORM(
             id=str(uuid4()),
             slot=slot,
@@ -24,7 +25,7 @@ class MealSlotService:
         # the same object twice.
         return item
 
-    def remove_dish(self, slot, slot_dish_id: str):
+    def remove_dish(self, slot: MealSlotORM, slot_dish_id: str) -> MealSlotORM:
         item = next(
             (dish for dish in slot.dishes if dish.id == slot_dish_id),
             None,
@@ -39,7 +40,12 @@ class MealSlotService:
 
         return slot
 
-    def replace_dish(self, slot, slot_dish_id: str, new_dish_id: str):
+    def replace_dish(
+        self,
+        slot: MealSlotORM,
+        slot_dish_id: str,
+        new_dish_id: str,
+    ) -> MealSlotDishORM:
         for item in slot.dishes:
             if item.id == slot_dish_id:
                 item.dish_id = new_dish_id
