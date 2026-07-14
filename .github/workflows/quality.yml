@@ -36,6 +36,7 @@ jobs:
         run: |
           python -m ruff check \
             app/core/exceptions.py \
+            app/services/dish_service.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
             app/services/meal_slot_service.py \
@@ -46,6 +47,7 @@ jobs:
             app/services/recipe_query_service.py \
             app/services/recipe_command_service.py \
             app/services/recipe_note_service.py \
+            app/modules/api/dish_router.py \
             app/modules/api/meal_slot_router.py \
             app/modules/api/recipe_router.py \
             app/modules/api/recipe_note_router.py \
@@ -56,6 +58,7 @@ jobs:
         run: |
           python -m mypy \
             app/core/exceptions.py \
+            app/services/dish_service.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
             app/services/meal_slot_service.py \
@@ -66,6 +69,7 @@ jobs:
             app/services/recipe_query_service.py \
             app/services/recipe_command_service.py \
             app/services/recipe_note_service.py \
+            app/modules/api/dish_router.py \
             app/modules/api/meal_slot_router.py \
             app/modules/api/recipe_router.py \
             app/modules/api/recipe_note_router.py \
