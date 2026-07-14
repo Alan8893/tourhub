@@ -2,16 +2,23 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.modules.projects.repositories.project_repository import ProjectRepository
+from app.modules.projects.schemas import (
+    ProjectCreateRequest,
+    ProjectParticipantsUpdateRequest,
+    ProjectResponse,
+)
+from app.modules.projects.service import ProjectService
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
-from app.modules.projects.repositories.project_repository import ProjectRepository
-from app.modules.projects.schemas import ProjectCreateRequest, ProjectResponse
-from app.modules.projects.service import ProjectService
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
-from app.services.project_preparation_service import ProjectPreparationService
 from app.services.project_document_package_service import ProjectDocumentPackageService
 from app.services.project_document_service import ProjectDocumentService
+from app.services.project_participant_recalculation_service import (
+    ProjectParticipantRecalculationService,
+)
+from app.services.project_preparation_service import ProjectPreparationService
 from app.services.purchase_checklist_service import PurchaseChecklistService
 from app.services.purchase_list_service import PurchaseListService
 from app.services.shopping_list_service import ShoppingListService
@@ -31,7 +38,7 @@ def create_project(request: ProjectCreateRequest, db: Session = Depends(get_db))
             last_meal=request.last_meal,
         )
     except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error))
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
     return ProjectResponse(**project.__dict__)
 
@@ -41,7 +48,37 @@ def get_project(project_id: int, db: Session = Depends(get_db)) -> ProjectRespon
     try:
         return ProjectService(ProjectRepository(db)).get_project(project_id)
     except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error))
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.patch("/{project_id}/participants", response_model=ProjectResponse)
+def update_project_participants(
+    project_id: int,
+    request: ProjectParticipantsUpdateRequest,
+    db: Session = Depends(get_db),
+) -> ProjectResponse:
+    service = ProjectParticipantRecalculationService(
+        db,
+        MealPlanShoppingService(ShoppingListService(db)),
+    )
+
+    try:
+        project = service.update_participants(project_id, request.participants)
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        participants=project.participants,
+        days=project.days,
+        start_date=project.start_date,
+        first_meal=project.first_meal,
+        last_meal=project.last_meal,
+        status=project.status,
+    )
 
 
 @router.post("/{project_id}/prepare")
@@ -70,12 +107,16 @@ def prepare_project(project_id: int, db: Session = Depends(get_db)):
         return preparation_service.prepare_project(project)
     except ValueError as error:
         if str(error) == "Meal plan not found":
-            raise HTTPException(status_code=404, detail=str(error))
-        raise HTTPException(status_code=400, detail=str(error))
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.get("/{project_id}/documents/purchase/{format}")
-def generate_purchase_document(project_id: int, format: str, db: Session = Depends(get_db)) -> Response:
+def generate_purchase_document(
+    project_id: int,
+    format: str,
+    db: Session = Depends(get_db),
+) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
