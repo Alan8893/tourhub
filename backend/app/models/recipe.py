@@ -1,4 +1,4 @@
-from sqlalchemy import String
+from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -17,13 +17,20 @@ class RecipeORM(Base):
 
     id: Mapped[str] = mapped_column(
         String,
-        primary_key=True
+        primary_key=True,
     )
 
     name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
-        unique=True
+        unique=True,
+    )
+
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
     )
 
     ingredients = relationship(
