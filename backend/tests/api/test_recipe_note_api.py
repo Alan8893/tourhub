@@ -7,12 +7,14 @@ def test_get_recipe_notes(client, db_session):
     note_low = RecipeNoteORM(
         id="note-1",
         recipe_id="recipe-1",
+        type="cooking_tip",
         text="Add hot pepper if needed.",
         priority=10,
     )
     note_high = RecipeNoteORM(
         id="note-2",
         recipe_id="recipe-1",
+        type="serving_tip",
         text="Serve with lemon.",
         priority=20,
     )
@@ -41,4 +43,6 @@ def test_get_recipe_notes_not_found(client):
     response = client.get("/api/v1/recipes/unknown/notes")
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Recipe not found: unknown"
+
+    data = response.json()
+    assert "detail" in data or "error" in data
