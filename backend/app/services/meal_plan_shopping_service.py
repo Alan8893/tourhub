@@ -1,3 +1,5 @@
+from typing import Any
+
 from app.engines.packaging import PackagedShoppingResult
 from app.engines.shopping_list import ShoppingListResult
 from app.models.meal_plan import MealPlanORM
@@ -30,15 +32,14 @@ class MealPlanShoppingService:
             days=1,
         )
 
-    def _collect_recipe_occurrences(self, meal_plan: MealPlanORM) -> list:
+    def _collect_recipe_occurrences(self, meal_plan: MealPlanORM) -> list[Any]:
         """Collect one recipe entry for every dish occurrence in the menu.
 
         MealSlot is the canonical composition source. Legacy MealPlanItem records
         are read only for days without slots, preventing double counting during
         the evolutionary migration.
         """
-
-        recipes = []
+        recipes: list[Any] = []
 
         for day in meal_plan.days:
             if day.slots:
@@ -57,5 +58,5 @@ class MealPlanShoppingService:
 
     # Compatibility for existing callers and tests while the old private name is
     # phased out. It now returns occurrences rather than unique recipes.
-    def _collect_recipes(self, meal_plan: MealPlanORM) -> list:
+    def _collect_recipes(self, meal_plan: MealPlanORM) -> list[Any]:
         return self._collect_recipe_occurrences(meal_plan)
