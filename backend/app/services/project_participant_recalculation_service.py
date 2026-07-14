@@ -1,14 +1,12 @@
-from uuid import uuid4
-
 from sqlalchemy.orm import Session
 
-from app.domain.workflows.purchase_checklist import PurchaseChecklistStatus
-from app.models.purchase_checklist_item import PurchaseChecklistItemORM
-from app.models.purchase_list_item import PurchaseListItemORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.services.meal_plan_purchasing_refresh_service import (
+    MealPlanPurchasingRefreshService,
+)
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
 
 
@@ -26,6 +24,11 @@ class ProjectParticipantRecalculationService:
         self.meal_plan_repository = MealPlanRepository(session)
         self.purchase_list_repository = PurchaseListRepository(session)
         self.checklist_repository = PurchaseChecklistRepository(session)
+        self.purchasing_refresh_service = MealPlanPurchasingRefreshService(
+            self.purchase_list_repository,
+            self.checklist_repository,
+            self.shopping_service,
+        )
 
     def update_participants(self, project_id: int, participants: int):
         if participants <= 0:
@@ -46,86 +49,8 @@ class ProjectParticipantRecalculationService:
                 raise LookupError("Meal plan not found")
 
             detailed_meal_plan.participants = participants
-            self._refresh_purchase_list(detailed_meal_plan)
-            self._refresh_checklist(detailed_meal_plan)
+            self.purchasing_refresh_service.refresh(detailed_meal_plan)
 
         self.session.commit()
         self.session.refresh(project)
         return project
-
-    def _refresh_purchase_list(self, meal_plan) -> None:
-        purchase_list = self.purchase_list_repository.get_by_meal_plan_id(
-            str(meal_plan.id)
-        )
-        if purchase_list is None:
-            return
-
-        result = self.shopping_service.calculate_packaged(meal_plan)
-        purchase_list.items.clear()
-
-        for item in result.items:
-            product = self.purchase_list_repository.get_product_by_name(
-                item.product_name
-            )
-            if product is None:
-                raise ValueError(f"Product not found: {item.product_name}")
-
-            purchase_list.items.append(
-                PurchaseListItemORM(
-                    id=str(uuid4()),
-                    product_id=product.id,
-                    required_quantity=item.amount,
-                    required_unit=item.unit,
-                    package_size=item.package_size,
-                    package_unit=item.unit,
-                    packages_count=item.packages,
-                )
-            )
-
-    def _refresh_checklist(self, meal_plan) -> None:
-        checklist = self.checklist_repository.get_by_meal_plan_id(
-            str(meal_plan.id)
-        )
-        if checklist is None:
-            return
-
-        previous_state = {
-            item.product_id: (
-                item.purchased_quantity,
-                item.is_checked,
-                item.note,
-            )
-            for item in checklist.items
-        }
-        result = self.shopping_service.calculate(meal_plan)
-        checklist.items.clear()
-
-        for item in result.items:
-            product = self.checklist_repository.get_product_by_name(
-                item.product_name
-            )
-            if product is None:
-                raise ValueError(f"Product not found: {item.product_name}")
-
-            purchased_quantity, is_checked, note = previous_state.get(
-                product.id,
-                (0, False, None),
-            )
-            checklist.items.append(
-                PurchaseChecklistItemORM(
-                    id=str(uuid4()),
-                    product_id=product.id,
-                    required_quantity=item.amount,
-                    purchased_quantity=purchased_quantity,
-                    unit=item.unit,
-                    is_checked=is_checked,
-                    note=note,
-                )
-            )
-
-        if checklist.items and all(item.is_checked for item in checklist.items):
-            checklist.status = PurchaseChecklistStatus.COMPLETED.value
-        elif any(item.is_checked for item in checklist.items):
-            checklist.status = PurchaseChecklistStatus.IN_PROGRESS.value
-        else:
-            checklist.status = PurchaseChecklistStatus.DRAFT.value
