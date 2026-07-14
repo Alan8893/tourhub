@@ -99,12 +99,12 @@ Completed:
 - rollback and commit behavior covered by backend regression tests;
 - MealSlot application service typed and added to the enforced Ruff and mypy workflow baseline;
 - PostgreSQL custom-format backup and restore procedures documented for Bash and PowerShell;
-- CI backup/restore smoke test added against the PostgreSQL 18 Compose service.
+- CI backup/restore smoke test added against the PostgreSQL 18 Compose service;
+- frontend dependency audit tightened to moderate severity and the current lockfile verified clean at that threshold.
 
 Remaining:
 
 - extend recalculation verification to the future equipment pipeline when equipment persistence is implemented;
-- resolve the reported frontend dependency vulnerability;
 - continue expanding Ruff and mypy from the stabilized workflow baseline to the agreed repository baseline;
 - expand frontend tests to responsive workflows and higher-level interaction coverage;
 - extend CI with the remaining agreed release gates;
