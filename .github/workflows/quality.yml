@@ -66,7 +66,9 @@ jobs:
           path: backend/ruff-output.txt
 
       - name: Mypy typed workflow baseline
+        shell: bash
         run: |
+          set -o pipefail
           python -m mypy \
             app/core/exceptions.py \
             app/services/catalog_import_service.py \
@@ -86,7 +88,14 @@ jobs:
             app/modules/api/meal_slot_router.py \
             app/modules/api/recipe_router.py \
             app/modules/api/recipe_note_router.py \
-            app/modules/api/product_router.py
+            app/modules/api/product_router.py 2>&1 | tee mypy-output.txt
+
+      - name: Upload mypy diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-import-mypy
+          path: backend/mypy-output.txt
 
       - name: Backend tests
         run: python -m pytest -q
