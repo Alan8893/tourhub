@@ -1,6 +1,7 @@
 import { Navigate, RouteObject } from "react-router-dom";
 
 import AppLayout from "../layout/AppLayout";
+import CatalogImportPage from "../../pages/CatalogImportPage";
 import CreateProjectPage from "../../pages/CreateProjectPage";
 import DishesPage from "../../pages/DishesPage";
 import ProjectsPage from "../../pages/ProjectsPage";
@@ -19,6 +20,7 @@ export const routes: RouteObject[] = [
       { path: "/recipes/:id", element: <RecipesPage /> },
       { path: "/dishes", element: <DishesPage /> },
       { path: "/dishes/:id", element: <DishesPage /> },
+      { path: "/catalog-import", element: <CatalogImportPage /> },
       { path: "/login", element: <div>Login</div> },
       { path: "/dashboard", element: <div>Dashboard</div> },
     ],
