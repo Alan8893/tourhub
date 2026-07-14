@@ -72,14 +72,7 @@ jobs:
             app/modules/api/product_router.py
 
       - name: Backend tests
-        run: set -o pipefail; python -m pytest -q 2>&1 | tee pytest-output.txt
-
-      - name: Upload pytest diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: recipe-archive-pytest
-          path: backend/pytest-output.txt
+        run: python -m pytest -q
 
       - name: Validate Alembic single head
         run: |
