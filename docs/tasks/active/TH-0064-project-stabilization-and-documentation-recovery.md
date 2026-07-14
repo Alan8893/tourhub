@@ -97,7 +97,9 @@ Completed:
 - successful MealSlot and participant-count purchasing recalculation covered by API tests;
 - failed MealSlot and participant-count recalculation now explicitly rolls back the database transaction;
 - rollback and commit behavior covered by backend regression tests;
-- MealSlot application service typed and added to the enforced Ruff and mypy workflow baseline.
+- MealSlot application service typed and added to the enforced Ruff and mypy workflow baseline;
+- PostgreSQL custom-format backup and restore procedures documented for Bash and PowerShell;
+- CI backup/restore smoke test added against the PostgreSQL 18 Compose service.
 
 Remaining:
 
@@ -106,5 +108,4 @@ Remaining:
 - continue expanding Ruff and mypy from the stabilized workflow baseline to the agreed repository baseline;
 - expand frontend tests to responsive workflows and higher-level interaction coverage;
 - extend CI with the remaining agreed release gates;
-- verify and document PostgreSQL backup and restore;
 - complete final legacy-document reconciliation before closing TH-0064.
