@@ -9,15 +9,14 @@ class RecipeQueryService:
     def __init__(self, session: Session):
         self.session = session
 
-    def list_recipes(self) -> list[RecipeORM]:
-        statement = (
-            select(RecipeORM)
-            .options(
-                selectinload(RecipeORM.components),
-                selectinload(RecipeORM.notes),
-            )
-            .order_by(RecipeORM.name)
+    def list_recipes(self, include_archived: bool = False) -> list[RecipeORM]:
+        statement = select(RecipeORM).options(
+            selectinload(RecipeORM.components),
+            selectinload(RecipeORM.notes),
         )
+        if not include_archived:
+            statement = statement.where(RecipeORM.is_archived.is_(False))
+        statement = statement.order_by(RecipeORM.name)
         return list(self.session.scalars(statement).all())
 
     def get_recipe(self, recipe_id: str) -> RecipeORM:

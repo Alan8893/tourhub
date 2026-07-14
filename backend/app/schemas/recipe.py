@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, model_validator
 class RecipeListItemResponse(BaseModel):
     id: str
     name: str
+    is_archived: bool
     component_count: int = Field(ge=0)
     note_count: int = Field(ge=0)
 
@@ -48,6 +49,7 @@ class RecipeDetailNoteResponse(BaseModel):
 class RecipeDetailResponse(BaseModel):
     id: str
     name: str
+    is_archived: bool
     components: list[RecipeComponentResponse]
     notes: list[RecipeDetailNoteResponse]
 
@@ -78,6 +80,7 @@ class RecipeComponentWriteRequest(BaseModel):
 class RecipeWriteResponse(BaseModel):
     id: str
     name: str
+    is_archived: bool
 
 
 class ProductListResponse(BaseModel):

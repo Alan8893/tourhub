@@ -1,8 +1,10 @@
 from uuid import uuid4
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.models.dish import DishORM
 from app.models.product import ProductORM
 from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
@@ -28,6 +30,30 @@ class RecipeCommandService:
         self._commit()
         self.session.refresh(recipe)
         return recipe
+
+    def archive_recipe(self, recipe_id: str) -> RecipeORM:
+        recipe = self._get_recipe(recipe_id)
+        recipe.is_archived = True
+        self._commit()
+        self.session.refresh(recipe)
+        return recipe
+
+    def restore_recipe(self, recipe_id: str) -> RecipeORM:
+        recipe = self._get_recipe(recipe_id)
+        recipe.is_archived = False
+        self._commit()
+        self.session.refresh(recipe)
+        return recipe
+
+    def delete_recipe(self, recipe_id: str) -> None:
+        recipe = self._get_recipe(recipe_id)
+        linked_dish = self.session.scalar(
+            select(DishORM.id).where(DishORM.recipe_id == recipe_id).limit(1)
+        )
+        if linked_dish is not None:
+            raise ValueError("Recipe is used by a dish and cannot be deleted")
+        self.session.delete(recipe)
+        self._commit()
 
     def add_component(
         self,
