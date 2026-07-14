@@ -5,7 +5,6 @@ from app.core.session import get_session
 from app.repositories.meal_slot_repository import MealSlotRepository
 from app.services.meal_slot_service import MealSlotService
 
-
 router = APIRouter(prefix="/meal-slots", tags=["Meal Slots"])
 
 
@@ -48,7 +47,11 @@ def remove_dish(
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
 
-    service.remove_dish(slot, slot_dish_id)
+    try:
+        service.remove_dish(slot, slot_dish_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
     repository.save(slot)
 
     return {"status": "ok"}
@@ -68,7 +71,11 @@ def replace_dish(
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
 
-    item = service.replace_dish(slot, slot_dish_id, dish_id)
+    try:
+        item = service.replace_dish(slot, slot_dish_id, dish_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
     repository.save(slot)
 
     return {
