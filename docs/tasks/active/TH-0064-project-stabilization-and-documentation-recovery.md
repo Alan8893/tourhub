@@ -93,11 +93,14 @@ Completed:
 - GitHub Actions frontend job extended to run the frontend test baseline before the production build;
 - MealSlot add, replace, and remove commands covered by deterministic frontend tests;
 - MealSlot pending and mutation-error states covered by deterministic frontend tests;
-- MealSlot editing controls localized to Russian and mutation failures surfaced to the user.
+- MealSlot editing controls localized to Russian and mutation failures surfaced to the user;
+- successful MealSlot and participant-count purchasing recalculation covered by API tests;
+- failed MealSlot and participant-count recalculation now explicitly rolls back the database transaction;
+- rollback and commit behavior covered by backend regression tests.
 
 Remaining:
 
-- complete recalculation verification for MealSlot and participant-count changes;
+- extend recalculation verification to the future equipment pipeline when equipment persistence is implemented;
 - resolve the reported frontend dependency vulnerability;
 - expand Ruff and mypy from the stabilized workflow baseline to the agreed repository baseline;
 - expand frontend tests to responsive workflows and higher-level interaction coverage;
