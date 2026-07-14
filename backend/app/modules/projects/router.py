@@ -121,7 +121,9 @@ def generate_purchase_document(
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    service = ProjectDocumentService()
+    service = ProjectDocumentService(
+        purchase_list_repository=PurchaseListRepository(db),
+    )
     generators = {
         "pdf": service.generate_purchase_pdf,
         "excel": service.generate_purchase_excel,
@@ -154,8 +156,11 @@ def generate_project_document_package(project_id: int, db: Session = Depends(get
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    document_service = ProjectDocumentService(
+        purchase_list_repository=PurchaseListRepository(db),
+    )
     try:
-        document = ProjectDocumentPackageService().generate_package(project)
+        document = ProjectDocumentPackageService(document_service).generate_package(project)
     except ValueError as error:
         if str(error) == "Purchase list not found":
             raise HTTPException(
