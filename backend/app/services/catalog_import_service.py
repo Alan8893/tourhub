@@ -163,7 +163,12 @@ class CatalogImportService:
                 )
 
                 if row.note_text and row.note_type:
-                    note_key = (recipe.id, row.note_type, row.note_text, row.note_priority)
+                    note_key = (
+                        recipe.id,
+                        row.note_type,
+                        row.note_text,
+                        row.note_priority,
+                    )
                     if note_key not in notes:
                         notes.add(note_key)
                         self.session.add(
@@ -181,7 +186,10 @@ class CatalogImportService:
             self.session.rollback()
             raise
 
-    def _parse_products(self, content: str) -> tuple[list[ProductRow], list[CatalogImportError]]:
+    def _parse_products(
+        self,
+        content: str,
+    ) -> tuple[list[ProductRow], list[CatalogImportError]]:
         reader, errors = self._reader(content, PRODUCT_HEADERS)
         if reader is None:
             return [], errors
@@ -192,14 +200,37 @@ class CatalogImportService:
             name = (raw.get("name") or "").strip()
             category = (raw.get("category") or "").strip() or None
             unit = (raw.get("unit") or "").strip()
-            package_size = self._positive_int(raw.get("package_size"), row_number, "package_size", errors)
+            package_size = self._positive_int(
+                raw.get("package_size"),
+                row_number,
+                "package_size",
+                errors,
+            )
             if not name:
-                errors.append(CatalogImportError(row=row_number, field="name", message="Название обязательно"))
+                errors.append(
+                    CatalogImportError(
+                        row=row_number,
+                        field="name",
+                        message="Название обязательно",
+                    )
+                )
             if not unit:
-                errors.append(CatalogImportError(row=row_number, field="unit", message="Единица обязательна"))
+                errors.append(
+                    CatalogImportError(
+                        row=row_number,
+                        field="unit",
+                        message="Единица обязательна",
+                    )
+                )
             key = name.casefold()
             if key and key in names:
-                errors.append(CatalogImportError(row=row_number, field="name", message="Дубликат продукта в файле"))
+                errors.append(
+                    CatalogImportError(
+                        row=row_number,
+                        field="name",
+                        message="Дубликат продукта в файле",
+                    )
+                )
             names.add(key)
             if name and unit and package_size is not False:
                 rows.append(
@@ -208,12 +239,17 @@ class CatalogImportService:
                         name=name,
                         category=category,
                         unit=unit,
-                        package_size=package_size if isinstance(package_size, int) else None,
+                        package_size=(
+                            package_size if isinstance(package_size, int) else None
+                        ),
                     )
                 )
         return rows, errors
 
-    def _parse_recipes(self, content: str) -> tuple[list[RecipeRow], list[CatalogImportError]]:
+    def _parse_recipes(
+        self,
+        content: str,
+    ) -> tuple[list[RecipeRow], list[CatalogImportError]]:
         reader, errors = self._reader(content, RECIPE_HEADERS)
         if reader is None:
             return [], errors
@@ -229,9 +265,25 @@ class CatalogImportService:
             calculation_type = (raw.get("calculation_type") or "").strip()
             note_type = (raw.get("note_type") or "").strip() or None
             note_text = (raw.get("note_text") or "").strip() or None
-            amount = self._positive_int(raw.get("amount"), row_number, "amount", errors)
-            people_count = self._positive_int(raw.get("people_count"), row_number, "people_count", errors)
-            note_priority = self._non_negative_int(raw.get("note_priority"), row_number, "note_priority", errors, default=100)
+            amount = self._positive_int(
+                raw.get("amount"),
+                row_number,
+                "amount",
+                errors,
+            )
+            people_count = self._positive_int(
+                raw.get("people_count"),
+                row_number,
+                "people_count",
+                errors,
+            )
+            note_priority = self._non_negative_int(
+                raw.get("note_priority"),
+                row_number,
+                "note_priority",
+                errors,
+                default=100,
+            )
 
             required = {
                 "recipe_name": recipe_name,
@@ -242,17 +294,64 @@ class CatalogImportService:
             }
             for field, value in required.items():
                 if not value:
-                    errors.append(CatalogImportError(row=row_number, field=field, message="Поле обязательно"))
+                    errors.append(
+                        CatalogImportError(
+                            row=row_number,
+                            field=field,
+                            message="Поле обязательно",
+                        )
+                    )
+            if amount is None:
+                errors.append(
+                    CatalogImportError(
+                        row=row_number,
+                        field="amount",
+                        message="Поле обязательно",
+                    )
+                )
             if component_type and component_type not in component_types:
-                errors.append(CatalogImportError(row=row_number, field="component_type", message="Неизвестный тип компонента"))
+                errors.append(
+                    CatalogImportError(
+                        row=row_number,
+                        field="component_type",
+                        message="Неизвестный тип компонента",
+                    )
+                )
             if calculation_type and calculation_type not in CALCULATION_TYPES:
-                errors.append(CatalogImportError(row=row_number, field="calculation_type", message="Неизвестный способ расчёта"))
-            if calculation_type == "package_per_people" and not isinstance(people_count, int):
-                errors.append(CatalogImportError(row=row_number, field="people_count", message="Укажите число человек"))
+                errors.append(
+                    CatalogImportError(
+                        row=row_number,
+                        field="calculation_type",
+                        message="Неизвестный способ расчёта",
+                    )
+                )
+            if calculation_type == "package_per_people" and not isinstance(
+                people_count,
+                int,
+            ):
+                errors.append(
+                    CatalogImportError(
+                        row=row_number,
+                        field="people_count",
+                        message="Укажите число человек",
+                    )
+                )
             if note_text and not note_type:
-                errors.append(CatalogImportError(row=row_number, field="note_type", message="Для заметки укажите тип"))
+                errors.append(
+                    CatalogImportError(
+                        row=row_number,
+                        field="note_type",
+                        message="Для заметки укажите тип",
+                    )
+                )
             if note_type and note_type not in note_types:
-                errors.append(CatalogImportError(row=row_number, field="note_type", message="Неизвестный тип заметки"))
+                errors.append(
+                    CatalogImportError(
+                        row=row_number,
+                        field="note_type",
+                        message="Неизвестный тип заметки",
+                    )
+                )
 
             if (
                 all(required.values())
@@ -272,7 +371,9 @@ class CatalogImportService:
                         amount=amount,
                         unit=unit,
                         calculation_type=calculation_type,
-                        people_count=people_count if isinstance(people_count, int) else None,
+                        people_count=(
+                            people_count if isinstance(people_count, int) else None
+                        ),
                         note_type=note_type,
                         note_text=note_text,
                         note_priority=note_priority,
@@ -319,10 +420,22 @@ class CatalogImportService:
         try:
             parsed = int(value)
         except ValueError:
-            errors.append(CatalogImportError(row=row, field=field, message="Ожидается целое число"))
+            errors.append(
+                CatalogImportError(
+                    row=row,
+                    field=field,
+                    message="Ожидается целое число",
+                )
+            )
             return False
         if parsed <= 0:
-            errors.append(CatalogImportError(row=row, field=field, message="Число должно быть больше нуля"))
+            errors.append(
+                CatalogImportError(
+                    row=row,
+                    field=field,
+                    message="Число должно быть больше нуля",
+                )
+            )
             return False
         return parsed
 
@@ -340,10 +453,22 @@ class CatalogImportService:
         try:
             parsed = int(value)
         except ValueError:
-            errors.append(CatalogImportError(row=row, field=field, message="Ожидается целое число"))
+            errors.append(
+                CatalogImportError(
+                    row=row,
+                    field=field,
+                    message="Ожидается целое число",
+                )
+            )
             return False
         if parsed < 0:
-            errors.append(CatalogImportError(row=row, field=field, message="Число не может быть отрицательным"))
+            errors.append(
+                CatalogImportError(
+                    row=row,
+                    field=field,
+                    message="Число не может быть отрицательным",
+                )
+            )
             return False
         return parsed
 
