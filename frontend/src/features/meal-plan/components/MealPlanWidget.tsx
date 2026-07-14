@@ -2,6 +2,7 @@ import { Card, CardContent, Divider, Stack, Typography } from "@mui/material";
 
 import { MealSlotEditor } from "@/features/meal-slot";
 import { useProjectMealPlan } from "@/features/meal-plan";
+import type { MealSlot } from "@/features/meal-plan";
 import { useProjectWorkflow } from "@/features/project-workflow";
 
 const mealTypeLabels: Record<string, string> = {
@@ -15,7 +16,7 @@ export default function MealPlanWidget() {
   const { projectId, preparationResult } = useProjectWorkflow();
   const { data: mealPlan, isLoading } = useProjectMealPlan(projectId);
 
-  const groupedMeals = (mealPlan?.meals ?? []).reduce<Record<number, typeof mealPlan.meals>>(
+  const groupedMeals = (mealPlan?.meals ?? []).reduce<Record<number, MealSlot[]>>(
     (acc, slot) => {
       if (!acc[slot.day_number]) {
         acc[slot.day_number] = [];
