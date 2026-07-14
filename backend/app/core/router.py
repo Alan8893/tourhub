@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.modules.api.dish_router import router as dish_router
 from app.modules.api.meal_plan_router import router as meal_plan_router
 from app.modules.api.meal_slot_router import router as meal_slot_router
 from app.modules.api.meta_router import router as meta_router
@@ -13,6 +14,7 @@ from app.modules.projects.router import router as project_router
 
 router = APIRouter(prefix="/api/v1")
 
+router.include_router(dish_router)
 router.include_router(meal_plan_router)
 router.include_router(meal_slot_router)
 router.include_router(meta_router)
