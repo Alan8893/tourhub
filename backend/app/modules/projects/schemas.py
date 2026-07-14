@@ -10,6 +10,10 @@ class ProjectCreateRequest(BaseModel):
     last_meal: str | None = None
 
 
+class ProjectParticipantsUpdateRequest(BaseModel):
+    participants: int
+
+
 class ProjectResponse(BaseModel):
     id: int
     name: str
