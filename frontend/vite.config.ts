@@ -1,13 +1,15 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-export function preserveApiPrefix(path: string): string {
-  if (path === "/api" || path.startsWith("/api/")) {
-    return path;
+const preserveApiPrefix = (path: string): string => {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  if (normalizedPath === "/api" || normalizedPath.startsWith("/api/")) {
+    return normalizedPath;
   }
 
-  return `/api${path.startsWith("/") ? path : `/${path}`}`;
-}
+  return `/api${normalizedPath}`;
+};
 
 export default defineConfig({
   plugins: [react()],
