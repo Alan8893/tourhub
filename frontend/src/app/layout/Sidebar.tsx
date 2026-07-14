@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 
 const menuItems = [
   { label: "Проекты", path: "/projects" },
+  { label: "Блюда", path: "/dishes" },
   { label: "Рецепты", path: "/recipes" },
 ];
 
