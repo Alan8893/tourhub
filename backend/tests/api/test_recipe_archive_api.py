@@ -39,6 +39,7 @@ def test_recipe_delete_is_blocked_when_used_by_dish(client, db_session):
     ).json()["id"]
     db_session.add(DishORM(id="dish-linked", name="Блюдо", recipe_id=recipe_id))
     db_session.commit()
+    db_session.close()
 
     response = client.delete(f"/api/v1/recipes/{recipe_id}")
 
