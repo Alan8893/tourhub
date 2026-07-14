@@ -37,6 +37,7 @@ interface RecipeComponentDialogProps {
   isSubmitting: boolean;
   errorMessage: string | null;
   onClose: () => void;
+  onCreateProduct: () => void;
   onSubmit: (input: ReturnType<typeof toRecipeComponentWriteInput>) => void;
 }
 
@@ -47,6 +48,7 @@ export default function RecipeComponentDialog({
   isSubmitting,
   errorMessage,
   onClose,
+  onCreateProduct,
   onSubmit,
 }: RecipeComponentDialogProps) {
   const [draft, setDraft] = useState<RecipeComponentDraft>(initialDraft);
@@ -92,29 +94,34 @@ export default function RecipeComponentDialog({
             <Alert severity="error">{validationError ?? errorMessage}</Alert>
           )}
 
-          <FormControl fullWidth>
-            <InputLabel id="recipe-product-label">Продукт</InputLabel>
-            <Select
-              labelId="recipe-product-label"
-              label="Продукт"
-              value={draft.productId}
-              onChange={(event) => {
-                const productId = event.target.value;
-                const product = products.find((item) => item.id === productId);
-                setDraft((current) => ({
-                  ...current,
-                  productId,
-                  unit: product?.unit ?? current.unit,
-                }));
-              }}
-            >
-              {products.map((product) => (
-                <MenuItem key={product.id} value={product.id}>
-                  {product.name}{product.category ? ` · ${product.category}` : ""}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="stretch">
+            <FormControl fullWidth>
+              <InputLabel id="recipe-product-label">Продукт</InputLabel>
+              <Select
+                labelId="recipe-product-label"
+                label="Продукт"
+                value={draft.productId}
+                onChange={(event) => {
+                  const productId = event.target.value;
+                  const product = products.find((item) => item.id === productId);
+                  setDraft((current) => ({
+                    ...current,
+                    productId,
+                    unit: product?.unit ?? current.unit,
+                  }));
+                }}
+              >
+                {products.map((product) => (
+                  <MenuItem key={product.id} value={product.id}>
+                    {product.name}{product.category ? ` · ${product.category}` : ""}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button variant="outlined" onClick={onCreateProduct} sx={{ whiteSpace: "nowrap" }}>
+              Новый продукт
+            </Button>
+          </Stack>
 
           <FormControl fullWidth>
             <InputLabel id="component-type-label">Роль компонента</InputLabel>
@@ -194,9 +201,7 @@ export default function RecipeComponentDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isSubmitting}>
-          Отмена
-        </Button>
+        <Button onClick={onClose} disabled={isSubmitting}>Отмена</Button>
         <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting}>
           {isSubmitting ? "Сохранение…" : "Сохранить"}
         </Button>

@@ -23,6 +23,13 @@ export interface ProductListResponse {
   items: RecipeProduct[];
 }
 
+export interface ProductWriteInput {
+  name: string;
+  category: string | null;
+  unit: string;
+  package_size: number | null;
+}
+
 export interface RecipeComponent {
   id: string;
   component_type: string;
@@ -39,6 +46,12 @@ export interface RecipeNote {
   text: string;
   priority: number;
   created_at: string;
+}
+
+export interface RecipeNoteWriteInput {
+  type: "cooking_tip" | "expedition_tip" | "serving_tip";
+  text: string;
+  priority: number;
 }
 
 export interface RecipeDetail {
@@ -74,6 +87,11 @@ export async function getRecipe(recipeId: string): Promise<RecipeDetail> {
 
 export async function getProducts(): Promise<ProductListResponse> {
   const response = await apiClient.get<ProductListResponse>("/products");
+  return response.data;
+}
+
+export async function createProduct(input: ProductWriteInput): Promise<RecipeProduct> {
+  const response = await apiClient.post<RecipeProduct>("/products", input);
   return response.data;
 }
 
@@ -115,4 +133,28 @@ export async function deleteRecipeComponent(
   componentId: string,
 ): Promise<void> {
   await apiClient.delete(`/recipes/${recipeId}/components/${componentId}`);
+}
+
+export async function createRecipeNote(
+  recipeId: string,
+  input: RecipeNoteWriteInput,
+): Promise<RecipeNote> {
+  const response = await apiClient.post<RecipeNote>(`/recipes/${recipeId}/notes`, input);
+  return response.data;
+}
+
+export async function updateRecipeNote(
+  recipeId: string,
+  noteId: string,
+  input: RecipeNoteWriteInput,
+): Promise<RecipeNote> {
+  const response = await apiClient.put<RecipeNote>(
+    `/recipes/${recipeId}/notes/${noteId}`,
+    input,
+  );
+  return response.data;
+}
+
+export async function deleteRecipeNote(recipeId: string, noteId: string): Promise<void> {
+  await apiClient.delete(`/recipes/${recipeId}/notes/${noteId}`);
 }
