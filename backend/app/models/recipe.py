@@ -2,6 +2,7 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+from app.models.recipe_note import RecipeNoteORM
 
 
 class RecipeORM(Base):
@@ -41,5 +42,5 @@ class RecipeORM(Base):
         "RecipeNoteORM",
         back_populates="recipe",
         cascade="all, delete-orphan",
-        order_by="RecipeNoteORM.priority",
+        order_by=RecipeNoteORM.priority,
     )
