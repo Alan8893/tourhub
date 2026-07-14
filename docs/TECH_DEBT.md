@@ -89,6 +89,20 @@ Record safe actor/action/time metadata for projects, menus, recipes, publication
 
 Provide tested PostgreSQL backup and restore scripts and local operations documentation.
 
+### TD-017 — Meal plan editor UX
+
+Redesign the functional but cramped MealSlot editor before final MVP UI acceptance. The tracked task is `TH-0065`.
+
+Required improvements:
+
+- fully Russian labels and placeholders;
+- compact dish rows with clear add, replace, and remove hierarchy;
+- domain-order meal sorting instead of alphabetical sorting;
+- responsive full-width editing layout;
+- collapsible day sections and better visual scanning;
+- per-mutation loading, success, and error feedback;
+- frontend coverage for add, replace, remove, error, and responsive states.
+
 ## Debt Closure Rule
 
 A debt item is closed only when:
