@@ -117,4 +117,4 @@ def test_get_recipe_returns_404_for_unknown_recipe(client):
     response = client.get("/api/v1/recipes/unknown")
 
     assert response.status_code == 404
-    assert response.json()["detail"] == "Recipe not found"
+    assert response.json()["error"] == "Recipe not found"
