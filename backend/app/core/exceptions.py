@@ -1,9 +1,9 @@
 import structlog
 from fastapi import Request
-from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-
 
 log = structlog.get_logger()
 
@@ -16,7 +16,6 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         detail=str(exc.detail),
         request_id=getattr(request.state, "request_id", None),
     )
-
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -27,18 +26,18 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = jsonable_encoder(exc.errors())
     log.error(
         "validation_error",
         path=request.url.path,
-        errors=exc.errors(),
+        errors=errors,
         request_id=getattr(request.state, "request_id", None),
     )
-
     return JSONResponse(
         status_code=422,
         content={
             "error": "Validation Error",
-            "details": exc.errors(),
+            "details": errors,
             "request_id": getattr(request.state, "request_id", None),
         },
     )
@@ -51,7 +50,6 @@ async def generic_exception_handler(request: Request, exc: Exception):
         error=str(exc),
         request_id=getattr(request.state, "request_id", None),
     )
-
     return JSONResponse(
         status_code=500,
         content={
