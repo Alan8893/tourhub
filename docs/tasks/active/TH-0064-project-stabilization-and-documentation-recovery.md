@@ -90,14 +90,17 @@ Completed:
 - full local stack startup, migrations, project creation, menu generation, preparation, and document exports verified through `docker compose up --build` after PR #24;
 - frontend API requests verified to use `/api/v1/...` after removal of the stale generated Vite config;
 - dependency-free frontend test baseline added with Node.js built-in test runner for MealPlan loading, error, empty, and ready presentation states;
-- GitHub Actions frontend job extended to run the frontend test baseline before the production build.
+- GitHub Actions frontend job extended to run the frontend test baseline before the production build;
+- MealSlot add, replace, and remove commands covered by deterministic frontend tests;
+- MealSlot pending and mutation-error states covered by deterministic frontend tests;
+- MealSlot editing controls localized to Russian and mutation failures surfaced to the user.
 
 Remaining:
 
 - complete recalculation verification for MealSlot and participant-count changes;
 - resolve the reported frontend dependency vulnerability;
 - expand Ruff and mypy from the stabilized workflow baseline to the agreed repository baseline;
-- expand frontend tests to MealSlot add, replace, remove, mutation-error, and responsive workflows;
+- expand frontend tests to responsive workflows and higher-level interaction coverage;
 - extend CI with the remaining agreed release gates;
 - verify and document PostgreSQL backup and restore;
 - complete final legacy-document reconciliation before closing TH-0064.

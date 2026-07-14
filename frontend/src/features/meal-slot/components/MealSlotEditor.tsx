@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
-import { Button, Stack, Typography } from "@mui/material";
+import { Alert, Button, Stack, Typography } from "@mui/material";
 
 import {
   useAddMealSlotDish,
@@ -8,6 +8,14 @@ import {
   useReplaceMealSlotDish,
   DishSelector,
 } from "@/features/meal-slot";
+import {
+  canSubmitDishSelection,
+  createAddMealSlotDishCommand,
+  createRemoveMealSlotDishCommand,
+  createReplaceMealSlotDishCommand,
+  hasMealSlotMutationError,
+  isMealSlotMutationBusy,
+} from "@/features/meal-slot/model/mealSlotEditorState";
 
 interface MealSlotDish {
   id: string;
@@ -33,88 +41,94 @@ export default function MealSlotEditor({
   const [newDishId, setNewDishId] = useState("");
   const [replaceDishId, setReplaceDishId] = useState<Record<string, string>>({});
 
-  const busy = addMutation.isPending || removeMutation.isPending || replaceMutation.isPending;
-
-  const canAdd = useMemo(() => newDishId.trim().length > 0, [newDishId]);
+  const mutationState = {
+    addPending: addMutation.isPending,
+    replacePending: replaceMutation.isPending,
+    removePending: removeMutation.isPending,
+    addError: addMutation.isError,
+    replaceError: replaceMutation.isError,
+    removeError: removeMutation.isError,
+  };
+  const busy = isMealSlotMutationBusy(mutationState);
+  const mutationError = hasMealSlotMutationError(mutationState);
 
   return (
     <Stack spacing={1}>
       <Typography variant="subtitle1">{mealType}</Typography>
 
-      {dishes.map((dish) => (
-        <Stack key={dish.id} direction="row" spacing={1} alignItems="center">
-          <Typography sx={{ flex: 1 }}>
-            {dish.dish_name ?? dish.dish_id}
-          </Typography>
+      {mutationError && (
+        <Alert severity="error">
+          Не удалось изменить состав приёма пищи. Повторите попытку.
+        </Alert>
+      )}
 
-          <DishSelector
-            value={replaceDishId[dish.id] ?? ""}
-            onChange={(value) =>
-              setReplaceDishId((current) => ({
-                ...current,
-                [dish.id]: value,
-              }))
-            }
-          />
+      {dishes.map((dish) => {
+        const replacementId = replaceDishId[dish.id] ?? "";
 
-          <Button
-            size="small"
-            disabled={busy || !replaceDishId[dish.id]}
-            onClick={() =>
-              replaceMutation.mutate({
-                slotId,
-                slotDishId: dish.id,
-                dishId: replaceDishId[dish.id],
-              })
-            }
-          >
-            Replace
-          </Button>
+        return (
+          <Stack key={dish.id} direction="row" spacing={1} alignItems="center">
+            <Typography sx={{ flex: 1 }}>
+              {dish.dish_name ?? dish.dish_id}
+            </Typography>
 
-          <Button
-            size="small"
-            disabled={busy}
-            onClick={() =>
-              removeMutation.mutate(
-                {
-                  slotId,
-                  slotDishId: dish.id,
-                },
-                {
-                  onSuccess: () => {
-                    setReplaceDishId((current) => {
-                      const next = { ...current };
-                      delete next[dish.id];
-                      return next;
-                    });
+            <DishSelector
+              value={replacementId}
+              onChange={(value) =>
+                setReplaceDishId((current) => ({
+                  ...current,
+                  [dish.id]: value,
+                }))
+              }
+            />
+
+            <Button
+              size="small"
+              disabled={!canSubmitDishSelection(replacementId, busy)}
+              onClick={() =>
+                replaceMutation.mutate(
+                  createReplaceMealSlotDishCommand(slotId, dish.id, replacementId),
+                )
+              }
+            >
+              Заменить
+            </Button>
+
+            <Button
+              size="small"
+              disabled={busy}
+              onClick={() =>
+                removeMutation.mutate(
+                  createRemoveMealSlotDishCommand(slotId, dish.id),
+                  {
+                    onSuccess: () => {
+                      setReplaceDishId((current) => {
+                        const next = { ...current };
+                        delete next[dish.id];
+                        return next;
+                      });
+                    },
                   },
-                },
-              )
-            }
-          >
-            Remove
-          </Button>
-        </Stack>
-      ))}
+                )
+              }
+            >
+              Удалить
+            </Button>
+          </Stack>
+        );
+      })}
 
       <Stack direction="row" spacing={1} alignItems="center">
         <DishSelector value={newDishId} onChange={setNewDishId} />
 
         <Button
-          disabled={busy || !canAdd}
+          disabled={!canSubmitDishSelection(newDishId, busy)}
           onClick={() =>
-            addMutation.mutate(
-              {
-                slotId,
-                dishId: newDishId,
-              },
-              {
-                onSuccess: () => setNewDishId(""),
-              },
-            )
+            addMutation.mutate(createAddMealSlotDishCommand(slotId, newDishId), {
+              onSuccess: () => setNewDishId(""),
+            })
           }
         >
-          Add dish
+          Добавить блюдо
         </Button>
       </Stack>
     </Stack>
