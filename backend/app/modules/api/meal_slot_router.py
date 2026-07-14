@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from typing import TypeVar
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -19,8 +18,6 @@ from app.services.shopping_list_service import ShoppingListService
 
 router = APIRouter(prefix="/meal-slots", tags=["Meal Slots"])
 
-T = TypeVar("T")
-
 
 def get_service() -> MealSlotService:
     return MealSlotService()
@@ -38,7 +35,10 @@ def _refresh_purchasing(session: Session, slot: MealSlotORM) -> None:
     ).refresh(meal_plan)
 
 
-def _commit_recalculation(session: Session, operation: Callable[[], T]) -> T:
+def _commit_recalculation(
+    session: Session,
+    operation: Callable[[], dict[str, str]],
+) -> dict[str, str]:
     try:
         result = operation()
         session.commit()
