@@ -1,10 +1,7 @@
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
-from app.models.recipe_note_type import RecipeNoteType
 from app.schemas.recipe_note import RecipeNoteListResponse, RecipeNoteResponse
 from app.services.recipe_note_service import RecipeNoteService
 
@@ -31,7 +28,7 @@ def get_recipe_notes(
             RecipeNoteResponse(
                 id=note.id,
                 recipe_id=note.recipe_id,
-                type=RecipeNoteType(note.type).value,
+                type=note.type,
                 text=note.text,
                 priority=note.priority,
                 created_at=note.created_at.isoformat(),
