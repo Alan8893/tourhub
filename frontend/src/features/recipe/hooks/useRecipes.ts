@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getRecipe, getRecipes } from "../api/recipeApi";
+import { getProducts, getRecipe, getRecipes } from "../api/recipeApi";
 
 export function useRecipes() {
   return useQuery({
@@ -14,5 +14,13 @@ export function useRecipe(recipeId: string | undefined) {
     queryKey: ["recipes", recipeId],
     queryFn: () => getRecipe(recipeId!),
     enabled: Boolean(recipeId),
+  });
+}
+
+export function useRecipeProducts(enabled = true) {
+  return useQuery({
+    queryKey: ["recipe-products"],
+    queryFn: getProducts,
+    enabled,
   });
 }
