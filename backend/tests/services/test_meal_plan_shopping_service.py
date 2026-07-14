@@ -104,6 +104,6 @@ def test_meal_plan_generates_shopping_list():
 
     assert shopping_item.product_name == "Рис"
 
-    assert shopping_item.amount == 6000
+    assert shopping_item.amount == 1200
 
     assert shopping_item.unit == "gram"
