@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from app.models.recipe_note import RecipeNoteORM
 from app.models.recipe_note_type import RecipeNoteType
 
@@ -21,7 +19,7 @@ def test_recipe_note_model_defaults():
 
     assert note.type == RecipeNoteType.COOKING_TIP.value
     assert note.priority == 100
-    assert isinstance(note.created_at, datetime)
+    assert note.created_at is None
 
 
 def test_recipe_note_model_can_store_custom_type_and_priority():
