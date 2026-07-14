@@ -6,18 +6,16 @@ Status date: 2026-07-14
 
 Deliver a stable local MVP for one tourist club.
 
-The complete user journey is:
+The immediate single-user journey is:
 
 ```text
-Administrator invites user
-        ↓
 Instructor creates project
         ↓
 Instructor enters dates, participant count, first and last meal
         ↓
 System generates a diverse editable menu
         ↓
-Instructor selects club or personal recipe variants
+Instructor selects and edits recipes for dishes
         ↓
 System calculates ingredients and packages
         ↓
@@ -28,14 +26,17 @@ Instructor reviews and adjusts results
 System exports Russian PDF and Excel documents
 ```
 
+Invitation-only access, roles, ownership, and moderation remain required for the later multi-user phase, but do not block completion of the current single-club workflow.
+
 ## Verified Baseline
 
-- Alembic has one head (`f10001`).
+- Alembic has one head (`g10001`).
 - Backend tests pass in GitHub Actions.
 - Selected Ruff and strict mypy baselines are enforced.
 - Frontend state tests, moderate-severity dependency audit, TypeScript check, and production build pass.
 - PostgreSQL 18 backup and restore are smoke-tested in GitHub Actions.
 - MealSlot editing and purchasing recalculation are implemented with transactional rollback coverage.
+- The single-club recipe library supports products, components, notes, archive, restore, and guarded deletion through API and frontend.
 - Docker Compose startup, automatic migrations, project creation, menu generation, preparation, and exports were verified during the stabilization cycle.
 
 ## Milestone 1 — Stabilization and Documentation Recovery
@@ -50,31 +51,40 @@ Completed through TH-0064:
 - verified local Docker startup and primary implemented workflow;
 - documented and tested PostgreSQL backup and restore.
 
-## Milestone 2 — Closed Access and Administration
+## Milestone 2 — Single-club Recipe Library
+
+Status: COMPLETE
+
+Completed:
+
+- recipe list and detail API;
+- recipe creation and renaming;
+- product catalogue reading and creation;
+- RecipeComponent CRUD with practical quantity modes;
+- recipe note CRUD and priority ordering;
+- active and archived library views;
+- safe archive and restore;
+- guarded physical deletion when a dish references a recipe;
+- complete frontend editor and lifecycle management;
+- regression coverage and CI enforcement.
+
+Deferred to multi-user mode:
+
+- CLUB and PERSONAL ownership scopes;
+- publication review and verified-instructor moderation.
+
+## Milestone 3 — Dish Catalogue and Recipe Selection
 
 Status: NEXT
 
 Goals:
 
-- invitation-only registration;
-- Administrator, Instructor, and Verified Instructor roles;
-- role-based permissions enforced by the backend;
-- user and invitation administration;
-- audit log foundation;
-- local-only security configuration.
-
-## Milestone 3 — Recipe Library and Moderation
-
-Status: PLANNED
-
-Goals:
-
-- CLUB, PERSONAL, and ARCHIVED recipe scopes;
-- club standards and instructor variants;
-- verified-instructor publication and moderation;
-- preparation technology, notes, equipment, tags, categories, season, and dietary metadata;
-- hard alcohol prohibition;
-- safe archival instead of destructive deletion.
+- expose a dish catalogue through API and frontend;
+- create and rename dishes;
+- assign a recipe to a dish;
+- replace the assigned recipe without changing historical recipe data;
+- show where a recipe is used before permanent deletion;
+- connect explicit recipe selection to MealSlot editing and shopping recalculation.
 
 ## Milestone 4 — Menu Intelligence and Recalculation
 
@@ -87,9 +97,9 @@ Goals:
 - automatic generation unless manually selected;
 - three-day main-dish diversity;
 - same-day uniqueness;
-- club/personal preference modes;
+- recipe preference modes;
 - warnings when the catalogue is insufficient;
-- automatic recalculation after participant-count and menu changes without regenerating selected dishes;
+- automatic recalculation after participant-count, menu, dish, and recipe changes without regenerating unrelated selections;
 - extend recalculation to dependent equipment after the equipment domain is implemented.
 
 ## Milestone 5 — Shopping, Packaging, and Equipment
@@ -121,10 +131,23 @@ Remaining:
 
 - Russian PDF with club logo from settings;
 - Russian Excel workbook with trip, menu, loadout, shopping, and equipment sheets;
-- safe audit trail;
 - complete local installation and update documentation.
 
-## Milestone 7 — MVP Acceptance
+## Milestone 7 — Multi-user Access and Administration
+
+Status: DEFERRED
+
+Goals:
+
+- invitation-only registration;
+- Administrator, Instructor, and Verified Instructor roles;
+- role-based permissions enforced by the backend;
+- user and invitation administration;
+- recipe ownership, publication, and moderation;
+- audit log foundation;
+- local-only security configuration.
+
+## Milestone 8 — MVP Acceptance
 
 Status: PLANNED
 
@@ -132,9 +155,9 @@ Acceptance requires:
 
 - `docker compose up --build` starts the complete system;
 - all automated quality gates pass;
-- the complete user journey works in Russian on desktop and mobile layouts;
+- the complete selected release journey works in Russian on desktop and mobile layouts;
 - backup and restore are verified;
-- no P0 debt remains;
+- no P0 debt applicable to the selected release scope remains;
 - documentation matches the release;
 - Product Owner completes local acceptance.
 
@@ -147,7 +170,7 @@ Acceptance requires:
 
 ## Future Modules
 
-Not part of MVP:
+Not part of the current single-club MVP:
 
 - participant profiles and personal data;
 - price aggregator integration;
