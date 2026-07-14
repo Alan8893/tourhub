@@ -60,21 +60,24 @@ class CatalogImportService:
 
     def preview(self, kind: str, content: str) -> CatalogImportResult:
         if kind == "products":
-            rows, errors = self._parse_products(content)
+            product_rows, errors = self._parse_products(content)
             existing = self._existing_product_names()
-            skipped = sum(row.name.casefold() in existing for row in rows)
+            skipped = sum(
+                row.name.casefold() in existing
+                for row in product_rows
+            )
             return CatalogImportResult(
                 kind="products",
                 valid=not errors,
-                row_count=len(rows),
-                create_count=len(rows) - skipped,
+                row_count=len(product_rows),
+                create_count=len(product_rows) - skipped,
                 skip_count=skipped,
                 errors=errors,
             )
 
-        rows, errors = self._parse_recipes(content)
+        recipe_rows, errors = self._parse_recipes(content)
         existing_recipes = self._existing_recipe_names()
-        recipe_names = {row.recipe_name.casefold() for row in rows}
+        recipe_names = {row.recipe_name.casefold() for row in recipe_rows}
         for name in sorted(recipe_names & existing_recipes):
             errors.append(
                 CatalogImportError(
@@ -84,7 +87,7 @@ class CatalogImportService:
                 )
             )
         product_names = self._existing_product_names()
-        for row in rows:
+        for row in recipe_rows:
             if row.product_name.casefold() not in product_names:
                 errors.append(
                     CatalogImportError(
@@ -95,16 +98,16 @@ class CatalogImportService:
                 )
         note_keys = {
             (row.recipe_name.casefold(), row.note_type, row.note_text, row.note_priority)
-            for row in rows
+            for row in recipe_rows
             if row.note_text
         }
         return CatalogImportResult(
             kind="recipes",
             valid=not errors,
-            row_count=len(rows),
+            row_count=len(recipe_rows),
             create_count=len(recipe_names),
             skip_count=0,
-            component_count=len(rows),
+            component_count=len(recipe_rows),
             note_count=len(note_keys),
             errors=errors,
         )
@@ -116,9 +119,9 @@ class CatalogImportService:
 
         try:
             if kind == "products":
-                rows, _ = self._parse_products(content)
+                product_rows, _ = self._parse_products(content)
                 existing = self._existing_product_names()
-                for row in rows:
+                for row in product_rows:
                     if row.name.casefold() in existing:
                         continue
                     self.session.add(
@@ -133,14 +136,14 @@ class CatalogImportService:
                 self.session.commit()
                 return preview
 
-            rows, _ = self._parse_recipes(content)
+            recipe_rows, _ = self._parse_recipes(content)
             products = {
                 product.name.casefold(): product
                 for product in self.session.scalars(select(ProductORM)).all()
             }
             recipes: dict[str, RecipeORM] = {}
             notes: set[tuple[str, str, str, int]] = set()
-            for row in rows:
+            for row in recipe_rows:
                 recipe_key = row.recipe_name.casefold()
                 recipe = recipes.get(recipe_key)
                 if recipe is None:
