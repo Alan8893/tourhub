@@ -8,7 +8,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 log = structlog.get_logger()
 
 
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+async def http_exception_handler(
+    request: Request,
+    exc: StarletteHTTPException,
+) -> JSONResponse:
     log.error(
         "http_exception",
         path=request.url.path,
@@ -25,7 +28,10 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     )
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError,
+) -> JSONResponse:
     errors = jsonable_encoder(exc.errors())
     log.error(
         "validation_error",
@@ -43,7 +49,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-async def generic_exception_handler(request: Request, exc: Exception):
+async def generic_exception_handler(
+    request: Request,
+    exc: Exception,
+) -> JSONResponse:
     log.error(
         "unhandled_exception",
         path=request.url.path,
