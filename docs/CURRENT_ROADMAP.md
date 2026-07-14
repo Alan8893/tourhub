@@ -1,146 +1,158 @@
 # TourHub Current Roadmap
 
-## Current Product State
+Status date: 2026-07-14
 
-MVP vertical slice is completed:
+## Product Goal
 
-```
-Project
-   ↓
-Preparation
-   ↓
-Meal Plan
-   ↓
-Shopping
-   ↓
-Purchase Checklist
-   ↓
-Documents Export
-```
+Deliver a stable local MVP for one tourist club.
 
-Validated:
+The complete user journey is:
 
-- Backend tests: pytest — 70 passed
-- Frontend build: npm run build — success
-- PDF export validated
-- Excel export validated
-- ZIP package export validated
-
----
-
-# Completed Technical Debt
-
-## TH-0053.5 — PDF Generator Refactoring
-
-Status: DONE
-
-Completed:
-
-- migrated from reportlab canvas to platypus;
-- SimpleDocTemplate;
-- Paragraph;
-- Table;
-- TableStyle;
-- footer;
-- page numbering.
-
----
-
-# Technical Debt
-
-## TH-0054 — Document Template Layer
-
-Status: OPEN
-
-Goal:
-
-Create a reusable document template layer for ERP documents.
-
-Problem:
-
-Current document generation works, but document structure is tightly coupled to individual generators.
-
-Impact:
-
-Future document types, club branding and additional export formats will become harder to maintain without a template abstraction.
-
-Planned improvements:
-
-- common document templates;
-- shared document DTO structures;
-- separation of document layout from generation engine;
-- support for PDF/Excel/Print template reuse;
-- preparation for club-specific branding.
-
-Priority:
-
-Medium.
-
-Implementation planned after the first complete user scenario.
-
----
-
-# Current Milestone
-
-## TH-0060 — First User Scenario MVP
-
-Goal:
-
-Create the first complete user journey in single-user mode.
-
-Flow:
-
-```
-Create Project
-      ↓
-Enter participants and duration
-      ↓
-Generate Preparation
-      ↓
-View Meal Plan
-      ↓
-View Shopping List
-      ↓
-View Purchase Checklist
-      ↓
-Export Documents
+```text
+Administrator invites user
+        ↓
+Instructor creates project
+        ↓
+Instructor enters dates, participant count, first and last meal
+        ↓
+System generates a diverse editable menu
+        ↓
+Instructor selects club or personal recipe variants
+        ↓
+System calculates ingredients and packages
+        ↓
+System produces shopping and equipment lists
+        ↓
+Instructor reviews and adjusts results
+        ↓
+System exports Russian PDF and Excel documents
 ```
 
-Included:
+## Verified Baseline
 
-- project creation;
-- project parameters;
-- preparation generation;
-- workspace result display.
+- Alembic: one head (`f10001`).
+- Backend: 110 tests passed.
+- Frontend: production build passed.
+- MealSlot editing API is present in OpenAPI.
+- Project, MealPlan, MealSlot, RecipeComponent, shopping, checklist, and export foundations exist.
 
-Excluded:
+## Milestone 1 — Stabilization and Documentation Recovery
 
-- authentication;
-- roles;
-- clubs;
-- permissions.
+Status: ACTIVE
 
----
+Goals:
 
-# Next Task
+- synchronize product decisions and implemented behavior;
+- remove duplicate task states;
+- eliminate public API placeholders;
+- restore enforceable quality gates;
+- add CI;
+- verify Docker startup.
 
-## TH-0060.1 — Project Creation Flow
+Primary task:
 
-Backend:
+- TH-0064 — Project Stabilization and Documentation Recovery.
 
-- create project endpoint;
-- validate input;
-- connect project creation with preparation workflow.
+Exit criteria:
 
-Frontend:
+- documentation is internally consistent;
+- backend tests pass;
+- frontend build passes;
+- Alembic has one head;
+- public API has no accidental placeholders;
+- agreed Ruff/mypy baseline is enforced;
+- CI and Docker verification exist.
 
-- create project page;
-- project form;
-- open workspace after creation.
+## Milestone 2 — Closed Access and Administration
 
-Acceptance criteria:
+Status: PLANNED
 
-- user creates project;
-- participants and days are saved;
-- workspace opens;
-- preparation can be started.
+Goals:
+
+- invitation-only registration;
+- Administrator, Instructor, and Verified Instructor roles;
+- role-based permissions;
+- user and invitation administration;
+- audit log foundation;
+- local-only security configuration.
+
+## Milestone 3 — Recipe Library and Moderation
+
+Status: PLANNED
+
+Goals:
+
+- CLUB, PERSONAL, and ARCHIVED recipe scopes;
+- club standards and instructor variants;
+- verified-instructor publication and moderation;
+- preparation technology, notes, equipment, tags, categories, season, and dietary metadata;
+- hard alcohol prohibition;
+- safe archival instead of destructive deletion.
+
+## Milestone 4 — Menu Intelligence and Recalculation
+
+Status: PLANNED
+
+Goals:
+
+- required meal schedule with first/last boundaries;
+- one-day trip handling;
+- automatic generation unless manually selected;
+- three-day main-dish diversity;
+- same-day uniqueness;
+- club/personal preference modes;
+- warnings when the catalogue is insufficient;
+- automatic recalculation after participant-count and menu changes without regenerating selected dishes.
+
+## Milestone 5 — Shopping, Packaging, and Equipment
+
+Status: PLANNED
+
+Goals:
+
+- aggregate identical products;
+- round package counts upward;
+- expose required, purchased, and remainder quantities;
+- purchased status, category, comments, and optional responsible person;
+- aggregate recipe equipment by maximum simultaneous requirement;
+- manual equipment overrides.
+
+Prices, stores, price aggregators, and warehouse balances remain future work.
+
+## Milestone 6 — Documents and Local Operations
+
+Status: PLANNED
+
+Goals:
+
+- Russian PDF with club logo from settings;
+- Russian Excel workbook with trip, menu, loadout, shopping, and equipment sheets;
+- safe audit trail;
+- PostgreSQL backup and restore scripts;
+- complete local installation and update documentation.
+
+## Milestone 7 — MVP Acceptance
+
+Status: PLANNED
+
+Acceptance requires:
+
+- `docker compose up --build` starts the complete system;
+- all automated quality gates pass;
+- the complete user journey works in Russian on desktop and mobile layouts;
+- backup and restore are verified;
+- no P0 debt remains;
+- documentation matches the release;
+- Product Owner completes local acceptance.
+
+## Future Modules
+
+Not part of MVP:
+
+- participant profiles and personal data;
+- price aggregator integration;
+- warehouse stock accounting;
+- routes and GPX;
+- logistics and load distribution;
+- external or paid services;
+- multi-tenant support.
