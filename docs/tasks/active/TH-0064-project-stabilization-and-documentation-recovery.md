@@ -96,13 +96,14 @@ Completed:
 - MealSlot editing controls localized to Russian and mutation failures surfaced to the user;
 - successful MealSlot and participant-count purchasing recalculation covered by API tests;
 - failed MealSlot and participant-count recalculation now explicitly rolls back the database transaction;
-- rollback and commit behavior covered by backend regression tests.
+- rollback and commit behavior covered by backend regression tests;
+- MealSlot application service typed and added to the enforced Ruff and mypy workflow baseline.
 
 Remaining:
 
 - extend recalculation verification to the future equipment pipeline when equipment persistence is implemented;
 - resolve the reported frontend dependency vulnerability;
-- expand Ruff and mypy from the stabilized workflow baseline to the agreed repository baseline;
+- continue expanding Ruff and mypy from the stabilized workflow baseline to the agreed repository baseline;
 - expand frontend tests to responsive workflows and higher-level interaction coverage;
 - extend CI with the remaining agreed release gates;
 - verify and document PostgreSQL backup and restore;
