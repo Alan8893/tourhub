@@ -1,8 +1,9 @@
-import { List, ListItemButton, ListItemText, Drawer } from "@mui/material";
+import { Drawer, List, ListItemButton, ListItemText } from "@mui/material";
+import { NavLink } from "react-router-dom";
 
 const menuItems = [
-  { label: "Projects", path: "/projects" },
-  { label: "Dashboard", path: "/dashboard" },
+  { label: "Проекты", path: "/projects" },
+  { label: "Рецепты", path: "/recipes" },
 ];
 
 export default function Sidebar() {
@@ -10,7 +11,12 @@ export default function Sidebar() {
     <Drawer variant="permanent">
       <List sx={{ width: 240 }}>
         {menuItems.map((item) => (
-          <ListItemButton key={item.path}>
+          <ListItemButton
+            key={item.path}
+            component={NavLink}
+            to={item.path}
+            sx={{ "&.active": { bgcolor: "action.selected" } }}
+          >
             <ListItemText primary={item.label} />
           </ListItemButton>
         ))}
