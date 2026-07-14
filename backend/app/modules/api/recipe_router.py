@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
+from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
 from app.schemas.recipe import (
     RecipeComponentResponse,
@@ -33,7 +34,7 @@ def get_recipe_command_service(
     return RecipeCommandService(session)
 
 
-def _write_response(recipe) -> RecipeWriteResponse:
+def _write_response(recipe: RecipeORM) -> RecipeWriteResponse:
     return RecipeWriteResponse(
         id=recipe.id,
         name=recipe.name,
