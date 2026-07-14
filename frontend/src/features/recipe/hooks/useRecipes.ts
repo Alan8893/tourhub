@@ -2,10 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getProducts, getRecipe, getRecipes } from "../api/recipeApi";
 
-export function useRecipes() {
+export function useRecipes(includeArchived = false) {
   return useQuery({
-    queryKey: ["recipes"],
-    queryFn: getRecipes,
+    queryKey: ["recipes", { includeArchived }],
+    queryFn: () => getRecipes(includeArchived),
   });
 }
 
