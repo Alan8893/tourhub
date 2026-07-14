@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 5173
 
-CMD ["sh", "/app/scripts/docker-entrypoint.sh"]
+CMD ["sh", "-c", "sed -i 's/\\r$//' /app/scripts/docker-entrypoint.sh && exec sh /app/scripts/docker-entrypoint.sh"]
