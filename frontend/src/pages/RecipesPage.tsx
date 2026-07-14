@@ -15,6 +15,8 @@ import {
   Paper,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { isAxiosError } from "axios";
@@ -28,10 +30,13 @@ import type {
 } from "@/features/recipe/api/recipeApi";
 import {
   useAddRecipeComponent,
+  useArchiveRecipe,
   useCreateProduct,
   useCreateRecipe,
+  useDeleteRecipe,
   useDeleteRecipeComponent,
   useRenameRecipe,
+  useRestoreRecipe,
   useUpdateRecipeComponent,
 } from "@/features/recipe/hooks/useRecipeMutations";
 import { useRecipe, useRecipeProducts, useRecipes } from "@/features/recipe/hooks/useRecipes";
@@ -56,7 +61,11 @@ const calculationTypeLabels: Record<string, string> = {
 
 function getApiErrorMessage(error: unknown): string {
   if (isAxiosError<{ error?: string }>(error)) {
-    return error.response?.data?.error ?? "Не удалось сохранить изменения.";
+    const message = error.response?.data?.error;
+    if (message === "Recipe is used by a dish and cannot be deleted") {
+      return "Рецепт используется блюдом. Его можно архивировать, но нельзя удалить.";
+    }
+    return message ?? "Не удалось сохранить изменения.";
   }
   return "Не удалось сохранить изменения.";
 }
@@ -64,10 +73,14 @@ function getApiErrorMessage(error: unknown): string {
 export default function RecipesPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const recipesQuery = useRecipes();
+  const [showArchived, setShowArchived] = useState(false);
+  const recipesQuery = useRecipes(showArchived);
   const recipeQuery = useRecipe(id);
   const createRecipeMutation = useCreateRecipe();
   const renameRecipeMutation = useRenameRecipe();
+  const archiveRecipeMutation = useArchiveRecipe();
+  const restoreRecipeMutation = useRestoreRecipe();
+  const deleteRecipeMutation = useDeleteRecipe();
   const addComponentMutation = useAddRecipeComponent();
   const updateComponentMutation = useUpdateRecipeComponent();
   const deleteComponentMutation = useDeleteRecipeComponent();
@@ -81,6 +94,7 @@ export default function RecipesPage() {
   const [componentError, setComponentError] = useState<string | null>(null);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [productError, setProductError] = useState<string | null>(null);
+  const [lifecycleError, setLifecycleError] = useState<string | null>(null);
 
   const productsQuery = useRecipeProducts(componentDialogOpen || productDialogOpen);
   const recipes = recipesQuery.data?.items ?? [];
@@ -91,6 +105,9 @@ export default function RecipesPage() {
   });
   const nameMutation = nameDialogMode === "create" ? createRecipeMutation : renameRecipeMutation;
   const componentMutation = editingComponent ? updateComponentMutation : addComponentMutation;
+  const selectedRecipe = recipeQuery.data;
+  const lifecyclePending =
+    archiveRecipeMutation.isPending || restoreRecipeMutation.isPending || deleteRecipeMutation.isPending;
 
   const openCreateDialog = () => {
     setRecipeName("");
@@ -100,8 +117,8 @@ export default function RecipesPage() {
   };
 
   const openRenameDialog = () => {
-    if (!recipeQuery.data) return;
-    setRecipeName(recipeQuery.data.name);
+    if (!selectedRecipe) return;
+    setRecipeName(selectedRecipe.name);
     setNameValidationError(null);
     renameRecipeMutation.reset();
     setNameDialogMode("rename");
@@ -115,6 +132,7 @@ export default function RecipesPage() {
     if (nameDialogMode === "create") {
       const recipe = await createRecipeMutation.mutateAsync(recipeName.trim());
       setNameDialogMode(null);
+      setShowArchived(false);
       navigate(`/recipes/${recipe.id}`);
     } else if (nameDialogMode === "rename" && id) {
       await renameRecipeMutation.mutateAsync({ recipeId: id, name: recipeName.trim() });
@@ -171,31 +189,71 @@ export default function RecipesPage() {
     }
   };
 
+  const archiveSelectedRecipe = async () => {
+    if (!id || !selectedRecipe || !window.confirm(`Архивировать рецепт «${selectedRecipe.name}»?`)) return;
+    setLifecycleError(null);
+    try {
+      await archiveRecipeMutation.mutateAsync(id);
+      setShowArchived(false);
+      navigate("/recipes");
+    } catch (error) {
+      setLifecycleError(getApiErrorMessage(error));
+    }
+  };
+
+  const restoreSelectedRecipe = async () => {
+    if (!id) return;
+    setLifecycleError(null);
+    try {
+      await restoreRecipeMutation.mutateAsync(id);
+      setShowArchived(false);
+      navigate(`/recipes/${id}`);
+    } catch (error) {
+      setLifecycleError(getApiErrorMessage(error));
+    }
+  };
+
+  const deleteSelectedRecipe = async () => {
+    if (!id || !selectedRecipe || !window.confirm(`Удалить рецепт «${selectedRecipe.name}» навсегда?`)) return;
+    setLifecycleError(null);
+    try {
+      await deleteRecipeMutation.mutateAsync(id);
+      navigate("/recipes");
+    } catch (error) {
+      setLifecycleError(getApiErrorMessage(error));
+    }
+  };
+
   return (
     <Stack spacing={3}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        justifyContent="space-between"
-        alignItems={{ xs: "stretch", sm: "flex-start" }}
-      >
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "flex-start" }}>
         <Box>
           <Typography variant="h4" component="h1">Рецепты</Typography>
-          <Typography color="text.secondary">
-            Библиотека походных рецептов и их продуктовых компонентов.
-          </Typography>
+          <Typography color="text.secondary">Библиотека походных рецептов и их продуктовых компонентов.</Typography>
         </Box>
         <Button variant="contained" onClick={openCreateDialog}>Создать рецепт</Button>
       </Stack>
 
-      {viewState === "loading" && (
-        <Stack alignItems="center" py={6}><CircularProgress aria-label="Загрузка рецептов" /></Stack>
-      )}
-      {viewState === "error" && (
-        <Alert severity="error">Не удалось загрузить библиотеку рецептов.</Alert>
-      )}
+      <ToggleButtonGroup
+        exclusive
+        size="small"
+        value={showArchived ? "archived" : "active"}
+        onChange={(_, value: "active" | "archived" | null) => {
+          if (!value) return;
+          setShowArchived(value === "archived");
+          navigate("/recipes");
+        }}
+      >
+        <ToggleButton value="active">Активные</ToggleButton>
+        <ToggleButton value="archived">Архив</ToggleButton>
+      </ToggleButtonGroup>
+
+      {viewState === "loading" && <Stack alignItems="center" py={6}><CircularProgress aria-label="Загрузка рецептов" /></Stack>}
+      {viewState === "error" && <Alert severity="error">Не удалось загрузить библиотеку рецептов.</Alert>}
       {viewState === "empty" && (
-        <Alert severity="info">В библиотеке пока нет рецептов. Создайте первый рецепт.</Alert>
+        <Alert severity="info">
+          {showArchived ? "Архив рецептов пуст." : "В библиотеке пока нет рецептов. Создайте первый рецепт."}
+        </Alert>
       )}
 
       {viewState === "ready" && (
@@ -210,6 +268,7 @@ export default function RecipesPage() {
                       primary={recipe.name}
                       secondary={`${recipe.component_count} компонентов · ${recipe.note_count} заметок`}
                     />
+                    {recipe.is_archived && <Chip size="small" label="Архив" />}
                   </ListItemButton>
                 </Box>
               ))}
@@ -220,70 +279,68 @@ export default function RecipesPage() {
             {!id && (
               <Stack spacing={1} alignItems="center" justifyContent="center" minHeight={190}>
                 <Typography variant="h6">Выберите рецепт</Typography>
-                <Typography color="text.secondary" textAlign="center">
-                  Компоненты и заметки выбранного рецепта появятся здесь.
-                </Typography>
+                <Typography color="text.secondary" textAlign="center">Компоненты и заметки выбранного рецепта появятся здесь.</Typography>
               </Stack>
             )}
-            {id && recipeQuery.isLoading && (
-              <Stack alignItems="center" py={6}><CircularProgress aria-label="Загрузка рецепта" /></Stack>
-            )}
-            {id && recipeQuery.isError && (
-              <Alert severity="error">Не удалось загрузить выбранный рецепт.</Alert>
-            )}
+            {id && recipeQuery.isLoading && <Stack alignItems="center" py={6}><CircularProgress aria-label="Загрузка рецепта" /></Stack>}
+            {id && recipeQuery.isError && <Alert severity="error">Не удалось загрузить выбранный рецепт.</Alert>}
 
-            {recipeQuery.data && (
+            {selectedRecipe && (
               <Stack spacing={3}>
+                {lifecycleError && <Alert severity="error">{lifecycleError}</Alert>}
+                {selectedRecipe.is_archived && (
+                  <Alert severity="warning">Рецепт находится в архиве. Восстановите его, чтобы снова редактировать.</Alert>
+                )}
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "flex-start" }}>
                   <Box>
-                    <Typography variant="h5" component="h2">{recipeQuery.data.name}</Typography>
-                    <Typography color="text.secondary">
-                      {recipeQuery.data.components.length} компонентов · {recipeQuery.data.notes.length} заметок
-                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                      <Typography variant="h5" component="h2">{selectedRecipe.name}</Typography>
+                      {selectedRecipe.is_archived && <Chip size="small" label="Архив" />}
+                    </Stack>
+                    <Typography color="text.secondary">{selectedRecipe.components.length} компонентов · {selectedRecipe.notes.length} заметок</Typography>
                   </Box>
-                  <Button variant="outlined" onClick={openRenameDialog}>Переименовать</Button>
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    {!selectedRecipe.is_archived && <Button variant="outlined" onClick={openRenameDialog}>Переименовать</Button>}
+                    {selectedRecipe.is_archived ? (
+                      <Button variant="contained" onClick={() => void restoreSelectedRecipe()} disabled={lifecyclePending}>Восстановить</Button>
+                    ) : (
+                      <Button color="warning" variant="outlined" onClick={() => void archiveSelectedRecipe()} disabled={lifecyclePending}>Архивировать</Button>
+                    )}
+                    <Button color="error" variant="outlined" onClick={() => void deleteSelectedRecipe()} disabled={lifecyclePending}>Удалить</Button>
+                  </Stack>
                 </Stack>
 
                 <Box>
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }} mb={1.5}>
                     <Typography variant="h6">Состав</Typography>
-                    <Button size="small" variant="contained" onClick={openAddComponent}>Добавить компонент</Button>
+                    {!selectedRecipe.is_archived && <Button size="small" variant="contained" onClick={openAddComponent}>Добавить компонент</Button>}
                   </Stack>
-                  {deleteComponentMutation.isError && (
-                    <Alert severity="error" sx={{ mb: 1.5 }}>{getApiErrorMessage(deleteComponentMutation.error)}</Alert>
-                  )}
-                  {recipeQuery.data.components.length === 0 ? (
+                  {deleteComponentMutation.isError && <Alert severity="error" sx={{ mb: 1.5 }}>{getApiErrorMessage(deleteComponentMutation.error)}</Alert>}
+                  {selectedRecipe.components.length === 0 ? (
                     <Typography color="text.secondary">Компоненты пока не добавлены.</Typography>
                   ) : (
                     <Stack spacing={1.5}>
-                      {recipeQuery.data.components.map((component) => (
+                      {selectedRecipe.components.map((component) => (
                         <Paper key={component.id} variant="outlined" sx={{ p: 2 }}>
                           <Stack spacing={1.5}>
                             <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="space-between">
                               <Box>
                                 <Typography fontWeight={600}>{component.product.name}</Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                  {component.product.category ?? "Без категории"}
-                                </Typography>
+                                <Typography variant="body2" color="text.secondary">{component.product.category ?? "Без категории"}</Typography>
                               </Box>
                               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                                 <Chip size="small" label={componentTypeLabels[component.component_type] ?? component.component_type} />
                                 <Chip size="small" variant="outlined" label={`${component.amount} ${component.unit}`} />
                               </Stack>
                             </Stack>
-                            <Typography variant="body2">
-                              Расчёт: {calculationTypeLabels[component.calculation_type] ?? component.calculation_type}
-                              {component.people_count ? `, на ${component.people_count} чел.` : ""}
-                            </Typography>
-                            {component.product.package_size && (
-                              <Typography variant="body2" color="text.secondary">
-                                Упаковка: {component.product.package_size} {component.product.unit}
-                              </Typography>
+                            <Typography variant="body2">Расчёт: {calculationTypeLabels[component.calculation_type] ?? component.calculation_type}{component.people_count ? `, на ${component.people_count} чел.` : ""}</Typography>
+                            {component.product.package_size && <Typography variant="body2" color="text.secondary">Упаковка: {component.product.package_size} {component.product.unit}</Typography>}
+                            {!selectedRecipe.is_archived && (
+                              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                                <Button size="small" onClick={() => openEditComponent(component)}>Изменить</Button>
+                                <Button size="small" color="error" onClick={() => void deleteComponent(component)} disabled={deleteComponentMutation.isPending}>Удалить</Button>
+                              </Stack>
                             )}
-                            <Stack direction="row" spacing={1} justifyContent="flex-end">
-                              <Button size="small" onClick={() => openEditComponent(component)}>Изменить</Button>
-                              <Button size="small" color="error" onClick={() => void deleteComponent(component)} disabled={deleteComponentMutation.isPending}>Удалить</Button>
-                            </Stack>
                           </Stack>
                         </Paper>
                       ))}
@@ -291,7 +348,7 @@ export default function RecipesPage() {
                   )}
                 </Box>
 
-                <RecipeNotesSection recipeId={recipeQuery.data.id} notes={recipeQuery.data.notes} />
+                <RecipeNotesSection recipeId={selectedRecipe.id} notes={selectedRecipe.notes} readOnly={selectedRecipe.is_archived} />
               </Stack>
             )}
           </Paper>
@@ -302,24 +359,13 @@ export default function RecipesPage() {
         <DialogTitle>{nameDialogMode === "create" ? "Новый рецепт" : "Переименовать рецепт"}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            {(nameValidationError || nameMutation.isError) && (
-              <Alert severity="error">{nameValidationError ?? getApiErrorMessage(nameMutation.error)}</Alert>
-            )}
-            <TextField
-              autoFocus
-              label="Название"
-              value={recipeName}
-              onChange={(event) => setRecipeName(event.target.value)}
-              onKeyDown={(event) => { if (event.key === "Enter") void submitRecipeName(); }}
-              fullWidth
-            />
+            {(nameValidationError || nameMutation.isError) && <Alert severity="error">{nameValidationError ?? getApiErrorMessage(nameMutation.error)}</Alert>}
+            <TextField autoFocus label="Название" value={recipeName} onChange={(event) => setRecipeName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void submitRecipeName(); }} fullWidth />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNameDialogMode(null)} disabled={nameMutation.isPending}>Отмена</Button>
-          <Button variant="contained" onClick={() => void submitRecipeName()} disabled={nameMutation.isPending}>
-            {nameMutation.isPending ? "Сохранение…" : "Сохранить"}
-          </Button>
+          <Button variant="contained" onClick={() => void submitRecipeName()} disabled={nameMutation.isPending}>{nameMutation.isPending ? "Сохранение…" : "Сохранить"}</Button>
         </DialogActions>
       </Dialog>
 
