@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -33,6 +35,19 @@ def _refresh_purchasing(session: Session, slot: MealSlotORM) -> None:
     ).refresh(meal_plan)
 
 
+def _commit_recalculation(
+    session: Session,
+    operation: Callable[[], dict[str, str]],
+) -> dict[str, str]:
+    try:
+        result = operation()
+        session.commit()
+        return result
+    except Exception:
+        session.rollback()
+        raise
+
+
 @router.post("/{slot_id}/dishes/{dish_id}")
 def add_dish(
     slot_id: str,
@@ -46,16 +61,17 @@ def add_dish(
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
 
-    item = service.add_dish(slot, dish_id)
-    session.add(item)
-    session.flush()
-    _refresh_purchasing(session, slot)
-    session.commit()
+    def operation() -> dict[str, str]:
+        item = service.add_dish(slot, dish_id)
+        session.add(item)
+        session.flush()
+        _refresh_purchasing(session, slot)
+        return {
+            "id": item.id,
+            "dish_id": item.dish_id,
+        }
 
-    return {
-        "id": item.id,
-        "dish_id": item.dish_id,
-    }
+    return _commit_recalculation(session, operation)
 
 
 @router.delete("/{slot_id}/dishes/{slot_dish_id}")
@@ -71,16 +87,17 @@ def remove_dish(
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
 
-    try:
-        service.remove_dish(slot, slot_dish_id)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
+    def operation() -> dict[str, str]:
+        try:
+            service.remove_dish(slot, slot_dish_id)
+        except ValueError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
-    session.flush()
-    _refresh_purchasing(session, slot)
-    session.commit()
+        session.flush()
+        _refresh_purchasing(session, slot)
+        return {"status": "ok"}
 
-    return {"status": "ok"}
+    return _commit_recalculation(session, operation)
 
 
 @router.put("/{slot_id}/dishes/{slot_dish_id}/{dish_id}")
@@ -97,16 +114,17 @@ def replace_dish(
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
 
-    try:
-        item = service.replace_dish(slot, slot_dish_id, dish_id)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
+    def operation() -> dict[str, str]:
+        try:
+            item = service.replace_dish(slot, slot_dish_id, dish_id)
+        except ValueError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
-    session.flush()
-    _refresh_purchasing(session, slot)
-    session.commit()
+        session.flush()
+        _refresh_purchasing(session, slot)
+        return {
+            "id": item.id,
+            "dish_id": item.dish_id,
+        }
 
-    return {
-        "id": item.id,
-        "dish_id": item.dish_id,
-    }
+    return _commit_recalculation(session, operation)

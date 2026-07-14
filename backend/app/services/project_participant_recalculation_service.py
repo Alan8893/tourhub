@@ -39,17 +39,24 @@ class ProjectParticipantRecalculationService:
         if project is None:
             raise LookupError("Project not found")
 
-        project.participants = participants
+        try:
+            project.participants = participants
 
-        meal_plan = self.meal_plan_repository.get_by_project_id(project_id)
-        if meal_plan is not None:
-            detailed_meal_plan = self.meal_plan_repository.get_with_details(str(meal_plan.id))
-            if detailed_meal_plan is None:
-                raise LookupError("Meal plan not found")
+            meal_plan = self.meal_plan_repository.get_by_project_id(project_id)
+            if meal_plan is not None:
+                detailed_meal_plan = self.meal_plan_repository.get_with_details(
+                    str(meal_plan.id)
+                )
+                if detailed_meal_plan is None:
+                    raise LookupError("Meal plan not found")
 
-            detailed_meal_plan.participants = participants
-            self.purchasing_refresh_service.refresh(detailed_meal_plan)
+                detailed_meal_plan.participants = participants
+                self.purchasing_refresh_service.refresh(detailed_meal_plan)
 
-        self.session.commit()
+            self.session.commit()
+        except Exception:
+            self.session.rollback()
+            raise
+
         self.session.refresh(project)
         return project
