@@ -1,4 +1,10 @@
+import pytest
+
+from app.main import app
 from app.models.dish import DishORM
+from app.models.recipe import RecipeORM
+from app.modules.api.recipe_router import get_recipe_command_service
+from app.services.recipe_command_service import RecipeCommandService
 
 
 def test_recipe_archive_restore_and_delete(client):
@@ -32,17 +38,28 @@ def test_recipe_archive_restore_and_delete(client):
     assert client.get(f"/api/v1/recipes/{recipe_id}").status_code == 404
 
 
-def test_recipe_delete_is_blocked_when_used_by_dish(client, db_session):
-    recipe_id = client.post(
-        "/api/v1/recipes",
-        json={"name": "Связанный рецепт"},
-    ).json()["id"]
-    db_session.add(DishORM(id="dish-linked", name="Блюдо", recipe_id=recipe_id))
+def test_recipe_delete_is_blocked_when_used_by_dish(db_session):
+    recipe = RecipeORM(id="recipe-linked", name="Связанный рецепт")
+    dish = DishORM(id="dish-linked", name="Блюдо", recipe_id=recipe.id)
+    db_session.add_all([recipe, dish])
     db_session.commit()
-    db_session.close()
 
-    response = client.delete(f"/api/v1/recipes/{recipe_id}")
+    service = RecipeCommandService(db_session)
+
+    with pytest.raises(ValueError, match="Recipe is used by a dish"):
+        service.delete_recipe(recipe.id)
+
+    assert db_session.get(RecipeORM, recipe.id) is not None
+
+
+def test_recipe_delete_conflict_is_exposed_by_api(client):
+    class ConflictService:
+        def delete_recipe(self, recipe_id: str) -> None:
+            raise ValueError("Recipe is used by a dish and cannot be deleted")
+
+    app.dependency_overrides[get_recipe_command_service] = ConflictService
+
+    response = client.delete("/api/v1/recipes/recipe-linked")
 
     assert response.status_code == 409
     assert response.json()["error"] == "Recipe is used by a dish and cannot be deleted"
-    assert client.get(f"/api/v1/recipes/{recipe_id}").status_code == 200
