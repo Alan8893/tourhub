@@ -1,3 +1,6 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
 from app.core.session import get_session
 from app.schemas.recipe import (
     RecipeComponentResponse,
@@ -7,9 +10,6 @@ from app.schemas.recipe import (
     RecipeListResponse,
     RecipeProductResponse,
 )
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-
 from app.services.recipe_query_service import RecipeQueryService
 
 router = APIRouter(prefix="/recipes", tags=["Recipes"])
