@@ -20,7 +20,11 @@ class PurchaseDocumentMapper:
                     product_name=item.product.name,
                     quantity=float(item.required_quantity),
                     unit=item.required_unit,
-                    package_size=float(item.package_size),
+                    package_size=(
+                        float(item.package_size)
+                        if item.package_size is not None
+                        else None
+                    ),
                     packages_count=item.packages_count,
                 )
                 for item in purchase_list.items

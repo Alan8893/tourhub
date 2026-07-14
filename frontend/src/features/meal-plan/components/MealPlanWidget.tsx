@@ -83,18 +83,35 @@ export default function MealPlanWidget() {
                   {groupedMeals[dayNumber]
                     .slice()
                     .sort((a, b) => a.meal_type.localeCompare(b.meal_type))
-                    .map((slot) => (
-                      <MealSlotEditor
-                        key={slot.id}
-                        slotId={slot.id}
-                        mealType={mealTypeLabels[slot.meal_type] ?? slot.meal_type}
-                        dishes={slot.dishes.map((dish) => ({
-                          id: dish.dish_id,
-                          dish_id: dish.dish_id,
-                          dish_name: dish.dish_name,
-                        }))}
-                      />
-                    ))}
+                    .map((slot) => {
+                      const mealType = mealTypeLabels[slot.meal_type] ?? slot.meal_type;
+
+                      if (slot.id.startsWith("legacy:")) {
+                        return (
+                          <Stack key={slot.id} spacing={0.5}>
+                            <Typography variant="subtitle2">{mealType}</Typography>
+                            {slot.dishes.map((dish) => (
+                              <Typography key={dish.dish_id} variant="body2">
+                                {dish.dish_name}
+                              </Typography>
+                            ))}
+                          </Stack>
+                        );
+                      }
+
+                      return (
+                        <MealSlotEditor
+                          key={slot.id}
+                          slotId={slot.id}
+                          mealType={mealType}
+                          dishes={slot.dishes.map((dish) => ({
+                            id: dish.dish_id,
+                            dish_id: dish.dish_id,
+                            dish_name: dish.dish_name,
+                          }))}
+                        />
+                      );
+                    })}
                 </Stack>
               </Stack>
             ))}

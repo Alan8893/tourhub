@@ -10,9 +10,7 @@ from app.schemas.meal_plan import (
 
 
 class MealPlanMapper:
-    """
-    Maps MealPlan ORM entities to API schemas.
-    """
+    """Maps MealPlan ORM entities to API schemas."""
 
     @staticmethod
     def to_response(
@@ -29,9 +27,8 @@ class MealPlanMapper:
                     day_number=day.day_number,
                     meal_type=item.meal_type,
                     dish_id=item.dish_id,
-                    dish_name=item.dish.name if item.dish else item.dish_id,
+                    dish_name=item.dish.name if item.dish else str(item.dish_id),
                 )
-
                 items.append(response_item)
                 meals_map[(day.day_number, item.meal_type)].append(response_item)
 
@@ -44,9 +41,12 @@ class MealPlanMapper:
                         day_number=day.day_number,
                         meal_type=slot.meal_type,
                         dish_id=slot_dish.dish_id,
-                        dish_name=slot_dish.dish.name if slot_dish.dish else slot_dish.dish_id,
+                        dish_name=(
+                            slot_dish.dish.name
+                            if slot_dish.dish
+                            else str(slot_dish.dish_id)
+                        ),
                     )
-
                     slot_items.append(response_item)
                     items.append(response_item)
 
@@ -54,7 +54,10 @@ class MealPlanMapper:
 
         meals = [
             MealSlotResponse(
-                id=slot_ids[(day_number, meal_type)],
+                id=slot_ids.get(
+                    (day_number, meal_type),
+                    f"legacy:{day_number}:{meal_type}",
+                ),
                 day_number=day_number,
                 meal_type=meal_type,
                 dishes=dishes,
