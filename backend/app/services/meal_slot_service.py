@@ -1,3 +1,4 @@
+from typing import cast
 from uuid import uuid4
 
 from app.models.meal_slot import MealSlotORM
@@ -13,11 +14,12 @@ class MealSlotService:
     """
 
     def add_dish(self, slot: MealSlotORM, dish_id: str) -> MealSlotDishORM:
+        dishes = cast(list[MealSlotDishORM], slot.dishes)
         item = MealSlotDishORM(
             id=str(uuid4()),
             slot=slot,
             dish_id=dish_id,
-            order=len(slot.dishes),
+            order=len(dishes),
         )
 
         # SQLAlchemy relationship already attaches the item through slot=slot.
@@ -26,16 +28,17 @@ class MealSlotService:
         return item
 
     def remove_dish(self, slot: MealSlotORM, slot_dish_id: str) -> MealSlotORM:
+        dishes = cast(list[MealSlotDishORM], slot.dishes)
         item = next(
-            (dish for dish in slot.dishes if dish.id == slot_dish_id),
+            (dish for dish in dishes if dish.id == slot_dish_id),
             None,
         )
         if item is None:
             raise ValueError("Meal slot dish not found")
 
-        slot.dishes.remove(item)
+        dishes.remove(item)
 
-        for index, dish in enumerate(slot.dishes):
+        for index, dish in enumerate(dishes):
             dish.order = index
 
         return slot
@@ -46,7 +49,8 @@ class MealSlotService:
         slot_dish_id: str,
         new_dish_id: str,
     ) -> MealSlotDishORM:
-        for item in slot.dishes:
+        dishes = cast(list[MealSlotDishORM], slot.dishes)
+        for item in dishes:
             if item.id == slot_dish_id:
                 item.dish_id = new_dish_id
                 return item
