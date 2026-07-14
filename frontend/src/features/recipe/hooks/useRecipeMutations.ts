@@ -2,11 +2,17 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   addRecipeComponent,
+  createProduct,
   createRecipe,
+  createRecipeNote,
   deleteRecipeComponent,
+  deleteRecipeNote,
   renameRecipe,
   updateRecipeComponent,
+  updateRecipeNote,
+  type ProductWriteInput,
   type RecipeComponentWriteInput,
+  type RecipeNoteWriteInput,
 } from "../api/recipeApi";
 
 function useInvalidateRecipes() {
@@ -76,5 +82,54 @@ export function useDeleteRecipeComponent() {
     mutationFn: ({ recipeId, componentId }: { recipeId: string; componentId: string }) =>
       deleteRecipeComponent(recipeId, componentId),
     onSuccess: invalidateRecipes,
+  });
+}
+
+export function useCreateRecipeNote() {
+  const invalidateRecipes = useInvalidateRecipes();
+
+  return useMutation({
+    mutationFn: ({ recipeId, input }: { recipeId: string; input: RecipeNoteWriteInput }) =>
+      createRecipeNote(recipeId, input),
+    onSuccess: invalidateRecipes,
+  });
+}
+
+export function useUpdateRecipeNote() {
+  const invalidateRecipes = useInvalidateRecipes();
+
+  return useMutation({
+    mutationFn: ({
+      recipeId,
+      noteId,
+      input,
+    }: {
+      recipeId: string;
+      noteId: string;
+      input: RecipeNoteWriteInput;
+    }) => updateRecipeNote(recipeId, noteId, input),
+    onSuccess: invalidateRecipes,
+  });
+}
+
+export function useDeleteRecipeNote() {
+  const invalidateRecipes = useInvalidateRecipes();
+
+  return useMutation({
+    mutationFn: ({ recipeId, noteId }: { recipeId: string; noteId: string }) =>
+      deleteRecipeNote(recipeId, noteId),
+    onSuccess: invalidateRecipes,
+  });
+}
+
+export function useCreateProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: ProductWriteInput) => createProduct(input),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: ["recipe-products"],
+      }),
   });
 }
