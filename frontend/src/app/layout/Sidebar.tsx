@@ -5,6 +5,7 @@ const menuItems = [
   { label: "Проекты", path: "/projects" },
   { label: "Блюда", path: "/dishes" },
   { label: "Рецепты", path: "/recipes" },
+  { label: "Импорт каталога", path: "/catalog-import" },
 ];
 
 export default function Sidebar() {
