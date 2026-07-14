@@ -42,12 +42,14 @@ def test_list_recipes_returns_sorted_summary(client, db_session):
             {
                 "id": "recipe-b",
                 "name": "Борщ",
+                "is_archived": False,
                 "component_count": 0,
                 "note_count": 0,
             },
             {
                 "id": "recipe-a",
                 "name": "Каша",
+                "is_archived": False,
                 "component_count": 1,
                 "note_count": 1,
             },
@@ -91,6 +93,7 @@ def test_get_recipe_returns_components_products_and_notes(client, db_session):
     data = response.json()
     assert data["id"] == "recipe-1"
     assert data["name"] == "Походная каша"
+    assert data["is_archived"] is False
     assert data["components"] == [
         {
             "id": "component-1",
