@@ -2,14 +2,36 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
+from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.meal_slot_repository import MealSlotRepository
+from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
+from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.services.meal_plan_purchasing_refresh_service import (
+    MealPlanPurchasingRefreshService,
+)
+from app.services.meal_plan_shopping_service import MealPlanShoppingService
 from app.services.meal_slot_service import MealSlotService
+from app.services.shopping_list_service import ShoppingListService
 
 router = APIRouter(prefix="/meal-slots", tags=["Meal Slots"])
 
 
-def get_service():
+def get_service() -> MealSlotService:
     return MealSlotService()
+
+
+def _refresh_purchasing(session: Session, slot) -> None:
+    meal_plan = MealPlanRepository(session).get_with_details(
+        str(slot.day.meal_plan_id)
+    )
+    if meal_plan is None:
+        raise HTTPException(status_code=404, detail="Meal plan not found")
+
+    MealPlanPurchasingRefreshService(
+        PurchaseListRepository(session),
+        PurchaseChecklistRepository(session),
+        MealPlanShoppingService(ShoppingListService(session)),
+    ).refresh(meal_plan)
 
 
 @router.post("/{slot_id}/dishes/{dish_id}")
@@ -26,7 +48,10 @@ def add_dish(
         raise HTTPException(status_code=404, detail="Meal slot not found")
 
     item = service.add_dish(slot, dish_id)
-    repository.save(slot)
+    session.add(item)
+    session.flush()
+    _refresh_purchasing(session, slot)
+    session.commit()
 
     return {
         "id": item.id,
@@ -52,7 +77,9 @@ def remove_dish(
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
-    repository.save(slot)
+    session.flush()
+    _refresh_purchasing(session, slot)
+    session.commit()
 
     return {"status": "ok"}
 
@@ -76,7 +103,9 @@ def replace_dish(
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
-    repository.save(slot)
+    session.flush()
+    _refresh_purchasing(session, slot)
+    session.commit()
 
     return {
         "id": item.id,
