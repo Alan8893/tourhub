@@ -1,10 +1,16 @@
 from pydantic import BaseModel, Field
 
+from app.models.recipe_note_type import RecipeNoteType
 
-class RecipeNoteCreateRequest(BaseModel):
-    type: str = Field(default="cooking_tip")
-    text: str = Field(min_length=1)
+
+class RecipeNoteWriteRequest(BaseModel):
+    type: RecipeNoteType = RecipeNoteType.COOKING_TIP
+    text: str = Field(min_length=1, max_length=4000)
     priority: int = Field(default=100, ge=0)
+
+
+class RecipeNoteCreateRequest(RecipeNoteWriteRequest):
+    pass
 
 
 class RecipeNoteResponse(BaseModel):
