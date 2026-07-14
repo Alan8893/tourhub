@@ -1,23 +1,39 @@
 import { Alert, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 
 import { useGenerateMealPlan } from "@/features/meal-plan/hooks/useGenerateMealPlan";
+import { useProjectMealPlan } from "@/features/meal-plan";
 import { usePrepareProject } from "@/features/project";
 import { useProjectWorkflow } from "@/features/project-workflow";
 
 export default function NextWorkflowAction() {
   const { projectId, preparationResult, setPreparationResult } = useProjectWorkflow();
+  const { data: mealPlan, isLoading: isMealPlanLoading } = useProjectMealPlan(projectId);
   const generateMealPlan = useGenerateMealPlan();
   const prepareProject = usePrepareProject();
 
-  if (!preparationResult?.meal_plan_id) {
+  const hasMealPlan = Boolean(mealPlan ?? preparationResult?.meal_plan_id);
+
+  if (isMealPlanLoading && !preparationResult?.meal_plan_id) {
+    return (
+      <Card sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography>Проверяем состояние проекта…</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!hasMealPlan) {
     return (
       <Card sx={{ mt: 3 }}>
         <CardContent>
           <Stack spacing={1}>
             <Typography variant="h6">Следующее действие</Typography>
             <Typography>Сформируйте меню для этого похода.</Typography>
-            {(generateMealPlan.isError) && (
-              <Alert severity="error">Не удалось сформировать меню. Проверьте данные проекта и повторите попытку.</Alert>
+            {generateMealPlan.isError && (
+              <Alert severity="error">
+                Не удалось сформировать меню. Проверьте данные проекта и повторите попытку.
+              </Alert>
             )}
             <Button
               variant="contained"
@@ -42,7 +58,7 @@ export default function NextWorkflowAction() {
     );
   }
 
-  if (!preparationResult.purchase_list_id || !preparationResult.purchase_checklist_id) {
+  if (!preparationResult?.purchase_list_id || !preparationResult.purchase_checklist_id) {
     return (
       <Card sx={{ mt: 3 }}>
         <CardContent>
@@ -50,7 +66,9 @@ export default function NextWorkflowAction() {
             <Typography variant="h6">Следующее действие</Typography>
             <Typography>Рассчитайте закупку и создайте чек-лист.</Typography>
             {prepareProject.isError && (
-              <Alert severity="error">Не удалось подготовить закупку. Проверьте состав меню и повторите попытку.</Alert>
+              <Alert severity="error">
+                Не удалось подготовить закупку. Проверьте состав меню и повторите попытку.
+              </Alert>
             )}
             <Button
               variant="contained"

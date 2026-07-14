@@ -26,7 +26,11 @@ export default function DocumentsWidget() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const ready = Boolean(projectId && preparationResult);
+  const ready = Boolean(
+    projectId &&
+      preparationResult?.purchase_list_id &&
+      preparationResult.purchase_checklist_id,
+  );
 
   async function runDownload(action: () => Promise<Blob>, filename: string) {
     setIsDownloading(true);
@@ -69,7 +73,7 @@ export default function DocumentsWidget() {
           <Typography>
             {ready
               ? "Документы готовы к формированию и скачиванию."
-              : "Сначала завершите подготовку проекта."}
+              : "Сначала рассчитайте закупку и создайте чек-лист."}
           </Typography>
 
           {error && <Alert severity="error">{error}</Alert>}
