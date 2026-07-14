@@ -2,9 +2,9 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 const preserveApiPrefix = (path: string): string => {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const normalizedPath = path.charAt(0) === "/" ? path : `/${path}`;
 
-  if (normalizedPath === "/api" || normalizedPath.startsWith("/api/")) {
+  if (normalizedPath === "/api" || normalizedPath.indexOf("/api/") === 0) {
     return normalizedPath;
   }
 
