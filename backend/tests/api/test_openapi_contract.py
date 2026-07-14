@@ -18,3 +18,16 @@ def test_openapi_contains_versioned_api_paths(client):
 
     assert "/api/v1/meta" in paths
     assert any(path.startswith("/api/v1/") for path in paths)
+
+
+def test_openapi_contains_meal_slot_editing_paths(client):
+    response = client.get("/openapi.json")
+
+    paths = response.json()["paths"]
+
+    assert "/api/v1/meal-slots/{slot_id}/dishes/{dish_id}" in paths
+    assert "/api/v1/meal-slots/{slot_id}/dishes/{slot_dish_id}" in paths
+    assert (
+        "/api/v1/meal-slots/{slot_id}/dishes/{slot_dish_id}/{dish_id}"
+        in paths
+    )
