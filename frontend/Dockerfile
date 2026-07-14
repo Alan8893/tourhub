@@ -1,13 +1,14 @@
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 
-RUN npm install --legacy-peer-deps
+RUN npm ci
 
 COPY . .
+RUN chmod +x /app/scripts/docker-entrypoint.sh
 
 EXPOSE 5173
 
-CMD ["npm", "run", "dev", "--", "--host"]
+CMD ["/app/scripts/docker-entrypoint.sh"]
