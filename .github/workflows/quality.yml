@@ -32,12 +32,27 @@ jobs:
       - name: Ruff critical baseline
         run: python -m ruff check app tests --select E9,F63,F7,F82
 
+      - name: Ruff stabilized workflow
+        run: |
+          python -m ruff check \
+            app/services/meal_plan_shopping_service.py \
+            app/services/meal_plan_purchasing_refresh_service.py \
+            app/services/project_participant_recalculation_service.py \
+            app/services/project_preparation_service.py \
+            app/services/purchase_list_service.py \
+            app/services/purchase_checklist_service.py \
+            app/modules/api/meal_slot_router.py \
+            --select E,F,I,UP,B --ignore B008
+
       - name: Mypy typed workflow baseline
         run: |
           python -m mypy \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
             app/services/project_participant_recalculation_service.py \
+            app/services/project_preparation_service.py \
+            app/services/purchase_list_service.py \
+            app/services/purchase_checklist_service.py \
             app/modules/api/meal_slot_router.py
 
       - name: Backend tests
