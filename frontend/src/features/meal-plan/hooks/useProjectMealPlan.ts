@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 
 import { apiClient } from "@/shared/api/client";
 
@@ -27,17 +28,33 @@ export interface ProjectMealPlan extends MealPlan {
   warnings: string[];
 }
 
-async function getProjectMealPlan(projectId: number): Promise<ProjectMealPlan> {
-  const response = await apiClient.get<ProjectMealPlan>(
-    `/meal-plans/project/${projectId}`,
-  );
+async function getProjectMealPlan(projectId: number): Promise<ProjectMealPlan | null> {
+  try {
+    const response = await apiClient.get<ProjectMealPlan>(
+      `/meal-plans/project/${projectId}`,
+    );
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export function useProjectMealPlan(projectId: number) {
   return useQuery({
     queryKey: ["meal-plan", projectId],
     queryFn: () => getProjectMealPlan(projectId),
+    enabled: projectId > 0,
+    retry: (failureCount, error) => {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        return false;
+      }
+
+      return failureCount < 2;
+    },
   });
 }

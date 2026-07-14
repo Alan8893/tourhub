@@ -13,52 +13,47 @@ const mealTypeLabels: Record<string, string> = {
 };
 
 export default function MealPlanWidget() {
-  const { projectId, preparationResult } = useProjectWorkflow();
+  const { projectId } = useProjectWorkflow();
   const { data: mealPlan, isError, isLoading } = useProjectMealPlan(projectId);
 
   const groupedMeals = (mealPlan?.meals ?? []).reduce<Record<number, MealSlot[]>>(
     (acc, slot) => {
-      if (!acc[slot.day_number]) {
-        acc[slot.day_number] = [];
-      }
-
+      if (!acc[slot.day_number]) acc[slot.day_number] = [];
       acc[slot.day_number].push(slot);
       return acc;
     },
     {},
   );
 
-  const dayNumbers = Object.keys(groupedMeals)
-    .map(Number)
-    .sort((a, b) => a - b);
+  const dayNumbers = Object.keys(groupedMeals).map(Number).sort((a, b) => a - b);
 
   return (
     <Card>
       <CardContent>
         <Stack spacing={2}>
-          <Stack spacing={0.5}>
-            <Typography variant="h6">Меню похода</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {mealPlan
-                ? `${mealPlan.name} · ${mealPlan.participants} участников · ${mealPlan.days_count} дней`
-                : "Меню ещё не сформировано."}
-            </Typography>
-            {preparationResult?.meal_plan_id && !mealPlan && !isLoading && !isError && (
-              <Typography variant="body2" color="success.main">
-                Меню создано. Загружаем состав по дням…
-              </Typography>
-            )}
-          </Stack>
+          <Typography variant="h6">Меню похода</Typography>
 
           {isLoading && <Typography>Загрузка меню…</Typography>}
 
           {isError && (
             <Alert severity="error">
-              Не удалось загрузить меню. Обновите страницу или повторите подготовку проекта.
+              Не удалось загрузить меню из-за ошибки сервера. Обновите страницу и повторите попытку.
             </Alert>
           )}
 
-          {!isLoading && mealPlan && mealPlan.warnings.length > 0 && (
+          {!isLoading && !isError && !mealPlan && (
+            <Typography variant="body2" color="text.secondary">
+              Меню ещё не сформировано. Нажмите «Сформировать меню» в блоке следующего действия.
+            </Typography>
+          )}
+
+          {mealPlan && (
+            <Typography variant="body2" color="text.secondary">
+              {mealPlan.name} · участников: {mealPlan.participants} · дней: {mealPlan.days_count}
+            </Typography>
+          )}
+
+          {mealPlan && mealPlan.warnings.length > 0 && (
             <Stack spacing={0.5}>
               <Typography variant="subtitle2">Предупреждения</Typography>
               {mealPlan.warnings.map((warning) => (
@@ -69,52 +64,46 @@ export default function MealPlanWidget() {
             </Stack>
           )}
 
-          {!isLoading && mealPlan && dayNumbers.length === 0 && (
+          {mealPlan && dayNumbers.length === 0 && (
             <Typography variant="body2">Для этого меню пока нет приёмов пищи.</Typography>
           )}
 
-          {!isLoading &&
-            mealPlan &&
-            dayNumbers.map((dayNumber, index) => (
-              <Stack key={dayNumber} spacing={1.5}>
-                {index > 0 && <Divider />}
-                <Typography variant="subtitle1">День {dayNumber}</Typography>
-                <Stack spacing={1.5}>
-                  {groupedMeals[dayNumber]
-                    .slice()
-                    .sort((a, b) => a.meal_type.localeCompare(b.meal_type))
-                    .map((slot) => {
-                      const mealType = mealTypeLabels[slot.meal_type] ?? slot.meal_type;
-
-                      if (slot.id.startsWith("legacy:")) {
-                        return (
-                          <Stack key={slot.id} spacing={0.5}>
-                            <Typography variant="subtitle2">{mealType}</Typography>
-                            {slot.dishes.map((dish) => (
-                              <Typography key={dish.dish_id} variant="body2">
-                                {dish.dish_name}
-                              </Typography>
-                            ))}
-                          </Stack>
-                        );
-                      }
-
-                      return (
-                        <MealSlotEditor
-                          key={slot.id}
-                          slotId={slot.id}
-                          mealType={mealType}
-                          dishes={slot.dishes.map((dish) => ({
-                            id: dish.dish_id,
-                            dish_id: dish.dish_id,
-                            dish_name: dish.dish_name,
-                          }))}
-                        />
-                      );
-                    })}
-                </Stack>
+          {mealPlan && dayNumbers.map((dayNumber, index) => (
+            <Stack key={dayNumber} spacing={1.5}>
+              {index > 0 && <Divider />}
+              <Typography variant="subtitle1">День {dayNumber}</Typography>
+              <Stack spacing={1.5}>
+                {groupedMeals[dayNumber]
+                  .slice()
+                  .sort((a, b) => a.meal_type.localeCompare(b.meal_type))
+                  .map((slot) =>
+                    slot.id.startsWith("legacy:") ? (
+                      <Stack key={slot.id} spacing={0.5}>
+                        <Typography variant="subtitle2">
+                          {mealTypeLabels[slot.meal_type] ?? slot.meal_type}
+                        </Typography>
+                        {slot.dishes.map((dish) => (
+                          <Typography key={dish.dish_id} variant="body2">
+                            • {dish.dish_name}
+                          </Typography>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <MealSlotEditor
+                        key={slot.id}
+                        slotId={slot.id}
+                        mealType={mealTypeLabels[slot.meal_type] ?? slot.meal_type}
+                        dishes={slot.dishes.map((dish) => ({
+                          id: dish.dish_id,
+                          dish_id: dish.dish_id,
+                          dish_name: dish.dish_name,
+                        }))}
+                      />
+                    ),
+                  )}
               </Stack>
-            ))}
+            </Stack>
+          ))}
         </Stack>
       </CardContent>
     </Card>
