@@ -1,15 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
+from app.models.recipe_component import RecipeComponentORM
 from app.schemas.recipe import (
     RecipeComponentResponse,
+    RecipeComponentWriteRequest,
+    RecipeCreateRequest,
     RecipeDetailNoteResponse,
     RecipeDetailResponse,
     RecipeListItemResponse,
     RecipeListResponse,
     RecipeProductResponse,
+    RecipeUpdateRequest,
+    RecipeWriteResponse,
 )
+from app.services.recipe_command_service import RecipeCommandService
 from app.services.recipe_query_service import RecipeQueryService
 
 router = APIRouter(prefix="/recipes", tags=["Recipes"])
@@ -19,6 +25,30 @@ def get_recipe_query_service(
     session: Session = Depends(get_session),
 ) -> RecipeQueryService:
     return RecipeQueryService(session)
+
+
+def get_recipe_command_service(
+    session: Session = Depends(get_session),
+) -> RecipeCommandService:
+    return RecipeCommandService(session)
+
+
+def _component_response(component: RecipeComponentORM) -> RecipeComponentResponse:
+    return RecipeComponentResponse(
+        id=component.id,
+        component_type=component.component_type,
+        amount=component.amount,
+        unit=component.unit,
+        calculation_type=component.calculation_type,
+        people_count=component.people_count,
+        product=RecipeProductResponse(
+            id=component.product.id,
+            name=component.product.name,
+            category=component.product.category,
+            unit=component.product.unit,
+            package_size=component.product.package_size,
+        ),
+    )
 
 
 @router.get("", response_model=RecipeListResponse)
@@ -37,6 +67,85 @@ def list_recipes(
             for recipe in recipes
         ]
     )
+
+
+@router.post("", response_model=RecipeWriteResponse, status_code=status.HTTP_201_CREATED)
+def create_recipe(
+    request: RecipeCreateRequest,
+    service: RecipeCommandService = Depends(get_recipe_command_service),
+) -> RecipeWriteResponse:
+    try:
+        recipe = service.create_recipe(request.name)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RecipeWriteResponse(id=recipe.id, name=recipe.name)
+
+
+@router.patch("/{recipe_id}", response_model=RecipeWriteResponse)
+def rename_recipe(
+    recipe_id: str,
+    request: RecipeUpdateRequest,
+    service: RecipeCommandService = Depends(get_recipe_command_service),
+) -> RecipeWriteResponse:
+    try:
+        recipe = service.rename_recipe(recipe_id, request.name)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return RecipeWriteResponse(id=recipe.id, name=recipe.name)
+
+
+@router.post(
+    "/{recipe_id}/components",
+    response_model=RecipeComponentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_recipe_component(
+    recipe_id: str,
+    request: RecipeComponentWriteRequest,
+    service: RecipeCommandService = Depends(get_recipe_command_service),
+) -> RecipeComponentResponse:
+    try:
+        component = service.add_component(recipe_id=recipe_id, **request.model_dump())
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return _component_response(component)
+
+
+@router.put("/{recipe_id}/components/{component_id}", response_model=RecipeComponentResponse)
+def update_recipe_component(
+    recipe_id: str,
+    component_id: str,
+    request: RecipeComponentWriteRequest,
+    service: RecipeCommandService = Depends(get_recipe_command_service),
+) -> RecipeComponentResponse:
+    try:
+        component = service.update_component(
+            recipe_id=recipe_id,
+            component_id=component_id,
+            **request.model_dump(),
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return _component_response(component)
+
+
+@router.delete("/{recipe_id}/components/{component_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_recipe_component(
+    recipe_id: str,
+    component_id: str,
+    service: RecipeCommandService = Depends(get_recipe_command_service),
+) -> Response:
+    try:
+        service.delete_component(recipe_id, component_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/{recipe_id}", response_model=RecipeDetailResponse)
@@ -58,24 +167,7 @@ def get_recipe(
     return RecipeDetailResponse(
         id=recipe.id,
         name=recipe.name,
-        components=[
-            RecipeComponentResponse(
-                id=component.id,
-                component_type=component.component_type,
-                amount=component.amount,
-                unit=component.unit,
-                calculation_type=component.calculation_type,
-                people_count=component.people_count,
-                product=RecipeProductResponse(
-                    id=component.product.id,
-                    name=component.product.name,
-                    category=component.product.category,
-                    unit=component.product.unit,
-                    package_size=component.product.package_size,
-                ),
-            )
-            for component in components
-        ],
+        components=[_component_response(component) for component in components],
         notes=[
             RecipeDetailNoteResponse(
                 id=note.id,
