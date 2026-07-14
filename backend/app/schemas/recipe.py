@@ -20,6 +20,13 @@ class RecipeProductResponse(BaseModel):
     package_size: int | None
 
 
+class ProductCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    category: str | None = Field(default=None, max_length=100)
+    unit: str = Field(min_length=1, max_length=50)
+    package_size: int | None = Field(default=None, gt=0)
+
+
 class RecipeComponentResponse(BaseModel):
     id: str
     component_type: str
