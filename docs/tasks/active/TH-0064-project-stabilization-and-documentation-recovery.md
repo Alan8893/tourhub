@@ -81,14 +81,21 @@ Completed:
 - duplicate active copies of TH-0061.7, TH-0062, and TH-0063 removed;
 - canonical current architecture and domain baselines added;
 - development workflow and Definition of Done formalized;
-- ADR-012 accepted for single-club, invitation-only deployment boundaries.
+- ADR-012 accepted for single-club, invitation-only deployment boundaries;
+- accidental public API placeholder removed;
+- legacy MealPlan placeholder route removed;
+- missing MealSlot dish operations return an explicit `404` contract;
+- GitHub Actions quality workflow added for backend tests, Alembic single-head validation, selected Ruff and mypy baselines, frontend dependency audit, and production build;
+- backend Docker startup now waits for PostgreSQL readiness and applies `alembic upgrade head` before Uvicorn;
+- full local stack startup, migrations, project creation, menu generation, preparation, and document exports verified through `docker compose up --build` after PR #24;
+- frontend API requests verified to use `/api/v1/...` after removal of the stale generated Vite config.
 
 Remaining:
 
-- remove public API placeholders;
-- improve MealSlot error and recalculation contracts;
-- resolve dependency vulnerability;
-- establish Ruff/mypy gates;
-- add frontend tests and CI;
-- verify Docker startup, migrations, backup, and restore;
+- complete recalculation verification for MealSlot and participant-count changes;
+- resolve the reported frontend dependency vulnerability;
+- expand Ruff and mypy from the stabilized workflow baseline to the agreed repository baseline;
+- add frontend tests for critical workflows;
+- extend CI with frontend tests and the remaining agreed release gates;
+- verify and document PostgreSQL backup and restore;
 - complete final legacy-document reconciliation before closing TH-0064.
