@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.modules.projects.models.project import ProjectORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
@@ -30,7 +31,7 @@ class ProjectParticipantRecalculationService:
             self.shopping_service,
         )
 
-    def update_participants(self, project_id: int, participants: int):
+    def update_participants(self, project_id: int, participants: int) -> ProjectORM:
         if participants <= 0:
             raise ValueError("Participants must be greater than zero")
 
@@ -42,9 +43,7 @@ class ProjectParticipantRecalculationService:
 
         meal_plan = self.meal_plan_repository.get_by_project_id(project_id)
         if meal_plan is not None:
-            detailed_meal_plan = self.meal_plan_repository.get_with_details(
-                str(meal_plan.id)
-            )
+            detailed_meal_plan = self.meal_plan_repository.get_with_details(str(meal_plan.id))
             if detailed_meal_plan is None:
                 raise LookupError("Meal plan not found")
 
