@@ -19,6 +19,13 @@ class ProjectRepository:
             .where(ProjectORM.id == project_id)
         )
 
+    def list(self) -> list[ProjectORM]:
+        return list(
+            self.session.scalars(
+                select(ProjectORM).order_by(ProjectORM.id.desc())
+            ).all()
+        )
+
     def create(self, project: ProjectORM) -> ProjectORM:
         self.session.add(project)
         self.session.commit()

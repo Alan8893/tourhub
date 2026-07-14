@@ -7,7 +7,12 @@ export interface Project {
   days: number;
   start_date: string | null;
   first_meal: string | null;
+  last_meal: string | null;
   status: string;
+}
+
+export interface ProjectListResponse {
+  items: Project[];
 }
 
 export interface CreateProjectRequest {
@@ -16,6 +21,7 @@ export interface CreateProjectRequest {
   days: number;
   start_date?: string;
   first_meal?: string;
+  last_meal?: string;
 }
 
 export interface ProjectPreparationResponse {
@@ -30,6 +36,11 @@ export async function createProject(
 ): Promise<Project> {
   const response = await apiClient.post<Project>("/projects", data);
 
+  return response.data;
+}
+
+export async function getProjects(): Promise<ProjectListResponse> {
+  const response = await apiClient.get<ProjectListResponse>("/projects");
   return response.data;
 }
 

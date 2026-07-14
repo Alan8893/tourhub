@@ -23,3 +23,7 @@ class ProjectResponse(BaseModel):
     first_meal: str | None
     last_meal: str | None
     status: str
+
+
+class ProjectListResponse(BaseModel):
+    items: list[ProjectResponse]

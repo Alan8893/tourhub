@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.modules.projects.schemas import (
     ProjectCreateRequest,
+    ProjectListResponse,
     ProjectParticipantsUpdateRequest,
     ProjectResponse,
 )
@@ -41,6 +42,26 @@ def create_project(request: ProjectCreateRequest, db: Session = Depends(get_db))
         raise HTTPException(status_code=400, detail=str(error)) from error
 
     return ProjectResponse(**project.__dict__)
+
+
+@router.get("", response_model=ProjectListResponse)
+def list_projects(db: Session = Depends(get_db)) -> ProjectListResponse:
+    projects = ProjectRepository(db).list()
+    return ProjectListResponse(
+        items=[
+            ProjectResponse(
+                id=project.id,
+                name=project.name,
+                participants=project.participants,
+                days=project.days,
+                start_date=project.start_date,
+                first_meal=project.first_meal,
+                last_meal=project.last_meal,
+                status=project.status,
+            )
+            for project in projects
+        ]
+    )
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
