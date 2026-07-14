@@ -4,17 +4,17 @@ Status date: 2026-07-14
 
 ## Current Phase
 
-MVP stabilization and documentation recovery.
+Closed-access and administration planning after completion of the stabilization baseline.
 
 ## Verified Baseline
 
-After stabilization PR #1:
-
-- Alembic has one head: `f10001`;
-- backend test suite: 110 tests passed;
-- frontend production build: passed;
-- MealSlot editing routes are registered in OpenAPI;
-- migration revision collision was removed.
+- Alembic has one head: `f10001`.
+- Backend functional tests pass in GitHub Actions.
+- Selected Ruff and strict mypy baselines are enforced in GitHub Actions.
+- Frontend state tests, moderate-severity dependency audit, TypeScript check, and production build pass in GitHub Actions.
+- PostgreSQL 18 backup and restore are smoke-tested in GitHub Actions.
+- MealSlot editing routes are registered in OpenAPI.
+- Full local stack startup, automatic migrations, project creation, menu generation, preparation, and exports were verified during the stabilization cycle.
 
 ## Implemented Product Areas
 
@@ -25,13 +25,14 @@ Implemented:
 - project creation and preparation context;
 - participant count and trip duration;
 - meal boundary context;
-- workspace preparation flow.
+- workspace preparation flow;
+- participant-count purchasing recalculation with transactional rollback.
 
 Needs completion:
 
-- automatic recalculation after participant-count change;
+- invitation-only authorization enforcement;
 - finalized Russian adaptive UX;
-- complete authorization enforcement.
+- equipment-dependent recalculation after the equipment domain is implemented.
 
 ### Meal plan
 
@@ -43,14 +44,17 @@ Implemented:
 - multiple dishes per meal;
 - add, remove, and replace dish operations;
 - frontend MealSlot editor;
+- purchasing recalculation after MealSlot edits;
+- commit/rollback regression coverage;
+- frontend loading, error, empty, ready, add, replace, remove, pending, and mutation-error state tests;
 - legacy MealPlanItem compatibility.
 
 Needs completion:
 
 - approved diversity rules;
 - manual-versus-generated recipe preference modes;
-- recalculation guarantees after edits;
-- frontend tests.
+- responsive and higher-level interaction tests;
+- TH-0065 Meal Plan Editor UX acceptance.
 
 ### Recipes
 
@@ -78,72 +82,72 @@ Implemented:
 - ingredient aggregation;
 - shopping list;
 - purchase checklist;
-- PDF, Excel, and package export foundations.
+- package rounding foundation;
+- recalculation after participant and MealSlot changes;
+- PDF, Excel, and package export foundations;
+- PostgreSQL backup and restore scripts and operational documentation.
 
 Needs completion:
 
-- recalculation after menu and participant changes;
 - complete package/remainder presentation;
 - equipment pipeline;
 - final Russian templates with logo from settings.
 
 ## Quality Status
 
-Passing:
+Passing and enforced:
 
-- backend functional tests;
-- frontend TypeScript production build;
-- Alembic single-head validation.
+- backend tests;
+- selected Ruff baseline;
+- selected strict mypy baseline;
+- Alembic single-head validation;
+- frontend automated tests;
+- moderate-severity dependency audit;
+- frontend TypeScript and production build;
+- PostgreSQL backup/restore smoke test.
 
 Open quality debt:
 
-- Ruff violations remain;
-- strict mypy errors remain;
-- frontend automated tests are absent;
-- CI quality gates are not complete;
-- dependency audit reports a high-severity Vite issue in the audited snapshot;
-- Docker end-to-end verification must be included in release acceptance.
+- broader Ruff cleanup;
+- broader strict mypy cleanup;
+- higher-level and responsive frontend tests;
+- Docker image/build and final release-acceptance gates.
 
 ## Documentation Status
 
-Documentation recovery is active.
+The stabilization and documentation recovery task TH-0064 is closed.
 
-Known resolved inconsistencies in this cycle:
+Canonical current documents:
 
-- product decisions are centralized in `PRODUCT_SPEC.md`;
-- current implementation state is centralized here;
-- duplicate active copies of closed TH-0061.7, TH-0062, and TH-0063 are removed;
-- current roadmap is replaced with a stabilization-first MVP roadmap.
+- `PRODUCT_SPEC.md`;
+- `PROJECT_STATUS.md`;
+- `ARCHITECTURE_CURRENT.md`;
+- `DOMAIN_CURRENT.md`;
+- `CURRENT_ROADMAP.md`;
+- `TECH_DEBT.md`.
 
-Known remaining documentation work:
-
-- align `PROJECT_CONTEXT.md` with the one-club model;
-- align `DOMAIN.md` with approved recipe scopes, invitations, alcohol prohibition, audit log, and equipment rules;
-- align `ARCHITECTURE.md` with the implemented MealSlot evolutionary model;
-- review duplicate ADR-011 documents and mark one canonical;
-- update module/API documentation after each implementation task.
+Legacy documents remain historical references and must not override current documents or accepted ADRs.
 
 ## Active Work
 
-Current task:
+Current active task:
 
-- TH-0064 — Project Stabilization and Documentation Recovery.
+- TH-0065 — Meal Plan Editor UX.
 
 Next major workstreams:
 
-1. close quality and public API gaps;
-2. implement invitation-only access and roles;
-3. finish recipe ownership and moderation;
-4. finish menu diversity and recalculation;
-5. finish packaging, shopping, and equipment;
-6. finish exports, audit log, backup/restore, and release acceptance.
+1. implement invitation-only access and roles;
+2. finish recipe ownership, moderation, and alcohol prohibition;
+3. finish menu diversity and preference modes;
+4. finish packaging, shopping, and equipment;
+5. finish exports, audit log, and release acceptance.
 
 ## Release Definition
 
 MVP is ready for Product Owner acceptance only when:
 
 - `docker compose up --build` starts the complete local stack;
-- backend, frontend, migration, lint, type-check, and security gates pass;
-- the complete Russian user scenario works from invitation through exports;
-- backup and restore are documented and verified;
+- backend, frontend, migration, lint, type-check, security, backup/restore, and release gates pass;
+- the complete Russian user scenario works from invitation through exports on desktop and mobile layouts;
+- no P0 debt remains;
 - documentation matches the released code.

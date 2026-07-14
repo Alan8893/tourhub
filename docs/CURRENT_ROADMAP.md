@@ -30,48 +30,35 @@ System exports Russian PDF and Excel documents
 
 ## Verified Baseline
 
-- Alembic: one head (`f10001`).
-- Backend: 110 tests passed.
-- Frontend: production build passed.
-- MealSlot editing API is present in OpenAPI.
-- Project, MealPlan, MealSlot, RecipeComponent, shopping, checklist, and export foundations exist.
+- Alembic has one head (`f10001`).
+- Backend tests pass in GitHub Actions.
+- Selected Ruff and strict mypy baselines are enforced.
+- Frontend state tests, moderate-severity dependency audit, TypeScript check, and production build pass.
+- PostgreSQL 18 backup and restore are smoke-tested in GitHub Actions.
+- MealSlot editing and purchasing recalculation are implemented with transactional rollback coverage.
+- Docker Compose startup, automatic migrations, project creation, menu generation, preparation, and exports were verified during the stabilization cycle.
 
 ## Milestone 1 — Stabilization and Documentation Recovery
 
-Status: ACTIVE
+Status: COMPLETE
 
-Goals:
+Completed through TH-0064:
 
-- synchronize product decisions and implemented behavior;
-- remove duplicate task states;
-- eliminate public API placeholders;
-- restore enforceable quality gates;
-- add CI;
-- verify Docker startup.
-
-Primary task:
-
-- TH-0064 — Project Stabilization and Documentation Recovery.
-
-Exit criteria:
-
-- documentation is internally consistent;
-- backend tests pass;
-- frontend build passes;
-- Alembic has one head;
-- public API has no accidental placeholders;
-- agreed Ruff/mypy baseline is enforced;
-- CI and Docker verification exist.
+- synchronized product, domain, architecture, status, roadmap, technical debt, and development rules;
+- removed duplicate task states, migration collision, and accidental public placeholders;
+- established backend, frontend, migration, dependency, and backup/restore CI gates;
+- verified local Docker startup and primary implemented workflow;
+- documented and tested PostgreSQL backup and restore.
 
 ## Milestone 2 — Closed Access and Administration
 
-Status: PLANNED
+Status: NEXT
 
 Goals:
 
 - invitation-only registration;
 - Administrator, Instructor, and Verified Instructor roles;
-- role-based permissions;
+- role-based permissions enforced by the backend;
 - user and invitation administration;
 - audit log foundation;
 - local-only security configuration.
@@ -102,7 +89,8 @@ Goals:
 - same-day uniqueness;
 - club/personal preference modes;
 - warnings when the catalogue is insufficient;
-- automatic recalculation after participant-count and menu changes without regenerating selected dishes.
+- automatic recalculation after participant-count and menu changes without regenerating selected dishes;
+- extend recalculation to dependent equipment after the equipment domain is implemented.
 
 ## Milestone 5 — Shopping, Packaging, and Equipment
 
@@ -121,14 +109,19 @@ Prices, stores, price aggregators, and warehouse balances remain future work.
 
 ## Milestone 6 — Documents and Local Operations
 
-Status: PLANNED
+Status: IN PROGRESS
 
-Goals:
+Completed:
+
+- PostgreSQL backup and restore scripts;
+- Bash and PowerShell operational instructions;
+- CI backup/restore verification.
+
+Remaining:
 
 - Russian PDF with club logo from settings;
 - Russian Excel workbook with trip, menu, loadout, shopping, and equipment sheets;
 - safe audit trail;
-- PostgreSQL backup and restore scripts;
 - complete local installation and update documentation.
 
 ## Milestone 7 — MVP Acceptance
@@ -144,6 +137,13 @@ Acceptance requires:
 - no P0 debt remains;
 - documentation matches the release;
 - Product Owner completes local acceptance.
+
+## Active Cross-cutting Work
+
+- TH-0065 — Meal Plan Editor UX;
+- incremental Ruff and strict mypy expansion;
+- higher-level and responsive frontend tests;
+- remaining Docker image/build and release gates.
 
 ## Future Modules
 
