@@ -6,62 +6,59 @@ Technical debt is prioritized by product risk, not by implementation convenience
 
 ## P0 — Release Blockers
 
-### TD-001 — Public API placeholders
-
-Remove, implement, or explicitly deprecate public endpoints that raise `NotImplementedError` or expose unfinished contracts.
-
 ### TD-002 — Authorization baseline
 
 Implement invitation-only registration, role enforcement, and secure local authentication before sensitive club data is introduced.
 
 ### TD-003 — Recalculation consistency
 
-Guarantee that participant-count and meal composition changes recalculate ingredients, packages, shopping, and dependent equipment without changing selected dishes.
-
-### TD-004 — Docker release verification
-
-Verify the full local stack with `docker compose up --build`, database migrations, frontend, backend, and OpenAPI.
+Participant-count and MealSlot changes now recalculate persisted purchasing data transactionally. Complete the contract for dependent equipment after equipment persistence is implemented.
 
 ## P1 — Quality and Maintainability
 
 ### TD-005 — Ruff backlog
 
-The audited snapshot contained 195 Ruff violations. Establish a clean baseline and enforce it in CI.
+The audited snapshot contained 195 Ruff violations. A clean critical baseline and selected workflow baseline are enforced in CI; continue expanding module coverage without increasing debt.
 
 ### TD-006 — Strict mypy backlog
 
-The audited snapshot contained 74 strict mypy errors. Fix incrementally by module and enforce the agreed baseline in CI.
+The audited snapshot contained 74 strict mypy errors. Selected workflow modules are clean and enforced in CI; continue fixing and adding modules incrementally.
 
 ### TD-007 — Frontend automated tests
 
-Add tests for critical flows:
+Implemented coverage:
+
+- MealPlan loading, error, empty, and ready states;
+- MealSlot add, replace, remove, pending, validation, and mutation-error states.
+
+Remaining critical coverage:
 
 - project creation;
-- meal generation display;
-- MealSlot editing;
 - shopping recalculation display;
-- invitation and role administration.
+- invitation and role administration;
+- responsive and higher-level interaction behavior.
 
 ### TD-008 — Continuous Integration
 
-Add GitHub Actions gates for:
+Implemented GitHub Actions gates:
 
 - backend tests;
-- Ruff;
-- mypy;
+- critical and selected Ruff baselines;
+- selected strict mypy baseline;
 - Alembic single-head validation;
-- frontend type-check and build;
 - frontend tests;
-- dependency audit;
-- Docker build.
+- frontend TypeScript and production build;
+- moderate-severity dependency audit;
+- PostgreSQL 18 backup/restore smoke test.
 
-### TD-009 — Dependency vulnerability
+Remaining:
 
-Update Vite and related dependencies to remove the high-severity issue reported by `npm audit`, without changing the approved stack.
+- Docker image/build validation;
+- final release-acceptance workflow.
 
 ### TD-010 — Documentation and ADR consistency
 
-Resolve contradictory MealSlot documentation, duplicate ADR-011 files, obsolete task states, and stale API/module descriptions.
+Current canonical product, status, roadmap, domain, and architecture documents are synchronized. Legacy documentation and duplicate ADR-011 history still require explicit archival/canonical labeling where ambiguity remains.
 
 ## P2 — Product Completion Debt
 
@@ -85,10 +82,6 @@ Complete Russian PDF/Excel templates and load club logo and name from system set
 
 Record safe actor/action/time metadata for projects, menus, recipes, publication, invitations, roles, and administration.
 
-### TD-016 — Backup and restore
-
-Provide tested PostgreSQL backup and restore scripts and local operations documentation.
-
 ### TD-017 — Meal plan editor UX
 
 Redesign the functional but cramped MealSlot editor before final MVP UI acceptance. The tracked task is `TH-0065`.
@@ -101,7 +94,14 @@ Required improvements:
 - responsive full-width editing layout;
 - collapsible day sections and better visual scanning;
 - per-mutation loading, success, and error feedback;
-- frontend coverage for add, replace, remove, error, and responsive states.
+- frontend coverage for responsive states.
+
+## Completed History
+
+- TD-001 — Public API placeholders: accidental and legacy public placeholders removed; OpenAPI contract covered.
+- TD-004 — Docker release verification baseline: complete local stack startup, migrations, and primary implemented flow verified during stabilization. Final acceptance remains under TD-008.
+- TD-009 — Dependency vulnerability: current lockfile passes enforced moderate-severity `npm audit`.
+- TD-016 — Backup and restore: Bash/PowerShell scripts, operational documentation, and PostgreSQL 18 CI smoke test implemented.
 
 ## Debt Closure Rule
 
@@ -110,5 +110,5 @@ A debt item is closed only when:
 - implementation is merged;
 - regression tests or executable checks exist;
 - documentation is updated;
-- the item is removed from this register or moved to a completed-history section;
+- the item is removed from the active register or moved to completed history;
 - no equivalent untracked debt remains in active task documents.
