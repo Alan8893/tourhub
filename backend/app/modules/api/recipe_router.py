@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
@@ -33,6 +33,14 @@ def get_recipe_command_service(
     return RecipeCommandService(session)
 
 
+def _write_response(recipe) -> RecipeWriteResponse:
+    return RecipeWriteResponse(
+        id=recipe.id,
+        name=recipe.name,
+        is_archived=recipe.is_archived,
+    )
+
+
 def _component_response(component: RecipeComponentORM) -> RecipeComponentResponse:
     return RecipeComponentResponse(
         id=component.id,
@@ -53,14 +61,16 @@ def _component_response(component: RecipeComponentORM) -> RecipeComponentRespons
 
 @router.get("", response_model=RecipeListResponse)
 def list_recipes(
+    include_archived: bool = Query(default=False),
     service: RecipeQueryService = Depends(get_recipe_query_service),
 ) -> RecipeListResponse:
-    recipes = service.list_recipes()
+    recipes = service.list_recipes(include_archived=include_archived)
     return RecipeListResponse(
         items=[
             RecipeListItemResponse(
                 id=recipe.id,
                 name=recipe.name,
+                is_archived=recipe.is_archived,
                 component_count=len(recipe.components),
                 note_count=len(recipe.notes),
             )
@@ -78,7 +88,7 @@ def create_recipe(
         recipe = service.create_recipe(request.name)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return RecipeWriteResponse(id=recipe.id, name=recipe.name)
+    return _write_response(recipe)
 
 
 @router.patch("/{recipe_id}", response_model=RecipeWriteResponse)
@@ -93,7 +103,45 @@ def rename_recipe(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return RecipeWriteResponse(id=recipe.id, name=recipe.name)
+    return _write_response(recipe)
+
+
+@router.post("/{recipe_id}/archive", response_model=RecipeWriteResponse)
+def archive_recipe(
+    recipe_id: str,
+    service: RecipeCommandService = Depends(get_recipe_command_service),
+) -> RecipeWriteResponse:
+    try:
+        recipe = service.archive_recipe(recipe_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _write_response(recipe)
+
+
+@router.post("/{recipe_id}/restore", response_model=RecipeWriteResponse)
+def restore_recipe(
+    recipe_id: str,
+    service: RecipeCommandService = Depends(get_recipe_command_service),
+) -> RecipeWriteResponse:
+    try:
+        recipe = service.restore_recipe(recipe_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _write_response(recipe)
+
+
+@router.delete("/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_recipe(
+    recipe_id: str,
+    service: RecipeCommandService = Depends(get_recipe_command_service),
+) -> Response:
+    try:
+        service.delete_recipe(recipe_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -167,6 +215,7 @@ def get_recipe(
     return RecipeDetailResponse(
         id=recipe.id,
         name=recipe.name,
+        is_archived=recipe.is_archived,
         components=[_component_response(component) for component in components],
         notes=[
             RecipeDetailNoteResponse(
