@@ -1,10 +1,34 @@
 # TourHub — PROJECT_CONTEXT
 
-Version: 0.0.1-alpha
+Version: 0.0.2-alpha
 
-Last update: 2026-07-03
+Last update: 2026-07-14
 
 Status: Active Development
+
+---
+
+# Canonical MVP Context (2026-07-14)
+
+This section supersedes conflicting earlier statements in this document.
+
+- One TourHub installation represents exactly one tourist club.
+- Multi-tenant support is prohibited.
+- MVP is a local closed-contour system.
+- Registration is invitation-only.
+- MVP roles are Administrator, Instructor, and Verified Instructor.
+- Product rules are defined in `PRODUCT_SPEC.md`.
+- Current implementation state is defined in `PROJECT_STATUS.md`.
+- Current delivery sequence is defined in `CURRENT_ROADMAP.md`.
+- Active stabilization work is TH-0064.
+
+The current MVP goal is a complete Russian adaptive workflow:
+
+```text
+Invitation -> Project -> Menu -> Recipes -> Shopping -> Equipment -> PDF/Excel
+```
+
+Participant profiles, routes, warehouse balances, logistics, and external price aggregation are future modules.
 
 ---
 

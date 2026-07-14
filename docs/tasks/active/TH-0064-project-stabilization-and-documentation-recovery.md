@@ -14,7 +14,7 @@ The audit identified:
 
 - duplicate active and closed task documents;
 - stale roadmap verification results;
-- contradictory MealSlot architecture documentation;
+- contradictory MealSlot and organization architecture documentation;
 - a duplicate Alembic revision, fixed in PR #1;
 - frontend build failure, fixed in PR #1;
 - Ruff and strict mypy backlogs;
@@ -30,7 +30,7 @@ The audit identified:
 - add prioritized technical debt register;
 - replace stale current roadmap;
 - remove duplicate active copies of closed tasks;
-- synchronize PROJECT_CONTEXT, DOMAIN, ARCHITECTURE, ADRs, and development rules.
+- synchronize project context, domain, architecture, ADRs, and development rules.
 
 ### Technical stabilization
 
@@ -71,8 +71,24 @@ The audit identified:
 
 Completed:
 
-- audit performed;
+- repository audit performed;
 - Alembic revision collision fixed;
 - frontend production build restored;
 - MealSlot OpenAPI contract test added;
-- product specification, project status, technical debt register, and roadmap recovery started.
+- approved product specification added;
+- project status and technical debt register added;
+- stale roadmap replaced;
+- duplicate active copies of TH-0061.7, TH-0062, and TH-0063 removed;
+- canonical current architecture and domain baselines added;
+- development workflow and Definition of Done formalized;
+- ADR-012 accepted for single-club, invitation-only deployment boundaries.
+
+Remaining:
+
+- remove public API placeholders;
+- improve MealSlot error and recalculation contracts;
+- resolve dependency vulnerability;
+- establish Ruff/mypy gates;
+- add frontend tests and CI;
+- verify Docker startup, migrations, backup, and restore;
+- complete final legacy-document reconciliation before closing TH-0064.

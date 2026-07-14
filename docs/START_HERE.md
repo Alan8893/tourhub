@@ -41,11 +41,12 @@ Priority order:
 
 1. Accepted product decisions in `docs/PRODUCT_SPEC.md`.
 2. Repository code and executable tests.
-3. `docs/PROJECT_STATUS.md`.
-4. Architecture and domain documentation.
-5. Accepted ADR decisions.
-6. Current active task.
-7. Roadmap documents.
+3. `docs/ARCHITECTURE_CURRENT.md` and `docs/DOMAIN_CURRENT.md`.
+4. `docs/PROJECT_STATUS.md`.
+5. Extended architecture and domain documentation.
+6. Accepted ADR decisions.
+7. Current active task.
+8. Roadmap documents.
 
 Never invent missing business requirements.
 
@@ -61,14 +62,15 @@ Before any implementation:
 2. `docs/PRODUCT_SPEC.md`
 3. `docs/PROJECT_STATUS.md`
 4. `docs/PROJECT_CONTEXT.md`
-5. `docs/ARCHITECTURE.md`
-6. `docs/DOMAIN.md`
-7. `docs/DEVELOPMENT_RULES.md`
-8. `docs/architecture/DOMAIN_BOUNDARIES.md`
-9. Relevant ADR documents
-10. Current task from `docs/tasks/active/`
-11. `docs/CURRENT_ROADMAP.md`
-12. `docs/TECH_DEBT.md` when the task affects stabilization or quality
+5. `docs/ARCHITECTURE_CURRENT.md`
+6. `docs/DOMAIN_CURRENT.md`
+7. `docs/ARCHITECTURE.md` and `docs/DOMAIN.md` as extended references
+8. `docs/DEVELOPMENT_RULES.md`
+9. `docs/architecture/DOMAIN_BOUNDARIES.md`
+10. Relevant ADR documents, including ADR-012
+11. Current task from `docs/tasks/active/`
+12. `docs/CURRENT_ROADMAP.md`
+13. `docs/TECH_DEBT.md` when the task affects stabilization or quality
 
 ---
 
@@ -77,7 +79,7 @@ Before any implementation:
 TourHub is a local ERP system for one tourist club.
 
 - One installation represents one club.
-- Multi-tenant support is out of scope.
+- Multi-tenant support is prohibited.
 - The application is designed for a closed local environment.
 - Registration is invitation-only.
 - MVP roles are Administrator, Instructor, and Verified Instructor.
@@ -98,7 +100,7 @@ TourHub uses:
 
 Frontend contains UI and client state only. Business rules belong to backend domains, services, and engines.
 
-Technology stack changes require Product Owner approval. Microservices are prohibited.
+Technology stack changes require Product Owner approval. Microservices and multi-tenant infrastructure are prohibited.
 
 ---
 
