@@ -11,14 +11,17 @@ RUN apt-get update && apt-get install -y \
     fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml /app/
+COPY pyproject.toml alembic.ini /app/
+COPY alembic /app/alembic
+COPY scripts /app/scripts
 COPY app /app/app
 
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir hatch
 
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir . && \
+    chmod +x /app/scripts/docker-entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
