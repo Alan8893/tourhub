@@ -25,14 +25,17 @@ class MealSlotService:
         return item
 
     def remove_dish(self, slot, slot_dish_id: str):
-        slot.dishes = [
-            item
-            for item in slot.dishes
-            if item.id != slot_dish_id
-        ]
+        item = next(
+            (dish for dish in slot.dishes if dish.id == slot_dish_id),
+            None,
+        )
+        if item is None:
+            raise ValueError("Meal slot dish not found")
 
-        for index, item in enumerate(slot.dishes):
-            item.order = index
+        slot.dishes.remove(item)
+
+        for index, dish in enumerate(slot.dishes):
+            dish.order = index
 
         return slot
 
