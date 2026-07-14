@@ -94,3 +94,14 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+  postgres-backup-restore:
+    name: PostgreSQL backup and restore
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify PostgreSQL backup and restore
+        run: bash scripts/db/verify-postgres-backup-restore.sh
