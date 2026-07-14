@@ -5,6 +5,7 @@ export interface RecipeListItem {
   name: string;
   component_count: number;
   note_count: number;
+  is_archived: boolean;
 }
 
 export interface RecipeListResponse {
@@ -57,6 +58,7 @@ export interface RecipeNoteWriteInput {
 export interface RecipeDetail {
   id: string;
   name: string;
+  is_archived: boolean;
   components: RecipeComponent[];
   notes: RecipeNote[];
 }
@@ -64,6 +66,7 @@ export interface RecipeDetail {
 export interface RecipeWriteResponse {
   id: string;
   name: string;
+  is_archived: boolean;
 }
 
 export interface RecipeComponentWriteInput {
@@ -75,8 +78,10 @@ export interface RecipeComponentWriteInput {
   people_count: number | null;
 }
 
-export async function getRecipes(): Promise<RecipeListResponse> {
-  const response = await apiClient.get<RecipeListResponse>("/recipes");
+export async function getRecipes(includeArchived = false): Promise<RecipeListResponse> {
+  const response = await apiClient.get<RecipeListResponse>("/recipes", {
+    params: includeArchived ? { include_archived: true } : undefined,
+  });
   return response.data;
 }
 
@@ -103,6 +108,20 @@ export async function createRecipe(name: string): Promise<RecipeWriteResponse> {
 export async function renameRecipe(recipeId: string, name: string): Promise<RecipeWriteResponse> {
   const response = await apiClient.patch<RecipeWriteResponse>(`/recipes/${recipeId}`, { name });
   return response.data;
+}
+
+export async function archiveRecipe(recipeId: string): Promise<RecipeWriteResponse> {
+  const response = await apiClient.post<RecipeWriteResponse>(`/recipes/${recipeId}/archive`);
+  return response.data;
+}
+
+export async function restoreRecipe(recipeId: string): Promise<RecipeWriteResponse> {
+  const response = await apiClient.post<RecipeWriteResponse>(`/recipes/${recipeId}/restore`);
+  return response.data;
+}
+
+export async function deleteRecipe(recipeId: string): Promise<void> {
+  await apiClient.delete(`/recipes/${recipeId}`);
 }
 
 export async function addRecipeComponent(
