@@ -35,6 +35,7 @@ jobs:
       - name: Ruff stabilized workflow
         run: |
           python -m ruff check \
+            app/core/exceptions.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
             app/services/meal_slot_service.py \
@@ -43,13 +44,16 @@ jobs:
             app/services/purchase_list_service.py \
             app/services/purchase_checklist_service.py \
             app/services/recipe_query_service.py \
+            app/services/recipe_command_service.py \
             app/modules/api/meal_slot_router.py \
             app/modules/api/recipe_router.py \
+            app/modules/api/product_router.py \
             --select E,F,I,UP,B --ignore B008
 
       - name: Mypy typed workflow baseline
         run: |
           python -m mypy \
+            app/core/exceptions.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
             app/services/meal_slot_service.py \
@@ -58,8 +62,10 @@ jobs:
             app/services/purchase_list_service.py \
             app/services/purchase_checklist_service.py \
             app/services/recipe_query_service.py \
+            app/services/recipe_command_service.py \
             app/modules/api/meal_slot_router.py \
-            app/modules/api/recipe_router.py
+            app/modules/api/recipe_router.py \
+            app/modules/api/product_router.py
 
       - name: Backend tests
         run: python -m pytest -q

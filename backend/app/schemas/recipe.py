@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class RecipeListItemResponse(BaseModel):
@@ -43,3 +43,35 @@ class RecipeDetailResponse(BaseModel):
     name: str
     components: list[RecipeComponentResponse]
     notes: list[RecipeDetailNoteResponse]
+
+
+class RecipeCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
+class RecipeUpdateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
+class RecipeComponentWriteRequest(BaseModel):
+    product_id: str = Field(min_length=1)
+    component_type: str
+    amount: int = Field(gt=0)
+    unit: str = Field(min_length=1, max_length=50)
+    calculation_type: str
+    people_count: int | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def validate_people_count(self) -> "RecipeComponentWriteRequest":
+        if self.calculation_type == "package_per_people" and self.people_count is None:
+            raise ValueError("people_count is required for package_per_people")
+        return self
+
+
+class RecipeWriteResponse(BaseModel):
+    id: str
+    name: str
+
+
+class ProductListResponse(BaseModel):
+    items: list[RecipeProductResponse]
