@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -53,7 +53,7 @@ class RecipeNoteService:
             type=note_type,
             text=text.strip(),
             priority=priority,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         self.session.add(note)
         self.session.commit()
