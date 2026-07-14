@@ -88,14 +88,16 @@ Completed:
 - GitHub Actions quality workflow added for backend tests, Alembic single-head validation, selected Ruff and mypy baselines, frontend dependency audit, and production build;
 - backend Docker startup now waits for PostgreSQL readiness and applies `alembic upgrade head` before Uvicorn;
 - full local stack startup, migrations, project creation, menu generation, preparation, and document exports verified through `docker compose up --build` after PR #24;
-- frontend API requests verified to use `/api/v1/...` after removal of the stale generated Vite config.
+- frontend API requests verified to use `/api/v1/...` after removal of the stale generated Vite config;
+- dependency-free frontend test baseline added with Node.js built-in test runner for MealPlan loading, error, empty, and ready presentation states;
+- GitHub Actions frontend job extended to run the frontend test baseline before the production build.
 
 Remaining:
 
 - complete recalculation verification for MealSlot and participant-count changes;
 - resolve the reported frontend dependency vulnerability;
 - expand Ruff and mypy from the stabilized workflow baseline to the agreed repository baseline;
-- add frontend tests for critical workflows;
-- extend CI with frontend tests and the remaining agreed release gates;
+- expand frontend tests to MealSlot add, replace, remove, mutation-error, and responsive workflows;
+- extend CI with the remaining agreed release gates;
 - verify and document PostgreSQL backup and restore;
 - complete final legacy-document reconciliation before closing TH-0064.
