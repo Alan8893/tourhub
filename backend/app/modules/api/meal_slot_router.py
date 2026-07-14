@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
+from app.models.meal_slot import MealSlotORM
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.meal_slot_repository import MealSlotRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
@@ -20,10 +21,8 @@ def get_service() -> MealSlotService:
     return MealSlotService()
 
 
-def _refresh_purchasing(session: Session, slot) -> None:
-    meal_plan = MealPlanRepository(session).get_with_details(
-        str(slot.day.meal_plan_id)
-    )
+def _refresh_purchasing(session: Session, slot: MealSlotORM) -> None:
+    meal_plan = MealPlanRepository(session).get_with_details(str(slot.day.meal_plan_id))
     if meal_plan is None:
         raise HTTPException(status_code=404, detail="Meal plan not found")
 
@@ -40,7 +39,7 @@ def add_dish(
     dish_id: str,
     session: Session = Depends(get_session),
     service: MealSlotService = Depends(get_service),
-):
+) -> dict[str, str]:
     repository = MealSlotRepository(session)
     slot = repository.get(slot_id)
 
@@ -65,7 +64,7 @@ def remove_dish(
     slot_dish_id: str,
     session: Session = Depends(get_session),
     service: MealSlotService = Depends(get_service),
-):
+) -> dict[str, str]:
     repository = MealSlotRepository(session)
     slot = repository.get(slot_id)
 
@@ -91,7 +90,7 @@ def replace_dish(
     dish_id: str,
     session: Session = Depends(get_session),
     service: MealSlotService = Depends(get_service),
-):
+) -> dict[str, str]:
     repository = MealSlotRepository(session)
     slot = repository.get(slot_id)
 
