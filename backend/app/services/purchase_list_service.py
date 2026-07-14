@@ -1,14 +1,22 @@
+from typing import TypedDict
 from uuid import uuid4
 
 from app.domain.workflows.purchase_list import PurchaseListStatus
-from app.engines.packaging import PackagedShoppingResult
 from app.engines.documents.dto import PurchaseDocumentDTO
+from app.engines.packaging import PackagedShoppingResult
 from app.models.purchase_list import PurchaseListORM
 from app.models.purchase_list_item import PurchaseListItemORM
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
 from app.services.document_mapper import PurchaseDocumentMapper
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
+
+
+class PurchaseListSummary(TypedDict):
+    id: str
+    status: str
+    items_total: int
+    packages_total: int
 
 
 class PurchaseListService:
@@ -20,7 +28,7 @@ class PurchaseListService:
         meal_plan_repository: MealPlanRepository | None = None,
         shopping_service: MealPlanShoppingService | None = None,
         document_mapper: PurchaseDocumentMapper | None = None,
-    ):
+    ) -> None:
         self.repository = repository
         self.meal_plan_repository = meal_plan_repository
         self.shopping_service = shopping_service
@@ -87,7 +95,7 @@ class PurchaseListService:
     def get(self, purchase_list_id: str) -> PurchaseListORM | None:
         return self.repository.get_by_id(purchase_list_id)
 
-    def get_summary(self, purchase_list_id: str) -> dict:
+    def get_summary(self, purchase_list_id: str) -> PurchaseListSummary:
         purchase_list = self.get(purchase_list_id)
 
         if not purchase_list:

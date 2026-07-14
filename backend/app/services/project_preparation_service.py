@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from app.modules.projects.models.project import ProjectORM
 from app.services.purchase_checklist_service import PurchaseChecklistService
 from app.services.purchase_list_service import PurchaseListService
 
@@ -19,11 +20,11 @@ class ProjectPreparationService:
         self,
         purchase_list_service: PurchaseListService,
         purchase_checklist_service: PurchaseChecklistService,
-    ):
+    ) -> None:
         self.purchase_list_service = purchase_list_service
         self.purchase_checklist_service = purchase_checklist_service
 
-    def prepare_project(self, project) -> ProjectPreparationResult:
+    def prepare_project(self, project: ProjectORM) -> ProjectPreparationResult:
         if not project.meal_plans:
             raise ValueError("Meal plan not found")
 
