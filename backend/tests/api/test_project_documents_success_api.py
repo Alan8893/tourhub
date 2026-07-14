@@ -1,10 +1,9 @@
-from app.main import app
 from app.core.database import get_db
-from app.modules.projects.models.project import ProjectORM
+from app.main import app
 from app.models.product import ProductORM
 from app.models.purchase_list import PurchaseListORM
 from app.models.purchase_list_item import PurchaseListItemORM
-
+from app.modules.projects.models.project import ProjectORM
 
 
 def override_test_db(db_session):
@@ -12,7 +11,6 @@ def override_test_db(db_session):
         yield db_session
 
     return _override
-
 
 
 def create_project_with_purchase_list(db_session):
@@ -57,6 +55,17 @@ def create_project_with_purchase_list(db_session):
     return project.id
 
 
+def create_project_without_purchase_list(db_session):
+    project = ProjectORM(
+        name="Unprepared Document Project",
+        participants=4,
+        days=3,
+        status="draft",
+    )
+    db_session.add(project)
+    db_session.commit()
+    return project.id
+
 
 def test_project_purchase_pdf_document(client, db_session):
     app.dependency_overrides[get_db] = override_test_db(db_session)
@@ -73,6 +82,20 @@ def test_project_purchase_pdf_document(client, db_session):
     app.dependency_overrides.clear()
 
 
+def test_project_purchase_document_requires_preparation(client, db_session):
+    app.dependency_overrides[get_db] = override_test_db(db_session)
+
+    project_id = create_project_without_purchase_list(db_session)
+
+    response = client.get(
+        f"/api/v1/projects/{project_id}/documents/purchase/pdf"
+    )
+
+    assert response.status_code == 409
+    assert response.json()["error"] == "Project purchasing is not prepared"
+
+    app.dependency_overrides.clear()
+
 
 def test_project_purchase_print_document(client, db_session):
     app.dependency_overrides[get_db] = override_test_db(db_session)
@@ -87,7 +110,6 @@ def test_project_purchase_print_document(client, db_session):
     assert response.headers["content-type"].startswith("text/plain")
 
     app.dependency_overrides.clear()
-
 
 
 def test_project_purchase_excel_document(client, db_session):

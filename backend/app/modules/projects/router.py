@@ -131,7 +131,16 @@ def generate_purchase_document(
     if generator is None:
         raise HTTPException(status_code=400, detail="Unsupported document format")
 
-    document = generator(project)
+    try:
+        document = generator(project)
+    except ValueError as error:
+        if str(error) == "Purchase list not found":
+            raise HTTPException(
+                status_code=409,
+                detail="Project purchasing is not prepared",
+            ) from error
+        raise
+
     return Response(
         content=document.content,
         media_type=document.content_type,
@@ -145,7 +154,16 @@ def generate_project_document_package(project_id: int, db: Session = Depends(get
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    document = ProjectDocumentPackageService().generate_package(project)
+    try:
+        document = ProjectDocumentPackageService().generate_package(project)
+    except ValueError as error:
+        if str(error) == "Purchase list not found":
+            raise HTTPException(
+                status_code=409,
+                detail="Project purchasing is not prepared",
+            ) from error
+        raise
+
     return Response(
         content=document.content,
         media_type=document.content_type,
