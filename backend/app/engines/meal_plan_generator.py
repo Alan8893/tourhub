@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, deque
 from dataclasses import dataclass, field
 
 
@@ -11,6 +11,7 @@ class DishInput:
 
     id: str
     name: str
+    is_main: bool = True
 
 
 @dataclass(frozen=True)
@@ -58,28 +59,13 @@ class MealPlanGenerator:
         schedule: list[object] | None = None,
         dishes_per_meal: int = 1,
     ) -> MealPlanGenerationResult:
-        """
-        Generate meal composition.
-
-        Backward compatible:
-        items are still returned for old consumers.
-        """
-
         if not dishes:
-            return MealPlanGenerationResult(
-                items=[],
-                slots=[],
-                warnings=["No dishes available"],
-            )
+            return MealPlanGenerationResult(items=[], slots=[], warnings=["No dishes available"])
         if dishes_per_meal < 1:
             raise ValueError("dishes_per_meal must be greater than zero")
 
         if schedule is not None:
-            meal_sequence = [
-                (day.day_number, meal)
-                for day in schedule
-                for meal in day.meals
-            ]
+            meal_sequence = [(day.day_number, meal) for day in schedule for meal in day.meals]
         else:
             meal_sequence = [
                 (day_number, meal_type)
@@ -92,13 +78,13 @@ class MealPlanGenerator:
         slots: list[MealSlotResult] = []
 
         meals_by_day = Counter(day_number for day_number, _ in meal_sequence)
-        required_dishes_for_day = max(meals_by_day.values(), default=0) * dishes_per_meal
-        if len(dishes) < required_dishes_for_day:
+        if len(dishes) < max(meals_by_day.values(), default=0) * dishes_per_meal:
             warnings.append(INSUFFICIENT_DISHES_WARNING)
 
         dish_index = 0
         current_day: int | None = None
         used_for_day: set[str] = set()
+        recent_main_ids: deque[str] = deque(maxlen=3)
 
         for day_number, meal_type in meal_sequence:
             if day_number != current_day:
@@ -106,51 +92,40 @@ class MealPlanGenerator:
                 used_for_day = set()
 
             selected: list[DishInput] = []
-
             for _ in range(dishes_per_meal):
                 dish, dish_index = self._select_next_dish(
                     dishes=dishes,
                     start_index=dish_index,
                     excluded_ids=used_for_day,
+                    recent_main_ids=set(recent_main_ids),
                 )
                 selected.append(dish)
-
-                items.append(
-                    MealPlanItemResult(
-                        day_number=day_number,
-                        meal_type=meal_type,
-                        dish_id=dish.id,
-                        dish_name=dish.name,
-                    )
-                )
-
                 used_for_day.add(dish.id)
 
-            slots.append(
-                MealSlotResult(
-                    day_number=day_number,
-                    meal_type=meal_type,
-                    dishes=selected,
-                )
-            )
+                if dish.is_main:
+                    recent_main_ids.append(dish.id)
 
-        return MealPlanGenerationResult(
-            items=items,
-            slots=slots,
-            warnings=warnings,
-        )
+                items.append(MealPlanItemResult(day_number, meal_type, dish.id, dish.name))
+
+            slots.append(MealSlotResult(day_number, meal_type, selected))
+
+        return MealPlanGenerationResult(items=items, slots=slots, warnings=warnings)
 
     @staticmethod
     def _select_next_dish(
         dishes: list[DishInput],
         start_index: int,
         excluded_ids: set[str],
+        recent_main_ids: set[str],
     ) -> tuple[DishInput, int]:
         for offset in range(len(dishes)):
             candidate_index = start_index + offset
             candidate = dishes[candidate_index % len(dishes)]
-            if candidate.id not in excluded_ids:
-                return candidate, candidate_index + 1
+            if candidate.id in excluded_ids:
+                continue
+            if candidate.is_main and candidate.id in recent_main_ids:
+                continue
+            return candidate, candidate_index + 1
 
         fallback = dishes[start_index % len(dishes)]
         return fallback, start_index + 1
