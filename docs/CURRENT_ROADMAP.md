@@ -34,6 +34,7 @@ Project
 - project catalogue and workspace routing;
 - participant count and duration;
 - first and last meal persistence;
+- backend meal-boundary validation;
 - participant-count purchasing recalculation.
 
 ### Recipes, products, and dishes
@@ -56,9 +57,12 @@ Project
 - domain order `breakfast`, `snack`, `lunch`, `dinner`;
 - multiple dishes per MealSlot;
 - backend add, replace, and remove operations;
+- correct MealSlotDish identifiers in API and frontend mutations;
 - deterministic same-day uniqueness;
-- deterministic insufficient-catalogue fallback and warning generation;
-- purchasing recalculation after MealSlot changes.
+- deterministic insufficient-catalogue fallback and immediate warning generation;
+- archived-recipe assignment guard;
+- purchasing recalculation after MealSlot changes;
+- removal of unsupported meal-plan placeholders and invalid pseudo three-day cooldown.
 
 ### Shopping and documents
 
@@ -68,28 +72,27 @@ Project
 - transactional refresh and checklist-state preservation;
 - PDF/Excel/package export foundations.
 
-## IN PROGRESS
-
 ### TH-0070 — Critical meal-plan stabilization
 
-- repair MealSlot membership identifiers end-to-end;
-- repair `/dishes` frontend contract;
-- enforce meal-boundary rules in Backend;
-- block archived-recipe MealSlot assignment;
-- expose generation warnings;
-- remove public and unused placeholders;
-- remove the invalid selection-based cooldown;
-- add regression tests and menu-engine quality gates;
-- synchronize current documentation.
+Completed by PR #54. Quality passed for backend tests, selected Ruff and strict mypy, Alembic, frontend tests/build/audit, and PostgreSQL backup/restore.
 
-TH-0070 is delivered only after PR #54 is merged with successful Quality checks.
+## IN PROGRESS
 
-### TH-0061 and TH-0065
+### TH-0065 — Meal Plan Editor UX
+
+- compact Russian dish rows;
+- explicit replace, add, and confirmed remove flows;
+- mutation loading, success, and error feedback;
+- collapsible day sections with dish counts;
+- full-width editor workspace;
+- desktop, tablet, and 360 px mobile acceptance;
+- React/API integration and responsive coverage.
+
+### TH-0061 — Guided project preparation
 
 - complete guided Russian preparation workflow;
-- compact and responsive Meal Plan Editor;
-- mutation success/error feedback;
-- desktop, tablet, and mobile acceptance.
+- connect the corrected editor, purchasing, and export steps;
+- verify the complete single-club preparation journey.
 
 ## NEXT
 
@@ -103,7 +106,7 @@ TH-0070 is delivered only after PR #54 is merged with successful Quality checks.
 6. Preserve manual selections as authoritative.
 7. Exclude archived-recipe dishes from automatic selection.
 8. Persist or reconstruct warnings for later reads.
-9. Add unit, service, API, and frontend integration coverage.
+9. Add unit, service, API, frontend, and recalculation coverage.
 
 No `MealDishRole`, role migration, or role-aware selection is currently implemented.
 
