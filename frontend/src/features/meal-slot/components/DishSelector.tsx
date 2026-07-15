@@ -19,7 +19,7 @@ export default function DishSelector({ value, onChange }: DishSelectorProps) {
       sx={{ minWidth: 220 }}
     >
       <MenuItem value="">
-        <em>Select dish</em>
+        <em>Выберите блюдо</em>
       </MenuItem>
       {dishes.map((dish) => (
         <MenuItem key={dish.id} value={dish.id}>
