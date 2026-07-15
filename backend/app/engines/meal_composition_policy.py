@@ -1,5 +1,4 @@
-from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -8,29 +7,20 @@ if TYPE_CHECKING:
 
 @dataclass
 class SelectionContext:
-    """State used by menu composition rules during generation."""
+    """Selection state for rules supported by the current persisted dish model."""
 
     used_for_day: set[str]
-    recent_main_ids: set[str] = field(default_factory=set)
-    _recent_main_order: deque[str] = field(default_factory=lambda: deque(maxlen=3))
+
+    def reset_day(self) -> None:
+        self.used_for_day.clear()
 
     def register_selected(self, dish: "DishInput") -> None:
         self.used_for_day.add(dish.id)
-        if not dish.is_main:
-            return
-        self._recent_main_order.append(dish.id)
-        self.recent_main_ids = set(self._recent_main_order)
 
 
 class MealCompositionPolicy:
-    """Pure rules for selecting dishes without persistence dependencies."""
+    """Pure rules that are valid without persisted meal-role metadata."""
 
     @staticmethod
     def can_select(dish: "DishInput", context: SelectionContext) -> bool:
-        if dish.id in context.used_for_day:
-            return False
-
-        if dish.is_main and dish.id in context.recent_main_ids:
-            return False
-
-        return True
+        return dish.id not in context.used_for_day
