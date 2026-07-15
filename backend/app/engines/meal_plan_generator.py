@@ -1,7 +1,14 @@
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass, field
+from typing import Protocol
 
 from app.engines.meal_composition_policy import MealCompositionPolicy, SelectionContext
+
+
+class MealScheduleDayInput(Protocol):
+    day_number: int
+    meals: list[str]
 
 
 INSUFFICIENT_DISHES_WARNING = "Dish database is insufficient"
@@ -13,7 +20,6 @@ class DishInput:
 
     id: str
     name: str
-    is_main: bool = True
 
 
 @dataclass(frozen=True)
@@ -58,7 +64,7 @@ class MealPlanGenerator:
         dishes: list[DishInput],
         days: int,
         meals_per_day: list[str] | None = None,
-        schedule: list[object] | None = None,
+        schedule: Sequence[MealScheduleDayInput] | None = None,
         dishes_per_meal: int = 1,
     ) -> MealPlanGenerationResult:
         if not dishes:
@@ -90,7 +96,7 @@ class MealPlanGenerator:
         for day_number, meal_type in meal_sequence:
             if day_number != current_day:
                 current_day = day_number
-                context.used_for_day = set()
+                context.reset_day()
 
             selected: list[DishInput] = []
             for _ in range(dishes_per_meal):
