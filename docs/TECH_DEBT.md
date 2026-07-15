@@ -33,7 +33,7 @@ TH-0065 and PR #57 added real-browser coverage for:
 Remaining critical coverage:
 
 - project creation and guided preparation;
-- meal-role management and catalogue readiness;
+- meal-role editor and catalogue readiness;
 - shopping recalculation presentation;
 - catalogue import interaction and error rendering;
 - final end-to-end release acceptance.
@@ -44,6 +44,7 @@ Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head
 
 Remaining:
 
+- explicit migration upgrade/downgrade smoke against PostgreSQL;
 - Docker image/build validation;
 - final release-acceptance workflow.
 
@@ -74,20 +75,21 @@ Remaining work covers CLUB/PERSONAL ownership, multiple recipe variants, publica
 
 ### TD-012 — Meal composition and diversity
 
-ADR-013 now defines the approved persisted role model:
+ADR-013 defines the persisted role model. PR #59 implements:
 
 - normalized `dish_meal_roles` owned by Dish;
 - roles `main`, `addition`, `drink`, and `snack`;
 - multiple roles per dish;
 - repeatability per `(dish, role)` assignment;
-- no heuristic role inference.
+- ORM relationship and Alembic revision `h10001` without heuristic backfill;
+- Dish response contracts and atomic role replacement API;
+- duplicate, invalid-role, clearing, and missing-dish API coverage.
 
 Remaining implementation work:
 
-- ORM model and Alembic migration;
-- repository, service, schemas, and atomic role-management API;
-- dish-editor role management and catalogue classification;
-- catalogue-readiness warnings;
+- dish-editor role management and browser/API coverage;
+- explicit active-catalogue classification;
+- catalogue-readiness thresholds and warnings;
 - role composition for breakfast, snack, lunch, and dinner;
 - calendar-day three-day main-dish diversity;
 - manual-selection preservation;
