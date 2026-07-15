@@ -1,4 +1,4 @@
-from collections import Counter, deque
+from collections import Counter
 from dataclasses import dataclass, field
 
 from app.engines.meal_composition_policy import MealCompositionPolicy, SelectionContext
@@ -86,7 +86,6 @@ class MealPlanGenerator:
         dish_index = 0
         current_day: int | None = None
         context = SelectionContext(used_for_day=set(), recent_main_ids=set())
-        recent_main_ids: deque[str] = deque(maxlen=3)
 
         for day_number, meal_type in meal_sequence:
             if day_number != current_day:
@@ -95,18 +94,10 @@ class MealPlanGenerator:
 
             selected: list[DishInput] = []
             for _ in range(dishes_per_meal):
-                dish, dish_index = self._select_next_dish(
-                    dishes=dishes,
-                    start_index=dish_index,
-                    context=context,
-                )
+                dish, dish_index = self._select_next_dish(dishes, dish_index, context)
                 selected.append(dish)
                 context.used_for_day.add(dish.id)
-
-                if dish.is_main:
-                    recent_main_ids.append(dish.id)
-                    context.recent_main_ids = set(recent_main_ids)
-
+                context.register_selected(dish)
                 items.append(MealPlanItemResult(day_number, meal_type, dish.id, dish.name))
 
             slots.append(MealSlotResult(day_number, meal_type, selected))
