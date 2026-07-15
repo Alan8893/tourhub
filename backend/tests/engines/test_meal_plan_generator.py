@@ -117,3 +117,18 @@ def test_main_dish_cooldown_allows_repeat_after_window():
 
     assert len(result.items) == 5
     assert result.items[-1].dish_id == "1"
+
+
+def test_snack_role_is_not_blocked_by_main_dish_cooldown():
+    generator = MealPlanGenerator()
+    dishes = [
+        DishInput(id="1", name="Tea", role=MealDishRole.SNACK),
+    ]
+
+    result = generator.generate(
+        dishes=dishes,
+        days=3,
+        meals_per_day=["snack"],
+    )
+
+    assert [item.dish_id for item in result.items] == ["1", "1", "1"]
