@@ -31,6 +31,6 @@ def test_meal_slot_rejects_dish_with_archived_recipe(client, db_session):
     response = client.post("/api/v1/meal-slots/slot/dishes/archived-dish")
 
     assert response.status_code == 422
-    assert response.json()["detail"] == (
+    assert response.json()["error"] == (
         "Dish with archived recipe cannot be assigned to a meal slot"
     )
