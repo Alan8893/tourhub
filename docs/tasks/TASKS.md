@@ -8,7 +8,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 |---|---|---|---|
 | TH-0061 | User Project Preparation Wizard | IN PROGRESS | ./active/TH-0061-project-wizard.md |
 | TH-0061.5 | Meal Composition Rules Engine | IN PROGRESS | ./active/TH-0061.5-menu-rules.md |
-| TH-0065 | Meal Plan Editor UX | IN PROGRESS | ./active/TH-0065-meal-plan-editor-ux.md |
+| TH-0065 | Meal Plan Editor UX | READY FOR REVIEW | ./active/TH-0065-meal-plan-editor-ux.md |
 
 ## Completed
 
