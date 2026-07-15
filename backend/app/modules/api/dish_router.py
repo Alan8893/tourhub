@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.session import get_session
 from app.models.dish import DishORM
 from app.modules.domain.meal_role import MEAL_ROLE_ORDER, MealRole
+from app.modules.domain.meal_type import MEAL_TYPE_ORDER, MealType
 from app.schemas.dish import (
     DishCreateRequest,
     DishListResponse,
@@ -18,6 +19,9 @@ from app.services.dish_service import DishService
 router = APIRouter(prefix="/dishes", tags=["Dishes"])
 _MEAL_ROLE_POSITION = {
     role.value: position for position, role in enumerate(MEAL_ROLE_ORDER)
+}
+_MEAL_TYPE_POSITION = {
+    meal_type.value: position for position, meal_type in enumerate(MEAL_TYPE_ORDER)
 }
 
 
@@ -42,6 +46,13 @@ def _dish_response(dish: DishORM) -> DishResponse:
             DishMealRoleResponse(
                 role=MealRole(assignment.role),
                 is_repeatable=assignment.is_repeatable,
+                allowed_meal_types=[
+                    MealType(meal_type.meal_type)
+                    for meal_type in sorted(
+                        assignment.meal_types,
+                        key=lambda item: _MEAL_TYPE_POSITION[item.meal_type],
+                    )
+                ],
             )
             for assignment in meal_roles
         ],
@@ -105,7 +116,11 @@ def replace_dish_meal_roles(
         dish = service.replace_meal_roles(
             dish_id,
             [
-                (assignment.role.value, assignment.is_repeatable)
+                (
+                    assignment.role.value,
+                    assignment.is_repeatable,
+                    [meal_type.value for meal_type in assignment.allowed_meal_types],
+                )
                 for assignment in request.roles
             ],
         )
