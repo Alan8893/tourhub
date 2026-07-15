@@ -156,7 +156,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: meal-plan-editor-browser-acceptance
-          path: frontend/browser-test-artifacts/*.png
+          path: frontend/browser-test-artifacts/*
           if-no-files-found: ignore
 
   postgres-backup-restore:
