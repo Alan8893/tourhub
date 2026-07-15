@@ -6,7 +6,7 @@ from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_component_type import RecipeComponentType
 from app.models.dish import DishORM
-from app.models.dish_meal_role import DishMealRoleORM
+from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
 from app.models.meal_plan import MealPlanORM
 from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_plan_item import MealPlanItemORM
@@ -28,6 +28,7 @@ __all__ = [
     "RecipeComponentType",
     "DishORM",
     "DishMealRoleORM",
+    "DishMealRoleMealTypeORM",
     "MealPlanORM",
     "MealPlanDayORM",
     "MealPlanItemORM",
