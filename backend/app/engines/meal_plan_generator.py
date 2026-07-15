@@ -1,6 +1,8 @@
 from collections import Counter, deque
 from dataclasses import dataclass, field
 
+from app.engines.meal_composition_policy import MealCompositionPolicy, SelectionContext
+
 
 INSUFFICIENT_DISHES_WARNING = "Dish database is insufficient"
 
@@ -118,12 +120,15 @@ class MealPlanGenerator:
         excluded_ids: set[str],
         recent_main_ids: set[str],
     ) -> tuple[DishInput, int]:
+        context = SelectionContext(
+            used_for_day=excluded_ids,
+            recent_main_ids=recent_main_ids,
+        )
+
         for offset in range(len(dishes)):
             candidate_index = start_index + offset
             candidate = dishes[candidate_index % len(dishes)]
-            if candidate.id in excluded_ids:
-                continue
-            if candidate.is_main and candidate.id in recent_main_ids:
+            if not MealCompositionPolicy.can_select(candidate, context):
                 continue
             return candidate, candidate_index + 1
 
