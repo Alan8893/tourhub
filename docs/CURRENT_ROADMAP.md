@@ -35,7 +35,8 @@ Project
 - participant count and duration;
 - first and last meal persistence;
 - backend meal-boundary validation;
-- participant-count purchasing recalculation.
+- participant-count purchasing recalculation;
+- LAN-safe same-origin frontend API routing.
 
 ### Recipes, products, and dishes
 
@@ -76,17 +77,23 @@ Project
 
 Completed by PR #54. Quality passed for backend tests, selected Ruff and strict mypy, Alembic, frontend tests/build/audit, and PostgreSQL backup/restore.
 
-## IN PROGRESS
+## READY FOR REVIEW
 
 ### TH-0065 — Meal Plan Editor UX
+
+Delivered across PR #55 and PR #57:
 
 - compact Russian dish rows;
 - explicit replace, add, and confirmed remove flows;
 - mutation loading, success, and error feedback;
 - collapsible day sections with dish counts;
 - full-width editor workspace;
-- desktop, tablet, and 360 px mobile acceptance;
-- React/API integration and responsive coverage.
+- browser-level React/API acceptance for mutations and errors;
+- no-overflow checks and screenshots at desktop, tablet, and 360 px mobile widths.
+
+Quality run #164 is successful. Remaining: Product Owner visual acceptance and squash merge of PR #57.
+
+## IN PROGRESS
 
 ### TH-0061 — Guided project preparation
 
