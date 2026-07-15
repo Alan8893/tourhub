@@ -1,3 +1,17 @@
+def _create_dish(client, name: str = "Тестовое блюдо") -> str:
+    recipe_id = client.post(
+        "/api/v1/recipes",
+        json={"name": f"Рецепт: {name}"},
+    ).json()["id"]
+    response = client.post(
+        "/api/v1/dishes",
+        json={"name": name, "recipe_id": recipe_id},
+    )
+    assert response.status_code == 201
+    assert response.json()["meal_roles"] == []
+    return response.json()["id"]
+
+
 def test_dish_catalog_create_update_and_list(client):
     first_recipe = client.post("/api/v1/recipes", json={"name": "Каша базовая"})
     second_recipe = client.post("/api/v1/recipes", json={"name": "Каша улучшенная"})
@@ -11,6 +25,7 @@ def test_dish_catalog_create_update_and_list(client):
     assert create_response.status_code == 201
     dish_id = create_response.json()["id"]
     assert create_response.json()["recipe"]["name"] == "Каша базовая"
+    assert create_response.json()["meal_roles"] == []
 
     update_response = client.put(
         f"/api/v1/dishes/{dish_id}",
@@ -27,6 +42,91 @@ def test_dish_catalog_create_update_and_list(client):
     detail_response = client.get(f"/api/v1/dishes/{dish_id}")
     assert detail_response.status_code == 200
     assert detail_response.json() == update_response.json()
+
+
+def test_dish_meal_roles_are_replaced_and_exposed(client):
+    dish_id = _create_dish(client, "Бутерброды")
+
+    first_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={
+            "roles": [
+                {"role": "snack", "is_repeatable": False},
+                {"role": "addition", "is_repeatable": True},
+            ]
+        },
+    )
+
+    assert first_response.status_code == 200
+    assert first_response.json()["meal_roles"] == [
+        {"role": "addition", "is_repeatable": True},
+        {"role": "snack", "is_repeatable": False},
+    ]
+
+    replacement_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={"roles": [{"role": "main", "is_repeatable": False}]},
+    )
+
+    assert replacement_response.status_code == 200
+    assert replacement_response.json()["meal_roles"] == [
+        {"role": "main", "is_repeatable": False}
+    ]
+    assert client.get(f"/api/v1/dishes/{dish_id}").json()["meal_roles"] == [
+        {"role": "main", "is_repeatable": False}
+    ]
+    assert client.get("/api/v1/dishes").json()["items"][0]["meal_roles"] == [
+        {"role": "main", "is_repeatable": False}
+    ]
+
+    clear_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={"roles": []},
+    )
+    assert clear_response.status_code == 200
+    assert clear_response.json()["meal_roles"] == []
+
+
+def test_duplicate_dish_meal_roles_are_rejected_atomically(client):
+    dish_id = _create_dish(client, "Чай")
+    initial_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={"roles": [{"role": "drink", "is_repeatable": True}]},
+    )
+    assert initial_response.status_code == 200
+
+    duplicate_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={
+            "roles": [
+                {"role": "snack", "is_repeatable": False},
+                {"role": "snack", "is_repeatable": True},
+            ]
+        },
+    )
+
+    assert duplicate_response.status_code == 422
+    assert duplicate_response.json()["error"] == "Meal roles must be unique"
+    assert client.get(f"/api/v1/dishes/{dish_id}").json()["meal_roles"] == [
+        {"role": "drink", "is_repeatable": True}
+    ]
+
+
+def test_invalid_or_unknown_dish_meal_roles_are_rejected(client):
+    dish_id = _create_dish(client, "Суп")
+
+    invalid_role_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={"roles": [{"role": "soup", "is_repeatable": False}]},
+    )
+    assert invalid_role_response.status_code == 422
+
+    missing_dish_response = client.put(
+        "/api/v1/dishes/unknown/meal-roles",
+        json={"roles": []},
+    )
+    assert missing_dish_response.status_code == 404
+    assert missing_dish_response.json()["error"] == "Dish not found"
 
 
 def test_dish_name_must_be_unique(client):
