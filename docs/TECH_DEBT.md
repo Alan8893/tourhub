@@ -30,17 +30,26 @@ TH-0065 and PR #57 added real-browser coverage for:
 - no horizontal overflow at desktop, tablet, and 360 px mobile widths;
 - desktop, tablet, and mobile screenshot artifacts in Quality CI.
 
+PR #60 adds real-browser coverage for:
+
+- Dish role and meal-type classification through React Query and Axios;
+- explicit meal-type requirement for every selected role;
+- exact atomic classification payload;
+- persisted success and injected backend error feedback;
+- lunch-only `main` and multi-meal repeatable drink examples;
+- no horizontal overflow at desktop, tablet, and 360 px mobile widths.
+
 Remaining critical coverage:
 
 - project creation and guided preparation;
-- meal-role editor and catalogue readiness;
+- active-catalogue readiness warnings;
 - shopping recalculation presentation;
 - catalogue import interaction and error rendering;
 - final end-to-end release acceptance.
 
 ### TD-008 — Continuous Integration
 
-Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, Meal Plan Editor browser acceptance, and PostgreSQL backup/restore.
+Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, Meal Plan Editor browser acceptance, Dish role/meal compatibility browser acceptance, and PostgreSQL backup/restore.
 
 Remaining:
 
@@ -50,7 +59,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical current documents and the active task index are synchronized after TH-0070 and TH-0065. ADR-013 supersedes the obsolete MealPlanItem-primary persistence wording in ADR-006. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
+Canonical current documents and the active task index are synchronized after TH-0070, TH-0065, and the role/meal-compatibility design correction. ADR-013 supersedes the obsolete MealPlanItem-primary persistence wording in ADR-006 and now explicitly prevents role-only misclassification such as borscht at breakfast. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
 ### TD-024 — Legacy MealPlanItem compatibility
 
@@ -75,22 +84,31 @@ Remaining work covers CLUB/PERSONAL ownership, multiple recipe variants, publica
 
 ### TD-012 — Meal composition and diversity
 
-ADR-013 defines the persisted role model. PR #59 implements:
+ADR-013 defines persisted role and meal-type compatibility. PR #59 implements:
 
 - normalized `dish_meal_roles` owned by Dish;
+- normalized `dish_meal_role_meal_types` owned by each role assignment;
 - roles `main`, `addition`, `drink`, and `snack`;
-- multiple roles per dish;
-- repeatability per `(dish, role)` assignment;
-- ORM relationship and Alembic revision `h10001` without heuristic backfill;
-- Dish response contracts and atomic role replacement API;
-- duplicate, invalid-role, clearing, and missing-dish API coverage.
+- meal types `breakfast`, `snack`, `lunch`, and `dinner`;
+- multiple roles per Dish;
+- repeatability per `(dish, role)`;
+- compatibility per `(dish, role, meal_type)`;
+- Alembic revision `h10001` without heuristic backfill;
+- Dish response contracts and atomic classification replacement API;
+- duplicate, empty, invalid, incompatible, clearing, and missing-dish API coverage.
+
+PR #60 implements:
+
+- Dish editor controls for roles, meal types, and repeatability;
+- local completeness and compatibility validation;
+- visible classification summaries;
+- browser/API acceptance and responsive screenshots.
 
 Remaining implementation work:
 
-- dish-editor role management and browser/API coverage;
 - explicit active-catalogue classification;
-- catalogue-readiness thresholds and warnings;
-- role composition for breakfast, snack, lunch, and dinner;
+- catalogue-readiness thresholds and warnings by meal type;
+- role and meal-type composition for breakfast, snack, lunch, and dinner;
 - calendar-day three-day main-dish diversity;
 - manual-selection preservation;
 - warning persistence or reconstruction;

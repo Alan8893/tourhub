@@ -101,44 +101,60 @@ Completed by PR #54. Quality passed for backend tests, selected Ruff and strict 
 
 ### TH-0061.5 — Meal Composition Rules Engine
 
-ADR-013 approves the persisted role model:
+ADR-013 now approves a two-dimensional persisted classification:
 
 - normalized `dish_meal_roles` owned by Dish;
 - roles `main`, `addition`, `drink`, and `snack`;
-- multiple roles per dish;
-- repeatability configured per `(dish, role)` assignment;
-- no role inference from names, recipes, ingredients, or historical placement.
+- normalized `dish_meal_role_meal_types` owned by each role assignment;
+- meal types `breakfast`, `snack`, `lunch`, and `dinner`;
+- multiple roles per Dish;
+- repeatability per `(dish, role)`;
+- compatibility per `(dish, role, meal_type)`;
+- no inference from names, recipes, ingredients, or historical placement.
 
-Backend persistence slice on PR #59:
+Backend persistence/API slice on PR #59:
 
-- `DishMealRoleORM` and Alembic revision `h10001`;
-- role constraints and `ON DELETE CASCADE`;
+- `DishMealRoleORM` and `DishMealRoleMealTypeORM`;
+- Alembic revision `h10001` with both normalized tables;
+- role and meal-type database constraints with cascading foreign keys;
 - Dish list/detail response contracts;
-- atomic full role replacement endpoint;
-- clearing, duplicate-role, invalid-role, and missing-dish coverage;
+- atomic full classification replacement endpoint;
+- clearing, duplicate, empty, invalid, incompatible, and missing-dish coverage;
 - unchanged current generation behavior.
 
-Quality run #174 is successful for Ruff, strict mypy, backend tests, Alembic, frontend/browser gates, and PostgreSQL backup/restore.
+Frontend editor slice on PR #60:
+
+- Russian role and meal-type controls in the Dish catalogue;
+- multiple roles and per-role repeatability;
+- explicit compatible meal types for every selected role;
+- local validation before API mutation;
+- visible role/meal-type classification in list and detail views;
+- exact Axios/React Query API acceptance;
+- backend error rendering and responsive 1280/768/360 px screenshots.
+
+Quality run #197 is successful for PR #59. Quality run #206 is successful for the stacked PR #60.
 
 ## NEXT
 
-### Catalogue role management and readiness
+### Catalogue classification and readiness
 
-1. Add role controls to the dish editor.
-2. Add browser/API integration coverage for classification.
-3. Classify the active catalogue explicitly.
-4. Add readiness thresholds and visible warnings.
-5. Keep unclassified dishes manually selectable and excluded from automatic role selection.
+1. Merge PR #59.
+2. Retarget PR #60 to `main`, rerun Quality, and merge it.
+3. Classify the active catalogue explicitly by role and meal type.
+4. Define minimum readiness thresholds per generated meal type.
+5. Return visible Russian warnings for missing `main`, `snack`, or optional supporting pools.
+6. Keep unclassified dishes manually selectable and excluded from automatic role selection.
 
 ### Role-aware composition
 
-1. Implement breakfast, snack, lunch, and dinner composition.
-2. Implement calendar-day three-day diversity for main dishes.
-3. Allow explicitly repeatable drinks and additions.
-4. Preserve manual selections as authoritative.
-5. Exclude archived-recipe dishes from automatic selection.
-6. Persist or reconstruct warnings for later reads.
-7. Add unit, service, API, frontend, and recalculation coverage.
+1. Filter candidates by both persisted role and current meal type.
+2. Implement breakfast, snack, lunch, and dinner composition.
+3. Implement calendar-day three-day diversity for main dishes.
+4. Allow explicitly repeatable drinks and additions.
+5. Preserve manual selections as authoritative.
+6. Exclude archived-recipe dishes from automatic selection.
+7. Persist or reconstruct warnings for later reads.
+8. Add unit, service, API, frontend, and recalculation coverage.
 
 ### Shopping and equipment
 
