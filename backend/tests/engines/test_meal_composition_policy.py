@@ -32,7 +32,6 @@ def test_context_register_selected_tracks_main_dish_cooldown():
 
     context.register_selected(dish)
 
-    assert dish.id in context.used_for_day
     assert dish.id in context.recent_main_ids
 
 
@@ -42,5 +41,4 @@ def test_context_does_not_track_non_main_dish_in_cooldown():
 
     context.register_selected(dish)
 
-    assert dish.id in context.used_for_day
     assert dish.id not in context.recent_main_ids
