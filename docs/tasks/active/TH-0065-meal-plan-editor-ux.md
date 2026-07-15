@@ -1,21 +1,21 @@
 # TH-0065 — Meal Plan Editor UX
 
-Status: active
+Status: IN PROGRESS
 Priority: P2
 Type: frontend / UX
 
 ## Problem
 
-The current MealSlot editor is functionally usable but difficult to scan and operate:
+The original MealSlot editor was functionally usable but difficult to scan and operate:
 
-- controls are repeated for every dish and consume too much vertical space;
-- action labels and select placeholders are partly in English;
-- replace, remove, and add actions have weak visual hierarchy;
-- meal types are ordered alphabetically instead of by the trip meal sequence;
-- long dish names make rows uneven;
-- the narrow two-column workspace leaves the menu editor cramped;
-- there is no compact summary or collapse behavior for completed days;
-- destructive actions do not have an explicit confirmation or undo affordance.
+- controls were repeated for every dish and consumed too much vertical space;
+- replace, remove, and add actions had weak visual hierarchy;
+- long dish names made rows uneven;
+- the narrow two-column workspace left the menu editor cramped;
+- there was no compact summary or collapse behavior for completed days;
+- destructive actions did not have an explicit confirmation or undo affordance.
+
+The stabilization PR #54 already corrected the MealSlot identifiers, dish-list API envelope, meal ordering, and remaining English selector text.
 
 ## Target UX
 
@@ -29,6 +29,20 @@ The current MealSlot editor is functionally usable but difficult to scan and ope
 - accessible controls with tooltips and clear destructive styling;
 - usable desktop, tablet, and mobile layouts.
 
+## Current implementation slice
+
+Branch `agent/meal-plan-editor-ux` adds:
+
+- progressive disclosure for replacement and addition selectors;
+- explicit two-step removal confirmation;
+- Russian success and error feedback;
+- compact outlined dish rows with long-name wrapping;
+- responsive column/row action layout;
+- collapsible days with dish counts and only the first day expanded by default;
+- a full-width Meal Plan workspace;
+- state-level tests for add, replace, remove, errors, feedback, Russian plurals, meal ordering, day summaries, collapse defaults, and responsive policy;
+- synchronized roadmap, status, technical debt, and task documentation after TH-0070.
+
 ## Acceptance criteria
 
 1. An instructor can identify day, meal, and dishes without reading technical controls.
@@ -36,8 +50,15 @@ The current MealSlot editor is functionally usable but difficult to scan and ope
 3. No English user-facing strings remain in the editor.
 4. The editor remains usable at 360 px width.
 5. MealSlot mutations continue to trigger purchasing recalculation.
-6. Frontend tests cover add, replace, remove, mutation error, and responsive rendering.
+6. Frontend tests cover add, replace, remove, mutation error, and responsive behavior.
+
+## Remaining before DONE
+
+- successful Quality workflow for the current implementation slice;
+- browser-level React/API integration tests for add, replace, remove, and mutation errors;
+- explicit browser verification at 360 px, tablet, and desktop widths;
+- final Product Owner UX acceptance.
 
 ## Notes
 
-This is not a release blocker for the current stabilization cycle. It must be completed before the final MVP UI acceptance pass.
+This task is not a backend business-rules task. MealSlot purchasing recalculation and validation remain owned by FastAPI.
