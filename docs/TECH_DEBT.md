@@ -1,6 +1,6 @@
 # TourHub Technical Debt
 
-Status date: 2026-07-14
+Status date: 2026-07-15
 
 Technical debt is prioritized by product risk, not by implementation convenience.
 
@@ -8,7 +8,7 @@ Technical debt is prioritized by product risk, not by implementation convenience
 
 ### TD-003 — Recalculation consistency
 
-Participant-count and MealSlot changes now recalculate persisted purchasing data transactionally. Complete the contract for dish recipe replacement and dependent equipment after those domains are implemented.
+Participant-count, MealSlot, and Dish recipe changes now recalculate persisted purchasing data transactionally. Complete the contract for dependent equipment after equipment persistence is implemented.
 
 ## P1 — Quality and Maintainability
 
@@ -22,13 +22,13 @@ The audited snapshot contained 74 strict mypy errors. Selected workflow modules 
 
 ### TD-007 — Frontend automated tests
 
-Implemented coverage includes MealPlan states and mutations plus recipe editor validation and lifecycle flows through production build.
+Implemented coverage includes MealPlan states and mutations, recipe editor validation and lifecycle flows, dish catalogue validation, project catalogue rendering through production build, and catalog-import template contracts.
 
 Remaining critical coverage:
 
-- project creation;
-- dish catalogue and recipe selection;
-- shopping recalculation display;
+- project creation and guided preparation;
+- shopping recalculation presentation;
+- catalog-import interaction and error rendering;
 - responsive and higher-level interaction behavior;
 - invitation and role administration when multi-user mode starts.
 
@@ -52,7 +52,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Current canonical product, status, roadmap, domain, and architecture documents are synchronized. Legacy documentation and duplicate ADR-011 history still require explicit archival/canonical labeling where ambiguity remains.
+Canonical product, status, roadmap, domain, architecture, technical-debt, and task documents are synchronized as of 2026-07-15. Legacy documentation and duplicate ADR-011 history still require explicit archival/canonical labeling where ambiguity remains.
 
 ## P2 — Product Completion Debt
 
@@ -62,15 +62,15 @@ Invitation-only registration, secure local authentication, role enforcement, rec
 
 ### TD-011 — Recipe ownership and moderation
 
-The single-club recipe library, safe archive, and guarded deletion are complete. Remaining work is limited to future CLUB/PERSONAL ownership scopes, publication review, and verified-instructor moderation.
+The single-club recipe library, safe archive, guarded deletion, and bulk import are complete. Remaining work is limited to future CLUB/PERSONAL ownership scopes, multiple recipe variants per Dish, publication review, and verified-instructor moderation.
 
 ### TD-012 — Menu diversity engine
 
-Implement the approved three-day main-dish diversity rule, same-day uniqueness, recipe preference modes, and warning fallback.
+Implement meal composition rules, the approved three-day main-dish diversity rule, same-day uniqueness, future recipe preference modes, and warning fallback when the catalogue is insufficient.
 
 ### TD-013 — Equipment domain completion
 
-Connect recipe equipment requirements to aggregated trip equipment with manual overrides.
+Connect recipe equipment requirements to aggregated trip equipment with manual overrides and transactional recalculation.
 
 ### TD-014 — Export templates and branding
 
@@ -94,9 +94,13 @@ Required improvements:
 - per-mutation loading, success, and error feedback;
 - frontend coverage for responsive states.
 
-### TD-018 — Dish and recipe selection workflow
+### TD-019 — Dish recipe change impact preview
 
-The current `Dish.recipe_id` relationship exists, but there is no complete catalogue UI or explicit recipe replacement workflow. Implement dish CRUD, assignment visibility, safe recipe replacement, and purchasing recalculation coverage.
+Dish recipe replacement now recalculates all affected purchasing projections transactionally. Before final UX acceptance, show how many existing meal plans, purchase lists, and checklists will be recalculated before the user confirms the change.
+
+### TD-020 — Alcohol prohibition enforcement
+
+The approved product specification prohibits alcohol across product creation, recipes, dishes, and imports. Add centralized backend classification/validation and regression tests; frontend-only filtering is insufficient.
 
 ## Completed History
 
@@ -104,7 +108,8 @@ The current `Dish.recipe_id` relationship exists, but there is no complete catal
 - TD-004 — Docker release verification baseline: complete local stack startup, migrations, and primary implemented flow verified during stabilization. Final acceptance remains under TD-008.
 - TD-009 — Dependency vulnerability: current lockfile passes enforced moderate-severity `npm audit`.
 - TD-016 — Backup and restore: Bash/PowerShell scripts, operational documentation, and PostgreSQL 18 CI smoke test implemented.
-- Recipe library foundation — product, component, note, archive, restore, and guarded-delete workflows implemented through API and frontend.
+- TD-018 — Dish and recipe selection workflow: dish catalogue, explicit active-recipe assignment, frontend editing, historical archived-recipe visibility, and transactional purchasing recalculation are implemented.
+- Recipe library foundation — product, component, note, archive, restore, guarded-delete, and transactional CSV-import workflows implemented through API and frontend.
 
 ## Debt Closure Rule
 
