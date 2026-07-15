@@ -2,11 +2,16 @@
 
 Status:
 
-Accepted
+Partially superseded by ADR-013
 
 Date:
 
 2026-07-09
+
+Supersession note:
+
+- ADR-013 replaces sections 2 and 3 with the current persisted `MealSlot` / `MealSlotDish` composition model and approved `Dish` meal-role metadata.
+- The hiking meal examples and composition intent in sections 4 and 5 remain valid.
 
 ---
 
@@ -16,11 +21,11 @@ This document fixes the current MealPlan backend state and prevents repeated arc
 
 ---
 
-# 2. Backend Audit Result
+# 2. Backend Audit Result — Historical
 
-## Existing domain model
+The original audited model described menu assignments through `MealPlanItem`. This persistence description is retained only as historical context and is superseded by ADR-013.
 
-MealPlan already has the required persistence structure:
+Original model:
 
 Project
  |
@@ -36,28 +41,15 @@ Project
  |
  Product
 
-A new MealSlot table or MealComposition table is NOT required.
+The current primary composition model is `MealPlan -> MealPlanDay -> MealSlot -> MealSlotDish -> Dish`.
 
 ---
 
-# 3. MealPlanItem Rule
+# 3. MealPlanItem Rule — Legacy Compatibility
 
-MealPlanItem is the existing unit of a dish assignment.
+`MealPlanItem` remains a legacy compatibility path. It is no longer the primary unit of meal composition and must not receive new role metadata or new generation behavior.
 
-One meal is represented by multiple MealPlanItem records with the same:
-
-- day_number;
-- meal_type.
-
-Example:
-
-Day 1
-
-Breakfast:
-
-- MealPlanItem -> Porridge
-- MealPlanItem -> Sandwiches
-- MealPlanItem -> Tea
+Current assignments are persisted through multiple `MealSlotDish` rows in one `MealSlot`.
 
 ---
 
@@ -185,10 +177,11 @@ Only after documentation analysis may code changes be proposed or implemented.
 
 # 7. Future Work
 
-Next implementation phase:
-
 TH-0061.5 — Meal Composition Rules Engine.
 
-Goal:
+The next implementation phase follows ADR-013:
 
-Convert generic dish generation into rule-based meal generation.
+1. add the persisted `dish_meal_roles` model and migration;
+2. expose role API contracts;
+3. classify the active catalogue explicitly;
+4. implement role-aware composition and calendar-day diversity.
