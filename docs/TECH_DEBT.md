@@ -20,21 +20,26 @@ The audited snapshot contained 74 strict mypy errors. Selected workflow modules,
 
 ### TD-007 — Frontend automated tests
 
-Current coverage focuses on pure state, command, validation, ordering, summary, feedback, and responsive-policy helpers.
+Current coverage includes pure state, command, validation, ordering, summary, feedback, and responsive-policy helpers.
 
-TH-0065 adds coverage for MealSlot add/replace/remove commands, mutation errors, Russian success feedback, day summaries, meal ordering, collapse defaults, and responsive layout policy.
+TH-0065 and PR #57 add real-browser coverage for:
+
+- MealSlot add, replace, and remove operations through React hooks and the shared Axios client;
+- explicit removal confirmation;
+- Russian success and injected mutation-error feedback;
+- no horizontal overflow at desktop, tablet, and 360 px mobile widths;
+- desktop, tablet, and mobile screenshot artifacts in Quality CI.
 
 Remaining critical coverage:
 
-- browser-level React component and API integration for MealSlot editing;
 - project creation and guided preparation;
 - shopping recalculation presentation;
 - catalogue import interaction and error rendering;
-- responsive browser behavior at 360 px.
+- final end-to-end release acceptance.
 
 ### TD-008 — Continuous Integration
 
-Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, and PostgreSQL backup/restore.
+Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, Meal Plan Editor browser acceptance, and PostgreSQL backup/restore.
 
 Remaining:
 
@@ -43,7 +48,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical current documents and the active task index are synchronized after TH-0070. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
+Canonical current documents and the active task index are synchronized after TH-0070 and TH-0065. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
 ### TD-024 — Legacy MealPlanItem compatibility
 
@@ -94,13 +99,18 @@ Record actor/action/time metadata when multi-user access is introduced.
 
 ### TD-017 — Meal plan editor UX
 
-TH-0065 currently covers compact Russian rows, domain meal order, collapsible days, explicit add/replace flows, confirmed removal, mutation feedback, full-width layout, and responsive Material UI direction.
+TH-0065 covers compact Russian rows, domain meal order, collapsible days, explicit add/replace flows, confirmed removal, mutation feedback, full-width layout, and responsive Material UI direction.
+
+Automated closure requirements are satisfied on PR #57 through Quality run #164:
+
+- browser-level React/API add, replace, remove, and mutation-error coverage;
+- verified no-overflow browser rendering at 1280, 768, and 360 px;
+- desktop, tablet, and mobile screenshot artifacts.
 
 Remaining closure requirements:
 
-- browser-level React/API integration tests;
-- verified 360 px browser rendering;
-- final desktop, tablet, and mobile acceptance.
+- Product Owner visual acceptance;
+- squash merge of PR #57 and post-merge verification.
 
 ### TD-019 — Dish recipe change impact preview
 

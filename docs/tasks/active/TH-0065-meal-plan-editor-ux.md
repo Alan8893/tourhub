@@ -1,6 +1,6 @@
 # TH-0065 — Meal Plan Editor UX
 
-Status: IN PROGRESS
+Status: READY FOR REVIEW
 Priority: P2
 Type: frontend / UX
 
@@ -15,33 +15,34 @@ The original MealSlot editor was functionally usable but difficult to scan and o
 - there was no compact summary or collapse behavior for completed days;
 - destructive actions did not have an explicit confirmation or undo affordance.
 
-The stabilization PR #54 already corrected the MealSlot identifiers, dish-list API envelope, meal ordering, and remaining English selector text.
+The stabilization PR #54 corrected the MealSlot identifiers, dish-list API envelope, meal ordering, and remaining English selector text.
 
-## Target UX
+## Delivered UX
 
 - fully Russian labels and placeholders;
 - stable meal ordering: breakfast, snack, lunch, dinner, constrained by first/last meal;
-- one compact row per dish with clear replace and remove actions;
-- add-dish action separated from existing dishes;
-- responsive full-width menu editor when editing is the primary task;
-- collapsible day sections with dish counts;
-- loading, success, and error feedback for each mutation;
-- accessible controls with tooltips and clear destructive styling;
-- usable desktop, tablet, and mobile layouts.
-
-## Current implementation slice
-
-Branch `agent/meal-plan-editor-ux` adds:
-
+- compact rows with clear replace and remove actions;
 - progressive disclosure for replacement and addition selectors;
 - explicit two-step removal confirmation;
-- Russian success and error feedback;
-- compact outlined dish rows with long-name wrapping;
-- responsive column/row action layout;
-- collapsible days with dish counts and only the first day expanded by default;
-- a full-width Meal Plan workspace;
-- state-level tests for add, replace, remove, errors, feedback, Russian plurals, meal ordering, day summaries, collapse defaults, and responsive policy;
-- synchronized roadmap, status, technical debt, and task documentation after TH-0070.
+- loading, success, and error feedback for mutations;
+- accessible controls with tooltips and destructive styling;
+- collapsible day sections with dish counts;
+- full-width workspace for the primary menu-editing task;
+- responsive desktop, tablet, and 360 px mobile layouts.
+
+## Automated acceptance
+
+PR #57 adds a dependency-free browser acceptance runner using Chrome DevTools Protocol, Vite, and an in-process mock API.
+
+Quality run #164 verifies:
+
+- add, replace, and remove requests through the real React hooks and Axios client;
+- explicit removal confirmation;
+- Russian success and injected mutation-error feedback;
+- no horizontal overflow at 1280, 768, and 360 px;
+- captured desktop, tablet, and mobile screenshots;
+- existing frontend Node tests, dependency audit, and production build;
+- backend quality gates and PostgreSQL backup/restore.
 
 ## Acceptance criteria
 
@@ -52,12 +53,13 @@ Branch `agent/meal-plan-editor-ux` adds:
 5. MealSlot mutations continue to trigger purchasing recalculation.
 6. Frontend tests cover add, replace, remove, mutation error, and responsive behavior.
 
+All automated acceptance criteria are satisfied on PR #57.
+
 ## Remaining before DONE
 
-- successful Quality workflow for the current implementation slice;
-- browser-level React/API integration tests for add, replace, remove, and mutation errors;
-- explicit browser verification at 360 px, tablet, and desktop widths;
-- final Product Owner UX acceptance.
+- Product Owner visual acceptance of the desktop, tablet, and mobile screenshots;
+- squash merge of PR #57 with unchanged successful Quality checks;
+- move this task to `closed/` after merge verification.
 
 ## Notes
 

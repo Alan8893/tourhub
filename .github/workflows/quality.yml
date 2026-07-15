@@ -148,6 +148,17 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Meal Plan Editor browser acceptance
+        run: npm run test:browser
+
+      - name: Upload browser acceptance screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: meal-plan-editor-browser-acceptance
+          path: frontend/browser-test-artifacts/*
+          if-no-files-found: ignore
+
   postgres-backup-restore:
     name: PostgreSQL backup and restore
     runs-on: ubuntu-latest

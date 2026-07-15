@@ -4,11 +4,12 @@ Status date: 2026-07-15
 
 ## Current phase
 
-TH-0065 — Meal Plan Editor UX on top of the corrected MealSlot contract. New menu-intelligence metadata and rules remain deferred until the editor workflow and its frontend integration coverage are accepted.
+TH-0065 — Meal Plan Editor UX is ready for Product Owner review on PR #57. New menu-intelligence metadata and rules remain deferred until this editor workflow is accepted and merged.
 
 ## Verified baseline
 
 - TH-0070 was merged through PR #54.
+- Remote-browser same-origin API routing was repaired through PR #56.
 - Alembic has one head: `g10001`.
 - Backend tests, selected Ruff and strict mypy baselines, frontend tests/build/audit, and PostgreSQL backup/restore are enforced in GitHub Actions.
 - Docker Compose, automatic migrations, project creation, menu generation, preparation, and export foundations were verified during stabilization.
@@ -29,7 +30,8 @@ Implemented:
 - first and last meal context;
 - backend boundary validation;
 - project catalogue and workspace;
-- participant-count purchasing recalculation with rollback.
+- participant-count purchasing recalculation with rollback;
+- same-origin browser routing for LAN clients.
 
 Needs completion:
 
@@ -50,20 +52,21 @@ Implemented in `main`:
 - deterministic fallback with immediate insufficient-catalogue warning generation;
 - archived-recipe assignment guard;
 - purchasing recalculation and rollback after MealSlot edits;
-- legacy MealPlanItem compatibility without duplicate flat API items.
-
-Current TH-0065 work:
-
+- legacy MealPlanItem compatibility without duplicate flat API items;
 - compact Russian editor rows;
 - explicit replace/add flows and confirmed removal;
 - mutation loading, success, and error feedback;
 - collapsible days with dish counts;
-- full-width responsive editor layout;
-- state-level tests for commands, errors, feedback, ordering, summaries, and responsive policy.
+- full-width responsive editor layout.
+
+Pending PR #57 merge:
+
+- browser-level React/API acceptance for add, replace, remove, and mutation errors;
+- automated no-overflow checks at 1280, 768, and 360 px;
+- desktop, tablet, and mobile screenshot artifacts in Quality CI.
 
 Needs later completion:
 
-- browser-level React/API integration tests;
 - persisted meal roles;
 - breakfast/snack/lunch/dinner composition rules;
 - repeatable drink/addition exceptions;
@@ -115,7 +118,7 @@ Needs completion:
 
 ## Quality status
 
-Enforced:
+Enforced in `main`:
 
 - backend tests;
 - critical Ruff baseline;
@@ -127,10 +130,16 @@ Enforced:
 - TypeScript production build;
 - PostgreSQL backup/restore smoke test.
 
+Verified on PR #57 Quality run #164:
+
+- real-browser MealSlot add, replace, remove, confirmation, and error flows;
+- same-origin Vite proxy integration against a mock API;
+- responsive no-overflow checks and screenshots at desktop, tablet, and 360 px mobile widths.
+
 Open quality debt:
 
-- browser-level React component/API integration tests;
-- responsive browser tests at 360 px;
+- guided preparation browser coverage;
+- shopping and catalogue-import browser coverage;
 - broader Ruff and strict mypy coverage;
 - Docker image/build and final release gates.
 
@@ -138,12 +147,12 @@ Open quality debt:
 
 - TH-0061 — guided project preparation journey;
 - TH-0061.5 — Meal Composition Rules Engine;
-- TH-0065 — Meal Plan Editor UX.
+- TH-0065 — Meal Plan Editor UX, ready for review on PR #57.
 
 ## Immediate sequence
 
-1. Complete and verify the TH-0065 editor UX slice.
-2. Add browser-level React/API integration coverage for MealSlot editing.
+1. Complete Product Owner review and merge PR #57.
+2. Close TH-0065 after merge verification.
 3. Approve and persist meal-role metadata.
 4. Implement role-aware composition and calendar-day diversity.
 5. Complete packaging, equipment, exports, and release acceptance.
