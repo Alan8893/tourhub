@@ -195,6 +195,19 @@ async function clickButtonByAriaLabel(client, label) {
 }
 
 async function selectMuiOption(client, label, optionText) {
+  await waitForExpression(
+    client,
+    `Array.from(document.querySelectorAll('[role="combobox"]')).some((candidate) => {
+      const normalize = (value) => (value ?? "").replace(/\\s+/g, " ").trim();
+      const labelledBy = (candidate.getAttribute("aria-labelledby") ?? "").split(/\\s+/);
+      const matchesLabel = labelledBy.some((id) =>
+        normalize(document.getElementById(id)?.textContent) === ${JSON.stringify(label)}
+      );
+      return matchesLabel && candidate.getAttribute("aria-disabled") !== "true";
+    })`,
+    `enabled select ${label}`,
+  );
+
   const opened = await client.evaluate(`(() => {
     const normalize = (value) => (value ?? "").replace(/\\s+/g, " ").trim();
     const controls = Array.from(document.querySelectorAll('[role="combobox"]'));
@@ -364,7 +377,12 @@ async function run() {
   }
 }
 
-run().catch((error) => {
+run().catch(async (error) => {
   console.error(error);
+  await mkdir(artifactDir, { recursive: true });
+  await writeFile(
+    path.join(artifactDir, "browser-acceptance-error.txt"),
+    `${error?.stack ?? error}\n`,
+  );
   process.exitCode = 1;
 });
