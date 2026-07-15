@@ -16,6 +16,7 @@ depends_on = None
 
 
 _ROLE_CHECK = "role IN ('main', 'addition', 'drink', 'snack')"
+_MEAL_TYPE_CHECK = "meal_type IN ('breakfast', 'snack', 'lunch', 'dinner')"
 
 
 def upgrade() -> None:
@@ -40,7 +41,24 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("dish_id", "role"),
     )
+    op.create_table(
+        "dish_meal_role_meal_types",
+        sa.Column("dish_id", sa.String(), nullable=False),
+        sa.Column("role", sa.String(length=32), nullable=False),
+        sa.Column("meal_type", sa.String(length=32), nullable=False),
+        sa.CheckConstraint(
+            _MEAL_TYPE_CHECK,
+            name="ck_dish_meal_role_meal_types_meal_type",
+        ),
+        sa.ForeignKeyConstraint(
+            ["dish_id", "role"],
+            ["dish_meal_roles.dish_id", "dish_meal_roles.role"],
+            ondelete="CASCADE",
+        ),
+        sa.PrimaryKeyConstraint("dish_id", "role", "meal_type"),
+    )
 
 
 def downgrade() -> None:
+    op.drop_table("dish_meal_role_meal_types")
     op.drop_table("dish_meal_roles")
