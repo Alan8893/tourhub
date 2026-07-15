@@ -51,33 +51,58 @@ def test_dish_meal_roles_are_replaced_and_exposed(client):
         f"/api/v1/dishes/{dish_id}/meal-roles",
         json={
             "roles": [
-                {"role": "snack", "is_repeatable": False},
-                {"role": "addition", "is_repeatable": True},
+                {
+                    "role": "snack",
+                    "is_repeatable": False,
+                    "allowed_meal_types": ["snack"],
+                },
+                {
+                    "role": "addition",
+                    "is_repeatable": True,
+                    "allowed_meal_types": ["dinner", "breakfast", "lunch"],
+                },
             ]
         },
     )
 
     assert first_response.status_code == 200
     assert first_response.json()["meal_roles"] == [
-        {"role": "addition", "is_repeatable": True},
-        {"role": "snack", "is_repeatable": False},
+        {
+            "role": "addition",
+            "is_repeatable": True,
+            "allowed_meal_types": ["breakfast", "lunch", "dinner"],
+        },
+        {
+            "role": "snack",
+            "is_repeatable": False,
+            "allowed_meal_types": ["snack"],
+        },
     ]
 
     replacement_response = client.put(
         f"/api/v1/dishes/{dish_id}/meal-roles",
-        json={"roles": [{"role": "main", "is_repeatable": False}]},
+        json={
+            "roles": [
+                {
+                    "role": "main",
+                    "is_repeatable": False,
+                    "allowed_meal_types": ["breakfast"],
+                }
+            ]
+        },
     )
 
     assert replacement_response.status_code == 200
-    assert replacement_response.json()["meal_roles"] == [
-        {"role": "main", "is_repeatable": False}
+    expected_roles = [
+        {
+            "role": "main",
+            "is_repeatable": False,
+            "allowed_meal_types": ["breakfast"],
+        }
     ]
-    assert client.get(f"/api/v1/dishes/{dish_id}").json()["meal_roles"] == [
-        {"role": "main", "is_repeatable": False}
-    ]
-    assert client.get("/api/v1/dishes").json()["items"][0]["meal_roles"] == [
-        {"role": "main", "is_repeatable": False}
-    ]
+    assert replacement_response.json()["meal_roles"] == expected_roles
+    assert client.get(f"/api/v1/dishes/{dish_id}").json()["meal_roles"] == expected_roles
+    assert client.get("/api/v1/dishes").json()["items"][0]["meal_roles"] == expected_roles
 
     clear_response = client.put(
         f"/api/v1/dishes/{dish_id}/meal-roles",
@@ -89,9 +114,16 @@ def test_dish_meal_roles_are_replaced_and_exposed(client):
 
 def test_duplicate_dish_meal_roles_are_rejected_atomically(client):
     dish_id = _create_dish(client, "Чай")
+    initial_roles = [
+        {
+            "role": "drink",
+            "is_repeatable": True,
+            "allowed_meal_types": ["breakfast", "lunch", "dinner"],
+        }
+    ]
     initial_response = client.put(
         f"/api/v1/dishes/{dish_id}/meal-roles",
-        json={"roles": [{"role": "drink", "is_repeatable": True}]},
+        json={"roles": initial_roles},
     )
     assert initial_response.status_code == 200
 
@@ -99,17 +131,87 @@ def test_duplicate_dish_meal_roles_are_rejected_atomically(client):
         f"/api/v1/dishes/{dish_id}/meal-roles",
         json={
             "roles": [
-                {"role": "snack", "is_repeatable": False},
-                {"role": "snack", "is_repeatable": True},
+                {
+                    "role": "snack",
+                    "is_repeatable": False,
+                    "allowed_meal_types": ["snack"],
+                },
+                {
+                    "role": "snack",
+                    "is_repeatable": True,
+                    "allowed_meal_types": ["snack"],
+                },
             ]
         },
     )
 
     assert duplicate_response.status_code == 422
     assert duplicate_response.json()["error"] == "Meal roles must be unique"
-    assert client.get(f"/api/v1/dishes/{dish_id}").json()["meal_roles"] == [
-        {"role": "drink", "is_repeatable": True}
+    assert client.get(f"/api/v1/dishes/{dish_id}").json()["meal_roles"] == initial_roles
+
+
+def test_meal_type_compatibility_is_validated_atomically(client):
+    dish_id = _create_dish(client, "Овсяная каша")
+    initial_roles = [
+        {
+            "role": "main",
+            "is_repeatable": False,
+            "allowed_meal_types": ["breakfast"],
+        }
     ]
+    assert client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={"roles": initial_roles},
+    ).status_code == 200
+
+    duplicate_meal_type_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={
+            "roles": [
+                {
+                    "role": "main",
+                    "is_repeatable": False,
+                    "allowed_meal_types": ["breakfast", "breakfast"],
+                }
+            ]
+        },
+    )
+    assert duplicate_meal_type_response.status_code == 422
+    assert duplicate_meal_type_response.json()["error"] == (
+        "Meal types must be unique within each meal role"
+    )
+
+    incompatible_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={
+            "roles": [
+                {
+                    "role": "main",
+                    "is_repeatable": False,
+                    "allowed_meal_types": ["snack"],
+                }
+            ]
+        },
+    )
+    assert incompatible_response.status_code == 422
+    assert incompatible_response.json()["error"] == (
+        "Meal role main is incompatible with meal type snack"
+    )
+
+    empty_compatibility_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={
+            "roles": [
+                {
+                    "role": "main",
+                    "is_repeatable": False,
+                    "allowed_meal_types": [],
+                }
+            ]
+        },
+    )
+    assert empty_compatibility_response.status_code == 422
+    assert client.get(f"/api/v1/dishes/{dish_id}").json()["meal_roles"] == initial_roles
 
 
 def test_invalid_or_unknown_dish_meal_roles_are_rejected(client):
@@ -117,9 +219,31 @@ def test_invalid_or_unknown_dish_meal_roles_are_rejected(client):
 
     invalid_role_response = client.put(
         f"/api/v1/dishes/{dish_id}/meal-roles",
-        json={"roles": [{"role": "soup", "is_repeatable": False}]},
+        json={
+            "roles": [
+                {
+                    "role": "soup",
+                    "is_repeatable": False,
+                    "allowed_meal_types": ["lunch"],
+                }
+            ]
+        },
     )
     assert invalid_role_response.status_code == 422
+
+    invalid_meal_type_response = client.put(
+        f"/api/v1/dishes/{dish_id}/meal-roles",
+        json={
+            "roles": [
+                {
+                    "role": "main",
+                    "is_repeatable": False,
+                    "allowed_meal_types": ["brunch"],
+                }
+            ]
+        },
+    )
+    assert invalid_meal_type_response.status_code == 422
 
     missing_dish_response = client.put(
         "/api/v1/dishes/unknown/meal-roles",
