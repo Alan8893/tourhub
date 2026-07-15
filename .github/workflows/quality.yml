@@ -37,6 +37,7 @@ jobs:
           python -m ruff check \
             app/core/exceptions.py \
             app/services/catalog_import_service.py \
+            app/services/dish_recipe_recalculation_service.py \
             app/services/dish_service.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
@@ -61,6 +62,7 @@ jobs:
           python -m mypy \
             app/core/exceptions.py \
             app/services/catalog_import_service.py \
+            app/services/dish_recipe_recalculation_service.py \
             app/services/dish_service.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \

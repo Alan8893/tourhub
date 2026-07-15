@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.dish import DishORM
 from app.models.recipe import RecipeORM
+from app.services.dish_recipe_recalculation_service import (
+    DishRecipeRecalculationService,
+)
 
 
 class DishService:
@@ -40,9 +43,22 @@ class DishService:
         normalized_name = name.strip()
         self._ensure_name_available(normalized_name, exclude_id=dish_id)
         recipe = self._get_selectable_recipe(recipe_id)
+        recipe_changed = dish.recipe_id != recipe.id
         dish.name = normalized_name
         dish.recipe_id = recipe.id
-        self._commit()
+
+        try:
+            self.session.flush()
+            if recipe_changed:
+                self.session.expire(dish, ["recipe"])
+                DishRecipeRecalculationService(
+                    self.session
+                ).refresh_affected_meal_plans(dish_id)
+            self.session.commit()
+        except Exception:
+            self.session.rollback()
+            raise
+
         return self.get_dish(dish.id)
 
     def _get_selectable_recipe(self, recipe_id: str) -> RecipeORM:
