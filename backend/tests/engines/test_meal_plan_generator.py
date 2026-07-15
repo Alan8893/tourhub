@@ -44,6 +44,29 @@ def test_generate_meal_plan_without_repetition_warning():
     assert result.items[1].meal_type == "dinner"
 
 
+def test_generate_meal_plan_uses_each_dish_once_per_day():
+    generator = MealPlanGenerator()
+    dishes = [
+        DishInput(id="1", name="Pilaf"),
+        DishInput(id="2", name="Soup"),
+        DishInput(id="3", name="Oatmeal"),
+        DishInput(id="4", name="Pasta"),
+    ]
+
+    result = generator.generate(
+        dishes=dishes,
+        days=2,
+        meals_per_day=["breakfast", "snack", "lunch", "dinner"],
+    )
+
+    first_day_ids = [item.dish_id for item in result.items if item.day_number == 1]
+    second_day_ids = [item.dish_id for item in result.items if item.day_number == 2]
+
+    assert first_day_ids == ["1", "2", "3", "4"]
+    assert second_day_ids == ["1", "2", "3", "4"]
+    assert result.warnings == []
+
+
 def test_generate_meal_plan_returns_warning_when_not_enough_dishes():
     generator = MealPlanGenerator()
 
@@ -65,10 +88,24 @@ def test_generate_meal_plan_returns_warning_when_not_enough_dishes():
 
     assert len(result.items) == 4
 
-    assert (
-        "Dish database is insufficient"
-        in result.warnings
+    assert "Dish database is insufficient" in result.warnings
+
+
+def test_generate_meal_plan_repeats_deterministically_after_catalogue_exhaustion():
+    generator = MealPlanGenerator()
+    dishes = [
+        DishInput(id="1", name="Pilaf"),
+        DishInput(id="2", name="Soup"),
+    ]
+
+    result = generator.generate(
+        dishes=dishes,
+        days=1,
+        meals_per_day=["breakfast", "snack", "lunch"],
     )
+
+    assert [item.dish_id for item in result.items] == ["1", "2", "1"]
+    assert result.warnings == ["Dish database is insufficient"]
 
 
 def test_generate_empty_dishes_returns_warning():
@@ -85,7 +122,4 @@ def test_generate_empty_dishes_returns_warning():
 
     assert result.items == []
 
-    assert (
-        "No dishes available"
-        in result.warnings
-    )
+    assert "No dishes available" in result.warnings
