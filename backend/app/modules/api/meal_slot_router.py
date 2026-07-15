@@ -1,9 +1,5 @@
 from collections.abc import Callable
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.orm import Session, joinedload
-
 from app.core.session import get_session
 from app.models.dish import DishORM
 from app.models.meal_slot import MealSlotORM
@@ -17,6 +13,9 @@ from app.services.meal_plan_purchasing_refresh_service import (
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
 from app.services.meal_slot_service import MealSlotService
 from app.services.shopping_list_service import ShoppingListService
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload
 
 
 router = APIRouter(prefix="/meal-slots", tags=["Meal Slots"])
