@@ -1,4 +1,8 @@
+from collections import Counter
 from dataclasses import dataclass, field
+
+
+INSUFFICIENT_DISHES_WARNING = "Dish database is insufficient"
 
 
 @dataclass(frozen=True)
@@ -67,7 +71,6 @@ class MealPlanGenerator:
                 slots=[],
                 warnings=["No dishes available"],
             )
-
         if dishes_per_meal < 1:
             raise ValueError("dishes_per_meal must be greater than zero")
 
@@ -88,26 +91,28 @@ class MealPlanGenerator:
         items: list[MealPlanItemResult] = []
         slots: list[MealSlotResult] = []
 
-        required_dishes = len(meal_sequence) * dishes_per_meal
-
-        if len(dishes) < required_dishes:
-            warnings.append("Dish database is insufficient")
+        meals_by_day = Counter(day_number for day_number, _ in meal_sequence)
+        required_dishes_for_day = max(meals_by_day.values(), default=0) * dishes_per_meal
+        if len(dishes) < required_dishes_for_day:
+            warnings.append(INSUFFICIENT_DISHES_WARNING)
 
         dish_index = 0
+        current_day: int | None = None
+        used_for_day: set[str] = set()
 
         for day_number, meal_type in meal_sequence:
+            if day_number != current_day:
+                current_day = day_number
+                used_for_day = set()
+
             selected: list[DishInput] = []
-            used_for_meal: set[str] = set()
 
             for _ in range(dishes_per_meal):
-                dish = dishes[dish_index % len(dishes)]
-                attempts = 0
-
-                while dish.id in used_for_meal and attempts < len(dishes):
-                    dish_index += 1
-                    dish = dishes[dish_index % len(dishes)]
-                    attempts += 1
-
+                dish, dish_index = self._select_next_dish(
+                    dishes=dishes,
+                    start_index=dish_index,
+                    excluded_ids=used_for_day,
+                )
                 selected.append(dish)
 
                 items.append(
@@ -119,8 +124,7 @@ class MealPlanGenerator:
                     )
                 )
 
-                used_for_meal.add(dish.id)
-                dish_index += 1
+                used_for_day.add(dish.id)
 
             slots.append(
                 MealSlotResult(
@@ -135,3 +139,18 @@ class MealPlanGenerator:
             slots=slots,
             warnings=warnings,
         )
+
+    @staticmethod
+    def _select_next_dish(
+        dishes: list[DishInput],
+        start_index: int,
+        excluded_ids: set[str],
+    ) -> tuple[DishInput, int]:
+        for offset in range(len(dishes)):
+            candidate_index = start_index + offset
+            candidate = dishes[candidate_index % len(dishes)]
+            if candidate.id not in excluded_ids:
+                return candidate, candidate_index + 1
+
+        fallback = dishes[start_index % len(dishes)]
+        return fallback, start_index + 1

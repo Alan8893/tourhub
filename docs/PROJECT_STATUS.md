@@ -49,12 +49,15 @@ Implemented:
 - purchasing recalculation after MealSlot edits;
 - commit/rollback regression coverage;
 - frontend loading, error, empty, ready, add, replace, remove, pending, and mutation-error state tests;
-- legacy MealPlanItem compatibility.
+- legacy MealPlanItem compatibility;
+- deterministic same-day dish uniqueness during automatic generation while unused catalogue dishes remain;
+- deterministic repetition fallback with an insufficient-catalogue warning after the daily catalogue is exhausted.
 
 Needs completion:
 
-- approved meal composition and diversity rules;
-- insufficient-catalogue warnings;
+- meal-role composition metadata and rules;
+- three-day main-dish diversity;
+- API/frontend presentation of insufficient-catalogue warnings;
 - responsive and higher-level interaction tests;
 - TH-0065 Meal Plan Editor UX acceptance.
 
@@ -155,10 +158,11 @@ Current active tasks:
 
 Immediate product sequence:
 
-1. implement meal composition, diversity, and insufficient-catalogue warnings;
-2. complete packaging presentation and equipment;
-3. finish exports and release acceptance;
-4. introduce invitation-only access, roles, multi-variant recipe ownership, and moderation.
+1. define meal-role metadata and complete meal composition and three-day main-dish diversity;
+2. expose insufficient-catalogue warnings through API and frontend;
+3. complete packaging presentation and equipment;
+4. finish exports and release acceptance;
+5. introduce invitation-only access, roles, multi-variant recipe ownership, and moderation.
 
 ## Release Definition
 
