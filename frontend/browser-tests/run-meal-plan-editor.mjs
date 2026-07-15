@@ -1,19 +1,19 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
-const chromeProfileDir = path.join("/tmp", "tourhub-browser-acceptance-profile");
 const frontendPort = 5173;
 const apiPort = 18080;
 const debuggingPort = 9222;
 const baseUrl = `http://127.0.0.1:${frontendPort}`;
+const chromeProfileDir = path.join("/tmp", "tourhub-browser-acceptance-profile");
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -71,16 +71,8 @@ function startMockApi() {
       if (request.method === "GET" && url.pathname === "/api/v1/dishes") {
         sendJson(200, {
           items: [
-            {
-              id: "dish-soup",
-              name: "Суп",
-              recipe: { id: "recipe-1", name: "Суп", is_archived: false },
-            },
-            {
-              id: "dish-fruit",
-              name: "Сухофрукты",
-              recipe: { id: "recipe-2", name: "Сухофрукты", is_archived: false },
-            },
+            { id: "dish-soup", name: "Суп", recipe: { id: "recipe-1", name: "Суп", is_archived: false } },
+            { id: "dish-fruit", name: "Сухофрукты", recipe: { id: "recipe-2", name: "Сухофрукты", is_archived: false } },
           ],
         });
         return;
@@ -108,12 +100,15 @@ function startMockApi() {
     failNextMutation: () => {
       failNextMutation = true;
     },
-    listen: () =>
-      new Promise((resolve, reject) => {
-        server.once("error", reject);
-        server.listen(apiPort, "127.0.0.1", resolve);
+    listen: () => new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(apiPort, "127.0.0.1", resolve);
+    }),
+    close: () =>
+      new Promise((resolve) => {
+        server.closeAllConnections();
+        server.close(resolve);
       }),
-    close: () => new Promise((resolve) => server.close(resolve)),
   };
 }
 
@@ -263,10 +258,7 @@ async function captureViewport(client, width, height, name) {
     `Horizontal overflow at ${width}px: ${JSON.stringify(layout)}`,
   );
 
-  const screenshot = await client.send("Page.captureScreenshot", {
-    format: "png",
-    captureBeyondViewport: false,
-  });
+  const screenshot = await client.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
   await writeFile(path.join(artifactDir, `${name}.png`), Buffer.from(screenshot.data, "base64"));
 }
 
@@ -279,32 +271,35 @@ async function run() {
   await mockApi.listen();
 
   const vite = spawn(
-    "npm",
-    ["run", "dev", "--", "--host", "127.0.0.1", "--port", String(frontendPort), "--strictPort"],
+    process.execPath,
+    [
+      path.join(frontendRoot, "node_modules", "vite", "bin", "vite.js"),
+      "--host",
+      "127.0.0.1",
+      "--port",
+      String(frontendPort),
+      "--strictPort",
+    ],
     {
       cwd: frontendRoot,
       env: { ...process.env, VITE_PROXY_TARGET: `http://127.0.0.1:${apiPort}` },
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: "ignore",
     },
   );
 
-  const chrome = spawn(
-    findChromeExecutable(),
-    [
-      "--headless=new",
-      "--no-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      `--remote-debugging-port=${debuggingPort}`,
-      `--user-data-dir=${chromeProfileDir}`,
-      "about:blank",
-    ],
-    { stdio: ["ignore", "pipe", "pipe"] },
-  );
+  const chrome = spawn(findChromeExecutable(), [
+    "--headless=new",
+    "--no-sandbox",
+    "--disable-dev-shm-usage",
+    "--disable-gpu",
+    `--remote-debugging-port=${debuggingPort}`,
+    `--user-data-dir=${chromeProfileDir}`,
+    "about:blank",
+  ], { stdio: "ignore" });
 
   const cleanup = async () => {
-    chrome.kill("SIGTERM");
-    vite.kill("SIGTERM");
+    chrome.kill("SIGKILL");
+    vite.kill("SIGKILL");
     await mockApi.close();
     await rm(chromeProfileDir, { recursive: true, force: true });
   };
@@ -313,9 +308,7 @@ async function run() {
     await waitForHttp(`${baseUrl}/browser-tests/meal-plan-editor.html`);
     await waitForHttp(`http://127.0.0.1:${debuggingPort}/json/version`);
 
-    const targets = await fetch(`http://127.0.0.1:${debuggingPort}/json/list`).then((response) =>
-      response.json(),
-    );
+    const targets = await fetch(`http://127.0.0.1:${debuggingPort}/json/list`).then((response) => response.json());
     const pageTarget = targets.find((target) => target.type === "page");
     assert.ok(pageTarget?.webSocketDebuggerUrl, "Chrome page target was not found");
 
@@ -328,11 +321,7 @@ async function run() {
     await clickButtonByAriaLabel(client, "Заменить блюдо «Овсяная каша»");
     await selectMuiOption(client, "Новое блюдо", "Суп");
     await clickButtonByText(client, "Сохранить");
-    await waitForExpression(
-      client,
-      `document.body.innerText.includes("Блюдо заменено.")`,
-      "replace success feedback",
-    );
+    await waitForExpression(client, `document.body.innerText.includes("Блюдо заменено.")`, "replace success feedback");
     await waitForRequest(
       mockApi.requests,
       "PUT",
@@ -346,30 +335,14 @@ async function run() {
       "remove confirmation",
     );
     await clickButtonByText(client, "Да, удалить");
-    await waitForExpression(
-      client,
-      `document.body.innerText.includes("Блюдо удалено.")`,
-      "remove success feedback",
-    );
-    await waitForRequest(
-      mockApi.requests,
-      "DELETE",
-      "/api/v1/meal-slots/slot-1/dishes/slot-dish-2",
-    );
+    await waitForExpression(client, `document.body.innerText.includes("Блюдо удалено.")`, "remove success feedback");
+    await waitForRequest(mockApi.requests, "DELETE", "/api/v1/meal-slots/slot-1/dishes/slot-dish-2");
 
     await clickButtonByText(client, "Добавить блюдо");
     await selectMuiOption(client, "Блюдо для добавления", "Сухофрукты");
     await clickButtonByText(client, "Добавить");
-    await waitForExpression(
-      client,
-      `document.body.innerText.includes("Блюдо добавлено.")`,
-      "add success feedback",
-    );
-    await waitForRequest(
-      mockApi.requests,
-      "POST",
-      "/api/v1/meal-slots/slot-1/dishes/dish-fruit",
-    );
+    await waitForExpression(client, `document.body.innerText.includes("Блюдо добавлено.")`, "add success feedback");
+    await waitForRequest(mockApi.requests, "POST", "/api/v1/meal-slots/slot-1/dishes/dish-fruit");
 
     mockApi.failNextMutation();
     await clickButtonByText(client, "Добавить блюдо");
