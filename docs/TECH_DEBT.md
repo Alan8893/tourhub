@@ -22,7 +22,7 @@ The audited snapshot contained 74 strict mypy errors. Selected workflow modules,
 
 Current coverage includes pure state, command, validation, ordering, summary, feedback, and responsive-policy helpers.
 
-TH-0065 and PR #57 add real-browser coverage for:
+TH-0065 and PR #57 added real-browser coverage for:
 
 - MealSlot add, replace, and remove operations through React hooks and the shared Axios client;
 - explicit removal confirmation;
@@ -33,6 +33,7 @@ TH-0065 and PR #57 add real-browser coverage for:
 Remaining critical coverage:
 
 - project creation and guided preparation;
+- meal-role management and catalogue readiness;
 - shopping recalculation presentation;
 - catalogue import interaction and error rendering;
 - final end-to-end release acceptance.
@@ -48,7 +49,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical current documents and the active task index are synchronized after TH-0070 and TH-0065. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
+Canonical current documents and the active task index are synchronized after TH-0070 and TH-0065. ADR-013 supersedes the obsolete MealPlanItem-primary persistence wording in ADR-006. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
 ### TD-024 — Legacy MealPlanItem compatibility
 
@@ -73,11 +74,21 @@ Remaining work covers CLUB/PERSONAL ownership, multiple recipe variants, publica
 
 ### TD-012 — Meal composition and diversity
 
-Remaining work:
+ADR-013 now defines the approved persisted role model:
 
-- persisted meal-role metadata;
+- normalized `dish_meal_roles` owned by Dish;
+- roles `main`, `addition`, `drink`, and `snack`;
+- multiple roles per dish;
+- repeatability per `(dish, role)` assignment;
+- no heuristic role inference.
+
+Remaining implementation work:
+
+- ORM model and Alembic migration;
+- repository, service, schemas, and atomic role-management API;
+- dish-editor role management and catalogue classification;
+- catalogue-readiness warnings;
 - role composition for breakfast, snack, lunch, and dinner;
-- approved repeatable roles;
 - calendar-day three-day main-dish diversity;
 - manual-selection preservation;
 - warning persistence or reconstruction;
@@ -96,21 +107,6 @@ Complete Russian PDF/Excel templates and load club logo and name from settings.
 ### TD-015 — Audit log
 
 Record actor/action/time metadata when multi-user access is introduced.
-
-### TD-017 — Meal plan editor UX
-
-TH-0065 covers compact Russian rows, domain meal order, collapsible days, explicit add/replace flows, confirmed removal, mutation feedback, full-width layout, and responsive Material UI direction.
-
-Automated closure requirements are satisfied on PR #57 through Quality run #164:
-
-- browser-level React/API add, replace, remove, and mutation-error coverage;
-- verified no-overflow browser rendering at 1280, 768, and 360 px;
-- desktop, tablet, and mobile screenshot artifacts.
-
-Remaining closure requirements:
-
-- Product Owner visual acceptance;
-- squash merge of PR #57 and post-merge verification.
 
 ### TD-019 — Dish recipe change impact preview
 
@@ -131,6 +127,7 @@ Product currently supports list and create. Update and guarded delete remain uni
 - TD-004 — local stack and primary workflow verified during stabilization.
 - TD-009 — dependency audit passes at moderate severity.
 - TD-016 — backup/restore scripts and CI smoke test implemented.
+- TD-017 — Meal Plan Editor UX and responsive browser acceptance completed by TH-0065 / PR #57.
 - TD-018 — dish catalogue and active-recipe assignment implemented.
 - TD-021 — MealSlot relation identifiers and `/dishes` frontend contract repaired by PR #54.
 - TD-022 — invalid selection-count pseudo cooldown removed by PR #54.
