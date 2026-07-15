@@ -83,8 +83,8 @@ class ProjectService:
             name=project.name,
             participants=project.participants,
             days=project.days,
-            start_date=project.start_date,
-            first_meal=project.first_meal,
-            last_meal=project.last_meal,
+            start_date=getattr(project, "start_date", None),
+            first_meal=getattr(project, "first_meal", None),
+            last_meal=getattr(project, "last_meal", None),
             status=project.status,
         )
