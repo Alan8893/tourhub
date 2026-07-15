@@ -6,6 +6,8 @@ import { normalizeApiUrl } from "../src/shared/config/apiUrl.ts";
 test("uses the same-origin API proxy when no URL is configured", () => {
   assert.equal(normalizeApiUrl(), "/api/v1");
   assert.equal(normalizeApiUrl("   "), "/api/v1");
+  assert.equal(normalizeApiUrl("/api"), "/api/v1");
+  assert.equal(normalizeApiUrl("/api/"), "/api/v1");
 });
 
 test("normalizes API version paths through the same-origin proxy", () => {
