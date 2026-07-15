@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from app.engines.meal_plan_generator import DishInput
+if TYPE_CHECKING:
+    from app.engines.meal_plan_generator import DishInput
 
 
 @dataclass
@@ -15,7 +17,7 @@ class MealCompositionPolicy:
     """Pure rules for selecting dishes without persistence dependencies."""
 
     @staticmethod
-    def can_select(dish: DishInput, context: SelectionContext) -> bool:
+    def can_select(dish: "DishInput", context: SelectionContext) -> bool:
         if dish.id in context.used_for_day:
             return False
 
