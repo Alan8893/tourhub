@@ -50,6 +50,7 @@ class DishService:
         try:
             self.session.flush()
             if recipe_changed:
+                self.session.expire(dish, ["recipe"])
                 DishRecipeRecalculationService(
                     self.session
                 ).refresh_affected_meal_plans(dish_id)
