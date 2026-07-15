@@ -2,6 +2,7 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   CircularProgress,
   Dialog,
@@ -9,6 +10,8 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
+  FormGroup,
   List,
   ListItemButton,
   ListItemText,
@@ -19,18 +22,37 @@ import {
   Typography,
 } from "@mui/material";
 import { isAxiosError } from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { useCreateDish, useDish, useDishes, useUpdateDish } from "@/features/dish/hooks/useDishes";
-import { toDishWriteInput } from "@/features/dish/model/dishEditor";
+import {
+  useCreateDish,
+  useDish,
+  useDishes,
+  useUpdateDish,
+  useUpdateDishMealRoles,
+} from "@/features/dish/hooks/useDishes";
+import {
+  MEAL_ROLE_OPTIONS,
+  MEAL_TYPE_OPTIONS,
+  createMealRoleDraft,
+  formatMealRoleSummary,
+  formatMealTypeSummary,
+  getMealRoleOption,
+  setMealRoleMealTypeSelected,
+  setMealRoleRepeatable,
+  setMealRoleSelected,
+  toDishMealRolesWriteInput,
+  toDishWriteInput,
+  type MealRoleDraft,
+} from "@/features/dish/model/dishEditor";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 
-function getErrorMessage(error: unknown): string {
+function getErrorMessage(error: unknown, fallback: string): string {
   if (isAxiosError<{ error?: string }>(error)) {
-    return error.response?.data?.error ?? "Не удалось сохранить блюдо.";
+    return error.response?.data?.error ?? fallback;
   }
-  return error instanceof Error ? error.message : "Не удалось сохранить блюдо.";
+  return error instanceof Error ? error.message : fallback;
 }
 
 export default function DishesPage() {
@@ -41,14 +63,24 @@ export default function DishesPage() {
   const recipesQuery = useRecipes(false);
   const createMutation = useCreateDish();
   const updateMutation = useUpdateDish();
+  const roleMutation = useUpdateDishMealRoles();
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [name, setName] = useState("");
   const [recipeId, setRecipeId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [roleDraft, setRoleDraft] = useState<MealRoleDraft>(() => createMealRoleDraft([]));
+  const [roleError, setRoleError] = useState<string | null>(null);
+  const [roleFeedback, setRoleFeedback] = useState<string | null>(null);
 
   const dishes = dishesQuery.data?.items ?? [];
   const activeRecipes = recipesQuery.data?.items.filter((recipe) => !recipe.is_archived) ?? [];
   const mutation = dialogMode === "create" ? createMutation : updateMutation;
+
+  useEffect(() => {
+    setRoleDialogOpen(false);
+    setRoleFeedback(null);
+  }, [id]);
 
   const openCreate = () => {
     setName("");
@@ -67,6 +99,14 @@ export default function DishesPage() {
     setDialogMode("edit");
   };
 
+  const openRoleEditor = () => {
+    if (!dishQuery.data) return;
+    setRoleDraft(createMealRoleDraft(dishQuery.data.meal_roles));
+    setRoleError(null);
+    roleMutation.reset();
+    setRoleDialogOpen(true);
+  };
+
   const submit = async () => {
     try {
       const input = toDishWriteInput({ name, recipeId });
@@ -79,7 +119,21 @@ export default function DishesPage() {
         setDialogMode(null);
       }
     } catch (error) {
-      setFormError(getErrorMessage(error));
+      setFormError(getErrorMessage(error, "Не удалось сохранить блюдо."));
+    }
+  };
+
+  const submitMealRoles = async () => {
+    if (!id) return;
+    try {
+      await roleMutation.mutateAsync({
+        dishId: id,
+        input: toDishMealRolesWriteInput(roleDraft),
+      });
+      setRoleDialogOpen(false);
+      setRoleFeedback("Роли блюда сохранены.");
+    } catch (error) {
+      setRoleError(getErrorMessage(error, "Не удалось сохранить роли блюда."));
     }
   };
 
@@ -88,7 +142,7 @@ export default function DishesPage() {
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between">
         <Box>
           <Typography variant="h4" component="h1">Блюда</Typography>
-          <Typography color="text.secondary">Каталог блюд и назначенных им рецептов.</Typography>
+          <Typography color="text.secondary">Каталог блюд, рецептов и ролей в составе меню.</Typography>
         </Box>
         <Button variant="contained" onClick={openCreate} disabled={recipesQuery.isLoading || activeRecipes.length === 0}>
           Создать блюдо
@@ -112,23 +166,27 @@ export default function DishesPage() {
                 <Box key={dish.id}>
                   {index > 0 && <Divider />}
                   <ListItemButton selected={dish.id === id} onClick={() => navigate(`/dishes/${dish.id}`)}>
-                    <ListItemText primary={dish.name} secondary={dish.recipe.name} />
+                    <ListItemText
+                      primary={dish.name}
+                      secondary={`${dish.recipe.name} · ${formatMealRoleSummary(dish.meal_roles)}`}
+                    />
                   </ListItemButton>
                 </Box>
               ))}
             </List>
           </Paper>
 
-          <Paper variant="outlined" sx={{ p: 3, minHeight: 220 }}>
+          <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, minHeight: 220 }}>
             {!id && <Typography color="text.secondary">Выберите блюдо для просмотра.</Typography>}
             {id && dishQuery.isLoading && <Stack alignItems="center" py={5}><CircularProgress /></Stack>}
             {id && dishQuery.isError && <Alert severity="error">Не удалось загрузить блюдо.</Alert>}
             {dishQuery.data && (
               <Stack spacing={2}>
+                {roleFeedback && <Alert severity="success">{roleFeedback}</Alert>}
                 <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={2}>
                   <Box>
                     <Typography variant="h5">{dishQuery.data.name}</Typography>
-                    <Stack direction="row" spacing={1} mt={1} alignItems="center">
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} mt={1} alignItems={{ sm: "center" }}>
                       <Typography color="text.secondary">Рецепт: {dishQuery.data.recipe.name}</Typography>
                       {dishQuery.data.recipe.is_archived && <Chip size="small" label="Рецепт в архиве" />}
                     </Stack>
@@ -141,6 +199,44 @@ export default function DishesPage() {
                 <Button onClick={() => navigate(`/recipes/${dishQuery.data.recipe.id}`)} sx={{ alignSelf: "flex-start" }}>
                   Открыть рецепт
                 </Button>
+
+                <Divider />
+
+                <Stack spacing={1.5}>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} justifyContent="space-between" alignItems={{ sm: "center" }}>
+                    <Box>
+                      <Typography variant="h6">Роли в меню</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Роль задаёт назначение блюда, а приёмы пищи — где генератор вправе его использовать.
+                      </Typography>
+                    </Box>
+                    <Button variant="outlined" onClick={openRoleEditor}>Настроить роли</Button>
+                  </Stack>
+
+                  {dishQuery.data.meal_roles.length === 0 ? (
+                    <Alert severity="info">
+                      Роли не назначены. Блюдо доступно для ручного выбора, но не будет участвовать в ролевой автогенерации.
+                    </Alert>
+                  ) : (
+                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ minWidth: 0 }}>
+                      {dishQuery.data.meal_roles.map((assignment) => (
+                        <Chip
+                          key={assignment.role}
+                          label={`${getMealRoleOption(assignment.role).shortLabel}: ${formatMealTypeSummary(assignment.allowed_meal_types)}${assignment.is_repeatable ? " · можно повторять" : ""}`}
+                          sx={{
+                            maxWidth: "100%",
+                            height: "auto",
+                            "& .MuiChip-label": {
+                              display: "block",
+                              py: 0.75,
+                              whiteSpace: "normal",
+                            },
+                          }}
+                        />
+                      ))}
+                    </Stack>
+                  )}
+                </Stack>
               </Stack>
             )}
           </Paper>
@@ -151,7 +247,9 @@ export default function DishesPage() {
         <DialogTitle>{dialogMode === "create" ? "Новое блюдо" : "Изменить блюдо"}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            {(formError || mutation.isError) && <Alert severity="error">{formError ?? getErrorMessage(mutation.error)}</Alert>}
+            {(formError || mutation.isError) && (
+              <Alert severity="error">{formError ?? getErrorMessage(mutation.error, "Не удалось сохранить блюдо.")}</Alert>
+            )}
             <TextField label="Название" value={name} onChange={(event) => setName(event.target.value)} autoFocus fullWidth />
             <TextField select label="Рецепт" value={recipeId} onChange={(event) => setRecipeId(event.target.value)} fullWidth>
               {activeRecipes.map((recipe) => <MenuItem key={recipe.id} value={recipe.id}>{recipe.name}</MenuItem>)}
@@ -161,6 +259,111 @@ export default function DishesPage() {
         <DialogActions>
           <Button onClick={() => setDialogMode(null)} disabled={mutation.isPending}>Отмена</Button>
           <Button variant="contained" onClick={() => void submit()} disabled={mutation.isPending}>Сохранить</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={roleDialogOpen}
+        onClose={roleMutation.isPending ? undefined : () => setRoleDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Роли блюда{dishQuery.data ? ` «${dishQuery.data.name}»` : ""}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            {(roleError || roleMutation.isError) && (
+              <Alert severity="error">
+                {roleError ?? getErrorMessage(roleMutation.error, "Не удалось сохранить роли блюда.")}
+              </Alert>
+            )}
+            <Alert severity="info">
+              Для каждой роли обязательно укажите допустимые приёмы пищи. Борщ можно ограничить обедом и ужином, а кашу — завтраком.
+            </Alert>
+            <FormGroup sx={{ gap: 1.5 }}>
+              {MEAL_ROLE_OPTIONS.map((option) => {
+                const item = roleDraft[option.role];
+                const mealTypeOptions = MEAL_TYPE_OPTIONS.filter(({ mealType }) => (
+                  option.allowedMealTypes.includes(mealType)
+                ));
+                return (
+                  <Paper key={option.role} variant="outlined" sx={{ p: 1.5 }}>
+                    <FormControlLabel
+                      sx={{ m: 0, alignItems: "flex-start" }}
+                      control={(
+                        <Checkbox
+                          checked={item.selected}
+                          onChange={(event) => setRoleDraft((current) => (
+                            setMealRoleSelected(current, option.role, event.target.checked)
+                          ))}
+                          inputProps={{ "aria-label": `Назначить роль «${option.label}»` }}
+                        />
+                      )}
+                      label={(
+                        <Box pt={0.75}>
+                          <Typography fontWeight={600}>{option.label}</Typography>
+                          <Typography variant="body2" color="text.secondary">{option.description}</Typography>
+                        </Box>
+                      )}
+                    />
+                    {item.selected && (
+                      <Box sx={{ ml: { xs: 0, sm: 4 }, mt: 1 }}>
+                        <Typography variant="body2" fontWeight={600} mb={0.5}>
+                          Допустимые приёмы пищи
+                        </Typography>
+                        <FormGroup row sx={{ columnGap: 1, rowGap: 0 }}>
+                          {mealTypeOptions.map((mealTypeOption) => (
+                            <FormControlLabel
+                              key={mealTypeOption.mealType}
+                              sx={{ mr: 1 }}
+                              control={(
+                                <Checkbox
+                                  size="small"
+                                  checked={item.allowedMealTypes[mealTypeOption.mealType]}
+                                  onChange={(event) => setRoleDraft((current) => (
+                                    setMealRoleMealTypeSelected(
+                                      current,
+                                      option.role,
+                                      mealTypeOption.mealType,
+                                      event.target.checked,
+                                    )
+                                  ))}
+                                  inputProps={{
+                                    "aria-label": `Разрешить роль «${option.label}» для приёма пищи «${mealTypeOption.label}»`,
+                                  }}
+                                />
+                              )}
+                              label={mealTypeOption.label}
+                            />
+                          ))}
+                        </FormGroup>
+                      </Box>
+                    )}
+                    <FormControlLabel
+                      sx={{ ml: { xs: 0, sm: 4 }, mt: 0.5 }}
+                      control={(
+                        <Checkbox
+                          size="small"
+                          checked={item.isRepeatable}
+                          disabled={!item.selected}
+                          onChange={(event) => setRoleDraft((current) => (
+                            setMealRoleRepeatable(current, option.role, event.target.checked)
+                          ))}
+                          inputProps={{ "aria-label": `Разрешить повторение роли «${option.label}»` }}
+                        />
+                      )}
+                      label="Разрешить повторение при автогенерации"
+                    />
+                  </Paper>
+                );
+              })}
+            </FormGroup>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRoleDialogOpen(false)} disabled={roleMutation.isPending}>Отмена</Button>
+          <Button variant="contained" onClick={() => void submitMealRoles()} disabled={roleMutation.isPending}>
+            Сохранить роли
+          </Button>
         </DialogActions>
       </Dialog>
     </Stack>

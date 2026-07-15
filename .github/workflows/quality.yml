@@ -148,14 +148,14 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Meal Plan Editor browser acceptance
+      - name: Frontend browser acceptance
         run: npm run test:browser
 
-      - name: Upload browser acceptance screenshots
+      - name: Upload frontend browser acceptance artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: meal-plan-editor-browser-acceptance
+          name: frontend-browser-acceptance
           path: frontend/browser-test-artifacts/*
           if-no-files-found: ignore
 

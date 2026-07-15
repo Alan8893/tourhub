@@ -1,5 +1,14 @@
 import { apiClient } from "@/shared/api/client";
 
+export type MealRole = "main" | "addition" | "drink" | "snack";
+export type MealType = "breakfast" | "snack" | "lunch" | "dinner";
+
+export interface DishMealRole {
+  role: MealRole;
+  is_repeatable: boolean;
+  allowed_meal_types: MealType[];
+}
+
 export interface DishRecipe {
   id: string;
   name: string;
@@ -10,6 +19,7 @@ export interface Dish {
   id: string;
   name: string;
   recipe: DishRecipe;
+  meal_roles: DishMealRole[];
 }
 
 export interface DishListResponse {
@@ -19,6 +29,16 @@ export interface DishListResponse {
 export interface DishWriteInput {
   name: string;
   recipe_id: string;
+}
+
+export interface DishMealRoleWriteInput {
+  role: MealRole;
+  is_repeatable: boolean;
+  allowed_meal_types: MealType[];
+}
+
+export interface DishMealRolesWriteInput {
+  roles: DishMealRoleWriteInput[];
 }
 
 export async function getDishes(): Promise<DishListResponse> {
@@ -38,5 +58,13 @@ export async function createDish(input: DishWriteInput): Promise<Dish> {
 
 export async function updateDish(dishId: string, input: DishWriteInput): Promise<Dish> {
   const response = await apiClient.put<Dish>(`/dishes/${dishId}`, input);
+  return response.data;
+}
+
+export async function updateDishMealRoles(
+  dishId: string,
+  input: DishMealRolesWriteInput,
+): Promise<Dish> {
+  const response = await apiClient.put<Dish>(`/dishes/${dishId}/meal-roles`, input);
   return response.data;
 }
