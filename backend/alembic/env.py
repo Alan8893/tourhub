@@ -7,6 +7,7 @@ from sqlalchemy import pool
 from app.core.config import settings
 from app.models import (
     Base,
+    DishMealRoleMealTypeORM,
     DishMealRoleORM,
     DishORM,
     IngredientORM,
@@ -25,6 +26,7 @@ _ = IngredientORM
 _ = RecipeORM
 _ = DishORM
 _ = DishMealRoleORM
+_ = DishMealRoleMealTypeORM
 _ = MealPlanORM
 _ = MealPlanDayORM
 _ = MealPlanItemORM
