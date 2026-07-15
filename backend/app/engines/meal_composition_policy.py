@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from collections import deque
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -10,7 +11,14 @@ class SelectionContext:
     """State used by menu composition rules during generation."""
 
     used_for_day: set[str]
-    recent_main_ids: set[str]
+    recent_main_ids: set[str] = field(default_factory=set)
+    _recent_main_order: deque[str] = field(default_factory=lambda: deque(maxlen=3))
+
+    def register_selected(self, dish: "DishInput") -> None:
+        if not dish.is_main:
+            return
+        self._recent_main_order.append(dish.id)
+        self.recent_main_ids = set(self._recent_main_order)
 
 
 class MealCompositionPolicy:
