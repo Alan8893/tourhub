@@ -65,6 +65,20 @@ Project
 - purchasing recalculation after MealSlot changes;
 - removal of unsupported meal-plan placeholders and invalid pseudo three-day cooldown.
 
+### TH-0065 — Meal Plan Editor UX
+
+Completed across PR #55 and PR #57:
+
+- compact Russian dish rows;
+- explicit replace, add, and confirmed remove flows;
+- mutation loading, success, and error feedback;
+- collapsible day sections with dish counts;
+- full-width editor workspace;
+- browser-level React/API acceptance for mutations and errors;
+- no-overflow checks and screenshots at desktop, tablet, and 360 px mobile widths.
+
+Quality run #169 passed before squash merge of PR #57. Product Owner visual acceptance was recorded and the task is closed.
+
 ### Shopping and documents
 
 - ingredient aggregation;
@@ -77,22 +91,6 @@ Project
 
 Completed by PR #54. Quality passed for backend tests, selected Ruff and strict mypy, Alembic, frontend tests/build/audit, and PostgreSQL backup/restore.
 
-## READY FOR REVIEW
-
-### TH-0065 — Meal Plan Editor UX
-
-Delivered across PR #55 and PR #57:
-
-- compact Russian dish rows;
-- explicit replace, add, and confirmed remove flows;
-- mutation loading, success, and error feedback;
-- collapsible day sections with dish counts;
-- full-width editor workspace;
-- browser-level React/API acceptance for mutations and errors;
-- no-overflow checks and screenshots at desktop, tablet, and 360 px mobile widths.
-
-Quality run #164 is successful. Remaining: Product Owner visual acceptance and squash merge of PR #57.
-
 ## IN PROGRESS
 
 ### TH-0061 — Guided project preparation
@@ -101,21 +99,39 @@ Quality run #164 is successful. Remaining: Product Owner visual acceptance and s
 - connect the corrected editor, purchasing, and export steps;
 - verify the complete single-club preparation journey.
 
+### TH-0061.5 — Meal Composition Rules Engine
+
+ADR-013 approves the persisted role model:
+
+- normalized `dish_meal_roles` owned by Dish;
+- roles `main`, `addition`, `drink`, and `snack`;
+- multiple roles per dish;
+- repeatability configured per `(dish, role)` assignment;
+- no role inference from names, recipes, ingredients, or historical placement;
+- current generator behavior remains unchanged until persistence, API, catalogue classification, and readiness checks are implemented.
+
 ## NEXT
 
-### Meal Composition Rules Engine
+### Persisted meal-role implementation
 
-1. Approve minimal persisted meal-role metadata.
-2. Represent main dishes, additions, drinks, and snack-compatible items.
-3. Implement composition per breakfast, snack, lunch, and dinner.
-4. Implement calendar-day three-day diversity for main dishes.
-5. Allow approved repeatable drinks and universal additions.
-6. Preserve manual selections as authoritative.
-7. Exclude archived-recipe dishes from automatic selection.
-8. Persist or reconstruct warnings for later reads.
-9. Add unit, service, API, frontend, and recalculation coverage.
+1. Add `DishMealRoleORM` and Alembic migration.
+2. Add Dish response contracts and transactional role-management endpoint.
+3. Add backend repository/service/API tests.
+4. Add role management to the dish editor with browser/API coverage.
+5. Classify the active catalogue explicitly.
+6. Add catalogue-readiness validation and visible warnings.
 
-No `MealDishRole`, role migration, or role-aware selection is currently implemented.
+### Role-aware composition
+
+1. Implement breakfast, snack, lunch, and dinner composition.
+2. Implement calendar-day three-day diversity for main dishes.
+3. Allow explicitly repeatable drinks and additions.
+4. Preserve manual selections as authoritative.
+5. Exclude archived-recipe dishes from automatic selection.
+6. Persist or reconstruct warnings for later reads.
+7. Add unit, service, API, frontend, and recalculation coverage.
+
+ADR-013 defines the target model. The table, migration, API, UI, catalogue data, and role-aware selection are not yet implemented.
 
 ### Shopping and equipment
 
