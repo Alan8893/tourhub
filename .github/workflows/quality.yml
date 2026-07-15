@@ -34,6 +34,7 @@ jobs:
 
       - name: Ruff stabilized workflow
         run: |
+          set -o pipefail
           python -m ruff check \
             app/core/exceptions.py \
             app/engines/meal_composition_policy.py \
@@ -57,7 +58,14 @@ jobs:
             app/modules/api/recipe_router.py \
             app/modules/api/recipe_note_router.py \
             app/modules/api/product_router.py \
-            --select E,F,I,UP,B --ignore B008
+            --select E,F,I,UP,B --ignore B008 2>&1 | tee ruff-diagnostics.txt
+
+      - name: Upload Ruff diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruff-diagnostics
+          path: backend/ruff-diagnostics.txt
 
       - name: Mypy typed workflow baseline
         run: |
