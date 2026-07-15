@@ -2,6 +2,7 @@ from app.engines.meal_plan_generator import (
     DishInput,
     MealPlanGenerator,
 )
+from app.engines.meal_role import MealDishRole
 
 
 def test_generate_meal_plan_without_repetition_warning():
@@ -50,10 +51,10 @@ def test_generate_meal_plan_uses_each_dish_once_per_day():
 def test_main_dish_is_not_repeated_within_three_days():
     generator = MealPlanGenerator()
     dishes = [
-        DishInput(id="1", name="Pilaf"),
-        DishInput(id="2", name="Soup"),
-        DishInput(id="3", name="Pasta"),
-        DishInput(id="4", name="Curry"),
+        DishInput(id="1", name="Pilaf", role=MealDishRole.MAIN),
+        DishInput(id="2", name="Soup", role=MealDishRole.MAIN),
+        DishInput(id="3", name="Pasta", role=MealDishRole.MAIN),
+        DishInput(id="4", name="Curry", role=MealDishRole.MAIN),
     ]
 
     result = generator.generate(
@@ -102,10 +103,10 @@ def test_generate_empty_dishes_returns_warning():
 def test_main_dish_cooldown_allows_repeat_after_window():
     generator = MealPlanGenerator()
     dishes = [
-        DishInput(id="1", name="Pilaf"),
-        DishInput(id="2", name="Soup"),
-        DishInput(id="3", name="Pasta"),
-        DishInput(id="4", name="Curry"),
+        DishInput(id="1", name="Pilaf", role=MealDishRole.MAIN),
+        DishInput(id="2", name="Soup", role=MealDishRole.MAIN),
+        DishInput(id="3", name="Pasta", role=MealDishRole.MAIN),
+        DishInput(id="4", name="Curry", role=MealDishRole.MAIN),
     ]
 
     result = generator.generate(
