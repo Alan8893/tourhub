@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-14
+Status date: 2026-07-15
 
 ## Product Goal
 
@@ -15,7 +15,7 @@ Instructor enters dates, participant count, first and last meal
         ↓
 System generates a diverse editable menu
         ↓
-Instructor selects and edits recipes for dishes
+Instructor selects and edits dishes and recipes
         ↓
 System calculates ingredients and packages
         ↓
@@ -35,8 +35,8 @@ Invitation-only access, roles, ownership, and moderation remain required for the
 - Selected Ruff and strict mypy baselines are enforced.
 - Frontend state tests, moderate-severity dependency audit, TypeScript check, and production build pass.
 - PostgreSQL 18 backup and restore are smoke-tested in GitHub Actions.
-- MealSlot editing and purchasing recalculation are implemented with transactional rollback coverage.
-- The single-club recipe library supports products, components, notes, archive, restore, and guarded deletion through API and frontend.
+- Project catalogue, MealSlot editing, dish recipe replacement, and purchasing recalculation are implemented with transactional rollback coverage.
+- The single-club recipe library supports products, components, notes, archive, restore, guarded deletion, and transactional CSV import through API and frontend.
 - Docker Compose startup, automatic migrations, project creation, menu generation, preparation, and exports were verified during the stabilization cycle.
 
 ## Milestone 1 — Stabilization and Documentation Recovery
@@ -66,6 +66,7 @@ Completed:
 - safe archive and restore;
 - guarded physical deletion when a dish references a recipe;
 - complete frontend editor and lifecycle management;
+- transactional CSV preview/import for products, recipes, components, and notes;
 - regression coverage and CI enforcement.
 
 Deferred to multi-user mode:
@@ -75,20 +76,25 @@ Deferred to multi-user mode:
 
 ## Milestone 3 — Dish Catalogue and Recipe Selection
 
-Status: NEXT
+Status: COMPLETE
 
-Goals:
+Completed:
 
-- expose a dish catalogue through API and frontend;
-- create and rename dishes;
-- assign a recipe to a dish;
-- replace the assigned recipe without changing historical recipe data;
-- show where a recipe is used before permanent deletion;
-- connect explicit recipe selection to MealSlot editing and shopping recalculation.
+- dish catalogue API and frontend;
+- dish creation and renaming;
+- explicit active-recipe assignment and replacement;
+- historical visibility when an assigned recipe is archived later;
+- prevention of new archived-recipe assignment;
+- guarded recipe deletion when referenced by a dish;
+- project catalogue at `/projects` with navigation to individual workspaces;
+- transactional recalculation of affected purchase lists and checklists after dish recipe replacement;
+- preservation of checklist progress for products that remain in the recalculated result.
+
+Current persistence deliberately stores one selected `recipe_id` per Dish. Multiple recipe variants, preferences, ownership, and moderation remain target-domain work for later milestones.
 
 ## Milestone 4 — Menu Intelligence and Recalculation
 
-Status: PLANNED
+Status: NEXT
 
 Goals:
 
@@ -97,10 +103,16 @@ Goals:
 - automatic generation unless manually selected;
 - three-day main-dish diversity;
 - same-day uniqueness;
-- recipe preference modes;
+- recipe preference modes after multi-variant recipes are introduced;
 - warnings when the catalogue is insufficient;
-- automatic recalculation after participant-count, menu, dish, and recipe changes without regenerating unrelated selections;
+- impact preview before changing a dish recipe used by existing projects;
 - extend recalculation to dependent equipment after the equipment domain is implemented.
+
+Already implemented recalculation triggers:
+
+- participant-count change;
+- MealSlot add, remove, and replace;
+- assigned recipe replacement on a Dish.
 
 ## Milestone 5 — Shopping, Packaging, and Equipment
 
@@ -108,14 +120,13 @@ Status: PLANNED
 
 Goals:
 
-- aggregate identical products;
-- round package counts upward;
-- expose required, purchased, and remainder quantities;
+- complete package and remainder presentation;
+- expose required, purchased, and remainder quantities consistently;
 - purchased status, category, comments, and optional responsible person;
 - aggregate recipe equipment by maximum simultaneous requirement;
 - manual equipment overrides.
 
-Prices, stores, price aggregators, and warehouse balances remain future work.
+Ingredient aggregation and upward package rounding foundations already exist. Prices, stores, price aggregators, and warehouse balances remain future work.
 
 ## Milestone 6 — Documents and Local Operations
 
@@ -163,6 +174,8 @@ Acceptance requires:
 
 ## Active Cross-cutting Work
 
+- TH-0061 — complete the guided project preparation journey;
+- TH-0061.5 — meal composition and menu diversity rules;
 - TH-0065 — Meal Plan Editor UX;
 - incremental Ruff and strict mypy expansion;
 - higher-level and responsive frontend tests;
