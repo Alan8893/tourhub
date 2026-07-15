@@ -8,7 +8,7 @@ import { ShoppingWidget } from "@/features/shopping";
 export default function WorkflowModules() {
   return (
     <Grid container spacing={2} sx={{ mt: 2 }}>
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <MealPlanWidget />
       </Grid>
 
@@ -20,7 +20,7 @@ export default function WorkflowModules() {
         <PurchaseWidget />
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <DocumentsWidget />
       </Grid>
     </Grid>
