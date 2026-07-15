@@ -1,10 +1,10 @@
 # TourHub Project Status
 
-Status date: 2026-07-14
+Status date: 2026-07-15
 
 ## Current Phase
 
-Single-club product completion. Multi-user access and administration are intentionally deferred while the recipe, dish, menu, shopping, and export workflow is completed.
+Single-club product completion. Multi-user access and administration are intentionally deferred while menu intelligence, shopping/equipment completeness, exports, and final UX acceptance are completed.
 
 ## Verified Baseline
 
@@ -13,7 +13,7 @@ Single-club product completion. Multi-user access and administration are intenti
 - Selected Ruff and strict mypy baselines are enforced in GitHub Actions.
 - Frontend state tests, moderate-severity dependency audit, TypeScript check, and production build pass in GitHub Actions.
 - PostgreSQL 18 backup and restore are smoke-tested in GitHub Actions.
-- MealSlot editing routes are registered in OpenAPI.
+- MealSlot and dish recipe replacement operations trigger transactional purchasing recalculation.
 - Full local stack startup, automatic migrations, project creation, menu generation, preparation, and exports were verified during the stabilization cycle.
 
 ## Implemented Product Areas
@@ -25,12 +25,14 @@ Implemented:
 - project creation and preparation context;
 - participant count and trip duration;
 - meal boundary context;
+- project catalogue with navigation to individual workspaces;
 - workspace preparation flow;
 - participant-count purchasing recalculation with transactional rollback.
 
 Needs completion:
 
 - finalized Russian adaptive UX;
+- fully guided preparation journey through final exports;
 - equipment-dependent recalculation after the equipment domain is implemented;
 - invitation-only authorization after the single-user MVP workflow is complete.
 
@@ -51,16 +53,21 @@ Implemented:
 
 Needs completion:
 
-- approved diversity rules;
-- explicit recipe selection for dishes;
+- approved meal composition and diversity rules;
+- insufficient-catalogue warnings;
 - responsive and higher-level interaction tests;
 - TH-0065 Meal Plan Editor UX acceptance.
 
-### Recipes
+### Dishes and recipes
 
 Implemented:
 
 - Dish and Recipe separation foundation;
+- dish catalogue API and frontend;
+- dish creation, renaming, and explicit active-recipe assignment;
+- recipe replacement with transactional recalculation of affected purchase lists and checklists;
+- historical visibility for dishes whose assigned recipe is archived later;
+- prevention of new archived-recipe assignment;
 - complete single-club recipe library API and frontend;
 - recipe creation and renaming;
 - RecipeComponent CRUD;
@@ -71,15 +78,18 @@ Implemented:
 - safe archive and restore;
 - guarded physical deletion when a recipe is referenced by a dish;
 - read-only archived recipe detail;
+- transactional CSV preview/import for products, recipes, components, and notes;
 - shopping integration with legacy fallback;
-- regression coverage for read, write, validation, archive, restore, and delete flows.
+- regression coverage for read, write, validation, archive, restore, delete, import, assignment, and recalculation flows.
+
+Current persistence stores one selected recipe per Dish. Multiple recipe variants and recipe preference modes remain target-domain work.
 
 Needs completion:
 
-- dish catalogue and explicit dish-to-recipe management;
+- impact preview before replacing a recipe used by existing projects;
 - preparation technology, equipment, dietary, season, and category metadata;
-- alcohol prohibition validation;
-- ownership, publication, and moderation after multi-user mode is introduced.
+- alcohol prohibition validation across API and import;
+- multiple recipe variants, ownership, publication, and moderation after multi-user mode is introduced.
 
 ### Shopping and documents
 
@@ -89,7 +99,8 @@ Implemented:
 - shopping list;
 - purchase checklist;
 - package rounding foundation;
-- recalculation after participant and MealSlot changes;
+- recalculation after participant, MealSlot, and Dish recipe changes;
+- preservation of checklist state where products remain after recalculation;
 - PDF, Excel, and package export foundations;
 - PostgreSQL backup and restore scripts and operational documentation.
 
@@ -121,14 +132,14 @@ Open quality debt:
 
 ## Documentation Status
 
-The stabilization and documentation recovery task TH-0064 is closed. TH-0061.6 is closed after delivery of the single-club recipe component, product, note, and lifecycle workflow.
+The stabilization and documentation recovery task TH-0064 is closed. TH-0061.6 is closed after delivery of the single-club recipe component, product, note, and lifecycle workflow. TH-0061.3 and TH-0061.4 are closed because persistent MealPlan and MealSlot composition are implemented; remaining menu rules are tracked by TH-0061.5.
 
 Canonical current documents:
 
-- `PRODUCT_SPEC.md`;
-- `PROJECT_STATUS.md`;
-- `ARCHITECTURE_CURRENT.md`;
-- `DOMAIN_CURRENT.md`;
+- `PRODUCT_SPEC.md` — approved target product scope;
+- `PROJECT_STATUS.md` — verified implementation status;
+- `ARCHITECTURE_CURRENT.md` — current architecture and explicitly deferred target boundaries;
+- `DOMAIN_CURRENT.md` — current persisted domain and future target model;
 - `CURRENT_ROADMAP.md`;
 - `TECH_DEBT.md`.
 
@@ -136,17 +147,18 @@ Legacy documents remain historical references and must not override current docu
 
 ## Active Work
 
-Current active task:
+Current active tasks:
 
+- TH-0061 — guided project preparation journey;
+- TH-0061.5 — Meal Composition Rules Engine;
 - TH-0065 — Meal Plan Editor UX.
 
 Immediate product sequence:
 
-1. finish dish catalogue and explicit recipe selection;
-2. finish menu diversity and preference modes;
-3. finish packaging, shopping, and equipment;
-4. finish exports and release acceptance;
-5. introduce invitation-only access, roles, ownership, and moderation.
+1. implement meal composition, diversity, and insufficient-catalogue warnings;
+2. complete packaging presentation and equipment;
+3. finish exports and release acceptance;
+4. introduce invitation-only access, roles, multi-variant recipe ownership, and moderation.
 
 ## Release Definition
 

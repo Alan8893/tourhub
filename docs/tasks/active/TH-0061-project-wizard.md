@@ -1,31 +1,41 @@
 # TH-0061 — User Project Preparation Wizard
 
-Status:
-
-IN PROGRESS
+Status: IN PROGRESS
 
 ## Goal
 
-Create a real user scenario for preparing a hiking project.
+Create a complete guided user scenario for preparing a hiking project from creation through final outputs.
 
 ## Completed
 
-- Project creation workflow implemented.
-- Project preparation parameters added.
-- Participants and duration stored.
-- Start meal context introduced.
+- project creation workflow;
+- project catalogue and navigation to individual workspaces;
+- participant count and duration persistence;
+- start date and first/last meal context;
+- persistent MealPlan and MealSlot structures;
+- editable dishes in meal slots;
+- preparation flow and purchasing projections;
+- participant and menu mutation recalculation foundations.
 
 ## Current
 
-Improve MealPlan domain before connecting advanced generation.
+Complete the guided Russian workflow after menu editing:
 
-## Related Decisions
+- meal composition and diversity rules;
+- clear packaging and shopping review;
+- equipment preparation;
+- final exports and acceptance UX.
+
+## Related decisions
 
 - Project is the preparation aggregate root.
-- MealPlan must become a persisted business document.
+- MealPlan is a persisted business document.
+- Selected dishes are preserved during quantity recalculation.
+- Multi-user access is deferred until the single-user journey is complete.
 
-## Acceptance Criteria
+## Acceptance criteria
 
-- User can create a project.
-- Project stores preparation context.
-- Workflow guides user through preparation.
+- user can create and locate a project;
+- project stores complete preparation context;
+- workflow guides the user through menu, shopping, equipment, and exports;
+- completed workflow is usable in Russian on desktop and mobile layouts.
