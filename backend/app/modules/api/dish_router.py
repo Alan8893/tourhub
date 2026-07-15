@@ -3,9 +3,13 @@ from sqlalchemy.orm import Session
 
 from app.core.session import get_session
 from app.models.dish import DishORM
+from app.modules.domain.meal_role import MEAL_ROLE_ORDER, MealRole
+from app.modules.domain.meal_type import MEAL_TYPE_ORDER, MealType
 from app.schemas.dish import (
     DishCreateRequest,
     DishListResponse,
+    DishMealRoleResponse,
+    DishMealRolesUpdateRequest,
     DishRecipeResponse,
     DishResponse,
     DishUpdateRequest,
@@ -13,6 +17,12 @@ from app.schemas.dish import (
 from app.services.dish_service import DishService
 
 router = APIRouter(prefix="/dishes", tags=["Dishes"])
+_MEAL_ROLE_POSITION = {
+    role.value: position for position, role in enumerate(MEAL_ROLE_ORDER)
+}
+_MEAL_TYPE_POSITION = {
+    meal_type.value: position for position, meal_type in enumerate(MEAL_TYPE_ORDER)
+}
 
 
 def get_dish_service(session: Session = Depends(get_session)) -> DishService:
@@ -20,6 +30,10 @@ def get_dish_service(session: Session = Depends(get_session)) -> DishService:
 
 
 def _dish_response(dish: DishORM) -> DishResponse:
+    meal_roles = sorted(
+        dish.meal_roles,
+        key=lambda assignment: _MEAL_ROLE_POSITION[assignment.role],
+    )
     return DishResponse(
         id=dish.id,
         name=dish.name,
@@ -28,6 +42,20 @@ def _dish_response(dish: DishORM) -> DishResponse:
             name=dish.recipe.name,
             is_archived=dish.recipe.is_archived,
         ),
+        meal_roles=[
+            DishMealRoleResponse(
+                role=MealRole(assignment.role),
+                is_repeatable=assignment.is_repeatable,
+                allowed_meal_types=[
+                    MealType(meal_type.meal_type)
+                    for meal_type in sorted(
+                        assignment.meal_types,
+                        key=lambda item: _MEAL_TYPE_POSITION[item.meal_type],
+                    )
+                ],
+            )
+            for assignment in meal_roles
+        ],
     )
 
 
@@ -75,4 +103,29 @@ def update_dish(
     except ValueError as exc:
         status_code = 409 if "unique" in str(exc) else 422
         raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+    return _dish_response(dish)
+
+
+@router.put("/{dish_id}/meal-roles", response_model=DishResponse)
+def replace_dish_meal_roles(
+    dish_id: str,
+    request: DishMealRolesUpdateRequest,
+    service: DishService = Depends(get_dish_service),
+) -> DishResponse:
+    try:
+        dish = service.replace_meal_roles(
+            dish_id,
+            [
+                (
+                    assignment.role.value,
+                    assignment.is_repeatable,
+                    [meal_type.value for meal_type in assignment.allowed_meal_types],
+                )
+                for assignment in request.roles
+            ],
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     return _dish_response(dish)

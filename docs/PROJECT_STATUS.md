@@ -4,7 +4,7 @@ Status date: 2026-07-15
 
 ## Current phase
 
-TH-0061.5 — implement the persisted Dish meal-role metadata approved by ADR-013. Role-aware generation remains deferred until the schema, API, catalogue classification workflow, and readiness validation are complete.
+TH-0061.5 — persisted Dish meal-role backend is implemented on PR #59. The next slice is catalogue role management in the dish editor, followed by explicit catalogue classification and readiness validation. Role-aware generation remains deferred until those paths are complete.
 
 ## Verified baseline
 
@@ -12,7 +12,7 @@ TH-0061.5 — implement the persisted Dish meal-role metadata approved by ADR-01
 - Remote-browser same-origin API routing was repaired through PR #56.
 - TH-0065 Meal Plan Editor UX was completed through PR #55 and PR #57.
 - Quality run #169 verified real-browser MealSlot mutations and responsive 1280, 768, and 360 px layouts before PR #57 merge.
-- Alembic has one head: `g10001`.
+- Alembic has one head: `h10001` on PR #59.
 - Backend tests, selected Ruff and strict mypy baselines, frontend tests/build/audit/browser acceptance, and PostgreSQL backup/restore are enforced in GitHub Actions.
 - Docker Compose, automatic migrations, project creation, menu generation, preparation, and export foundations were verified during stabilization.
 - Recipe library, dish catalogue, project catalogue, CSV import, and purchasing recalculation are present in `main`.
@@ -43,7 +43,7 @@ Needs completion:
 
 ### Meal plan
 
-Implemented in `main`:
+Implemented:
 
 - persistent MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
 - multiple dishes per meal;
@@ -60,24 +60,18 @@ Implemented in `main`:
 - mutation loading, success, and error feedback;
 - collapsible days with dish counts;
 - full-width responsive editor layout;
-- browser-level add, replace, remove, confirmation, error, and responsive acceptance.
-
-Approved but not implemented:
-
-- ADR-013 normalized `dish_meal_roles` model;
-- roles `main`, `addition`, `drink`, and `snack`;
-- multiple roles per Dish;
-- repeatability per `(dish, role)` assignment;
-- atomic role replacement API contract;
-- migration without heuristic role inference.
+- browser-level add, replace, remove, confirmation, error, and responsive acceptance;
+- normalized `dish_meal_roles` persistence with roles `main`, `addition`, `drink`, and `snack`;
+- multiple roles per Dish and repeatability per `(dish, role)` assignment;
+- atomic full role replacement API with no heuristic migration backfill.
 
 Needs later completion:
 
-- `DishMealRoleORM`, migration, repository, service, schemas, and API;
-- catalogue role management UI and explicit catalogue classification;
-- readiness validation and warnings;
+- catalogue role-management UI and browser/API coverage;
+- explicit active-catalogue classification;
+- catalogue readiness validation and warnings;
 - breakfast/snack/lunch/dinner composition rules;
-- repeatable drink/addition exceptions;
+- repeatable drink/addition behavior in generation;
 - calendar-day three-day main-dish diversity;
 - manual-selection preservation during regeneration;
 - warning persistence or deterministic reconstruction for later GET responses.
@@ -90,6 +84,7 @@ Implemented:
 - dish catalogue and editor;
 - explicit active-recipe assignment;
 - archived-recipe historical visibility;
+- persisted multi-role meal classification backend and API;
 - recipe library and editor;
 - RecipeComponent CRUD and quantity modes;
 - product reading and creation;
@@ -100,7 +95,7 @@ Implemented:
 
 Needs completion:
 
-- meal-role persistence and role-management UI;
+- meal-role management UI and catalogue classification;
 - impact preview before recipe replacement;
 - product update/delete;
 - preparation, equipment, dietary, season, and category metadata;
@@ -128,7 +123,7 @@ Needs completion:
 
 ## Quality status
 
-Enforced in `main`:
+Enforced:
 
 - backend tests;
 - critical Ruff baseline;
@@ -141,11 +136,21 @@ Enforced in `main`:
 - Meal Plan Editor real-browser acceptance and screenshot artifacts;
 - PostgreSQL backup/restore smoke test.
 
+Verified on PR #59 Quality run #174:
+
+- role persistence in Dish list and detail responses;
+- transactional role replacement and clearing;
+- duplicate-role atomic rejection;
+- invalid-role and unknown-dish rejection;
+- single Alembic head `h10001`;
+- unchanged frontend, browser, and PostgreSQL backup/restore gates.
+
 Open quality debt:
 
 - guided preparation browser coverage;
+- meal-role editor browser/API coverage;
 - shopping and catalogue-import browser coverage;
-- meal-role migration and API integration coverage;
+- explicit PostgreSQL migration upgrade smoke beyond single-head validation;
 - broader Ruff and strict mypy coverage;
 - Docker image/build and final release gates.
 
@@ -156,10 +161,10 @@ Open quality debt:
 
 ## Immediate sequence
 
-1. Implement `dish_meal_roles` persistence and Alembic migration.
-2. Implement role schemas, service, repository, and atomic API contract.
-3. Add dish-editor role management and browser/API tests.
-4. Classify the active catalogue explicitly and validate readiness.
+1. Merge and deploy the persisted meal-role backend slice.
+2. Add dish-editor role management and browser/API tests.
+3. Classify the active catalogue explicitly.
+4. Add catalogue readiness validation and visible warnings.
 5. Implement role-aware composition and calendar-day diversity.
 6. Complete packaging, equipment, exports, and release acceptance.
 7. Introduce invitation-only access and roles.

@@ -25,7 +25,7 @@ Project
 - Alembic migrations with one-head CI validation;
 - backend tests;
 - selected Ruff and strict mypy gates;
-- frontend tests, dependency audit, and production build;
+- frontend tests, dependency audit, production build, and browser acceptance;
 - PostgreSQL backup/restore scripts and CI smoke test.
 
 ### Projects
@@ -107,19 +107,28 @@ ADR-013 approves the persisted role model:
 - roles `main`, `addition`, `drink`, and `snack`;
 - multiple roles per dish;
 - repeatability configured per `(dish, role)` assignment;
-- no role inference from names, recipes, ingredients, or historical placement;
-- current generator behavior remains unchanged until persistence, API, catalogue classification, and readiness checks are implemented.
+- no role inference from names, recipes, ingredients, or historical placement.
+
+Backend persistence slice on PR #59:
+
+- `DishMealRoleORM` and Alembic revision `h10001`;
+- role constraints and `ON DELETE CASCADE`;
+- Dish list/detail response contracts;
+- atomic full role replacement endpoint;
+- clearing, duplicate-role, invalid-role, and missing-dish coverage;
+- unchanged current generation behavior.
+
+Quality run #174 is successful for Ruff, strict mypy, backend tests, Alembic, frontend/browser gates, and PostgreSQL backup/restore.
 
 ## NEXT
 
-### Persisted meal-role implementation
+### Catalogue role management and readiness
 
-1. Add `DishMealRoleORM` and Alembic migration.
-2. Add Dish response contracts and transactional role-management endpoint.
-3. Add backend repository/service/API tests.
-4. Add role management to the dish editor with browser/API coverage.
-5. Classify the active catalogue explicitly.
-6. Add catalogue-readiness validation and visible warnings.
+1. Add role controls to the dish editor.
+2. Add browser/API integration coverage for classification.
+3. Classify the active catalogue explicitly.
+4. Add readiness thresholds and visible warnings.
+5. Keep unclassified dishes manually selectable and excluded from automatic role selection.
 
 ### Role-aware composition
 
@@ -130,8 +139,6 @@ ADR-013 approves the persisted role model:
 5. Exclude archived-recipe dishes from automatic selection.
 6. Persist or reconstruct warnings for later reads.
 7. Add unit, service, API, frontend, and recalculation coverage.
-
-ADR-013 defines the target model. The table, migration, API, UI, catalogue data, and role-aware selection are not yet implemented.
 
 ### Shopping and equipment
 

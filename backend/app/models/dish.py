@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+if TYPE_CHECKING:
+    from app.models.dish_meal_role import DishMealRoleORM
 
 
 class DishORM(Base):
@@ -13,19 +18,24 @@ class DishORM(Base):
 
     id: Mapped[str] = mapped_column(
         String,
-        primary_key=True
+        primary_key=True,
     )
 
     name: Mapped[str] = mapped_column(
         String(255),
-        nullable=False
+        nullable=False,
     )
 
     recipe_id: Mapped[str] = mapped_column(
         ForeignKey("recipes.id"),
-        nullable=False
+        nullable=False,
     )
 
-    recipe = relationship(
-        "RecipeORM"
+    recipe = relationship("RecipeORM")
+    meal_roles: Mapped[list["DishMealRoleORM"]] = relationship(
+        "DishMealRoleORM",
+        back_populates="dish",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="DishMealRoleORM.role",
     )
