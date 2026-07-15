@@ -2,174 +2,158 @@
 
 Status date: 2026-07-15
 
-## Current Phase
+## Current phase
 
-Single-club product completion. Multi-user access and administration are intentionally deferred while menu intelligence, shopping/equipment completeness, exports, and final UX acceptance are completed.
+Critical stabilization of the single-club preparation workflow. New menu-intelligence features remain paused until TH-0070 is merged and verified.
 
-## Verified Baseline
+## Verified baseline before TH-0070
 
 - Alembic has one head: `g10001`.
-- Backend functional tests pass in GitHub Actions.
-- Selected Ruff and strict mypy baselines are enforced in GitHub Actions.
-- Frontend state tests, moderate-severity dependency audit, TypeScript check, and production build pass in GitHub Actions.
-- PostgreSQL 18 backup and restore are smoke-tested in GitHub Actions.
-- MealSlot and dish recipe replacement operations trigger transactional purchasing recalculation.
-- Full local stack startup, automatic migrations, project creation, menu generation, preparation, and exports were verified during the stabilization cycle.
+- Backend tests, selected Ruff and strict mypy baselines, frontend tests/build/audit, and PostgreSQL backup/restore are enforced in GitHub Actions.
+- Docker Compose, automatic migrations, project creation, menu generation, preparation, and export foundations were verified during the stabilization cycle.
+- Recipe library, dish catalogue, project catalogue, CSV import, and purchasing recalculation are present in `main`.
 
-## Implemented Product Areas
+## TH-0070 stabilization scope
 
-### Project workflow
+The current stabilization branch repairs the following audited regressions:
+
+- MealSlot frontend consumes the real `/dishes` response envelope;
+- MealPlan API exposes `MealSlotDish.id` and frontend mutations use it;
+- API mapping no longer duplicates legacy MealPlanItem data when MealSlots exist;
+- meal ordering is `breakfast`, `snack`, `lunch`, `dinner` in the frontend;
+- project meal-boundary validation is enforced in Backend;
+- dishes with archived recipes cannot be assigned to MealSlots;
+- generation warnings are returned from project generation;
+- unsupported standalone meal-plan placeholders are removed;
+- the invalid selection-based pseudo three-day cooldown is removed;
+- menu policy and generator join selected Ruff and strict mypy coverage.
+
+These changes are not considered delivered in `main` until PR #54 is merged and its Quality workflow succeeds.
+
+## Implemented product areas
+
+### Projects
 
 Implemented:
 
 - project creation and preparation context;
 - participant count and trip duration;
-- meal boundary context;
-- project catalogue with navigation to individual workspaces;
-- workspace preparation flow;
-- participant-count purchasing recalculation with transactional rollback.
+- first and last meal context;
+- project catalogue and workspace;
+- participant-count purchasing recalculation with rollback.
 
 Needs completion:
 
-- finalized Russian adaptive UX;
-- fully guided preparation journey through final exports;
-- equipment-dependent recalculation after the equipment domain is implemented;
-- invitation-only authorization after the single-user MVP workflow is complete.
+- complete Russian guided workflow;
+- equipment-dependent recalculation;
+- invitation-only access after single-user acceptance.
 
 ### Meal plan
 
-Implemented:
+Implemented in `main`:
 
-- persistent MealPlan domain;
-- days and meal schedule;
-- MealSlot composition;
+- persistent MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
 - multiple dishes per meal;
-- add, remove, and replace dish operations;
-- frontend MealSlot editor;
-- purchasing recalculation after MealSlot edits;
-- commit/rollback regression coverage;
-- frontend loading, error, empty, ready, add, replace, remove, pending, and mutation-error state tests;
-- legacy MealPlanItem compatibility;
-- deterministic same-day dish uniqueness during automatic generation while unused catalogue dishes remain;
-- deterministic repetition fallback with an insufficient-catalogue warning after the daily catalogue is exhausted.
+- add, remove, and replace backend operations;
+- first/last meal schedule and one-day support;
+- deterministic same-day uniqueness;
+- deterministic fallback with insufficient-catalogue warning generation;
+- purchasing recalculation and rollback after MealSlot edits;
+- legacy MealPlanItem compatibility.
 
-Needs completion:
+Pending TH-0070 merge:
 
-- meal-role composition metadata and rules;
-- three-day main-dish diversity;
-- API/frontend presentation of insufficient-catalogue warnings;
-- responsive and higher-level interaction tests;
-- TH-0065 Meal Plan Editor UX acceptance.
+- corrected frontend/backend MealSlot identifier contract;
+- visible generation warning in the immediate project generation response;
+- backend archived-recipe validation for MealSlot assignment;
+- removal of duplicate flat API items and placeholder endpoints.
+
+Needs later completion:
+
+- persisted meal roles;
+- breakfast/snack/lunch/dinner composition rules;
+- repeatable drink/addition exceptions;
+- calendar-day three-day main-dish diversity;
+- warning persistence or deterministic reconstruction for later GET responses;
+- responsive Meal Plan Editor UX.
 
 ### Dishes and recipes
 
 Implemented:
 
-- Dish and Recipe separation foundation;
-- dish catalogue API and frontend;
-- dish creation, renaming, and explicit active-recipe assignment;
-- recipe replacement with transactional recalculation of affected purchase lists and checklists;
-- historical visibility for dishes whose assigned recipe is archived later;
-- prevention of new archived-recipe assignment;
-- complete single-club recipe library API and frontend;
-- recipe creation and renaming;
-- RecipeComponent CRUD;
-- component roles and practical quantity calculation modes;
-- product catalogue reading and creation;
-- recipe note CRUD and priority ordering;
-- active and archived library views;
-- safe archive and restore;
-- guarded physical deletion when a recipe is referenced by a dish;
-- read-only archived recipe detail;
-- transactional CSV preview/import for products, recipes, components, and notes;
-- shopping integration with legacy fallback;
-- regression coverage for read, write, validation, archive, restore, delete, import, assignment, and recalculation flows.
-
-Current persistence stores one selected recipe per Dish. Multiple recipe variants and recipe preference modes remain target-domain work.
+- Dish and Recipe separation;
+- dish catalogue and editor;
+- explicit active-recipe assignment;
+- archived-recipe historical visibility;
+- recipe library and editor;
+- RecipeComponent CRUD and quantity modes;
+- product reading and creation;
+- recipe notes;
+- archive, restore, and guarded deletion;
+- transactional CSV import;
+- purchasing recalculation after Dish recipe replacement.
 
 Needs completion:
 
-- impact preview before replacing a recipe used by existing projects;
-- preparation technology, equipment, dietary, season, and category metadata;
-- alcohol prohibition validation across API and import;
-- multiple recipe variants, ownership, publication, and moderation after multi-user mode is introduced.
+- impact preview before recipe replacement;
+- product update/delete;
+- preparation, equipment, dietary, season, and category metadata;
+- alcohol prohibition enforcement;
+- multiple recipe variants and ownership after multi-user mode.
 
 ### Shopping and documents
 
 Implemented:
 
 - ingredient aggregation;
-- shopping list;
-- purchase checklist;
+- shopping list and purchase checklist;
 - package rounding foundation;
-- recalculation after participant, MealSlot, and Dish recipe changes;
-- preservation of checklist state where products remain after recalculation;
-- PDF, Excel, and package export foundations;
-- PostgreSQL backup and restore scripts and operational documentation.
+- transactional recalculation after participant, MealSlot, and Dish recipe changes;
+- checklist state preservation;
+- PDF/Excel/package export foundations;
+- PostgreSQL backup/restore scripts and CI smoke test.
 
 Needs completion:
 
-- complete package/remainder presentation;
+- complete package and remainder presentation;
+- responsible-person field;
 - equipment pipeline;
-- final Russian templates with logo from settings.
+- final Russian templates and club branding.
 
-## Quality Status
+## Quality status
 
-Passing and enforced:
+Enforced:
 
 - backend tests;
-- selected Ruff baseline;
+- critical Ruff baseline;
+- selected expanded Ruff baseline;
 - selected strict mypy baseline;
 - Alembic single-head validation;
-- frontend automated tests;
-- moderate-severity dependency audit;
-- frontend TypeScript and production build;
+- frontend Node tests;
+- dependency audit at moderate severity;
+- TypeScript production build;
 - PostgreSQL backup/restore smoke test.
 
 Open quality debt:
 
-- broader Ruff cleanup;
-- broader strict mypy cleanup;
-- higher-level and responsive frontend tests;
-- Docker image/build and final release-acceptance gates.
+- confirm PR #54 Quality result;
+- broader Ruff and strict mypy coverage;
+- React component/API integration tests;
+- responsive tests;
+- Docker image/build and final release gates.
 
-## Documentation Status
-
-The stabilization and documentation recovery task TH-0064 is closed. TH-0061.6 is closed after delivery of the single-club recipe component, product, note, and lifecycle workflow. TH-0061.3 and TH-0061.4 are closed because persistent MealPlan and MealSlot composition are implemented; remaining menu rules are tracked by TH-0061.5.
-
-Canonical current documents:
-
-- `PRODUCT_SPEC.md` — approved target product scope;
-- `PROJECT_STATUS.md` — verified implementation status;
-- `ARCHITECTURE_CURRENT.md` — current architecture and explicitly deferred target boundaries;
-- `DOMAIN_CURRENT.md` — current persisted domain and future target model;
-- `CURRENT_ROADMAP.md`;
-- `TECH_DEBT.md`.
-
-Legacy documents remain historical references and must not override current documents or accepted ADRs.
-
-## Active Work
-
-Current active tasks:
+## Active tasks
 
 - TH-0061 — guided project preparation journey;
 - TH-0061.5 — Meal Composition Rules Engine;
-- TH-0065 — Meal Plan Editor UX.
+- TH-0065 — Meal Plan Editor UX;
+- TH-0070 — critical meal-plan contract stabilization.
 
-Immediate product sequence:
+## Immediate sequence
 
-1. define meal-role metadata and complete meal composition and three-day main-dish diversity;
-2. expose insufficient-catalogue warnings through API and frontend;
-3. complete packaging presentation and equipment;
-4. finish exports and release acceptance;
-5. introduce invitation-only access, roles, multi-variant recipe ownership, and moderation.
-
-## Release Definition
-
-MVP is ready for Product Owner acceptance only when:
-
-- `docker compose up --build` starts the complete local stack;
-- backend, frontend, migration, lint, type-check, security, backup/restore, and release gates pass;
-- the complete Russian single-club workflow works from project creation through exports on desktop and mobile layouts;
-- no P0 debt applicable to the selected single-user release scope remains;
-- documentation matches the released code.
+1. Merge and verify TH-0070.
+2. Complete TH-0065 against the corrected contract.
+3. Approve and persist meal-role metadata.
+4. Implement role-aware composition and calendar-day diversity.
+5. Complete packaging, equipment, exports, and release acceptance.
+6. Introduce invitation-only access and roles.
