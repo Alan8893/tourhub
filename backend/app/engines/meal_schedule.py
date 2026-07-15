@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 MEAL_ORDER = [
     "breakfast",
+    "snack",
     "lunch",
     "dinner",
 ]
@@ -55,7 +56,6 @@ class MealScheduleEngine:
             ]
 
         result: list[MealScheduleDay] = []
-
         start_index = MEAL_ORDER.index(start_meal)
         end_index = MEAL_ORDER.index(end_meal)
 
