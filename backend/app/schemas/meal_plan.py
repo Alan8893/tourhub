@@ -1,18 +1,10 @@
-from pydantic import BaseModel, Field
 from uuid import UUID
 
-
-class MealPlanGenerateRequest(BaseModel):
-    """Request for automatic meal plan generation."""
-
-    name: str = Field(min_length=1, max_length=255)
-    participants: int = Field(gt=0)
-    days: int = Field(gt=0)
-    meals_per_day: list[str] = Field(min_length=1)
+from pydantic import BaseModel, Field
 
 
 class MealPlanItemResponse(BaseModel):
-    """Single dish inside a meal."""
+    """Single dish inside the legacy flat meal-plan view."""
 
     day_number: int
     meal_type: str
@@ -20,17 +12,25 @@ class MealPlanItemResponse(BaseModel):
     dish_name: str
 
 
+class MealSlotDishResponse(BaseModel):
+    """Dish membership inside a persisted MealSlot."""
+
+    id: str
+    dish_id: UUID
+    dish_name: str
+
+
 class MealSlotResponse(BaseModel):
-    """A meal slot containing multiple dishes."""
+    """A meal slot containing one or more dishes."""
 
     id: str
     day_number: int
     meal_type: str
-    dishes: list[MealPlanItemResponse]
+    dishes: list[MealSlotDishResponse]
 
 
 class MealPlanResponse(BaseModel):
-    """Generated meal plan response."""
+    """Persisted meal-plan response."""
 
     id: UUID
     project_id: int | None = None
@@ -38,33 +38,5 @@ class MealPlanResponse(BaseModel):
     participants: int
     days_count: int
     items: list[MealPlanItemResponse]
-    meals: list[MealSlotResponse] = []
-    warnings: list[str] = []
-
-
-class ShoppingListItemResponse(BaseModel):
-    product_name: str
-    amount: float
-    unit: str
-
-
-class ShoppingListResponse(BaseModel):
-    items: list[ShoppingListItemResponse]
-
-
-class PackagedShoppingItemResponse(BaseModel):
-    product_name: str
-    amount: float
-    unit: str
-    package_size: float
-    packages: int
-
-
-class PackagedShoppingResponse(BaseModel):
-    items: list[PackagedShoppingItemResponse]
-
-
-class MealPlanGenerateResponse(BaseModel):
-    meal_plan: MealPlanResponse
-    shopping_list: ShoppingListResponse
-    purchase_list: PackagedShoppingResponse
+    meals: list[MealSlotResponse] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
