@@ -1,10 +1,8 @@
-from collections import defaultdict
-
 from app.models.meal_plan import MealPlanORM
-
 from app.schemas.meal_plan import (
     MealPlanItemResponse,
     MealPlanResponse,
+    MealSlotDishResponse,
     MealSlotResponse,
 )
 
@@ -18,52 +16,72 @@ class MealPlanMapper:
         warnings: list[str] | None = None,
     ) -> MealPlanResponse:
         items: list[MealPlanItemResponse] = []
-        meals_map: dict[tuple[int, str], list[MealPlanItemResponse]] = defaultdict(list)
-        slot_ids: dict[tuple[int, str], str] = {}
+        meals: list[MealSlotResponse] = []
 
         for day in meal_plan.days:
-            for item in day.items:
-                response_item = MealPlanItemResponse(
-                    day_number=day.day_number,
-                    meal_type=item.meal_type,
-                    dish_id=item.dish_id,
-                    dish_name=item.dish.name if item.dish else str(item.dish_id),
-                )
-                items.append(response_item)
-                meals_map[(day.day_number, item.meal_type)].append(response_item)
-
-            for slot in day.slots:
-                slot_items: list[MealPlanItemResponse] = []
-                slot_ids[(day.day_number, slot.meal_type)] = slot.id
-
-                for slot_dish in slot.dishes:
-                    response_item = MealPlanItemResponse(
-                        day_number=day.day_number,
-                        meal_type=slot.meal_type,
-                        dish_id=slot_dish.dish_id,
-                        dish_name=(
+            if day.slots:
+                for slot in day.slots:
+                    slot_dishes: list[MealSlotDishResponse] = []
+                    for slot_dish in slot.dishes:
+                        dish_name = (
                             slot_dish.dish.name
                             if slot_dish.dish
                             else str(slot_dish.dish_id)
-                        ),
+                        )
+                        items.append(
+                            MealPlanItemResponse(
+                                day_number=day.day_number,
+                                meal_type=slot.meal_type,
+                                dish_id=slot_dish.dish_id,
+                                dish_name=dish_name,
+                            )
+                        )
+                        slot_dishes.append(
+                            MealSlotDishResponse(
+                                id=slot_dish.id,
+                                dish_id=slot_dish.dish_id,
+                                dish_name=dish_name,
+                            )
+                        )
+
+                    meals.append(
+                        MealSlotResponse(
+                            id=slot.id,
+                            day_number=day.day_number,
+                            meal_type=slot.meal_type,
+                            dishes=slot_dishes,
+                        )
                     )
-                    slot_items.append(response_item)
-                    items.append(response_item)
+                continue
 
-                meals_map[(day.day_number, slot.meal_type)] = slot_items
+            legacy_meals: dict[str, list[MealSlotDishResponse]] = {}
+            for item in day.items:
+                dish_name = item.dish.name if item.dish else str(item.dish_id)
+                items.append(
+                    MealPlanItemResponse(
+                        day_number=day.day_number,
+                        meal_type=item.meal_type,
+                        dish_id=item.dish_id,
+                        dish_name=dish_name,
+                    )
+                )
+                legacy_meals.setdefault(item.meal_type, []).append(
+                    MealSlotDishResponse(
+                        id=f"legacy:{item.id}",
+                        dish_id=item.dish_id,
+                        dish_name=dish_name,
+                    )
+                )
 
-        meals = [
-            MealSlotResponse(
-                id=slot_ids.get(
-                    (day_number, meal_type),
-                    f"legacy:{day_number}:{meal_type}",
-                ),
-                day_number=day_number,
-                meal_type=meal_type,
-                dishes=dishes,
-            )
-            for (day_number, meal_type), dishes in meals_map.items()
-        ]
+            for meal_type, dishes in legacy_meals.items():
+                meals.append(
+                    MealSlotResponse(
+                        id=f"legacy:{day.day_number}:{meal_type}",
+                        day_number=day.day_number,
+                        meal_type=meal_type,
+                        dishes=dishes,
+                    )
+                )
 
         return MealPlanResponse(
             id=meal_plan.id,

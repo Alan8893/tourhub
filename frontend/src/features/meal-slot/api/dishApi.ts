@@ -1,12 +1,12 @@
 import { apiClient } from "@/shared/api/client";
 
-export interface DishOption {
-  id: string;
-  name: string;
-}
+import {
+  extractDishOptions,
+  type DishListResponse,
+  type DishOption,
+} from "../model/dishOptions";
 
 export async function getDishes(): Promise<DishOption[]> {
-  const response = await apiClient.get<DishOption[]>("/dishes");
-
-  return response.data;
+  const response = await apiClient.get<DishListResponse>("/dishes");
+  return extractDishOptions(response.data);
 }

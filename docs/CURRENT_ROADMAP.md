@@ -2,193 +2,141 @@
 
 Status date: 2026-07-15
 
-## Product Goal
+## Product goal
 
-Deliver a stable local MVP for one tourist club.
-
-The immediate single-user journey is:
+Deliver a stable local MVP for one tourist club without changing the approved architecture.
 
 ```text
-Instructor creates project
-        ↓
-Instructor enters dates, participant count, first and last meal
-        ↓
-System generates a diverse editable menu
-        ↓
-Instructor selects and edits dishes and recipes
-        ↓
-System calculates ingredients and packages
-        ↓
-System produces shopping and equipment lists
-        ↓
-Instructor reviews and adjusts results
-        ↓
-System exports Russian PDF and Excel documents
+Project
+  → Menu
+  → Recipes and dishes
+  → Shopping and packaging
+  → Equipment
+  → Russian PDF and Excel
 ```
 
-Invitation-only access, roles, ownership, and moderation remain required for the later multi-user phase, but do not block completion of the current single-club workflow.
+## DONE
 
-## Verified Baseline
+### Infrastructure
 
-- Alembic has one head (`g10001`).
-- Backend tests pass in GitHub Actions.
-- Selected Ruff and strict mypy baselines are enforced.
-- Frontend state tests, moderate-severity dependency audit, TypeScript check, and production build pass.
-- PostgreSQL 18 backup and restore are smoke-tested in GitHub Actions.
-- Project catalogue, MealSlot editing, dish recipe replacement, and purchasing recalculation are implemented with transactional rollback coverage.
-- The single-club recipe library supports products, components, notes, archive, restore, guarded deletion, and transactional CSV import through API and frontend.
-- Docker Compose startup, automatic migrations, project creation, menu generation, preparation, and exports were verified during the stabilization cycle.
+- Dockerfiles and Docker Compose;
+- PostgreSQL 18;
+- Redis runtime service and configuration;
+- Alembic migrations with one-head CI validation;
+- backend tests;
+- selected Ruff and strict mypy gates;
+- frontend tests, dependency audit, and production build;
+- PostgreSQL backup/restore scripts and CI smoke test.
 
-## Milestone 1 — Stabilization and Documentation Recovery
+### Projects
 
-Status: COMPLETE
+- project creation;
+- project catalogue and workspace routing;
+- participant count and duration;
+- first and last meal persistence;
+- participant-count purchasing recalculation.
 
-Completed through TH-0064:
+### Recipes, products, and dishes
 
-- synchronized product, domain, architecture, status, roadmap, technical debt, and development rules;
-- removed duplicate task states, migration collision, and accidental public placeholders;
-- established backend, frontend, migration, dependency, and backup/restore CI gates;
-- verified local Docker startup and primary implemented workflow;
-- documented and tested PostgreSQL backup and restore.
+- recipe list/detail/create/rename;
+- RecipeComponent CRUD and practical quantity modes;
+- recipe note CRUD and ordering;
+- archive, restore, and guarded delete;
+- product list and creation;
+- transactional CSV preview/apply;
+- dish catalogue, create, rename, and active-recipe assignment;
+- archived-recipe historical visibility;
+- purchasing recalculation after Dish recipe replacement.
 
-## Milestone 2 — Single-club Recipe Library
+### Menu foundation
 
-Status: COMPLETE
+- persisted MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
+- first/last meal schedule;
+- one-day range handling;
+- domain order `breakfast`, `snack`, `lunch`, `dinner`;
+- multiple dishes per MealSlot;
+- backend add, replace, and remove operations;
+- deterministic same-day uniqueness;
+- deterministic insufficient-catalogue fallback and warning generation;
+- purchasing recalculation after MealSlot changes.
 
-Completed:
+### Shopping and documents
 
-- recipe list and detail API;
-- recipe creation and renaming;
-- product catalogue reading and creation;
-- RecipeComponent CRUD with practical quantity modes;
-- recipe note CRUD and priority ordering;
-- active and archived library views;
-- safe archive and restore;
-- guarded physical deletion when a dish references a recipe;
-- complete frontend editor and lifecycle management;
-- transactional CSV preview/import for products, recipes, components, and notes;
-- regression coverage and CI enforcement.
+- ingredient aggregation;
+- package rounding foundation;
+- purchase list and checklist;
+- transactional refresh and checklist-state preservation;
+- PDF/Excel/package export foundations.
 
-Deferred to multi-user mode:
+## IN PROGRESS
 
-- CLUB and PERSONAL ownership scopes;
-- publication review and verified-instructor moderation.
+### TH-0070 — Critical meal-plan stabilization
 
-## Milestone 3 — Dish Catalogue and Recipe Selection
+- repair MealSlot membership identifiers end-to-end;
+- repair `/dishes` frontend contract;
+- enforce meal-boundary rules in Backend;
+- block archived-recipe MealSlot assignment;
+- expose generation warnings;
+- remove public and unused placeholders;
+- remove the invalid selection-based cooldown;
+- add regression tests and menu-engine quality gates;
+- synchronize current documentation.
 
-Status: COMPLETE
+TH-0070 is delivered only after PR #54 is merged with successful Quality checks.
 
-Completed:
+### TH-0061 and TH-0065
 
-- dish catalogue API and frontend;
-- dish creation and renaming;
-- explicit active-recipe assignment and replacement;
-- historical visibility when an assigned recipe is archived later;
-- prevention of new archived-recipe assignment;
-- guarded recipe deletion when referenced by a dish;
-- project catalogue at `/projects` with navigation to individual workspaces;
-- transactional recalculation of affected purchase lists and checklists after dish recipe replacement;
-- preservation of checklist progress for products that remain in the recalculated result.
+- complete guided Russian preparation workflow;
+- compact and responsive Meal Plan Editor;
+- mutation success/error feedback;
+- desktop, tablet, and mobile acceptance.
 
-Current persistence deliberately stores one selected `recipe_id` per Dish. Multiple recipe variants, preferences, ownership, and moderation remain target-domain work for later milestones.
+## NEXT
 
-## Milestone 4 — Menu Intelligence and Recalculation
+### Meal Composition Rules Engine
 
-Status: NEXT
+1. Approve minimal persisted meal-role metadata.
+2. Represent main dishes, additions, drinks, and snack-compatible items.
+3. Implement composition per breakfast, snack, lunch, and dinner.
+4. Implement calendar-day three-day diversity for main dishes.
+5. Allow approved repeatable drinks and universal additions.
+6. Preserve manual selections as authoritative.
+7. Exclude archived-recipe dishes from automatic selection.
+8. Persist or reconstruct warnings for later reads.
+9. Add unit, service, API, and frontend integration coverage.
 
-Goals:
+No `MealDishRole`, role migration, or role-aware selection is currently implemented.
 
-- required meal schedule with first/last boundaries;
-- one-day trip handling;
-- automatic generation unless manually selected;
-- three-day main-dish diversity;
-- same-day uniqueness;
-- recipe preference modes after multi-variant recipes are introduced;
-- warnings when the catalogue is insufficient;
-- impact preview before changing a dish recipe used by existing projects;
-- extend recalculation to dependent equipment after the equipment domain is implemented.
+### Shopping and equipment
 
-Already implemented recalculation triggers:
+- complete required/purchased/remainder presentation;
+- optional responsible-person text;
+- recipe equipment requirements;
+- maximum simultaneous equipment aggregation;
+- manual equipment overrides;
+- equipment recalculation after participant and menu changes.
 
-- participant-count change;
-- MealSlot add, remove, and replace;
-- assigned recipe replacement on a Dish.
+### Documents and acceptance
 
-## Milestone 5 — Shopping, Packaging, and Equipment
+- final Russian PDF;
+- final Russian Excel workbook;
+- club name and logo settings;
+- installation/update documentation;
+- Docker image/build CI gate;
+- desktop and mobile acceptance.
 
-Status: PLANNED
-
-Goals:
-
-- complete package and remainder presentation;
-- expose required, purchased, and remainder quantities consistently;
-- purchased status, category, comments, and optional responsible person;
-- aggregate recipe equipment by maximum simultaneous requirement;
-- manual equipment overrides.
-
-Ingredient aggregation and upward package rounding foundations already exist. Prices, stores, price aggregators, and warehouse balances remain future work.
-
-## Milestone 6 — Documents and Local Operations
-
-Status: IN PROGRESS
-
-Completed:
-
-- PostgreSQL backup and restore scripts;
-- Bash and PowerShell operational instructions;
-- CI backup/restore verification.
-
-Remaining:
-
-- Russian PDF with club logo from settings;
-- Russian Excel workbook with trip, menu, loadout, shopping, and equipment sheets;
-- complete local installation and update documentation.
-
-## Milestone 7 — Multi-user Access and Administration
-
-Status: DEFERRED
-
-Goals:
+## LATER
 
 - invitation-only registration;
 - Administrator, Instructor, and Verified Instructor roles;
-- role-based permissions enforced by the backend;
-- user and invitation administration;
-- recipe ownership, publication, and moderation;
-- audit log foundation;
-- local-only security configuration.
-
-## Milestone 8 — MVP Acceptance
-
-Status: PLANNED
-
-Acceptance requires:
-
-- `docker compose up --build` starts the complete system;
-- all automated quality gates pass;
-- the complete selected release journey works in Russian on desktop and mobile layouts;
-- backup and restore are verified;
-- no P0 debt applicable to the selected release scope remains;
-- documentation matches the release;
-- Product Owner completes local acceptance.
-
-## Active Cross-cutting Work
-
-- TH-0061 — complete the guided project preparation journey;
-- TH-0061.5 — meal composition and menu diversity rules;
-- TH-0065 — Meal Plan Editor UX;
-- incremental Ruff and strict mypy expansion;
-- higher-level and responsive frontend tests;
-- remaining Docker image/build and release gates.
-
-## Future Modules
-
-Not part of the current single-club MVP:
-
-- participant profiles and personal data;
-- price aggregator integration;
-- warehouse stock accounting;
+- backend permission enforcement;
+- recipe ownership and multiple variants;
+- publication and moderation;
+- audit log;
+- participant profiles;
 - routes and GPX;
 - logistics and load distribution;
-- external or paid services;
-- multi-tenant support.
+- warehouse balances;
+- price aggregation.
+
+Multi-tenant support and microservices remain prohibited.

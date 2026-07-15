@@ -8,9 +8,16 @@ import { useProjectWorkflow } from "@/features/project-workflow";
 
 const mealTypeLabels: Record<string, string> = {
   breakfast: "Завтрак",
+  snack: "Перекус",
   lunch: "Обед",
   dinner: "Ужин",
-  snack: "Перекус",
+};
+
+const mealTypeOrder: Record<string, number> = {
+  breakfast: 0,
+  snack: 1,
+  lunch: 2,
+  dinner: 3,
 };
 
 export default function MealPlanWidget() {
@@ -30,7 +37,6 @@ export default function MealPlanWidget() {
     },
     {},
   );
-
   const dayNumbers = Object.keys(groupedMeals).map(Number).sort((a, b) => a - b);
 
   return (
@@ -81,7 +87,11 @@ export default function MealPlanWidget() {
               <Stack spacing={1.5}>
                 {groupedMeals[dayNumber]
                   .slice()
-                  .sort((a, b) => a.meal_type.localeCompare(b.meal_type))
+                  .sort(
+                    (a, b) =>
+                      (mealTypeOrder[a.meal_type] ?? Number.MAX_SAFE_INTEGER) -
+                      (mealTypeOrder[b.meal_type] ?? Number.MAX_SAFE_INTEGER),
+                  )
                   .map((slot) =>
                     slot.id.startsWith("legacy:") ? (
                       <Stack key={slot.id} spacing={0.5}>
@@ -89,7 +99,7 @@ export default function MealPlanWidget() {
                           {mealTypeLabels[slot.meal_type] ?? slot.meal_type}
                         </Typography>
                         {slot.dishes.map((dish) => (
-                          <Typography key={dish.dish_id} variant="body2">
+                          <Typography key={dish.id} variant="body2">
                             • {dish.dish_name}
                           </Typography>
                         ))}
@@ -100,7 +110,7 @@ export default function MealPlanWidget() {
                         slotId={slot.id}
                         mealType={mealTypeLabels[slot.meal_type] ?? slot.meal_type}
                         dishes={slot.dishes.map((dish) => ({
-                          id: dish.dish_id,
+                          id: dish.id,
                           dish_id: dish.dish_id,
                           dish_name: dish.dish_name,
                         }))}

@@ -2,695 +2,156 @@
 
 Version: 0.0.2-alpha
 
-Last update: 2026-07-14
+Last update: 2026-07-15
 
 Status: Active Development
 
----
+## 1. Product boundary
 
-# Canonical MVP Context (2026-07-14)
+TourHub is a local ERP application for one tourist club.
 
-This section supersedes conflicting earlier statements in this document.
-
-- One TourHub installation represents exactly one tourist club.
+- One installation represents one club.
 - Multi-tenant support is prohibited.
-- MVP is a local closed-contour system.
-- Registration is invitation-only.
-- MVP roles are Administrator, Instructor, and Verified Instructor.
-- Product rules are defined in `PRODUCT_SPEC.md`.
-- Current implementation state is defined in `PROJECT_STATUS.md`.
-- Current delivery sequence is defined in `CURRENT_ROADMAP.md`.
-- Active stabilization work is TH-0064.
+- The current delivery phase is single-user.
+- Invitation-only access and user roles are deferred until the single-user preparation workflow is complete.
+- Participant profiles are not part of the current MVP workflow; calculations use participant count.
+- Paid external services are not used.
 
-The current MVP goal is a complete Russian adaptive workflow:
+The approved target product scope is defined in `PRODUCT_SPEC.md`. The implemented state is defined by repository code, tests, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
+
+## 2. Current product goal
+
+Complete and stabilize the Russian local workflow:
 
 ```text
-Invitation -> Project -> Menu -> Recipes -> Shopping -> Equipment -> PDF/Excel
+Project
+  → Menu
+  → Recipes and dishes
+  → Shopping and packaging
+  → Equipment
+  → PDF and Excel
 ```
 
-Participant profiles, routes, warehouse balances, logistics, and external price aggregation are future modules.
+Current work must prioritize stability and contract correctness before new menu-intelligence features.
 
----
+## 3. Architecture
 
-# 1. Project
+TourHub remains a modular monolith.
 
-## Name
+### Frontend
 
-TourHub
+- React;
+- TypeScript;
+- Vite;
+- Material UI;
+- TanStack Query;
+- React Router.
 
-## Description
+Frontend owns presentation, form state, navigation, and API integration. It does not own business validation, menu generation, shopping calculations, or authorization decisions.
 
-TourHub — это веб-платформа для туристических клубов.
+### Backend
 
-Первая версия решает задачу автоматического формирования походной раскладки.
+- Python 3.13;
+- FastAPI;
+- SQLAlchemy 2.x;
+- Alembic;
+- Pydantic v2;
+- PostgreSQL;
+- Redis configuration;
+- deterministic calculation engines.
 
-В дальнейшем проект должен вырасти в полноценную ERP-систему для туристических клубов.
+Backend owns business validation, persistence, generation, catalogue import, recalculation, and document generation.
 
----
+### Runtime
 
-# 2. Product Vision
+The local stack starts with:
 
-Первая цель проекта — максимально упростить подготовку похода.
+```bash
+docker compose up --build
+```
 
-Инструктор должен потратить несколько минут вместо нескольких часов.
+Docker Compose includes frontend, backend, PostgreSQL, and Redis. Redis is available in the runtime stack but no business workflow currently depends on it.
 
-Дальнейшая цель — объединить в одной системе:
+## 4. Implemented baseline
 
-- походы;
-- маршруты;
-- участников;
-- рецепты;
-- продукты;
-- закупку;
-- склад;
-- оборудование;
-- документы;
-- подрядчиков;
-- внутренние процессы клуба.
+### Projects
 
----
+- creation;
+- catalogue at `/projects`;
+- workspace at `/projects/{id}`;
+- participant count and trip duration;
+- first and last meal context;
+- backend validation of meal boundaries;
+- participant-count purchasing recalculation.
 
-# 3. MVP
+### Recipes and products
 
-Первая рабочая версия должна позволять:
+- recipe library and detail;
+- recipe create and rename;
+- components and practical quantity modes;
+- notes and priority ordering;
+- archive, restore, and guarded deletion;
+- product list and creation;
+- transactional CSV preview and apply.
 
-✅ регистрация
+### Dishes
 
-✅ авторизация
+- dish catalogue;
+- create and rename;
+- one selected active recipe per Dish;
+- archived-recipe history;
+- prevention of new archived-recipe assignment;
+- purchasing recalculation after recipe replacement.
 
-✅ создание похода
+### Menu
 
-✅ мастер формирования меню
+- persisted MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
+- first/last meal schedule;
+- breakfast, snack, lunch, dinner order;
+- one-day schedule handling;
+- multiple dishes per MealSlot;
+- add, replace, and remove operations;
+- real MealSlotDish identifiers in the API;
+- deterministic same-day uniqueness while unused dishes remain;
+- insufficient-catalogue warning and deterministic fallback.
 
-✅ генерация меню
+Meal-role composition and calendar-day three-day diversity are not implemented. No persisted MealDishRole exists.
 
-✅ автоматический расчет раскладки
+### Shopping and documents
 
-✅ расчет количества упаковок
+- ingredient aggregation;
+- package rounding foundation;
+- purchase list and checklist;
+- transactional recalculation after participant, MealSlot, and Dish recipe changes;
+- preservation of checklist state where products remain;
+- PDF and Excel purchase export foundations;
+- PostgreSQL backup and restore scripts.
 
-✅ список закупки
+## 5. Current active work
 
-✅ PDF
-
-✅ Excel
-
----
-
-# 4. Development Philosophy
-
-Главное правило проекта:
-
-Сначала работающий продукт.
-
-Потом улучшения.
-
-Не писать код "на будущее".
-
-Не использовать сложные решения без необходимости.
-
----
-
-# 5. Architecture
-
-Тип архитектуры:
-
-Modular Monolith
-
-Каждый модуль максимально независим.
-
-Никаких микросервисов.
-
-Если когда-нибудь понадобится выделить сервис — это должно происходить без переписывания логики.
-
----
-
-# 6. Backend
-
-Stack
-
-Python 3.13
-
-FastAPI
-
-SQLAlchemy 2.x
-
-Alembic
-
-Pydantic v2
-
-PostgreSQL
-
-Redis
-
-Docker
-
-Backend состоит из четырех частей.
-
-core
-
-Общие настройки приложения.
-
-shared
-
-Общие компоненты.
-
-modules
-
-Бизнес-модули.
-
-engines
-
-Вычислительные движки.
-
----
-
-# 7. Frontend
-
-Stack
-
-React
-
-TypeScript
-
-Vite
-
-Material UI
-
-React Hook Form
-
-TanStack Query
-
-React Router
-
-AG Grid Community
-
----
-
-# 8. Backend Structure
-
-backend/
-
-app/
-
-core/
-
-shared/
-
-modules/
-
-engines/
-
-main.py
-
----
-
-# 9. Modules
-
-На текущий момент планируются следующие модули.
-
-auth
-
-users
-
-projects
-
-recipes
-
-products
-
-warehouse
-
-routes
-
-equipment
-
----
-
-# 10. Engines
-
-Engine — это вычислительный модуль.
-
-Engine никогда напрямую не работает с HTTP.
-
-Engine никогда напрямую не работает с React.
-
-Engine никогда напрямую не обращается к базе данных.
-
-Engine получает готовые данные.
-
-Возвращает готовый результат.
-
----
-
-Планируемые Engines
-
-planner
-
-calculation
-
-shopping
-
-packages
-
-equipment
-
-printing
-
----
-
-# 11. Domain
-
-Главные сущности проекта
-
-Organization
-
-User
-
-Project
-
-Trip
-
-Recipe
-
-Dish
-
-Meal
-
-Meal Plan
-
-Product
-
-Package
-
-Shopping List
-
-Equipment
-
-Warehouse
-
-Route
-
-Document
-
----
-
-# 12. Roles
-
-Guest
-
-неавторизованный пользователь
-
-Instructor
-
-может создавать походы
-
-может использовать генератор
-
-может использовать собственные рецепты
-
-Verified Instructor
-
-может публиковать рецепты
-
-может публиковать блюда
-
-Administrator
-
-полный доступ
-
----
-
-# 13. Meal Planner
-
-Мастер состоит из шагов.
-
-1.
-
-Основная информация
-
-Название
-
-Количество участников
-
-Количество дней
-
-Дата
-
-2.
-
-Настройки
-
-Начальный прием пищи
-
-Последний прием пищи
-
-Сезон определяется автоматически
-
-3.
-
-Предпочтения
-
-Любимые блюда
-
-Исключенные блюда
-
-Ручная замена блюд
-
-4.
-
-Генерация
-
-Создание меню
-
-5.
-
-Результат
-
-Меню
-
-Раскладка
-
-Список закупки
-
-Вес
-
-Стоимость
-
-Оборудование
-
-Экспорт
-
----
-
-# 14. Recipe System
-
-Каждое блюдо состоит из ингредиентов.
-
-Каждый ингредиент хранит:
-
-продукт
-
-количество
-
-единицу измерения
-
-тип расчета
-
-Тип расчета:
-
-фиксированное количество
-
-или
-
-количество на одного человека
-
-Пример
-
-Гречка
-
-80 г / человек
-
-20 человек
-
-Итог
-
-1600 г
-
----
-
-# 15. Packages
-
-Каждый продукт может иметь размер упаковки.
-
-Например
-
-гречка
-
-900 грамм
-
-Если требуется
-
-1600 грамм
-
-Система должна предложить
-
-2 упаковки
-
-И показать итоговый остаток.
-
----
-
-# 16. Equipment
-
-Каждое блюдо может требовать оборудование.
-
-Например
-
-Плов
-
-Казан
-
-Газ
-
-Половник
-
-Борщ
-
-Кан
-
-Сковорода
-
-Половник
-
-После генерации меню автоматически формируется список оборудования.
-
----
-
-# 17. Main Principles
-
-Не использовать TODO.
-
-Не писать временный код.
-
-Каждый файл должен быть Production Ready.
-
-Любое изменение архитектуры сначала обсуждается.
-
----
-
-# 18. Development Rules
-
-Один ответ — одна законченная задача.
-
-Один Commit — одна логическая задача.
-
-Каждый новый файл полностью готов.
-
-Минимум заглушек.
-
-Максимум законченного функционала.
-
----
-
-# 19. Git
-
-Используем Conventional Commits.
-
-Примеры
-
-feat:
-
-fix:
-
-refactor:
-
-docs:
-
-test:
-
-chore:
-
----
-
-# 20. Docker
-
-Все сервисы работают через Docker.
-
-Локальный PostgreSQL не используется.
-
-Backend работает в Docker.
-
-Frontend работает в Docker.
-
-PostgreSQL работает в Docker.
-
-Redis работает в Docker.
-
----
-
-# 21. AI Workflow
-
-Роли команды
-
-Product Owner
-
-Пользователь
-
-CTO
-
-ChatGPT
-
-Senior Developer
-
-Cursor
-
-Cursor пишет код.
-
-ChatGPT принимает архитектурные решения.
-
----
-
-# 22. Current Repository
-
-Текущая структура
-
-backend/
-
-frontend/
-
-docs/
-
-docker/
-
-scripts/
-
----
-
-# 23. Current Milestone
-
-Milestone 1
-
-Foundation
-
----
-
-# 24. Current Epic
-
-Backend Skeleton
-
----
-
-# 25. Current Task
-
-Создание первого запускаемого FastAPI приложения.
-
-Цель:
-
-получить
-
-http://localhost:8000
-
-↓
-
-{
-    "status": "ok",
-    "project": "TourHub"
-}
-
-и
-
-http://localhost:8000/docs
-
----
-
-# 26. Future Roadmap
-
-Version 0.1
-
-Авторизация
-
-Пользователи
-
-Проекты
-
-Meal Planner
-
-PDF
-
-Excel
-
----
-
-Version 0.2
-
-Рецепты
-
-Любимые блюда
-
-Оборудование
-
----
-
-Version 0.3
-
-Склад
-
-QR
-
-Инвентаризация
-
----
-
-Version 0.4
-
-Маршруты
-
-Карточки маршрутов
-
-GPX
-
-Карты
-
----
-
-Version 1.0
-
-Полноценная ERP для туристических клубов.
-
----
-
-# 27. Rules For AI
-
-При работе с проектом соблюдать следующие правила.
-
-Не менять стек технологий.
-
-Не менять архитектуру без объяснения причин.
-
-Не использовать новые библиотеки без необходимости.
-
-Не использовать микросервисы.
-
-Не использовать временный код.
-
-Не использовать сокращенные примеры.
-
-Каждый файл должен быть полностью готов.
-
-При необходимости сначала объяснить влияние изменений на проект.
-
----
-
-# 28. Next Task
-
-Создать полностью рабочий Backend Skeleton.
-
-Результат задачи:
-
-Backend запускается.
-
-Swagger доступен.
-
-Docker Compose запускает приложение.
-
-После этого начинается разработка модулей.
+- TH-0061 — guided project preparation workflow;
+- TH-0061.5 — Meal Composition Rules Engine;
+- TH-0065 — Meal Plan Editor UX;
+- TH-0070 — critical meal-plan contract stabilization.
+
+TH-0070 must be merged and verified before new menu composition metadata or rules are introduced.
+
+## 6. Immediate sequence
+
+1. Complete TH-0070 and confirm all Quality jobs.
+2. Complete Meal Plan Editor UX on the corrected API contract.
+3. Define approved persisted meal-role metadata.
+4. Implement role-aware composition and calendar-day diversity.
+5. Complete packaging presentation and equipment.
+6. Complete Russian exports and local MVP acceptance.
+7. Introduce invitation-only access, roles, ownership, moderation, and audit logging.
+
+## 7. Development rules
+
+- Do not invent missing business requirements.
+- Do not add microservices or multi-tenant infrastructure.
+- Do not put business rules only in React.
+- Do not describe a feature as implemented unless repository code and tests confirm it.
+- Architecture or stack changes require Product Owner approval and an ADR.
+- One logical task is squash-merged to `main`.
+- Documentation, task state, roadmap, and technical debt are updated with code.

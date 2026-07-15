@@ -1,34 +1,20 @@
 from app.models.dish import DishORM
-from app.repositories.meal_plan_repository import MealPlanRepository
-from app.repositories.dish_repository import DishRepository
 from app.services.meal_plan_service import MealPlanService
 
 
 class FakeDishRepository:
-    """
-    Fake dish repository.
-    """
+    def __init__(self, dish_count: int = 2):
+        self.dish_count = dish_count
 
     def list(self):
-        return [
-            DishORM(
-                id="dish-1",
-                name="Pilaf",
-                recipe_id="recipe-1",
-            ),
-            DishORM(
-                id="dish-2",
-                name="Soup",
-                recipe_id="recipe-2",
-            ),
+        dishes = [
+            DishORM(id="dish-1", name="Pilaf", recipe_id="recipe-1"),
+            DishORM(id="dish-2", name="Soup", recipe_id="recipe-2"),
         ]
+        return dishes[: self.dish_count]
 
 
 class FakeMealPlanRepository:
-    """
-    Fake persistence repository.
-    """
-
     def __init__(self):
         self.meal_plans = []
         self.days = []
@@ -57,39 +43,49 @@ class FakeMealPlanRepository:
     def commit(self):
         self.committed = True
 
-    def get_with_details(
-        self,
-        meal_plan_id: str,
-    ):
+    def get_with_details(self, meal_plan_id: str):
         return self.meal_plan
 
 
 def test_generate_and_save_meal_plan():
-    meal_plan_repository = FakeMealPlanRepository()
-
+    repository = FakeMealPlanRepository()
     service = MealPlanService(
         dish_repository=FakeDishRepository(),
-        meal_plan_repository=meal_plan_repository,
+        meal_plan_repository=repository,
     )
 
     result = service.generate_and_save(
         name="Altai Trip",
         participants=10,
         days=2,
-        meals_per_day=[
-            "breakfast",
-            "dinner",
-        ],
+        meals_per_day=["breakfast", "dinner"],
     )
 
     assert result.name == "Altai Trip"
     assert result.participants == 10
     assert result.days_count == 2
+    assert len(repository.meal_plans) == 1
+    assert len(repository.days) == 2
+    assert len(repository.items) == 4
+    assert len(repository.slots) == 4
+    assert [slot.order for slot in repository.slots] == [0, 1, 0, 1]
+    assert len(repository.slot_dishes) == 4
+    assert repository.committed is True
 
-    assert len(meal_plan_repository.meal_plans) == 1
-    assert len(meal_plan_repository.days) == 2
-    assert len(meal_plan_repository.items) == 4
-    assert len(meal_plan_repository.slots) == 4
-    assert len(meal_plan_repository.slot_dishes) == 4
 
-    assert meal_plan_repository.committed is True
+def test_generate_and_save_result_preserves_generator_warnings():
+    repository = FakeMealPlanRepository()
+    service = MealPlanService(
+        dish_repository=FakeDishRepository(dish_count=1),
+        meal_plan_repository=repository,
+    )
+
+    saved = service.generate_and_save_result(
+        name="Short catalogue",
+        participants=4,
+        days=1,
+        meals_per_day=["breakfast", "dinner"],
+    )
+
+    assert saved.meal_plan.name == "Short catalogue"
+    assert saved.warnings == ["Dish database is insufficient"]

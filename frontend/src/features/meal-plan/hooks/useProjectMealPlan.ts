@@ -5,16 +5,17 @@ import { apiClient } from "@/shared/api/client";
 
 import type { MealPlan } from "../api/mealPlanApi";
 
+export interface MealSlotDish {
+  id: string;
+  dish_id: string;
+  dish_name: string;
+}
+
 export interface MealSlot {
   id: string;
   day_number: number;
   meal_type: string;
-  dishes: Array<{
-    day_number: number;
-    meal_type: string;
-    dish_id: string;
-    dish_name: string;
-  }>;
+  dishes: MealSlotDish[];
 }
 
 export interface ProjectMealPlan extends MealPlan {
@@ -33,13 +34,11 @@ async function getProjectMealPlan(projectId: number): Promise<ProjectMealPlan | 
     const response = await apiClient.get<ProjectMealPlan>(
       `/meal-plans/project/${projectId}`,
     );
-
     return response.data;
   } catch (error) {
     if (isAxiosError(error) && error.response?.status === 404) {
       return null;
     }
-
     throw error;
   }
 }
@@ -53,7 +52,6 @@ export function useProjectMealPlan(projectId: number) {
       if (isAxiosError(error) && error.response?.status === 404) {
         return false;
       }
-
       return failureCount < 2;
     },
   });
