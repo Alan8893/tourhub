@@ -2,176 +2,75 @@
 
 Status: Active
 
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 
-## 1. Purpose
+## Purpose
 
-This document is the concise canonical domain baseline for the MVP. `DOMAIN.md` remains an extended reference. When they conflict, this document, `PRODUCT_SPEC.md`, and accepted ADRs take precedence.
+This document describes the implemented domain baseline. `PRODUCT_SPEC.md` describes approved target scope. Deferred capabilities are not current implementation.
 
-## 2. Club and Access
+## Club and access
 
-One TourHub installation represents one tourist club.
+One installation represents one tourist club. Multi-tenant support is prohibited.
 
-There is no tenant selection, tenant identifier, or organization isolation layer in MVP.
+The current phase is local and single-user. Invitations, roles, permissions, recipe ownership, publication, and moderation are deferred.
 
-Access is invitation-only.
+## Project
 
-Roles:
+Project is the preparation root for one trip. It stores name, participant count, duration, optional start date, first and last meal, status, and preparation results.
 
-- Administrator;
-- Instructor;
-- Verified Instructor.
+`/projects` lists all projects. `/projects/{id}` opens one project workspace.
 
-Administrator manages users, roles, invitations, system settings, and recipes.
+Participant-count changes preserve selected dishes and recalculate persisted purchasing data transactionally.
 
-Verified Instructor may publish personal recipes into the club library, review submissions, edit club recipes, archive club recipes, and reject publication with a comment.
+## Meal plan
 
-Instructor may manage projects, personal recipes, menu choices, shopping state, equipment overrides, and exports within granted permissions.
+MealPlan contains MealPlanDay records. MealSlot represents one meal occurrence and contains one or more dishes.
 
-## 3. Project
+Users can add, remove, and replace dishes. These operations refresh affected purchase lists and checklists transactionally.
 
-Project is the working preparation object for one trip.
+Meal composition, three-day diversity, same-day uniqueness, preferences, and insufficient-catalogue warnings remain incomplete.
 
-MVP stores:
+## Dish and recipe
 
-- name;
-- start and end dates;
-- participant count;
-- first and last meal;
-- comments;
-- preparation results.
+Dish and Recipe are separate entities.
 
-Participant count may change after generation. Selected dishes remain unchanged while quantities, packages, shopping, and dependent equipment are recalculated.
+Current persistence stores exactly one selected `recipe_id` on each Dish. Users can create and rename dishes and replace the assigned active recipe. A recipe archived after assignment remains visible historically but cannot be newly assigned.
 
-Participant profiles and personal information are a future domain.
+Dish recipe replacement recalculates every affected persisted purchasing projection in the same transaction.
 
-## 4. Meal Schedule
+Multiple Recipe variants per Dish, CLUB/PERSONAL ownership, publication, and moderation are approved future work and are not yet persisted.
 
-Meal types:
+Recipe currently supports components, practical quantity modes, notes, and archive state. Preparation technology, equipment, dietary metadata, season metadata, and richer categories remain incomplete.
 
-- breakfast;
-- lunch;
-- snack;
-- dinner.
+## Product and import
 
-For multi-day trips, intermediate days contain all meal types. The instructor selects the first and last meal. One-day trips contain only the selected inclusive range, including a single meal when both boundaries are equal.
+Product is independent of recipes. Practical calculation modes include per-person, fixed-group, and package-per-people.
 
-## 5. Meal Plan and Meal Slot
+Products, recipes, components, and notes can be loaded through CSV preview and apply operations. Invalid input does not create partial catalogue data.
 
-MealPlan contains days. A MealSlot represents one meal occurrence and contains one or more dishes.
+The approved alcohol prohibition rule still requires centralized backend enforcement for API and import paths.
 
-Instructor may:
+## Shopping and packaging
 
-- add a dish;
-- remove a dish;
-- replace a dish;
-- manually choose dishes before or after generation.
+Products are aggregated across recipe components and legacy ingredients. Package rounding foundations exist.
 
-Manual choices override generation rules.
+Recalculation triggers currently include participant-count changes, MealSlot edits, and Dish recipe replacement. Checklist state is preserved for products that remain after refresh.
 
-Diversity rules:
+Complete remainder presentation and responsible-person workflow remain incomplete.
 
-- a main dish should not repeat within three days;
-- the same dish should not occur twice on one day;
-- drinks and universal additions may repeat;
-- instructor preferences increase priority but do not disable diversity;
-- insufficient catalogue allows repetition with a warning.
+## Equipment
 
-## 6. Dish and Recipe
+Equipment persistence is not implemented. Target behavior is recipe-originated requirements, maximum simultaneous aggregation, and manual overrides.
 
-Dish describes the culinary concept. Recipe describes one concrete preparation variant.
+## Documents
 
-One Dish may have many Recipes.
+PDF, Excel, and package export foundations exist. Final Russian templates, complete workbook contents, and club branding remain incomplete.
 
-Recipe scopes:
+## Audit
 
-- `CLUB` — approved club standard;
-- `PERSONAL` — instructor-specific variant;
-- `ARCHIVED` — retained for history and excluded from generation.
+Audit logging is deferred until identity and roles exist.
 
-Generation modes:
-
-- club recipes only;
-- club and personal recipes;
-- personal recipes preferred.
-
-Recipe may contain:
-
-- components and ingredients;
-- preparation technology;
-- notes;
-- equipment;
-- tags and categories;
-- season compatibility;
-- dietary metadata;
-- practical hiking quantities.
-
-A club recipe used by historical projects is archived rather than destructively deleted.
-
-## 7. Product and Quantity
-
-Product is a catalogue item independent of recipes.
-
-Supported units include gram, kilogram, millilitre, litre, piece, can, package, portion, head, and pack.
-
-The primary MVP rule is amount per participant. Existing fixed-group and package-per-people rules remain valid for practical hiking recipes.
-
-Alcohol is prohibited without exceptions. Backend rejects alcoholic products, dishes, drinks, recipe components, and imports. Existing prohibited records are archived.
-
-## 8. Shopping and Packaging
-
-Identical products are aggregated across recipe components.
-
-Package count is rounded upward.
-
-For every item, the system may expose:
-
-- required quantity;
-- unit;
-- package size;
-- package count;
-- purchased quantity;
-- remainder;
-- category;
-- purchased status;
-- comment;
-- optional responsible person.
-
-Prices, stores, warehouse balances, and external price aggregators are future work.
-
-## 9. Equipment
-
-Equipment requirements originate from recipes.
-
-Identical items are aggregated by maximum simultaneous requirement rather than summed across the whole trip.
-
-Instructor may manually add, remove, or change an equipment quantity.
-
-Warehouse issue workflow and participant distribution are future domains.
-
-## 10. Documents
-
-MVP exports Russian PDF and Excel documents.
-
-PDF includes club branding, trip parameters, menu, food loadout, shopping, equipment, warnings, and comments.
-
-Excel includes sheets for trip, menu, loadout, shopping, and equipment.
-
-Club logo and name come from system settings.
-
-## 11. Audit Log
-
-Audit events include:
-
-- user, role, and invitation administration;
-- project and participant-count changes;
-- menu editing;
-- recipe editing, publication, rejection, and archiving;
-- other security-sensitive or business-significant changes.
-
-Audit records actor, action, timestamp, and safe metadata. Passwords, tokens, invitation secrets, and sensitive values are never stored in the log.
-
-## 12. Future Domains
+## Future domains
 
 - participant profiles;
 - routes and GPX;
@@ -179,4 +78,4 @@ Audit records actor, action, timestamp, and safe metadata. Passwords, tokens, in
 - warehouse balances;
 - procurement prices and aggregator integration.
 
-Multi-tenant support is not a future domain and remains prohibited.
+Multi-tenant support remains prohibited.
