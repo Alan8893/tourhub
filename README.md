@@ -10,13 +10,21 @@ One installation represents one tourist club. The current delivery sequence comp
 docker compose up --build
 ```
 
-After startup:
+After startup on the server:
 
 - frontend: `http://localhost:5173`;
 - backend API: `http://localhost:8000`;
 - OpenAPI: `http://localhost:8000/docs`.
 
-Database migrations run through the backend container entrypoint. PostgreSQL data is stored in the named Docker volume declared by `compose.yml`.
+From another computer on the same network, open the frontend with the server address:
+
+```text
+http://<server-ip>:5173
+```
+
+Frontend API calls use the same origin under `/api/v1` and are proxied by Vite to the backend container. Browser-facing frontend code must not hardcode `localhost:8000`, because `localhost` would refer to the user's computer rather than the TourHub server.
+
+Database migrations run through the backend container entrypoint. PostgreSQL data is stored in the named Docker volume declared by `docker-compose.yml`.
 
 ## Canonical documentation
 
@@ -49,4 +57,5 @@ GitHub Actions currently enforce:
 - migrations must keep exactly one Alembic head;
 - backend owns calculations, import validation, transaction boundaries, and future authorization decisions;
 - frontend owns presentation, navigation, form state, and API integration;
+- frontend features use the shared API client and do not hardcode browser-visible service origins;
 - documentation must be synchronized when product, domain, architecture, persistence, or release scope changes.
