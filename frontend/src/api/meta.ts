@@ -1,4 +1,5 @@
-import { apiClient } from "./client";
+import { apiClient } from "@/shared/api/client";
+
 import type { MetaResponse } from "./types/meta";
 
 export async function getMeta(): Promise<MetaResponse> {
