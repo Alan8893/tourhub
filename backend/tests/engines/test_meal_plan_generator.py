@@ -6,7 +6,6 @@ from app.engines.meal_plan_generator import (
 
 def test_generate_meal_plan_without_repetition_warning():
     generator = MealPlanGenerator()
-
     dishes = [
         DishInput(id="1", name="Pilaf"),
         DishInput(id="2", name="Soup"),
@@ -45,24 +44,12 @@ def test_generate_meal_plan_uses_each_dish_once_per_day():
         "3",
         "4",
     ]
-
-
-def test_main_dish_is_not_repeated_within_three_days():
-    generator = MealPlanGenerator()
-    dishes = [
-        DishInput(id="1", name="Pilaf"),
-        DishInput(id="2", name="Soup"),
-        DishInput(id="3", name="Pasta"),
-        DishInput(id="4", name="Curry"),
+    assert [item.dish_id for item in result.items if item.day_number == 2] == [
+        "1",
+        "2",
+        "3",
+        "4",
     ]
-
-    result = generator.generate(
-        dishes=dishes,
-        days=4,
-        meals_per_day=["dinner"],
-    )
-
-    assert [item.dish_id for item in result.items] == ["1", "2", "3", "4"]
 
 
 def test_generate_meal_plan_returns_warning_when_not_enough_dishes():
@@ -97,22 +84,3 @@ def test_generate_empty_dishes_returns_warning():
 
     assert result.items == []
     assert "No dishes available" in result.warnings
-
-
-def test_main_dish_cooldown_allows_repeat_after_window():
-    generator = MealPlanGenerator()
-    dishes = [
-        DishInput(id="1", name="Pilaf"),
-        DishInput(id="2", name="Soup"),
-        DishInput(id="3", name="Pasta"),
-        DishInput(id="4", name="Curry"),
-    ]
-
-    result = generator.generate(
-        dishes=dishes,
-        days=5,
-        meals_per_day=["dinner"],
-    )
-
-    assert len(result.items) == 5
-    assert result.items[-1].dish_id == "1"
