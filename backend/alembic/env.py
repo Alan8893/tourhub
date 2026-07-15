@@ -7,15 +7,16 @@ from sqlalchemy import pool
 from app.core.config import settings
 from app.models import (
     Base,
-    ProductORM,
-    IngredientORM,
-    RecipeORM,
+    DishMealRoleORM,
     DishORM,
-    MealPlanORM,
+    IngredientORM,
     MealPlanDayORM,
     MealPlanItemORM,
-    PurchaseChecklistORM,
+    MealPlanORM,
+    ProductORM,
     PurchaseChecklistItemORM,
+    PurchaseChecklistORM,
+    RecipeORM,
 )
 
 # Ensure SQLAlchemy registers all models
@@ -23,6 +24,7 @@ _ = ProductORM
 _ = IngredientORM
 _ = RecipeORM
 _ = DishORM
+_ = DishMealRoleORM
 _ = MealPlanORM
 _ = MealPlanDayORM
 _ = MealPlanItemORM
