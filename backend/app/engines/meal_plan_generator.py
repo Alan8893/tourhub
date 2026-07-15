@@ -85,27 +85,27 @@ class MealPlanGenerator:
 
         dish_index = 0
         current_day: int | None = None
-        used_for_day: set[str] = set()
+        context = SelectionContext(used_for_day=set(), recent_main_ids=set())
         recent_main_ids: deque[str] = deque(maxlen=3)
 
         for day_number, meal_type in meal_sequence:
             if day_number != current_day:
                 current_day = day_number
-                used_for_day = set()
+                context.used_for_day = set()
 
             selected: list[DishInput] = []
             for _ in range(dishes_per_meal):
                 dish, dish_index = self._select_next_dish(
                     dishes=dishes,
                     start_index=dish_index,
-                    excluded_ids=used_for_day,
-                    recent_main_ids=set(recent_main_ids),
+                    context=context,
                 )
                 selected.append(dish)
-                used_for_day.add(dish.id)
+                context.used_for_day.add(dish.id)
 
                 if dish.is_main:
                     recent_main_ids.append(dish.id)
+                    context.recent_main_ids = set(recent_main_ids)
 
                 items.append(MealPlanItemResult(day_number, meal_type, dish.id, dish.name))
 
@@ -117,14 +117,8 @@ class MealPlanGenerator:
     def _select_next_dish(
         dishes: list[DishInput],
         start_index: int,
-        excluded_ids: set[str],
-        recent_main_ids: set[str],
+        context: SelectionContext,
     ) -> tuple[DishInput, int]:
-        context = SelectionContext(
-            used_for_day=excluded_ids,
-            recent_main_ids=recent_main_ids,
-        )
-
         for offset in range(len(dishes)):
             candidate_index = start_index + offset
             candidate = dishes[candidate_index % len(dishes)]
