@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 
 from app.modules.domain.meal_role import MealRole
+from app.modules.domain.meal_type import MealType
 
 
 class DishRecipeResponse(BaseModel):
@@ -12,6 +13,7 @@ class DishRecipeResponse(BaseModel):
 class DishMealRoleResponse(BaseModel):
     role: MealRole
     is_repeatable: bool
+    allowed_meal_types: list[MealType]
 
 
 class DishResponse(BaseModel):
@@ -38,6 +40,7 @@ class DishUpdateRequest(BaseModel):
 class DishMealRoleRequest(BaseModel):
     role: MealRole
     is_repeatable: bool = False
+    allowed_meal_types: list[MealType] = Field(min_length=1)
 
 
 class DishMealRolesUpdateRequest(BaseModel):
