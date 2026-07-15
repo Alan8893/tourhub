@@ -97,3 +97,22 @@ def test_generate_empty_dishes_returns_warning():
 
     assert result.items == []
     assert "No dishes available" in result.warnings
+
+
+def test_main_dish_cooldown_allows_repeat_after_window():
+    generator = MealPlanGenerator()
+    dishes = [
+        DishInput(id="1", name="Pilaf"),
+        DishInput(id="2", name="Soup"),
+        DishInput(id="3", name="Pasta"),
+        DishInput(id="4", name="Curry"),
+    ]
+
+    result = generator.generate(
+        dishes=dishes,
+        days=5,
+        meals_per_day=["dinner"],
+    )
+
+    assert len(result.items) == 5
+    assert result.items[-1].dish_id == "1"
