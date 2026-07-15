@@ -6,6 +6,8 @@ from app.models.dish import DishORM
 from app.modules.domain.meal_role import MEAL_ROLE_ORDER, MealRole
 from app.modules.domain.meal_type import MEAL_TYPE_ORDER, MealType
 from app.schemas.dish import (
+    DishCatalogueCoverageResponse,
+    DishCatalogueReadinessResponse,
     DishCreateRequest,
     DishListResponse,
     DishMealRoleResponse,
@@ -13,6 +15,9 @@ from app.schemas.dish import (
     DishRecipeResponse,
     DishResponse,
     DishUpdateRequest,
+)
+from app.services.dish_catalogue_readiness_service import (
+    DishCatalogueReadinessService,
 )
 from app.services.dish_service import DishService
 
@@ -27,6 +32,12 @@ _MEAL_TYPE_POSITION = {
 
 def get_dish_service(session: Session = Depends(get_session)) -> DishService:
     return DishService(session)
+
+
+def get_dish_catalogue_readiness_service(
+    session: Session = Depends(get_session),
+) -> DishCatalogueReadinessService:
+    return DishCatalogueReadinessService(session)
 
 
 def _dish_response(dish: DishORM) -> DishResponse:
@@ -62,6 +73,35 @@ def _dish_response(dish: DishORM) -> DishResponse:
 @router.get("", response_model=DishListResponse)
 def list_dishes(service: DishService = Depends(get_dish_service)) -> DishListResponse:
     return DishListResponse(items=[_dish_response(dish) for dish in service.list_dishes()])
+
+
+@router.get(
+    "/catalogue-readiness",
+    response_model=DishCatalogueReadinessResponse,
+)
+def get_dish_catalogue_readiness(
+    service: DishCatalogueReadinessService = Depends(
+        get_dish_catalogue_readiness_service
+    ),
+) -> DishCatalogueReadinessResponse:
+    readiness = service.evaluate()
+    return DishCatalogueReadinessResponse(
+        ready=readiness.ready,
+        active_dish_count=readiness.active_dish_count,
+        classified_dish_count=readiness.classified_dish_count,
+        unclassified_dish_count=readiness.unclassified_dish_count,
+        coverage=[
+            DishCatalogueCoverageResponse(
+                meal_type=item.meal_type,
+                role=item.role,
+                required=item.required,
+                candidate_count=item.candidate_count,
+                minimum_required=item.minimum_required,
+                ready=item.ready,
+            )
+            for item in readiness.coverage
+        ],
+    )
 
 
 @router.get("/{dish_id}", response_model=DishResponse)

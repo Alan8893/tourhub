@@ -101,7 +101,7 @@ Completed by PR #54. Quality passed for backend tests, selected Ruff and strict 
 
 ### TH-0061.5 — Meal Composition Rules Engine
 
-ADR-013 now approves a two-dimensional persisted classification:
+ADR-013 approves a two-dimensional persisted classification:
 
 - normalized `dish_meal_roles` owned by Dish;
 - roles `main`, `addition`, `drink`, and `snack`;
@@ -132,29 +132,38 @@ Frontend editor slice on PR #60:
 - exact Axios/React Query API acceptance;
 - backend error rendering and responsive 1280/768/360 px screenshots.
 
-Quality run #197 is successful for PR #59. Quality run #206 is successful for the stacked PR #60.
+Catalogue readiness slice on stacked PR #61:
+
+- structured `GET /api/v1/dishes/catalogue-readiness`;
+- blocking minimums: one `main` for breakfast/lunch/dinner and one `snack` for snack;
+- non-blocking `addition` and `drink` recommendations;
+- active/classified/unclassified counts;
+- archived-recipe exclusion;
+- Russian warnings refreshed after role mutation;
+- desktop and 360 px Chrome acceptance.
+
+Quality run #197 is successful for PR #59. Quality run #206 is successful for PR #60. Quality run #225 is successful for the initial PR #61 implementation.
 
 ## NEXT
 
-### Catalogue classification and readiness
+### Merge and deployment sequence
 
 1. Merge PR #59.
 2. Retarget PR #60 to `main`, rerun Quality, and merge it.
-3. Classify the active catalogue explicitly by role and meal type.
-4. Define minimum readiness thresholds per generated meal type.
-5. Return visible Russian warnings for missing `main`, `snack`, or optional supporting pools.
-6. Keep unclassified dishes manually selectable and excluded from automatic role selection.
+3. Retarget PR #61 to `main`, rerun Quality, and merge it.
+4. Classify the active deployment catalogue explicitly by role and meal type.
 
 ### Role-aware composition
 
 1. Filter candidates by both persisted role and current meal type.
 2. Implement breakfast, snack, lunch, and dinner composition.
-3. Implement calendar-day three-day diversity for main dishes.
-4. Allow explicitly repeatable drinks and additions.
-5. Preserve manual selections as authoritative.
-6. Exclude archived-recipe dishes from automatic selection.
-7. Persist or reconstruct warnings for later reads.
-8. Add unit, service, API, frontend, and recalculation coverage.
+3. Use catalogue readiness before generation and preserve visible warnings.
+4. Implement calendar-day three-day diversity for main dishes.
+5. Allow explicitly repeatable drinks and additions.
+6. Preserve manual selections as authoritative.
+7. Exclude archived-recipe dishes from automatic selection.
+8. Persist or reconstruct warnings for later reads.
+9. Add unit, service, API, frontend, and recalculation coverage.
 
 ### Shopping and equipment
 

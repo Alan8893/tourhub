@@ -40,6 +40,7 @@ jobs:
             app/engines/meal_composition_policy.py \
             app/engines/meal_plan_generator.py \
             app/services/catalog_import_service.py \
+            app/services/dish_catalogue_readiness_service.py \
             app/services/dish_recipe_recalculation_service.py \
             app/services/dish_service.py \
             app/services/meal_plan_shopping_service.py \
@@ -75,6 +76,7 @@ jobs:
             app/engines/meal_composition_policy.py \
             app/engines/meal_plan_generator.py \
             app/services/catalog_import_service.py \
+            app/services/dish_catalogue_readiness_service.py \
             app/services/dish_recipe_recalculation_service.py \
             app/services/dish_service.py \
             app/services/meal_plan_shopping_service.py \
