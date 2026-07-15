@@ -16,10 +16,6 @@ class DishInput:
     name: str
     role: MealDishRole = MealDishRole.MAIN
 
-    @property
-    def is_main(self) -> bool:
-        return self.role == MealDishRole.MAIN
-
 
 @dataclass(frozen=True)
 class MealPlanItemResult:
