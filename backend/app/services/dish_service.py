@@ -1,10 +1,12 @@
 from uuid import uuid4
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.dish import DishORM
+from app.models.dish_meal_role import DishMealRoleORM
 from app.models.recipe import RecipeORM
+from app.modules.domain.meal_role import MEAL_ROLE_VALUES
 from app.services.dish_recipe_recalculation_service import (
     DishRecipeRecalculationService,
 )
@@ -15,13 +17,23 @@ class DishService:
         self.session = session
 
     def list_dishes(self) -> list[DishORM]:
-        statement = select(DishORM).options(joinedload(DishORM.recipe)).order_by(DishORM.name)
+        statement = (
+            select(DishORM)
+            .options(
+                joinedload(DishORM.recipe),
+                selectinload(DishORM.meal_roles),
+            )
+            .order_by(DishORM.name)
+        )
         return list(self.session.scalars(statement).all())
 
     def get_dish(self, dish_id: str) -> DishORM:
         statement = (
             select(DishORM)
-            .options(joinedload(DishORM.recipe))
+            .options(
+                joinedload(DishORM.recipe),
+                selectinload(DishORM.meal_roles),
+            )
             .where(DishORM.id == dish_id)
         )
         dish = self.session.scalar(statement)
@@ -61,6 +73,35 @@ class DishService:
 
         return self.get_dish(dish.id)
 
+    def replace_meal_roles(
+        self,
+        dish_id: str,
+        roles: list[tuple[str, bool]],
+    ) -> DishORM:
+        requested_roles = self._validate_meal_roles(roles)
+        dish = self.get_dish(dish_id)
+        existing_roles = {assignment.role: assignment for assignment in dish.meal_roles}
+
+        for role, assignment in existing_roles.items():
+            if role not in requested_roles:
+                dish.meal_roles.remove(assignment)
+
+        for role, is_repeatable in requested_roles.items():
+            assignment = existing_roles.get(role)
+            if assignment is None:
+                dish.meal_roles.append(
+                    DishMealRoleORM(
+                        dish_id=dish.id,
+                        role=role,
+                        is_repeatable=is_repeatable,
+                    )
+                )
+            else:
+                assignment.is_repeatable = is_repeatable
+
+        self._commit()
+        return self.get_dish(dish.id)
+
     def _get_selectable_recipe(self, recipe_id: str) -> RecipeORM:
         recipe = self.session.get(RecipeORM, recipe_id)
         if recipe is None:
@@ -74,6 +115,17 @@ class DishService:
         existing = self.session.scalar(statement)
         if existing is not None and existing.id != exclude_id:
             raise ValueError("Dish name must be unique")
+
+    @staticmethod
+    def _validate_meal_roles(roles: list[tuple[str, bool]]) -> dict[str, bool]:
+        normalized_roles: dict[str, bool] = {}
+        for role, is_repeatable in roles:
+            if role not in MEAL_ROLE_VALUES:
+                raise ValueError(f"Unsupported meal role: {role}")
+            if role in normalized_roles:
+                raise ValueError("Meal roles must be unique")
+            normalized_roles[role] = is_repeatable
+        return normalized_roles
 
     def _commit(self) -> None:
         try:
