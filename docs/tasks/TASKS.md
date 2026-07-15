@@ -8,7 +8,6 @@ This file contains task status and links. Detailed task descriptions are stored 
 |---|---|---|---|
 | TH-0061 | User Project Preparation Wizard | IN PROGRESS | ./active/TH-0061-project-wizard.md |
 | TH-0061.5 | Meal Composition Rules Engine | IN PROGRESS | ./active/TH-0061.5-menu-rules.md |
-| TH-0065 | Meal Plan Editor UX | READY FOR REVIEW | ./active/TH-0065-meal-plan-editor-ux.md |
 
 ## Completed
 
@@ -22,6 +21,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | TH-0061.7 | Recipe Components Implementation | DONE |
 | TH-0063 | MealSlot Integration | DONE |
 | TH-0064 | Project Stabilization and Documentation Recovery | DONE |
+| TH-0065 | Meal Plan Editor UX | DONE |
 | TH-0066 | Project Catalogue | DONE |
 | TH-0067 | Dish Catalogue and Recipe Assignment | DONE |
 | TH-0068 | Catalogue CSV Import | DONE |
