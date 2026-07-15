@@ -6,8 +6,11 @@ import {
   createAddMealSlotDishCommand,
   createRemoveMealSlotDishCommand,
   createReplaceMealSlotDishCommand,
+  formatDishCount,
+  getMealSlotSuccessMessage,
   hasMealSlotMutationError,
   isMealSlotMutationBusy,
+  mealSlotResponsiveDirection,
 } from "../src/features/meal-slot/model/mealSlotEditorState.ts";
 
 const idleState = {
@@ -47,4 +50,28 @@ test("reports mutation errors from add, replace, or remove operations", () => {
   assert.equal(hasMealSlotMutationError({ ...idleState, addError: true }), true);
   assert.equal(hasMealSlotMutationError({ ...idleState, replaceError: true }), true);
   assert.equal(hasMealSlotMutationError({ ...idleState, removeError: true }), true);
+});
+
+test("returns Russian success feedback for every mutation", () => {
+  assert.equal(getMealSlotSuccessMessage("add"), "Блюдо добавлено.");
+  assert.equal(getMealSlotSuccessMessage("replace"), "Блюдо заменено.");
+  assert.equal(getMealSlotSuccessMessage("remove"), "Блюдо удалено.");
+});
+
+test("formats dish counts with Russian plural forms", () => {
+  assert.equal(formatDishCount(0), "0 блюд");
+  assert.equal(formatDishCount(1), "1 блюдо");
+  assert.equal(formatDishCount(2), "2 блюда");
+  assert.equal(formatDishCount(5), "5 блюд");
+  assert.equal(formatDishCount(11), "11 блюд");
+  assert.equal(formatDishCount(21), "21 блюдо");
+  assert.equal(formatDishCount(24), "24 блюда");
+  assert.equal(formatDishCount(25), "25 блюд");
+});
+
+test("uses a stacked layout on mobile and an inline layout from the small breakpoint", () => {
+  assert.deepEqual(mealSlotResponsiveDirection, {
+    xs: "column",
+    sm: "row",
+  });
 });
