@@ -4,31 +4,19 @@ Status date: 2026-07-15
 
 ## Current phase
 
-Critical stabilization of the single-club preparation workflow. New menu-intelligence features remain paused until TH-0070 is merged and verified.
+TH-0065 — Meal Plan Editor UX on top of the corrected MealSlot contract. New menu-intelligence metadata and rules remain deferred until the editor workflow and its frontend integration coverage are accepted.
 
-## Verified baseline before TH-0070
+## Verified baseline
 
+- TH-0070 was merged through PR #54.
 - Alembic has one head: `g10001`.
 - Backend tests, selected Ruff and strict mypy baselines, frontend tests/build/audit, and PostgreSQL backup/restore are enforced in GitHub Actions.
-- Docker Compose, automatic migrations, project creation, menu generation, preparation, and export foundations were verified during the stabilization cycle.
+- Docker Compose, automatic migrations, project creation, menu generation, preparation, and export foundations were verified during stabilization.
 - Recipe library, dish catalogue, project catalogue, CSV import, and purchasing recalculation are present in `main`.
-
-## TH-0070 stabilization scope
-
-The current stabilization branch repairs the following audited regressions:
-
-- MealSlot frontend consumes the real `/dishes` response envelope;
-- MealPlan API exposes `MealSlotDish.id` and frontend mutations use it;
-- API mapping no longer duplicates legacy MealPlanItem data when MealSlots exist;
-- meal ordering is `breakfast`, `snack`, `lunch`, `dinner` in the frontend;
-- project meal-boundary validation is enforced in Backend;
-- dishes with archived recipes cannot be assigned to MealSlots;
-- generation warnings are returned from project generation;
-- unsupported standalone meal-plan placeholders are removed;
-- the invalid selection-based pseudo three-day cooldown is removed;
-- menu policy and generator join selected Ruff and strict mypy coverage.
-
-These changes are not considered delivered in `main` until PR #54 is merged and its Quality workflow succeeds.
+- MealSlot API exposes persisted relation identifiers and frontend mutations use them.
+- Backend validates project meal boundaries and blocks assignment of dishes with archived recipes.
+- Immediate generation warnings are returned to the frontend.
+- Unsupported meal-plan placeholders and the invalid selection-based pseudo three-day cooldown are removed.
 
 ## Implemented product areas
 
@@ -39,6 +27,7 @@ Implemented:
 - project creation and preparation context;
 - participant count and trip duration;
 - first and last meal context;
+- backend boundary validation;
 - project catalogue and workspace;
 - participant-count purchasing recalculation with rollback.
 
@@ -55,27 +44,31 @@ Implemented in `main`:
 - persistent MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
 - multiple dishes per meal;
 - add, remove, and replace backend operations;
+- corrected frontend/backend MealSlot identifier contract;
 - first/last meal schedule and one-day support;
 - deterministic same-day uniqueness;
-- deterministic fallback with insufficient-catalogue warning generation;
+- deterministic fallback with immediate insufficient-catalogue warning generation;
+- archived-recipe assignment guard;
 - purchasing recalculation and rollback after MealSlot edits;
-- legacy MealPlanItem compatibility.
+- legacy MealPlanItem compatibility without duplicate flat API items.
 
-Pending TH-0070 merge:
+Current TH-0065 work:
 
-- corrected frontend/backend MealSlot identifier contract;
-- visible generation warning in the immediate project generation response;
-- backend archived-recipe validation for MealSlot assignment;
-- removal of duplicate flat API items and placeholder endpoints.
+- compact Russian editor rows;
+- explicit replace/add flows and confirmed removal;
+- mutation loading, success, and error feedback;
+- collapsible days with dish counts;
+- full-width responsive editor layout;
+- state-level tests for commands, errors, feedback, ordering, summaries, and responsive policy.
 
 Needs later completion:
 
+- browser-level React/API integration tests;
 - persisted meal roles;
 - breakfast/snack/lunch/dinner composition rules;
 - repeatable drink/addition exceptions;
 - calendar-day three-day main-dish diversity;
-- warning persistence or deterministic reconstruction for later GET responses;
-- responsive Meal Plan Editor UX.
+- warning persistence or deterministic reconstruction for later GET responses.
 
 ### Dishes and recipes
 
@@ -136,23 +129,21 @@ Enforced:
 
 Open quality debt:
 
-- confirm PR #54 Quality result;
+- browser-level React component/API integration tests;
+- responsive browser tests at 360 px;
 - broader Ruff and strict mypy coverage;
-- React component/API integration tests;
-- responsive tests;
 - Docker image/build and final release gates.
 
 ## Active tasks
 
 - TH-0061 — guided project preparation journey;
 - TH-0061.5 — Meal Composition Rules Engine;
-- TH-0065 — Meal Plan Editor UX;
-- TH-0070 — critical meal-plan contract stabilization.
+- TH-0065 — Meal Plan Editor UX.
 
 ## Immediate sequence
 
-1. Merge and verify TH-0070.
-2. Complete TH-0065 against the corrected contract.
+1. Complete and verify the TH-0065 editor UX slice.
+2. Add browser-level React/API integration coverage for MealSlot editing.
 3. Approve and persist meal-role metadata.
 4. Implement role-aware composition and calendar-day diversity.
 5. Complete packaging, equipment, exports, and release acceptance.

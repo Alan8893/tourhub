@@ -6,35 +6,7 @@ Technical debt is prioritized by product risk.
 
 ## P0 — Release blockers
 
-### TD-021 — MealSlot API contract regression
-
-Status: IN REVIEW in TH-0070 / PR #54.
-
-The API previously omitted `MealSlotDish.id`, while frontend replace/remove mutations sent `dish_id`. The MealSlot dish selector also treated the `/dishes` envelope as a raw array.
-
-Closure requires:
-
-- relation identifiers in the API;
-- frontend use of relation identifiers;
-- correct dish-list envelope handling;
-- API and frontend regression coverage;
-- successful Quality workflow.
-
-### TD-022 — Invalid menu cooldown claim
-
-Status: IN REVIEW in TH-0070 / PR #54.
-
-The merged policy treated the last three selected dishes as a three-day cooldown and defaulted every DishInput to a main dish. This is not the approved calendar-day, role-aware rule.
-
-Closure requires removal of the invalid behavior and documentation that three-day diversity remains unimplemented until persisted meal roles are approved.
-
-### TD-023 — Backend meal-boundary authority
-
-Status: IN REVIEW in TH-0070 / PR #54.
-
-Project creation previously relied on frontend-only one-day validation and accepted unknown meal strings through the API.
-
-Closure requires backend validation and regression tests.
+No open P0 release blockers are recorded after TH-0070 / PR #54.
 
 ## P1 — Quality and maintainability
 
@@ -44,17 +16,21 @@ The audited snapshot contained 195 Ruff violations. A critical baseline and sele
 
 ### TD-006 — Strict mypy backlog
 
-The audited snapshot contained 74 strict mypy errors. Selected workflow modules are clean and enforced. TH-0070 adds the menu policy and generator to the typed baseline.
+The audited snapshot contained 74 strict mypy errors. Selected workflow modules, including the menu policy and generator, are clean and enforced.
 
 ### TD-007 — Frontend automated tests
 
-Current coverage focuses on pure state and validation helpers. Remaining critical coverage:
+Current coverage focuses on pure state, command, validation, ordering, summary, feedback, and responsive-policy helpers.
 
-- React component and API integration for MealSlot editing;
+TH-0065 adds coverage for MealSlot add/replace/remove commands, mutation errors, Russian success feedback, day summaries, meal ordering, collapse defaults, and responsive layout policy.
+
+Remaining critical coverage:
+
+- browser-level React component and API integration for MealSlot editing;
 - project creation and guided preparation;
 - shopping recalculation presentation;
 - catalogue import interaction and error rendering;
-- responsive behavior.
+- responsive browser behavior at 360 px.
 
 ### TD-008 — Continuous Integration
 
@@ -67,7 +43,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-TH-0070 synchronizes canonical current documents and removes the duplicate active TH-0061.5 task file. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
+Canonical current documents and the active task index are synchronized after TH-0070. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
 ### TD-024 — Legacy MealPlanItem compatibility
 
@@ -118,7 +94,13 @@ Record actor/action/time metadata when multi-user access is introduced.
 
 ### TD-017 — Meal plan editor UX
 
-Complete Russian labels, compact rows, domain meal order, responsive editing, collapsible days, mutation feedback, confirmation/undo affordances, and responsive tests.
+TH-0065 currently covers compact Russian rows, domain meal order, collapsible days, explicit add/replace flows, confirmed removal, mutation feedback, full-width layout, and responsive Material UI direction.
+
+Remaining closure requirements:
+
+- browser-level React/API integration tests;
+- verified 360 px browser rendering;
+- final desktop, tablet, and mobile acceptance.
 
 ### TD-019 — Dish recipe change impact preview
 
@@ -134,9 +116,12 @@ Product currently supports list and create. Update and guarded delete remain uni
 
 ## Completed history
 
-- TD-001 — accidental public API placeholders removed; TH-0070 removes the remaining unused legacy router and standalone fake response.
+- TD-001 — accidental public API placeholders removed.
 - TD-003 — participant, MealSlot, and Dish recipe purchasing refresh implemented transactionally.
 - TD-004 — local stack and primary workflow verified during stabilization.
 - TD-009 — dependency audit passes at moderate severity.
 - TD-016 — backup/restore scripts and CI smoke test implemented.
 - TD-018 — dish catalogue and active-recipe assignment implemented.
+- TD-021 — MealSlot relation identifiers and `/dishes` frontend contract repaired by PR #54.
+- TD-022 — invalid selection-count pseudo cooldown removed by PR #54.
+- TD-023 — backend meal-boundary authority and regression tests delivered by PR #54.

@@ -8,8 +8,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 |---|---|---|---|
 | TH-0061 | User Project Preparation Wizard | IN PROGRESS | ./active/TH-0061-project-wizard.md |
 | TH-0061.5 | Meal Composition Rules Engine | IN PROGRESS | ./active/TH-0061.5-menu-rules.md |
-| TH-0065 | Meal Plan Editor UX | ACTIVE | ./active/TH-0065-meal-plan-editor-ux.md |
-| TH-0070 | Critical Meal Plan Stabilization | READY FOR REVIEW | ./active/TH-0070-critical-meal-plan-stabilization.md |
+| TH-0065 | Meal Plan Editor UX | IN PROGRESS | ./active/TH-0065-meal-plan-editor-ux.md |
 
 ## Completed
 
@@ -27,6 +26,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | TH-0067 | Dish Catalogue and Recipe Assignment | DONE |
 | TH-0068 | Catalogue CSV Import | DONE |
 | TH-0069 | Dish Recipe Purchasing Recalculation | DONE |
+| TH-0070 | Critical Meal Plan Stabilization | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 

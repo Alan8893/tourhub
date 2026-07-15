@@ -32,7 +32,7 @@ Project
   → PDF and Excel
 ```
 
-Current work must prioritize stability and contract correctness before new menu-intelligence features.
+The critical contract stabilization from TH-0070 is complete. Current work prioritizes a usable and tested Meal Plan Editor before new menu-intelligence metadata and rules.
 
 ## 3. Architecture
 
@@ -131,15 +131,14 @@ Meal-role composition and calendar-day three-day diversity are not implemented. 
 
 - TH-0061 — guided project preparation workflow;
 - TH-0061.5 — Meal Composition Rules Engine;
-- TH-0065 — Meal Plan Editor UX;
-- TH-0070 — critical meal-plan contract stabilization.
+- TH-0065 — Meal Plan Editor UX.
 
-TH-0070 must be merged and verified before new menu composition metadata or rules are introduced.
+TH-0070 was completed by PR #54 with a successful Quality workflow. New composition work must still wait for approved persisted meal-role metadata.
 
 ## 6. Immediate sequence
 
-1. Complete TH-0070 and confirm all Quality jobs.
-2. Complete Meal Plan Editor UX on the corrected API contract.
+1. Complete Meal Plan Editor UX on the corrected API contract.
+2. Add React/API integration coverage for the editor.
 3. Define approved persisted meal-role metadata.
 4. Implement role-aware composition and calendar-day diversity.
 5. Complete packaging presentation and equipment.
