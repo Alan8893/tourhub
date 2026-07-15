@@ -1,7 +1,7 @@
 export function normalizeApiUrl(value?: string): string {
   const configured = value?.trim();
 
-  if (!configured) {
+  if (!configured || configured === "/api" || configured === "/api/") {
     return "/api/v1";
   }
 
