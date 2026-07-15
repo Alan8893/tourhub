@@ -4,7 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-import DishesPage from "@/pages/DishesPage";
+import DishesWorkspacePage from "@/pages/DishesWorkspacePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,8 +26,8 @@ createRoot(root).render(
       <MemoryRouter initialEntries={["/dishes/dish-soup"]}>
         <Container maxWidth="lg" sx={{ py: 2 }}>
           <Routes>
-            <Route path="/dishes" element={<DishesPage />} />
-            <Route path="/dishes/:id" element={<DishesPage />} />
+            <Route path="/dishes" element={<DishesWorkspacePage />} />
+            <Route path="/dishes/:id" element={<DishesWorkspacePage />} />
           </Routes>
         </Container>
       </MemoryRouter>

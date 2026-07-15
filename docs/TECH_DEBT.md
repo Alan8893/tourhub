@@ -16,11 +16,11 @@ The audited snapshot contained 195 Ruff violations. A critical baseline and sele
 
 ### TD-006 — Strict mypy backlog
 
-The audited snapshot contained 74 strict mypy errors. Selected workflow modules, including the menu policy and generator, are clean and enforced.
+The audited snapshot contained 74 strict mypy errors. Selected workflow modules, including the menu policy, generator, and catalogue readiness service, are clean and enforced.
 
 ### TD-007 — Frontend automated tests
 
-Current coverage includes pure state, command, validation, ordering, summary, feedback, and responsive-policy helpers.
+Current coverage includes pure state, command, validation, ordering, summary, feedback, readiness presentation, and responsive-policy helpers.
 
 TH-0065 and PR #57 added real-browser coverage for:
 
@@ -39,17 +39,25 @@ PR #60 adds real-browser coverage for:
 - lunch-only `main` and multi-meal repeatable drink examples;
 - no horizontal overflow at desktop, tablet, and 360 px mobile widths.
 
+PR #61 adds real-browser coverage for:
+
+- blocking Russian readiness warnings for missing required pools;
+- non-blocking addition/drink recommendations;
+- active and unclassified Dish summaries;
+- readiness refresh after role mutation without page reload;
+- desktop and 360 px no-overflow screenshots.
+
 Remaining critical coverage:
 
 - project creation and guided preparation;
-- active-catalogue readiness warnings;
+- active deployment catalogue data acceptance;
 - shopping recalculation presentation;
 - catalogue import interaction and error rendering;
 - final end-to-end release acceptance.
 
 ### TD-008 — Continuous Integration
 
-Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, Meal Plan Editor browser acceptance, Dish role/meal compatibility browser acceptance, and PostgreSQL backup/restore.
+Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, Meal Plan Editor browser acceptance, Dish role/meal compatibility and readiness browser acceptance, and PostgreSQL backup/restore.
 
 Remaining:
 
@@ -59,7 +67,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical current documents and the active task index are synchronized after TH-0070, TH-0065, and the role/meal-compatibility design correction. ADR-013 supersedes the obsolete MealPlanItem-primary persistence wording in ADR-006 and now explicitly prevents role-only misclassification such as borscht at breakfast. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
+Canonical current documents and the active task index are synchronized after TH-0070, TH-0065, the role/meal-compatibility design correction, and the minimal readiness policy. ADR-013 supersedes obsolete MealPlanItem-primary wording in ADR-006 and prevents role-only misclassification such as borscht at breakfast. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
 ### TD-024 — Legacy MealPlanItem compatibility
 
@@ -104,17 +112,25 @@ PR #60 implements:
 - visible classification summaries;
 - browser/API acceptance and responsive screenshots.
 
+PR #61 implements:
+
+- deterministic structured catalogue readiness evaluation;
+- required `main` coverage for breakfast/lunch/dinner;
+- required `snack` coverage for snack;
+- optional addition/drink recommendations;
+- archived-recipe exclusion and classification counts;
+- Russian warning presentation and browser refresh coverage.
+
 Remaining implementation work:
 
-- explicit active-catalogue classification;
-- catalogue-readiness thresholds and warnings by meal type;
+- explicit classification of the active deployment catalogue;
 - role and meal-type composition for breakfast, snack, lunch, and dinner;
-- calendar-day three-day main-dish diversity;
+- larger candidate thresholds and calendar-day three-day main-dish diversity;
 - manual-selection preservation;
-- warning persistence or reconstruction;
+- generation-warning persistence or reconstruction;
 - preference modes after multi-variant recipes.
 
-Same-day uniqueness and immediate generation warning fallback are implemented and are no longer open parts of TD-012.
+Same-day uniqueness, immediate generation warning fallback, and minimal catalogue readiness are no longer open parts of TD-012.
 
 ### TD-013 — Equipment domain completion
 

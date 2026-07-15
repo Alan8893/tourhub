@@ -3,7 +3,7 @@ import { Navigate, RouteObject } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
 import CatalogImportPage from "../../pages/CatalogImportPage";
 import CreateProjectPage from "../../pages/CreateProjectPage";
-import DishesPage from "../../pages/DishesPage";
+import DishesWorkspacePage from "../../pages/DishesWorkspacePage";
 import ProjectsPage from "../../pages/ProjectsPage";
 import ProjectWorkspacePage from "../../pages/ProjectWorkspacePage";
 import RecipesPage from "../../pages/RecipesPage";
@@ -18,8 +18,8 @@ export const routes: RouteObject[] = [
       { path: "/projects/:id", element: <ProjectWorkspacePage /> },
       { path: "/recipes", element: <RecipesPage /> },
       { path: "/recipes/:id", element: <RecipesPage /> },
-      { path: "/dishes", element: <DishesPage /> },
-      { path: "/dishes/:id", element: <DishesPage /> },
+      { path: "/dishes", element: <DishesWorkspacePage /> },
+      { path: "/dishes/:id", element: <DishesWorkspacePage /> },
       { path: "/catalog-import", element: <CatalogImportPage /> },
       { path: "/login", element: <div>Login</div> },
       { path: "/dashboard", element: <div>Dashboard</div> },

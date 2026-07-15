@@ -26,6 +26,23 @@ export interface DishListResponse {
   items: Dish[];
 }
 
+export interface DishCatalogueCoverage {
+  meal_type: MealType;
+  role: MealRole;
+  required: boolean;
+  candidate_count: number;
+  minimum_required: number;
+  ready: boolean;
+}
+
+export interface DishCatalogueReadiness {
+  ready: boolean;
+  active_dish_count: number;
+  classified_dish_count: number;
+  unclassified_dish_count: number;
+  coverage: DishCatalogueCoverage[];
+}
+
 export interface DishWriteInput {
   name: string;
   recipe_id: string;
@@ -43,6 +60,11 @@ export interface DishMealRolesWriteInput {
 
 export async function getDishes(): Promise<DishListResponse> {
   const response = await apiClient.get<DishListResponse>("/dishes");
+  return response.data;
+}
+
+export async function getDishCatalogueReadiness(): Promise<DishCatalogueReadiness> {
+  const response = await apiClient.get<DishCatalogueReadiness>("/dishes/catalogue-readiness");
   return response.data;
 }
 

@@ -27,6 +27,23 @@ class DishListResponse(BaseModel):
     items: list[DishResponse]
 
 
+class DishCatalogueCoverageResponse(BaseModel):
+    meal_type: MealType
+    role: MealRole
+    required: bool
+    candidate_count: int
+    minimum_required: int
+    ready: bool
+
+
+class DishCatalogueReadinessResponse(BaseModel):
+    ready: bool
+    active_dish_count: int
+    classified_dish_count: int
+    unclassified_dish_count: int
+    coverage: list[DishCatalogueCoverageResponse]
+
+
 class DishCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     recipe_id: str = Field(min_length=1)

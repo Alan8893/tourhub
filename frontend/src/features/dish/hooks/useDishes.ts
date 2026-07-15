@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createDish,
   getDish,
+  getDishCatalogueReadiness,
   getDishes,
   updateDish,
   updateDishMealRoles,
@@ -12,6 +13,13 @@ import {
 
 export function useDishes() {
   return useQuery({ queryKey: ["dishes"], queryFn: getDishes });
+}
+
+export function useDishCatalogueReadiness() {
+  return useQuery({
+    queryKey: ["dishes", "catalogue-readiness"],
+    queryFn: getDishCatalogueReadiness,
+  });
 }
 
 export function useDish(dishId: string | undefined) {
