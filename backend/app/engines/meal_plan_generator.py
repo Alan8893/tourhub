@@ -2,6 +2,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from app.engines.meal_composition_policy import MealCompositionPolicy, SelectionContext
+from app.engines.meal_role import MealDishRole
 
 
 INSUFFICIENT_DISHES_WARNING = "Dish database is insufficient"
@@ -13,7 +14,11 @@ class DishInput:
 
     id: str
     name: str
-    is_main: bool = True
+    role: MealDishRole = MealDishRole.MAIN
+
+    @property
+    def is_main(self) -> bool:
+        return self.role == MealDishRole.MAIN
 
 
 @dataclass(frozen=True)
