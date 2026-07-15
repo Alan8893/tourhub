@@ -1,9 +1,25 @@
-import { Alert, Card, CardContent, Divider, Stack, Typography } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Card,
+  CardContent,
+  Chip,
+  Stack,
+  Typography,
+} from "@mui/material";
 
 import { MealSlotEditor } from "@/features/meal-slot";
+import { formatDishCount } from "@/features/meal-slot/model/mealSlotEditorState";
 import { useProjectMealPlan } from "@/features/meal-plan";
 import type { MealSlot } from "@/features/meal-plan";
-import { getMealPlanViewState } from "@/features/meal-plan/model/mealPlanViewState";
+import {
+  countMealPlanDayDishes,
+  getMealPlanViewState,
+  isMealPlanDayExpandedByDefault,
+  sortMealSlots,
+} from "@/features/meal-plan/model/mealPlanViewState";
 import { useProjectWorkflow } from "@/features/project-workflow";
 
 const mealTypeLabels: Record<string, string> = {
@@ -11,13 +27,6 @@ const mealTypeLabels: Record<string, string> = {
   snack: "Перекус",
   lunch: "Обед",
   dinner: "Ужин",
-};
-
-const mealTypeOrder: Record<string, number> = {
-  breakfast: 0,
-  snack: 1,
-  lunch: 2,
-  dinner: 3,
 };
 
 export default function MealPlanWidget() {
@@ -40,10 +49,15 @@ export default function MealPlanWidget() {
   const dayNumbers = Object.keys(groupedMeals).map(Number).sort((a, b) => a - b);
 
   return (
-    <Card>
+    <Card sx={{ width: "100%" }}>
       <CardContent>
         <Stack spacing={2}>
-          <Typography variant="h6">Меню похода</Typography>
+          <Stack spacing={0.25}>
+            <Typography variant="h6">Меню похода</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Дни можно сворачивать, чтобы быстрее просматривать длинное меню.
+            </Typography>
+          </Stack>
 
           {viewState === "loading" && <Typography>Загрузка меню…</Typography>}
 
@@ -66,12 +80,11 @@ export default function MealPlanWidget() {
           )}
 
           {mealPlan && mealPlan.warnings.length > 0 && (
-            <Stack spacing={0.5}>
-              <Typography variant="subtitle2">Предупреждения</Typography>
+            <Stack spacing={1}>
               {mealPlan.warnings.map((warning) => (
-                <Typography key={warning} variant="body2" color="warning.main">
+                <Alert key={warning} severity="warning">
                   {warning}
-                </Typography>
+                </Alert>
               ))}
             </Stack>
           )}
@@ -80,46 +93,79 @@ export default function MealPlanWidget() {
             <Typography variant="body2">Для этого меню пока нет приёмов пищи.</Typography>
           )}
 
-          {mealPlan && dayNumbers.map((dayNumber, index) => (
-            <Stack key={dayNumber} spacing={1.5}>
-              {index > 0 && <Divider />}
-              <Typography variant="subtitle1">День {dayNumber}</Typography>
-              <Stack spacing={1.5}>
-                {groupedMeals[dayNumber]
-                  .slice()
-                  .sort(
-                    (a, b) =>
-                      (mealTypeOrder[a.meal_type] ?? Number.MAX_SAFE_INTEGER) -
-                      (mealTypeOrder[b.meal_type] ?? Number.MAX_SAFE_INTEGER),
-                  )
-                  .map((slot) =>
-                    slot.id.startsWith("legacy:") ? (
-                      <Stack key={slot.id} spacing={0.5}>
-                        <Typography variant="subtitle2">
-                          {mealTypeLabels[slot.meal_type] ?? slot.meal_type}
+          {mealPlan && (
+            <Stack spacing={1}>
+              {dayNumbers.map((dayNumber, index) => {
+                const dayMeals = sortMealSlots(groupedMeals[dayNumber]);
+                const dishCount = countMealPlanDayDishes(dayMeals);
+                const contentId = `meal-plan-day-${dayNumber}-content`;
+                const headerId = `meal-plan-day-${dayNumber}-header`;
+
+                return (
+                  <Accordion
+                    key={dayNumber}
+                    defaultExpanded={isMealPlanDayExpandedByDefault(index)}
+                    disableGutters
+                    elevation={0}
+                    sx={{
+                      border: 1,
+                      borderColor: "divider",
+                      borderRadius: 1,
+                      "&:before": { display: "none" },
+                    }}
+                  >
+                    <AccordionSummary
+                      id={headerId}
+                      aria-controls={contentId}
+                      expandIcon={<Typography component="span" aria-hidden="true">⌄</Typography>}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        justifyContent="space-between"
+                        sx={{ width: "100%", pr: 1 }}
+                      >
+                        <Typography variant="subtitle1" component="h3">
+                          День {dayNumber}
                         </Typography>
-                        {slot.dishes.map((dish) => (
-                          <Typography key={dish.id} variant="body2">
-                            • {dish.dish_name}
-                          </Typography>
-                        ))}
+                        <Chip size="small" variant="outlined" label={formatDishCount(dishCount)} />
                       </Stack>
-                    ) : (
-                      <MealSlotEditor
-                        key={slot.id}
-                        slotId={slot.id}
-                        mealType={mealTypeLabels[slot.meal_type] ?? slot.meal_type}
-                        dishes={slot.dishes.map((dish) => ({
-                          id: dish.id,
-                          dish_id: dish.dish_id,
-                          dish_name: dish.dish_name,
-                        }))}
-                      />
-                    ),
-                  )}
-              </Stack>
+                    </AccordionSummary>
+                    <AccordionDetails id={contentId} sx={{ pt: 0 }}>
+                      <Stack spacing={1.5}>
+                        {dayMeals.map((slot) =>
+                          slot.id.startsWith("legacy:") ? (
+                            <Stack key={slot.id} spacing={0.5}>
+                              <Typography variant="subtitle2">
+                                {mealTypeLabels[slot.meal_type] ?? slot.meal_type}
+                              </Typography>
+                              {slot.dishes.map((dish) => (
+                                <Typography key={dish.id} variant="body2">
+                                  • {dish.dish_name}
+                                </Typography>
+                              ))}
+                            </Stack>
+                          ) : (
+                            <MealSlotEditor
+                              key={slot.id}
+                              slotId={slot.id}
+                              mealType={mealTypeLabels[slot.meal_type] ?? slot.meal_type}
+                              dishes={slot.dishes.map((dish) => ({
+                                id: dish.id,
+                                dish_id: dish.dish_id,
+                                dish_name: dish.dish_name,
+                              }))}
+                            />
+                          ),
+                        )}
+                      </Stack>
+                    </AccordionDetails>
+                  </Accordion>
+                );
+              })}
             </Stack>
-          ))}
+          )}
         </Stack>
       </CardContent>
     </Card>
