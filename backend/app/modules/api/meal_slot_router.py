@@ -18,7 +18,6 @@ from app.services.meal_plan_shopping_service import MealPlanShoppingService
 from app.services.meal_slot_service import MealSlotService
 from app.services.shopping_list_service import ShoppingListService
 
-
 router = APIRouter(prefix="/meal-slots", tags=["Meal Slots"])
 
 
