@@ -1,8 +1,27 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Button, FormControl, FormControlLabel, FormLabel, Paper, Radio, RadioGroup, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Paper,
+  Radio,
+  RadioGroup,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 import { useCreateProject } from "../features/project/hooks/useCreateProject";
+
+const mealOptions = [
+  { value: "breakfast", label: "Завтрак" },
+  { value: "snack", label: "Перекус" },
+  { value: "lunch", label: "Обед" },
+  { value: "dinner", label: "Ужин" },
+] as const;
 
 export default function CreateProjectPage() {
   const navigate = useNavigate();
@@ -13,16 +32,27 @@ export default function CreateProjectPage() {
   const [days, setDays] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [firstMeal, setFirstMeal] = useState("dinner");
+  const [lastMeal, setLastMeal] = useState("dinner");
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
 
+    const firstIndex = mealOptions.findIndex((meal) => meal.value === firstMeal);
+    const lastIndex = mealOptions.findIndex((meal) => meal.value === lastMeal);
+    if (days === 1 && firstIndex > lastIndex) {
+      setValidationError("В однодневном походе последний приём пищи не может быть раньше первого.");
+      return;
+    }
+
+    setValidationError(null);
     const project = await createProject.mutateAsync({
       name,
       participants,
       days,
       start_date: startDate || undefined,
       first_meal: firstMeal,
+      last_meal: lastMeal,
     });
 
     navigate(`/projects/${project.id}`);
@@ -39,6 +69,8 @@ export default function CreateProjectPage() {
       </Typography>
 
       <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {validationError && <Alert severity="error">{validationError}</Alert>}
+
         <TextField
           label="Название похода"
           placeholder="Например: Карелия 2026"
@@ -75,21 +107,23 @@ export default function CreateProjectPage() {
 
         <FormControl>
           <FormLabel>Первый приём пищи</FormLabel>
-          <RadioGroup
-            value={firstMeal}
-            onChange={(event) => setFirstMeal(event.target.value)}
-          >
-            <FormControlLabel value="breakfast" control={<Radio />} label="Завтрак" />
-            <FormControlLabel value="lunch" control={<Radio />} label="Обед" />
-            <FormControlLabel value="dinner" control={<Radio />} label="Ужин" />
+          <RadioGroup value={firstMeal} onChange={(event) => setFirstMeal(event.target.value)}>
+            {mealOptions.map((meal) => (
+              <FormControlLabel key={meal.value} value={meal.value} control={<Radio />} label={meal.label} />
+            ))}
           </RadioGroup>
         </FormControl>
 
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={createProject.isPending}
-        >
+        <FormControl>
+          <FormLabel>Последний приём пищи</FormLabel>
+          <RadioGroup value={lastMeal} onChange={(event) => setLastMeal(event.target.value)}>
+            {mealOptions.map((meal) => (
+              <FormControlLabel key={meal.value} value={meal.value} control={<Radio />} label={meal.label} />
+            ))}
+          </RadioGroup>
+        </FormControl>
+
+        <Button type="submit" variant="contained" disabled={createProject.isPending}>
           {createProject.isPending ? "Создание..." : "Создать поход"}
         </Button>
       </Box>
