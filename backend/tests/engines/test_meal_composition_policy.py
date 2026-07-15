@@ -3,6 +3,7 @@ from app.engines.meal_composition_policy import (
     SelectionContext,
 )
 from app.engines.meal_plan_generator import DishInput
+from app.engines.meal_role import MealDishRole
 
 
 def test_policy_rejects_same_day_duplicate():
@@ -13,7 +14,7 @@ def test_policy_rejects_same_day_duplicate():
 
 
 def test_policy_rejects_recent_main_dish():
-    dish = DishInput(id="1", name="Pilaf", is_main=True)
+    dish = DishInput(id="1", name="Pilaf", role=MealDishRole.MAIN)
     context = SelectionContext(used_for_day=set(), recent_main_ids={"1"})
 
     assert MealCompositionPolicy.can_select(dish, context) is False
@@ -27,7 +28,7 @@ def test_policy_allows_available_dish():
 
 
 def test_context_register_selected_tracks_main_dish_cooldown():
-    dish = DishInput(id="1", name="Pilaf", is_main=True)
+    dish = DishInput(id="1", name="Pilaf", role=MealDishRole.MAIN)
     context = SelectionContext(used_for_day=set(), recent_main_ids=set())
 
     context.register_selected(dish)
@@ -35,8 +36,8 @@ def test_context_register_selected_tracks_main_dish_cooldown():
     assert dish.id in context.recent_main_ids
 
 
-def test_context_does_not_track_non_main_dish_in_cooldown():
-    dish = DishInput(id="1", name="Tea", is_main=False)
+def test_context_does_not_track_snack_in_cooldown():
+    dish = DishInput(id="1", name="Tea", role=MealDishRole.SNACK)
     context = SelectionContext(used_for_day=set(), recent_main_ids=set())
 
     context.register_selected(dish)
