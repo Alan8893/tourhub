@@ -82,13 +82,13 @@ class DishService:
         dish = self.get_dish(dish_id)
         existing_roles = {assignment.role: assignment for assignment in dish.meal_roles}
 
-        for role, assignment in existing_roles.items():
+        for role, current_assignment in existing_roles.items():
             if role not in requested_roles:
-                dish.meal_roles.remove(assignment)
+                dish.meal_roles.remove(current_assignment)
 
         for role, is_repeatable in requested_roles.items():
-            assignment = existing_roles.get(role)
-            if assignment is None:
+            existing_assignment = existing_roles.get(role)
+            if existing_assignment is None:
                 dish.meal_roles.append(
                     DishMealRoleORM(
                         dish_id=dish.id,
@@ -97,7 +97,7 @@ class DishService:
                     )
                 )
             else:
-                assignment.is_repeatable = is_repeatable
+                existing_assignment.is_repeatable = is_repeatable
 
         self._commit()
         return self.get_dish(dish.id)
