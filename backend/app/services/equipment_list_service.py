@@ -63,6 +63,7 @@ class EquipmentListService:
             equipment_list.meal_plan_id = meal_plan_id
             equipment_list.status = "prepared"
             equipment_list.items.clear()
+            self.repository.flush()
 
         for name, quantity in sorted(
             calculated.values(),

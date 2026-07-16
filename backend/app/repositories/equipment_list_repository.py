@@ -37,6 +37,9 @@ class EquipmentListRepository:
     def add(self, equipment_list: EquipmentListORM) -> None:
         self.session.add(equipment_list)
 
+    def flush(self) -> None:
+        self.session.flush()
+
     def commit(self) -> None:
         self.session.flush()
         self.session.commit()
