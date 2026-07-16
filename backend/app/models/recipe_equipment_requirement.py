@@ -1,5 +1,5 @@
 from sqlalchemy import CheckConstraint, ForeignKey, Integer, String, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from app.models.base import Base
 
@@ -25,3 +25,10 @@ class RecipeEquipmentRequirementORM(Base):
     )
     equipment_name: Mapped[str] = mapped_column(String(255), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    @validates("equipment_name")
+    def normalize_equipment_name(self, _key: str, value: str) -> str:
+        normalized = " ".join(value.split())
+        if not normalized:
+            raise ValueError("Equipment name must not be empty")
+        return normalized[:1].upper() + normalized[1:]
