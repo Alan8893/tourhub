@@ -36,6 +36,8 @@ Real-browser coverage now includes:
 
 PR #64 adds backend/persistence/API integration coverage rather than a new frontend workflow. It verifies real project generation with persisted ORM roles and distinguishes `MealSlotDish.id` from source `dish_id`.
 
+PR #66 adds backend pure-policy, generator, service, persistence, and public API regressions for calendar-day `main` diversity. No frontend behavior changes in this slice.
+
 Remaining critical coverage:
 
 - guided project preparation;
@@ -56,7 +58,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical status, roadmap, context, domain, architecture, and active TH-0061.5 documentation are synchronized after PR #64. ADR-013 remains the accepted source for persisted role and meal-type ownership. ADR-006 is superseded where it described MealPlanItem as primary.
+Canonical status, roadmap, context, domain, architecture, and active TH-0061.5 documentation are synchronized after PR #64 through documentation PR #65. PR #66 updates the status, roadmap, technical debt, and active task for calendar-day diversity. ADR-013 remains the accepted source for persisted role and meal-type ownership. ADR-006 is superseded where it described MealPlanItem as primary.
 
 Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
@@ -83,7 +85,7 @@ Remaining work covers CLUB/PERSONAL ownership, multiple recipe variants, publica
 
 ### TD-012 — Meal composition and diversity
 
-Implemented through PR #59, #60, #61, and #64:
+Implemented through PR #59, #60, #61, #64, and stacked PR #66:
 
 - normalized `dish_meal_roles` owned by Dish;
 - normalized `dish_meal_role_meal_types` owned by each role assignment;
@@ -105,17 +107,20 @@ Implemented through PR #59, #60, #61, and #64:
 - explicit required-pool warnings without incompatible fallback;
 - exclusion of unclassified and archived-recipe dishes from automatic selection;
 - same-day uniqueness with per-role repeatability exceptions;
+- trip-calendar-day three-day diversity for non-repeatable `main` assignments;
+- day-four reuse after a day-one `main` selection;
+- repeatable `main` bypass of the diversity restriction;
+- deterministic empty required slots and warnings when the diversity-eligible pool is exhausted;
 - pure, service, persistence, and public API integration coverage.
 
 Remaining implementation work:
 
 - maintain and complete explicit classification of the active deployment catalogue;
-- larger candidate thresholds and calendar-day three-day `main` diversity;
 - manual-selection preservation during regeneration;
 - generation-warning persistence or deterministic reconstruction;
-- preference modes after multi-variant recipes.
+- larger candidate thresholds and preference modes after approved product requirements and multi-variant recipes.
 
-Minimal readiness, role-aware composition, optional repeatable roles, archived-recipe filtering, and immediate warnings are no longer open parts of TD-012.
+Minimal readiness, role-aware composition, optional repeatable roles, archived-recipe filtering, immediate warnings, and calendar-day `main` diversity are no longer open parts of TD-012 after PR #66.
 
 ### TD-013 — Equipment domain completion
 
