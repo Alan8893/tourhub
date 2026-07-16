@@ -2,7 +2,7 @@
 
 Version: 0.0.2-alpha
 
-Last update: 2026-07-15
+Last update: 2026-07-16
 
 Status: Active Development
 
@@ -32,7 +32,7 @@ Project
   → PDF and Excel
 ```
 
-The critical contract stabilization from TH-0070 is complete. Current work prioritizes a usable and tested Meal Plan Editor before new menu-intelligence metadata and rules.
+Critical meal-plan stabilization, Meal Plan Editor UX, persisted Dish classification, catalogue readiness, responsive mobile navigation, and the first role-aware generation slice are complete. Current work should extend this verified baseline rather than recreate it.
 
 ## 3. Architecture
 
@@ -60,14 +60,14 @@ Frontend owns presentation, form state, navigation, and API integration. It does
 - Redis configuration;
 - deterministic calculation engines.
 
-Backend owns business validation, persistence, generation, catalogue import, recalculation, and document generation.
+Backend owns business validation, persistence, menu generation, catalogue import, recalculation, and document generation.
 
 ### Runtime
 
 The local stack starts with:
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
 Docker Compose includes frontend, backend, PostgreSQL, and Redis. Redis is available in the runtime stack but no business workflow currently depends on it.
@@ -76,13 +76,13 @@ Docker Compose includes frontend, backend, PostgreSQL, and Redis. Redis is avail
 
 ### Projects
 
-- creation;
-- catalogue at `/projects`;
+- creation and catalogue at `/projects`;
 - workspace at `/projects/{id}`;
 - participant count and trip duration;
 - first and last meal context;
 - backend validation of meal boundaries;
-- participant-count purchasing recalculation.
+- participant-count purchasing recalculation;
+- LAN-safe same-origin API routing.
 
 ### Recipes and products
 
@@ -96,31 +96,44 @@ Docker Compose includes frontend, backend, PostgreSQL, and Redis. Redis is avail
 
 ### Dishes
 
-- dish catalogue;
-- create and rename;
+- dish catalogue, create, and rename;
 - one selected active recipe per Dish;
-- archived-recipe history;
-- prevention of new archived-recipe assignment;
-- purchasing recalculation after recipe replacement.
+- archived-recipe history and assignment guards;
+- purchasing recalculation after recipe replacement;
+- normalized `dish_meal_roles`;
+- normalized role-specific `dish_meal_role_meal_types`;
+- roles `main`, `addition`, `drink`, and `snack`;
+- repeatability per role assignment;
+- atomic role/meal-type editing API;
+- Russian responsive classification UI;
+- structured catalogue-readiness API and warnings.
 
 ### Menu
 
 - persisted MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
-- first/last meal schedule;
+- first/last meal schedule and one-day handling;
 - breakfast, snack, lunch, dinner order;
-- one-day schedule handling;
 - multiple dishes per MealSlot;
 - add, replace, and remove operations;
-- real MealSlotDish identifiers in the API;
-- deterministic same-day uniqueness while unused dishes remain;
-- insufficient-catalogue warning and deterministic fallback.
+- real MealSlotDish relation identifiers in the API;
+- compact responsive Russian editor;
+- role-aware automatic generation using both persisted role and meal type;
+- `main` required for breakfast/lunch/dinner;
+- `snack` required for snack;
+- optional compatible `addition` and `drink`;
+- stable `main → addition → drink` order;
+- same-day uniqueness for non-repeatable assignments;
+- repeatability per selected `(dish, role)`;
+- unclassified and archived-recipe dishes excluded from automatic selection;
+- explicit required-pool warnings instead of hidden incompatible fallback;
+- generated compositions persisted through primary MealSlot rows and compatibility MealPlanItem rows.
 
-Meal-role composition and calendar-day three-day diversity are not implemented. No persisted MealDishRole exists.
+MealPlanItem remains a legacy compatibility path. Calendar-day three-day main-dish diversity, regeneration that preserves manual choices, and warning reconstruction for later reads are not yet implemented.
 
 ### Shopping and documents
 
 - ingredient aggregation;
-- package rounding foundation;
+- package-rounding foundation;
 - purchase list and checklist;
 - transactional recalculation after participant, MealSlot, and Dish recipe changes;
 - preservation of checklist state where products remain;
@@ -130,18 +143,17 @@ Meal-role composition and calendar-day three-day diversity are not implemented. 
 ## 5. Current active work
 
 - TH-0061 — guided project preparation workflow;
-- TH-0061.5 — Meal Composition Rules Engine;
-- TH-0065 — Meal Plan Editor UX.
+- TH-0061.5 — remaining menu diversity, regeneration, and warning-lifecycle rules.
 
-TH-0070 was completed by PR #54 with a successful Quality workflow. New composition work must still wait for approved persisted meal-role metadata.
+TH-0065 and TH-0070 are complete. PR #59, #60, #61, #62, and #64 are merged. Quality run #254 passed on the exact PR #64 head, and the Product Owner verified the deployed behavior locally.
 
 ## 6. Immediate sequence
 
-1. Complete Meal Plan Editor UX on the corrected API contract.
-2. Add React/API integration coverage for the editor.
-3. Define approved persisted meal-role metadata.
-4. Implement role-aware composition and calendar-day diversity.
-5. Complete packaging presentation and equipment.
+1. Maintain and complete explicit classification of the active deployment catalogue.
+2. Implement calendar-day three-day diversity for main dishes.
+3. Preserve manual selections during regeneration.
+4. Persist or deterministically reconstruct generation warnings for later GET responses.
+5. Complete guided preparation, packaging presentation, and equipment.
 6. Complete Russian exports and local MVP acceptance.
 7. Introduce invitation-only access, roles, ownership, moderation, and audit logging.
 

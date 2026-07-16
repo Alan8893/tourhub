@@ -1,6 +1,6 @@
 # TourHub Technical Debt
 
-Status date: 2026-07-15
+Status date: 2026-07-16
 
 Technical debt is prioritized by product risk.
 
@@ -12,52 +12,41 @@ No open P0 release blockers are recorded after TH-0070 / PR #54.
 
 ### TD-005 — Ruff backlog
 
-The audited snapshot contained 195 Ruff violations. A critical baseline and selected workflow baseline are enforced. Continue expanding coverage without increasing debt.
+The audited snapshot contained 195 Ruff violations. Critical and selected workflow baselines are enforced. Continue expanding coverage without increasing debt.
 
 ### TD-006 — Strict mypy backlog
 
-The audited snapshot contained 74 strict mypy errors. Selected workflow modules, including the menu policy, generator, and catalogue readiness service, are clean and enforced.
+The audited snapshot contained 74 strict mypy errors. Selected workflow modules, including meal policy, role-aware generator, MealPlanService mapping, and catalogue readiness, are clean and enforced.
 
-### TD-007 — Frontend automated tests
+### TD-007 — Frontend and browser automated tests
 
 Current coverage includes pure state, command, validation, ordering, summary, feedback, readiness presentation, and responsive-policy helpers.
 
-TH-0065 and PR #57 added real-browser coverage for:
+Real-browser coverage now includes:
 
-- MealSlot add, replace, and remove operations through React hooks and the shared Axios client;
+- MealSlot add, replace, and remove operations;
 - explicit removal confirmation;
 - Russian success and injected mutation-error feedback;
-- no horizontal overflow at desktop, tablet, and 360 px mobile widths;
-- desktop, tablet, and mobile screenshot artifacts in Quality CI.
-
-PR #60 adds real-browser coverage for:
-
 - Dish role and meal-type classification through React Query and Axios;
-- explicit meal-type requirement for every selected role;
 - exact atomic classification payload;
-- persisted success and injected backend error feedback;
-- lunch-only `main` and multi-meal repeatable drink examples;
-- no horizontal overflow at desktop, tablet, and 360 px mobile widths.
+- readiness warning refresh after role mutation;
+- responsive mobile navigation closed by default, open on demand, and closed after navigation;
+- no horizontal overflow at desktop, tablet, and 360 px mobile widths;
+- stable screenshot artifacts.
 
-PR #61 adds real-browser coverage for:
-
-- blocking Russian readiness warnings for missing required pools;
-- non-blocking addition/drink recommendations;
-- active and unclassified Dish summaries;
-- readiness refresh after role mutation without page reload;
-- desktop and 360 px no-overflow screenshots.
+PR #64 adds backend/persistence/API integration coverage rather than a new frontend workflow. It verifies real project generation with persisted ORM roles and distinguishes `MealSlotDish.id` from source `dish_id`.
 
 Remaining critical coverage:
 
-- project creation and guided preparation;
-- active deployment catalogue data acceptance;
+- guided project preparation;
+- active deployment catalogue acceptance data;
 - shopping recalculation presentation;
 - catalogue import interaction and error rendering;
 - final end-to-end release acceptance.
 
 ### TD-008 — Continuous Integration
 
-Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, Meal Plan Editor browser acceptance, Dish role/meal compatibility and readiness browser acceptance, and PostgreSQL backup/restore.
+Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, all browser acceptance suites, and PostgreSQL backup/restore.
 
 Remaining:
 
@@ -67,7 +56,9 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical current documents and the active task index are synchronized after TH-0070, TH-0065, the role/meal-compatibility design correction, and the minimal readiness policy. ADR-013 supersedes obsolete MealPlanItem-primary wording in ADR-006 and prevents role-only misclassification such as borscht at breakfast. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
+Canonical status, roadmap, context, domain, architecture, and active TH-0061.5 documentation are synchronized after PR #64. ADR-013 remains the accepted source for persisted role and meal-type ownership. ADR-006 is superseded where it described MealPlanItem as primary.
+
+Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
 ### TD-024 — Legacy MealPlanItem compatibility
 
@@ -92,7 +83,7 @@ Remaining work covers CLUB/PERSONAL ownership, multiple recipe variants, publica
 
 ### TD-012 — Meal composition and diversity
 
-ADR-013 defines persisted role and meal-type compatibility. PR #59 implements:
+Implemented through PR #59, #60, #61, and #64:
 
 - normalized `dish_meal_roles` owned by Dish;
 - normalized `dish_meal_role_meal_types` owned by each role assignment;
@@ -103,34 +94,28 @@ ADR-013 defines persisted role and meal-type compatibility. PR #59 implements:
 - compatibility per `(dish, role, meal_type)`;
 - Alembic revision `h10001` without heuristic backfill;
 - Dish response contracts and atomic classification replacement API;
-- duplicate, empty, invalid, incompatible, clearing, and missing-dish API coverage.
-
-PR #60 implements:
-
-- Dish editor controls for roles, meal types, and repeatability;
-- local completeness and compatibility validation;
-- visible classification summaries;
-- browser/API acceptance and responsive screenshots.
-
-PR #61 implements:
-
-- deterministic structured catalogue readiness evaluation;
-- required `main` coverage for breakfast/lunch/dinner;
-- required `snack` coverage for snack;
+- Russian role/meal-type management UI;
+- deterministic structured catalogue readiness;
+- required `main` coverage for breakfast/lunch/dinner and `snack` coverage for snack;
 - optional addition/drink recommendations;
 - archived-recipe exclusion and classification counts;
-- Russian warning presentation and browser refresh coverage.
+- role- and meal-type-aware production generation;
+- optional compatible `addition` and `drink` composition;
+- stable composition persistence order;
+- explicit required-pool warnings without incompatible fallback;
+- exclusion of unclassified and archived-recipe dishes from automatic selection;
+- same-day uniqueness with per-role repeatability exceptions;
+- pure, service, persistence, and public API integration coverage.
 
 Remaining implementation work:
 
-- explicit classification of the active deployment catalogue;
-- role and meal-type composition for breakfast, snack, lunch, and dinner;
-- larger candidate thresholds and calendar-day three-day main-dish diversity;
-- manual-selection preservation;
-- generation-warning persistence or reconstruction;
+- maintain and complete explicit classification of the active deployment catalogue;
+- larger candidate thresholds and calendar-day three-day `main` diversity;
+- manual-selection preservation during regeneration;
+- generation-warning persistence or deterministic reconstruction;
 - preference modes after multi-variant recipes.
 
-Same-day uniqueness, immediate generation warning fallback, and minimal catalogue readiness are no longer open parts of TD-012.
+Minimal readiness, role-aware composition, optional repeatable roles, archived-recipe filtering, and immediate warnings are no longer open parts of TD-012.
 
 ### TD-013 — Equipment domain completion
 
