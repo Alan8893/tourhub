@@ -95,12 +95,9 @@ class MealPlanGenerator:
         slots: list[MealSlotResult] = []
         indexes: dict[tuple[str, str], int] = {}
         context = SelectionContext(used_for_day=set())
-        current_day: int | None = None
 
         for day_number, meal_type in meal_sequence:
-            if day_number != current_day:
-                current_day = day_number
-                context.reset_day()
+            context.begin_day(day_number)
 
             composition = (("snack", True),) if meal_type == "snack" else (
                 ("main", True),
@@ -145,7 +142,11 @@ class MealPlanGenerator:
                     continue
                 selected.append(chosen)
                 selected_ids.add(chosen.id)
-                context.register_selected(chosen, repeatable)
+                context.register_selected(
+                    chosen,
+                    role=role,
+                    is_repeatable=repeatable,
+                )
                 items.append(MealPlanItemResult(day_number, meal_type, chosen.id, chosen.name))
 
             slots.append(MealSlotResult(day_number, meal_type, selected))
@@ -206,7 +207,12 @@ class MealPlanGenerator:
             assignment = self._assignment(candidate, role, meal_type)
             if candidate.id in selected_ids:
                 continue
-            if not MealCompositionPolicy.can_select(candidate, context, assignment.is_repeatable):
+            if not MealCompositionPolicy.can_select(
+                candidate,
+                context,
+                assignment.is_repeatable,
+                role,
+            ):
                 continue
             return candidate, candidate_index + 1, assignment.is_repeatable
 
@@ -226,12 +232,9 @@ class MealPlanGenerator:
             warnings.append(INSUFFICIENT_DISHES_WARNING)
 
         dish_index = 0
-        current_day: int | None = None
         context = SelectionContext(used_for_day=set())
         for day_number, meal_type in meal_sequence:
-            if day_number != current_day:
-                current_day = day_number
-                context.reset_day()
+            context.begin_day(day_number)
             selected: list[DishInput] = []
             for _ in range(dishes_per_meal):
                 dish, dish_index = self._select_next_dish(dishes, dish_index, context)
