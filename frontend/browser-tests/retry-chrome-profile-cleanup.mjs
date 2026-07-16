@@ -5,6 +5,7 @@ const originalRm = fsPromises.rm.bind(fsPromises);
 const chromeProfileSuffixes = [
   "tourhub-browser-acceptance-profile",
   "tourhub-purchase-checklist-profile",
+  "tourhub-equipment-list-profile",
 ];
 let profileRemovalCalls = 0;
 
