@@ -2,7 +2,7 @@ import { Container, CssBaseline } from "@mui/material";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { DocumentsDownloadCard } from "@/features/documents/components/DocumentsWidget";
+import DocumentsDownloadCard from "@/features/documents/components/DocumentsDownloadCard";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing root element");
