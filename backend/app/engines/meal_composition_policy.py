@@ -1,5 +1,5 @@
-import typing
 from dataclasses import dataclass, field
+import typing
 
 
 MAIN_DIVERSITY_DAYS = 3
