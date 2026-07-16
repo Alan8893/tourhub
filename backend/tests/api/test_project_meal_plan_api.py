@@ -1,3 +1,5 @@
+from uuid import NAMESPACE_URL, uuid5
+
 from app.models.dish import DishORM
 from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
 from app.models.meal_plan import MealPlanORM
@@ -8,6 +10,12 @@ from app.modules.projects.models.project import ProjectORM
 MEAL_PLAN_ID = "ea557e05-d89b-4403-9822-5bc3a95c8f2c"
 DISH_ID = "550e8400-e29b-41d4-a716-446655440001"
 RECIPE_ID = "660e8400-e29b-41d4-a716-446655440001"
+OATMEAL_ID = "00000000-0000-0000-0000-000000000101"
+APPLE_ID = "00000000-0000-0000-0000-000000000102"
+BORSCHT_ID = "00000000-0000-0000-0000-000000000103"
+BUCKWHEAT_ID = "00000000-0000-0000-0000-000000000104"
+BREAD_ID = "00000000-0000-0000-0000-000000000105"
+TEA_ID = "00000000-0000-0000-0000-000000000106"
 
 
 def _classified_dish(
@@ -18,7 +26,7 @@ def _classified_dish(
     *,
     is_repeatable: bool = False,
 ) -> tuple[RecipeORM, DishORM]:
-    recipe = RecipeORM(id=f"recipe-{dish_id}", name=f"{name} recipe")
+    recipe = RecipeORM(id=str(uuid5(NAMESPACE_URL, f"recipe:{dish_id}")), name=f"{name} recipe")
     dish = DishORM(id=dish_id, name=name, recipe=recipe)
     assignment = DishMealRoleORM(
         dish=dish,
@@ -121,19 +129,19 @@ def test_generate_project_meal_plan_uses_role_and_meal_type_compatibility(
         status="draft",
     )
     classified = [
-        _classified_dish("oatmeal", "Овсяная каша", "main", ("breakfast",)),
-        _classified_dish("apple", "Яблоко", "snack", ("snack",)),
-        _classified_dish("borscht", "Борщ", "main", ("lunch",)),
-        _classified_dish("buckwheat", "Гречка с мясом", "main", ("dinner",)),
+        _classified_dish(OATMEAL_ID, "Овсяная каша", "main", ("breakfast",)),
+        _classified_dish(APPLE_ID, "Яблоко", "snack", ("snack",)),
+        _classified_dish(BORSCHT_ID, "Борщ", "main", ("lunch",)),
+        _classified_dish(BUCKWHEAT_ID, "Гречка с мясом", "main", ("dinner",)),
         _classified_dish(
-            "bread",
+            BREAD_ID,
             "Хлеб",
             "addition",
             ("breakfast", "lunch", "dinner"),
             is_repeatable=True,
         ),
         _classified_dish(
-            "tea",
+            TEA_ID,
             "Чай",
             "drink",
             ("breakfast", "lunch", "dinner"),
@@ -154,20 +162,20 @@ def test_generate_project_meal_plan_uses_role_and_meal_type_compatibility(
         meal["meal_type"]: [dish["id"] for dish in meal["dishes"]]
         for meal in data["meals"]
     } == {
-        "breakfast": ["oatmeal", "bread", "tea"],
-        "snack": ["apple"],
-        "lunch": ["borscht", "bread", "tea"],
-        "dinner": ["buckwheat", "bread", "tea"],
+        "breakfast": [OATMEAL_ID, BREAD_ID, TEA_ID],
+        "snack": [APPLE_ID],
+        "lunch": [BORSCHT_ID, BREAD_ID, TEA_ID],
+        "dinner": [BUCKWHEAT_ID, BREAD_ID, TEA_ID],
     }
     assert [item["dish_id"] for item in data["items"]] == [
-        "oatmeal",
-        "bread",
-        "tea",
-        "apple",
-        "borscht",
-        "bread",
-        "tea",
-        "buckwheat",
-        "bread",
-        "tea",
+        OATMEAL_ID,
+        BREAD_ID,
+        TEA_ID,
+        APPLE_ID,
+        BORSCHT_ID,
+        BREAD_ID,
+        TEA_ID,
+        BUCKWHEAT_ID,
+        BREAD_ID,
+        TEA_ID,
     ]
