@@ -11,7 +11,6 @@ from app.services.equipment_list_service import EquipmentListService
 from app.services.meal_plan_mapper import MealPlanMapper
 from app.services.meal_plan_service import MealPlanService
 
-
 router = APIRouter(prefix="/meal-plans", tags=["Meal Plans"])
 
 
