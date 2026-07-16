@@ -1,0 +1,51 @@
+from datetime import datetime, timezone
+from io import BytesIO
+
+from openpyxl import Workbook
+from openpyxl.styles import Font
+
+from app.engines.documents.dto import GeneratedDocument
+from app.engines.documents.equipment_dto import EquipmentDocumentDTO
+
+
+class EquipmentExcelDocumentGenerator:
+    """Generate an XLSX workbook with final and calculated equipment quantities."""
+
+    def generate(self, document: EquipmentDocumentDTO) -> GeneratedDocument:
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = "Оборудование"
+        sheet.append([document.title])
+        sheet.append(["Проект", document.project_name])
+        sheet.append(["Идентификатор списка", document.equipment_list_id])
+        sheet.append([])
+        sheet.append(["Оборудование", "Итого, шт.", "Расчёт, шт.", "Источник"])
+        for cell in sheet[5]:
+            cell.font = Font(bold=True)
+
+        for item in document.items:
+            sheet.append(
+                [
+                    item.equipment_name,
+                    item.required_quantity,
+                    item.calculated_quantity,
+                    item.source,
+                ]
+            )
+
+        sheet.freeze_panes = "A6"
+        sheet.column_dimensions["A"].width = 34
+        sheet.column_dimensions["B"].width = 14
+        sheet.column_dimensions["C"].width = 16
+        sheet.column_dimensions["D"].width = 24
+        buffer = BytesIO()
+        workbook.save(buffer)
+        return GeneratedDocument(
+            filename="equipment_list.xlsx",
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+            generated_at=datetime.now(timezone.utc),
+            content=buffer.getvalue(),
+        )
