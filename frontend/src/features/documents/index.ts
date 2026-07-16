@@ -1,1 +1,1 @@
-export { default as DocumentsWidget } from "./components/DocumentsWidget";
+export { default as DocumentsWidget } from "./components/DocumentsWorkflowWidget";
