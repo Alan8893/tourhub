@@ -83,6 +83,7 @@ class MealPlanMapper:
                     )
                 )
 
+        response_warnings = meal_plan.warnings if warnings is None else warnings
         return MealPlanResponse(
             id=meal_plan.id,
             project_id=meal_plan.project_id,
@@ -91,5 +92,5 @@ class MealPlanMapper:
             days_count=meal_plan.days_count,
             items=items,
             meals=meals,
-            warnings=warnings or [],
+            warnings=list(response_warnings),
         )
