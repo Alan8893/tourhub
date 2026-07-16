@@ -7,7 +7,6 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { Fragment } from "react";
 
 import { useProjectWorkflow } from "@/features/project-workflow";
 
@@ -64,9 +63,11 @@ export default function PurchaseWidget() {
 
               <Stack divider={<Divider flexItem />}>
                 {checklist.items.map((item) => (
-                  <Fragment key={item.id}>
-                    <PurchaseChecklistItemRow item={item} projectId={projectId} />
-                  </Fragment>
+                  <PurchaseChecklistItemRow
+                    key={item.id}
+                    item={item}
+                    projectId={projectId}
+                  />
                 ))}
               </Stack>
             </>
