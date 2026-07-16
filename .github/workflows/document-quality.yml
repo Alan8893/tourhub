@@ -1,0 +1,56 @@
+name: Document Quality
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  document-backend:
+    name: Document backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install backend
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+
+      - name: Ruff document workflow
+        run: |
+          python -m ruff check \
+            app/engines/documents/equipment_dto.py \
+            app/engines/documents/equipment_excel.py \
+            app/engines/documents/equipment_pdf.py \
+            app/engines/documents/excel.py \
+            app/engines/documents/pdf.py \
+            app/services/document_mapper.py \
+            app/services/equipment_document_mapper.py \
+            app/services/project_document_package_service.py \
+            app/services/project_document_service.py \
+            app/modules/projects/router.py \
+            --select E,F,I,UP,B --ignore B008
+
+      - name: Strict mypy document workflow
+        run: |
+          python -m mypy \
+            app/engines/documents/equipment_dto.py \
+            app/services/equipment_document_mapper.py \
+            app/services/project_document_service.py
+
+      - name: Document export tests
+        run: |
+          python -m pytest -q \
+            tests/services/test_equipment_document_export.py \
+            tests/api/test_project_equipment_documents.py \
+            tests/api/test_project_document_package_api.py
