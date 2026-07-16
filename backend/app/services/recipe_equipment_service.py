@@ -5,11 +5,21 @@ from sqlalchemy.orm import Session
 
 from app.models.recipe import RecipeORM
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
+from app.services.recipe_equipment_recalculation_service import (
+    RecipeEquipmentRecalculationService,
+)
 
 
 class RecipeEquipmentService:
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+        recalculation_service: RecipeEquipmentRecalculationService | None = None,
+    ) -> None:
         self.session = session
+        self.recalculation_service = recalculation_service or RecipeEquipmentRecalculationService(
+            session
+        )
 
     def list(self, recipe_id: str) -> list[RecipeEquipmentRequirementORM]:
         self._get_recipe(recipe_id)
@@ -36,7 +46,7 @@ class RecipeEquipmentService:
             quantity=quantity,
         )
         self.session.add(requirement)
-        self._commit()
+        self._commit(recipe_id)
         self.session.refresh(requirement)
         return requirement
 
@@ -53,7 +63,7 @@ class RecipeEquipmentService:
         self._ensure_unique(recipe_id, normalized, exclude_id=requirement_id)
         requirement.equipment_name = normalized
         requirement.quantity = quantity
-        self._commit()
+        self._commit(recipe_id)
         self.session.refresh(requirement)
         return requirement
 
@@ -61,7 +71,7 @@ class RecipeEquipmentService:
         self._get_editable_recipe(recipe_id)
         requirement = self._get_requirement(recipe_id, requirement_id)
         self.session.delete(requirement)
-        self._commit()
+        self._commit(recipe_id)
 
     def _get_recipe(self, recipe_id: str) -> RecipeORM:
         recipe = self.session.get(RecipeORM, recipe_id)
@@ -105,8 +115,10 @@ class RecipeEquipmentService:
             raise ValueError("Equipment name must not be empty")
         return normalized
 
-    def _commit(self) -> None:
+    def _commit(self, recipe_id: str) -> None:
         try:
+            self.session.flush()
+            self.recalculation_service.refresh_affected_meal_plans(recipe_id)
             self.session.commit()
         except Exception:
             self.session.rollback()

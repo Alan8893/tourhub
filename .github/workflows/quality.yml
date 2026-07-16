@@ -57,6 +57,7 @@ jobs:
             app/services/purchase_list_service.py \
             app/services/purchase_checklist_service.py \
             app/services/recipe_equipment_service.py \
+            app/services/recipe_equipment_recalculation_service.py \
             app/services/recipe_query_service.py \
             app/services/recipe_command_service.py \
             app/services/recipe_note_service.py \
@@ -104,6 +105,7 @@ jobs:
             app/services/purchase_list_service.py \
             app/services/purchase_checklist_service.py \
             app/services/recipe_equipment_service.py \
+            app/services/recipe_equipment_recalculation_service.py \
             app/services/recipe_query_service.py \
             app/services/recipe_command_service.py \
             app/services/recipe_note_service.py \
