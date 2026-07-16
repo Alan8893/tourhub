@@ -66,7 +66,7 @@ Project
 - responsive desktop, tablet, and mobile layouts;
 - transactional purchasing recalculation after MealSlot changes.
 
-### TH-0061.5 delivered slices
+### TH-0061.5 delivered baseline
 
 Merged through PR #59, #60, #61, and #64:
 
@@ -101,27 +101,35 @@ Quality run #254 passed on the exact PR #64 head with 175 backend tests and all 
 - connect menu, purchasing, packaging, equipment, and export steps;
 - verify the complete single-club preparation journey.
 
-### TH-0061.5 — Calendar-day main diversity
+### TH-0061.5 — Stacked generator completion
 
-Stacked PR #66 implements the next rules slice on top of documentation PR #65:
+PR #66 implements calendar-day three-day diversity for `main` dishes:
 
-- a pure selection context keyed by trip calendar day;
-- a rolling three-day diversity window only for non-repeatable `main` assignments;
-- reuse on day four after a day-one selection;
-- explicitly repeatable `main` assignments bypassing the diversity restriction;
-- unchanged same-day uniqueness for non-repeatable assignments;
-- unchanged role and meal-type compatibility filtering;
-- deterministic empty required slots and warnings when the eligible pool is exhausted;
-- pure engine, service, persistence, and public API regression coverage.
+- trip-calendar-day selection context;
+- rolling three-day diversity only for non-repeatable `main` assignments;
+- day-four reuse after a day-one selection;
+- explicitly repeatable `main` bypass;
+- unchanged same-day uniqueness and role/meal-type compatibility;
+- deterministic empty required slots and warnings on eligible-pool exhaustion.
 
-The slice intentionally does not preserve manual selections during regeneration and does not persist warnings; those remain separate changes.
+Stacked PR #67 implements manual-slot preservation during regeneration:
 
-Remaining TH-0061.5 scope after PR #66:
+- Alembic revision `h10002` adds an explicit `MealSlot.is_manually_edited` marker;
+- successful add, replace, and remove mutations mark the whole slot as manual;
+- an emptied manual slot remains authoritative;
+- repeated project generation reuses the existing MealPlan instead of creating duplicates;
+- marked slots are preserved exactly while unmarked schedule slots are generated again;
+- unclassified manual dishes remain valid without role inference;
+- preserved manual slots bypass automatic composition warnings and diversity rules because their selected role is not persisted on MealSlotDish;
+- pure generator, service/persistence, mutation, migration, and public API regressions cover the behavior.
+
+Warning persistence or deterministic reconstruction is intentionally not mixed into PR #67.
+
+Remaining TH-0061.5 scope after PR #67:
 
 1. maintain and complete explicit classification of the active deployment catalogue;
-2. preserve manual selections as authoritative during regeneration;
-3. persist or deterministically reconstruct generation warnings for later GET responses;
-4. define larger candidate thresholds and preference modes only when product requirements are approved.
+2. persist or deterministically reconstruct generation warnings for later GET responses;
+3. define larger candidate thresholds and preference modes only when product requirements are approved.
 
 ## NEXT
 
