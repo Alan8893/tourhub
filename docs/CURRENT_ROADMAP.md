@@ -101,15 +101,27 @@ Quality run #254 passed on the exact PR #64 head with 175 backend tests and all 
 - connect menu, purchasing, packaging, equipment, and export steps;
 - verify the complete single-club preparation journey.
 
-### TH-0061.5 — Remaining Meal Composition Rules
+### TH-0061.5 — Calendar-day main diversity
 
-The core persisted classification and role-aware generator are complete. Remaining scope:
+Stacked PR #66 implements the next rules slice on top of documentation PR #65:
+
+- a pure selection context keyed by trip calendar day;
+- a rolling three-day diversity window only for non-repeatable `main` assignments;
+- reuse on day four after a day-one selection;
+- explicitly repeatable `main` assignments bypassing the diversity restriction;
+- unchanged same-day uniqueness for non-repeatable assignments;
+- unchanged role and meal-type compatibility filtering;
+- deterministic empty required slots and warnings when the eligible pool is exhausted;
+- pure engine, service, persistence, and public API regression coverage.
+
+The slice intentionally does not preserve manual selections during regeneration and does not persist warnings; those remain separate changes.
+
+Remaining TH-0061.5 scope after PR #66:
 
 1. maintain and complete explicit classification of the active deployment catalogue;
-2. implement calendar-day three-day diversity for `main` dishes;
-3. preserve manual selections as authoritative during regeneration;
-4. persist or deterministically reconstruct generation warnings for later GET responses;
-5. define larger candidate thresholds and preference modes only when product requirements are approved.
+2. preserve manual selections as authoritative during regeneration;
+3. persist or deterministically reconstruct generation warnings for later GET responses;
+4. define larger candidate thresholds and preference modes only when product requirements are approved.
 
 ## NEXT
 
