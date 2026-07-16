@@ -15,6 +15,11 @@ const fixtureUrl = `${baseUrl}/browser-tests/app-layout-mobile.html`;
 const chromeProfileDir = path.join("/tmp", `tourhub-mobile-navigation-${process.pid}`);
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const visibleDrawerExpression = `Array.from(document.querySelectorAll(".MuiDrawer-paper")).some((element) => {
+  const rect = element.getBoundingClientRect();
+  const style = getComputedStyle(element);
+  return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+})`;
 
 async function waitForHttp(url, timeoutMs = 30_000) {
   const deadline = Date.now() + timeoutMs;
@@ -228,24 +233,14 @@ async function run() {
     await captureScreenshot(client, "app-layout-mobile-closed");
 
     await clickByAriaLabel(client, "Открыть меню");
-    await waitForExpression(client, `(async () => ${await visibleDrawerCount(client)} > 0)()`, "open mobile drawer").catch(async () => {
-      await waitForExpression(
-        client,
-        `Array.from(document.querySelectorAll(".MuiDrawer-paper")).some((element) => element.getBoundingClientRect().width > 0 && getComputedStyle(element).visibility !== "hidden")`,
-        "open mobile drawer",
-      );
-    });
+    await waitForExpression(client, visibleDrawerExpression, "open mobile drawer");
     const drawerWidth = await client.evaluate(`Math.max(...Array.from(document.querySelectorAll(".MuiDrawer-paper")).map((element) => element.getBoundingClientRect().width))`);
     assert.ok(drawerWidth <= 281, `Mobile drawer is too wide: ${drawerWidth}px`);
     await captureScreenshot(client, "app-layout-mobile-open");
 
     await clickVisibleLinkByText(client, "Рецепты");
     await waitForExpression(client, `document.body.innerText.includes("Рецепты мобильный тест")`, "mobile route navigation");
-    await waitForExpression(
-      client,
-      `!Array.from(document.querySelectorAll(".MuiDrawer-paper")).some((element) => element.getBoundingClientRect().width > 0 && getComputedStyle(element).visibility !== "hidden")`,
-      "drawer close after navigation",
-    );
+    await waitForExpression(client, `!(${visibleDrawerExpression})`, "drawer close after navigation");
     await captureScreenshot(client, "app-layout-mobile-after-navigation");
 
     await setViewport(client, 1280, 850);
