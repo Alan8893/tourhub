@@ -15,6 +15,8 @@ from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_plan_item import MealPlanItemORM
 from app.models.meal_slot import MealSlotORM
 from app.models.meal_slot_dish import MealSlotDishORM
+from app.repositories.dish_repository import DishRepository
+from app.repositories.meal_plan_repository import MealPlanRepository
 
 
 @dataclass(frozen=True)
@@ -26,7 +28,13 @@ class SavedMealPlanResult:
 class MealPlanService:
     """Application service for meal plan generation."""
 
-    def __init__(self, dish_repository, meal_plan_repository=None, generator=None, schedule_engine=None):
+    def __init__(
+        self,
+        dish_repository: DishRepository,
+        meal_plan_repository: MealPlanRepository | None = None,
+        generator: MealPlanGenerator | None = None,
+        schedule_engine: MealScheduleEngine | None = None,
+    ) -> None:
         self.dish_repository = dish_repository
         self.meal_plan_repository = meal_plan_repository
         self.generator = generator or MealPlanGenerator()
@@ -119,7 +127,9 @@ class MealPlanService:
             if current_plan is not None:
                 existing_plan = self.meal_plan_repository.get_with_details(current_plan.id)
                 if existing_plan is None:
-                    raise ValueError(f"Meal plan not found before regeneration: {current_plan.id}")
+                    raise ValueError(
+                        f"Meal plan not found before regeneration: {current_plan.id}"
+                    )
 
         dishes = self._generation_dishes()
         preserved_slots = self._preserved_slots(existing_plan)

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.equipment_list import EquipmentListORM
+from app.models.equipment_list_item import EquipmentListItemORM
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
 
 
@@ -36,6 +37,9 @@ class EquipmentListRepository:
 
     def add(self, equipment_list: EquipmentListORM) -> None:
         self.session.add(equipment_list)
+
+    def delete_item(self, item: EquipmentListItemORM) -> None:
+        self.session.delete(item)
 
     def flush(self) -> None:
         self.session.flush()

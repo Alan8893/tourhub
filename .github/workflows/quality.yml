@@ -39,6 +39,8 @@ jobs:
             app/core/exceptions.py \
             app/engines/meal_composition_policy.py \
             app/engines/meal_plan_generator.py \
+            app/models/equipment_list.py \
+            app/models/equipment_list_item.py \
             app/models/recipe_equipment_requirement.py \
             app/repositories/equipment_list_repository.py \
             app/services/catalog_import_service.py \
@@ -46,6 +48,7 @@ jobs:
             app/services/dish_recipe_recalculation_service.py \
             app/services/dish_service.py \
             app/services/equipment_list_service.py \
+            app/services/meal_plan_derived_refresh_service.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
             app/services/meal_slot_service.py \
@@ -60,6 +63,7 @@ jobs:
             app/modules/api/catalog_import_router.py \
             app/modules/api/dish_router.py \
             app/modules/api/equipment_list_router.py \
+            app/modules/api/meal_plan_router.py \
             app/modules/api/meal_slot_router.py \
             app/modules/api/recipe_equipment_router.py \
             app/modules/api/recipe_router.py \
@@ -82,6 +86,8 @@ jobs:
             app/core/exceptions.py \
             app/engines/meal_composition_policy.py \
             app/engines/meal_plan_generator.py \
+            app/models/equipment_list.py \
+            app/models/equipment_list_item.py \
             app/models/recipe_equipment_requirement.py \
             app/repositories/equipment_list_repository.py \
             app/services/catalog_import_service.py \
@@ -89,6 +95,7 @@ jobs:
             app/services/dish_recipe_recalculation_service.py \
             app/services/dish_service.py \
             app/services/equipment_list_service.py \
+            app/services/meal_plan_derived_refresh_service.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
             app/services/meal_slot_service.py \
@@ -103,6 +110,7 @@ jobs:
             app/modules/api/catalog_import_router.py \
             app/modules/api/dish_router.py \
             app/modules/api/equipment_list_router.py \
+            app/modules/api/meal_plan_router.py \
             app/modules/api/meal_slot_router.py \
             app/modules/api/recipe_equipment_router.py \
             app/modules/api/recipe_router.py \

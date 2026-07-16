@@ -2,9 +2,11 @@ from sqlalchemy.orm import Session
 
 from app.modules.projects.models.project import ProjectORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
+from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.services.equipment_list_service import EquipmentListService
 from app.services.meal_plan_purchasing_refresh_service import (
     MealPlanPurchasingRefreshService,
 )
@@ -12,7 +14,7 @@ from app.services.meal_plan_shopping_service import MealPlanShoppingService
 
 
 class ProjectParticipantRecalculationService:
-    """Update participant count and refresh derived purchasing data atomically."""
+    """Update participant count and refresh derived project data atomically."""
 
     def __init__(
         self,
@@ -29,6 +31,10 @@ class ProjectParticipantRecalculationService:
             self.purchase_list_repository,
             self.checklist_repository,
             self.shopping_service,
+        )
+        self.equipment_list_service = EquipmentListService(
+            EquipmentListRepository(session),
+            self.meal_plan_repository,
         )
 
     def update_participants(self, project_id: int, participants: int) -> ProjectORM:
@@ -52,6 +58,7 @@ class ProjectParticipantRecalculationService:
 
                 detailed_meal_plan.participants = participants
                 self.purchasing_refresh_service.refresh(detailed_meal_plan)
+                self.equipment_list_service.refresh_existing(detailed_meal_plan)
 
             self.session.commit()
         except Exception:

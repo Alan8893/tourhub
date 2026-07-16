@@ -15,51 +15,49 @@ Create a complete guided Russian scenario for preparing a hiking project from cr
 - persisted role-aware menu generation and manual editing;
 - diversity rules and persisted generation warnings;
 - purchase list and checklist persistence;
-- editable required, purchased, and remaining quantities through PR #70;
-- package size, count, total quantity, and surplus review through PR #71;
-- optional purchasing contact through merged PR #72;
+- editable purchase progress, package review, surplus, and purchasing contact through PRs #70–#72;
+- recipe equipment requirements and maximum simultaneous project aggregation through merged PR #73;
 - transactional purchasing recalculation foundations.
 
 ## Current implementation slice
 
-### Draft PR #73 — equipment requirements and aggregation
+### Draft PR #74 — project equipment overrides and recalculation
 
-- persist recipe equipment requirements through Alembic `h10005`;
-- provide validated add, update, delete, and read-only archived-recipe API behavior;
-- generate and persist one EquipmentList for the project;
-- sum identical equipment required by recipes in one meal occurrence;
-- use the maximum simultaneous quantity across all meal occurrences;
-- preserve stable equipment identity and safely replace generated rows;
-- expose `equipment_list_id` from project preparation;
-- provide Russian recipe controls and a project equipment review;
-- verify backend behavior, frontend state, production build, exact GET, screenshot, and 360 px no-overflow.
+- add Alembic `h10006` fields for calculated baseline, manual rows, and persisted removals;
+- keep `required_quantity` as the final user-facing value;
+- allow manual equipment additions, quantity overrides, and removals in the project workspace;
+- preserve manual additions and overrides during repeated project preparation;
+- preserve removal decisions for generated rows while their calculated source still exists;
+- convert an overridden generated row to a manual row if its calculated source disappears;
+- refresh existing equipment after meal-slot edits, Dish recipe changes, participant changes, and full menu regeneration;
+- display calculated, manually added, and overridden state in Russian;
+- verify API behavior, strict typing, frontend state, production build, interactive browser CRUD, refetch, screenshot, and 360 px no-overflow.
 
-The functional PR head passed exact-head Quality #331 before documentation synchronization.
-
-This slice does not add project-level manual overrides or participant distribution.
+The functional PR head `cef66b99c4546805cffc0ad0e445e0fe8048e86c` passed Quality #349 before documentation synchronization.
 
 ## Next slices
 
-1. Add manual equipment rows, removals, and quantity overrides.
-2. Preserve manual overrides while recalculating generated quantities.
-3. Refresh equipment after participant, menu, and recipe changes.
-4. Complete final Russian PDF/Excel and release acceptance.
+1. Refresh prepared project equipment lists after direct recipe-equipment requirement changes.
+2. Include equipment in final Russian PDF and Excel outputs.
+3. Complete guided-preparation and release acceptance.
 
 ## Related decisions
 
 - Project is the preparation aggregate root.
-- Recipe owns equipment requirements used during one simultaneous preparation.
+- Recipe owns equipment requirements for one simultaneous preparation.
 - EquipmentList is a persisted project preparation document.
 - Identical equipment is summed within one meal occurrence.
 - The project requirement is the maximum across meal occurrences, not a trip-wide sum.
-- Manual project overrides remain a separate authoritative layer.
+- Calculated quantity remains visible separately from the final user-controlled quantity.
+- Manual additions, removals, and quantity overrides are authoritative during recalculation.
 - Multi-user access remains deferred until single-user acceptance.
 
 ## Acceptance criteria
 
-- recipe equipment requirements persist and can be maintained in Russian;
-- preparation creates a persisted project equipment list;
-- aggregation follows the maximum simultaneous rule;
-- repeated preparation refreshes one list without duplicate rows;
+- recipe equipment requirements persist and aggregate correctly;
+- the project equipment list can be edited in Russian;
+- manual additions, removals, and quantity overrides survive regeneration;
+- meal, Dish recipe, participant, and full menu changes refresh the calculated baseline;
+- calculated and user-controlled values remain distinguishable;
 - the workflow is usable on desktop and mobile layouts;
 - all backend, frontend, browser, migration, and PostgreSQL quality gates pass.
