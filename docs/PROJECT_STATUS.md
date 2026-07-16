@@ -4,98 +4,53 @@ Status date: 2026-07-16
 
 ## Current phase
 
-TH-0061.5 approved menu rules are complete in `main` through PR #69. TH-0061 guided preparation is active: PR #70 merged the editable purchase checklist, and draft PR #71 adds package-count and package-surplus review.
+TH-0061.5 menu rules are complete through PR #69. TH-0061 guided preparation is active: PR #70 delivered the editable purchase checklist, PR #71 delivered package-count and surplus review, and draft PR #72 adds an optional purchasing contact.
 
 ## Verified baseline
 
-- Current `main`: `3732db5191ab6fcf4fc87725632fbbcc4314625f` — PR #70.
-- Alembic head: `h10003`.
-- Exact-head Quality #280 passed before PR #69 merge.
+- `main`: `ed2ab62a70cefbd41425e9cdbaab0f81a6777298` — PR #71.
+- Alembic head on `main`: `h10003`; PR #72 adds `h10004`.
 - Exact-head Quality #287 passed before PR #70 merge.
-- MealSlot and MealSlotDish remain the primary menu-composition model.
-- MealPlanItem remains a legacy compatibility path.
+- Exact-head Quality #296 passed before PR #71 merge.
+- MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
-## Implemented product areas
+## Implemented
 
-### Projects and menu
+### Project and menu
 
-- project creation, catalogue, workspace, participant count, duration, and meal boundaries;
-- role-aware generation using persisted role and meal-type compatibility;
-- required `main` and `snack`, optional `addition` and `drink`;
-- stable `main → addition → drink` order;
-- same-day uniqueness and calendar-day three-day `main` diversity;
-- authoritative manual slots across regeneration;
-- persisted warning snapshot and later GET responses;
+- project workspace, participants, duration, and meal boundaries;
+- persisted Dish roles, meal compatibility, repeatability, and catalogue readiness;
+- role-aware menu generation with diversity, manual-slot preservation, and persisted warnings;
 - transactional purchasing recalculation after project, menu, and recipe changes.
 
-Operational follow-up remains explicit classification of the active deployment catalogue.
+### Shopping and packaging
 
-### Recipes and dishes
+- ingredient aggregation and package rounding;
+- persisted PurchaseList and PurchaseChecklist;
+- required, purchased, and remaining quantity review;
+- editable checked state and purchased quantities;
+- package size, package count, total purchase quantity, and non-negative surplus;
+- responsive Russian UI and browser acceptance.
 
-- recipe and product catalogues;
-- recipe components, quantity modes, notes, archive/restore, and guarded delete;
-- transactional CSV import;
-- Dish catalogue and active-recipe assignment;
-- persisted multi-role classification, compatibility, repeatability, and Russian editor;
-- deterministic catalogue-readiness warnings.
+Draft PR #72 adds:
 
-### Shopping and documents
+- nullable purchasing contact on PurchaseList through Alembic `h10004`;
+- GET/PATCH API with trim, clear, and 255-character validation;
+- preservation when purchase-list items are recalculated;
+- save/clear UI and dedicated browser coverage.
 
-Merged foundations:
+## Next
 
-- ingredient aggregation;
-- package-rounding calculation;
-- PurchaseList and PurchaseChecklist persistence;
-- purchased quantity and checked-state persistence;
-- checklist-state preservation during recalculation;
-- PDF/Excel/package export foundations;
-- PostgreSQL backup/restore CI.
+1. Complete exact-head Quality and review for PR #72.
+2. Implement equipment requirements, aggregation, overrides, and recalculation.
+3. Complete final Russian PDF/Excel and release acceptance.
+4. Add invitation-only access only after single-user acceptance.
 
-PR #70 merged:
+## Quality debt
 
-- product names in checklist responses;
-- required, purchased, and non-negative remaining quantities;
-- rejection of negative purchased quantities;
-- editable Russian purchase checklist;
-- progress, feedback, responsive layout, and browser acceptance.
-
-Draft PR #71 adds:
-
-- product names in PurchaseList responses;
-- total purchase quantity from package size and count;
-- non-negative package surplus;
-- required quantity, package size, package count, total to buy, and surplus in the project workspace;
-- backend API, frontend helper, and combined purchase browser acceptance.
-
-Still required after PR #71:
-
-- optional responsible-person text;
-- equipment requirements, aggregation, overrides, and recalculation;
-- final Russian documents and release acceptance.
-
-## Quality status
-
-Enforced gates:
-
-- backend pytest, critical/stabilized Ruff, and strict mypy;
-- Alembic single-head validation;
-- frontend dependency audit, unit tests, production build, and browser acceptance;
-- responsive no-overflow checks and screenshots;
-- PostgreSQL backup/restore.
-
-Open quality debt:
-
-- complete guided-preparation browser coverage;
-- active deployment catalogue acceptance data;
+- complete guided-preparation acceptance;
+- active deployment catalogue data acceptance;
 - catalogue-import interaction coverage;
 - PostgreSQL migration upgrade/downgrade smoke;
 - Docker image/build validation;
-- final release-acceptance workflow.
-
-## Immediate sequence
-
-1. Complete exact-head Quality and review for PR #71.
-2. Add optional responsible-person text.
-3. Implement equipment workflow.
-4. Complete final Russian documents and release acceptance.
-5. Add invitation-only access only after single-user acceptance.
+- final release workflow.
