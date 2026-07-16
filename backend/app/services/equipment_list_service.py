@@ -29,6 +29,148 @@ class EquipmentListService:
         if resolved_project_id is None:
             raise ValueError("Project is required")
 
+        equipment_list = self.repository.get_by_project_id(resolved_project_id)
+        if equipment_list is None:
+            equipment_list = EquipmentListORM(
+                id=str(uuid4()),
+                project_id=resolved_project_id,
+                meal_plan_id=meal_plan_id,
+                status="prepared",
+            )
+            self.repository.add(equipment_list)
+        else:
+            equipment_list.meal_plan_id = meal_plan_id
+            equipment_list.status = "prepared"
+
+        self._synchronize(equipment_list, meal_plan)
+        self.repository.commit()
+        return equipment_list
+
+    def refresh_existing(self, meal_plan: MealPlanORM) -> EquipmentListORM | None:
+        if meal_plan.project_id is None:
+            return None
+        equipment_list = self.repository.get_by_project_id(meal_plan.project_id)
+        if equipment_list is None:
+            return None
+        equipment_list.meal_plan_id = str(meal_plan.id)
+        equipment_list.status = "prepared"
+        self._synchronize(equipment_list, meal_plan)
+        self.repository.flush()
+        return equipment_list
+
+    def get_by_project_id(self, project_id: int) -> EquipmentListORM | None:
+        return self.repository.get_by_project_id(project_id)
+
+    def add_manual_item(
+        self,
+        project_id: int,
+        equipment_name: str,
+        required_quantity: int,
+    ) -> EquipmentListItemORM:
+        equipment_list = self._require_list(project_id)
+        normalized_name = self._normalize_name(equipment_name)
+        existing = self._find_by_name(equipment_list, normalized_name)
+        if existing is not None:
+            if not existing.is_removed:
+                raise ValueError("Equipment item already exists")
+            existing.is_removed = False
+            existing.required_quantity = required_quantity
+            self.repository.commit()
+            return existing
+
+        item = EquipmentListItemORM(
+            id=str(uuid4()),
+            equipment_name=normalized_name,
+            required_quantity=required_quantity,
+            calculated_quantity=None,
+            is_manual=True,
+            is_removed=False,
+        )
+        equipment_list.items.append(item)
+        self.repository.commit()
+        return item
+
+    def update_item_quantity(
+        self,
+        project_id: int,
+        item_id: str,
+        required_quantity: int,
+    ) -> EquipmentListItemORM:
+        item = self._require_item(project_id, item_id)
+        if item.is_removed:
+            raise LookupError("Equipment item not found")
+        item.required_quantity = required_quantity
+        self.repository.commit()
+        return item
+
+    def delete_item(self, project_id: int, item_id: str) -> None:
+        item = self._require_item(project_id, item_id)
+        if item.is_removed:
+            raise LookupError("Equipment item not found")
+        if item.is_manual or item.calculated_quantity is None:
+            self.repository.delete_item(item)
+        else:
+            item.is_removed = True
+        self.repository.commit()
+
+    def visible_items(self, equipment_list: EquipmentListORM) -> list[EquipmentListItemORM]:
+        return [item for item in equipment_list.items if not item.is_removed]
+
+    def _synchronize(
+        self,
+        equipment_list: EquipmentListORM,
+        meal_plan: MealPlanORM,
+    ) -> None:
+        calculated = self._calculate(meal_plan)
+        existing = {self._key(item.equipment_name): item for item in equipment_list.items}
+
+        for key, (name, quantity) in calculated.items():
+            item = existing.get(key)
+            if item is None:
+                equipment_list.items.append(
+                    EquipmentListItemORM(
+                        id=str(uuid4()),
+                        equipment_name=name,
+                        required_quantity=quantity,
+                        calculated_quantity=quantity,
+                        is_manual=False,
+                        is_removed=False,
+                    )
+                )
+                continue
+
+            old_calculated = item.calculated_quantity
+            has_quantity_override = (
+                old_calculated is not None
+                and item.required_quantity != old_calculated
+            )
+            if item.is_manual:
+                item.is_manual = False
+                item.calculated_quantity = quantity
+            else:
+                item.calculated_quantity = quantity
+                if not has_quantity_override:
+                    item.required_quantity = quantity
+
+        calculated_keys = set(calculated)
+        for item in list(equipment_list.items):
+            key = self._key(item.equipment_name)
+            if key in calculated_keys or item.is_manual:
+                continue
+            old_calculated = item.calculated_quantity
+            has_quantity_override = (
+                old_calculated is not None
+                and item.required_quantity != old_calculated
+            )
+            if item.is_removed:
+                self.repository.delete_item(item)
+            elif has_quantity_override:
+                item.calculated_quantity = None
+                item.is_manual = True
+            else:
+                self.repository.delete_item(item)
+
+    def _calculate(self, meal_plan: MealPlanORM) -> dict[str, tuple[str, int]]:
         recipe_ids = self._recipe_ids(meal_plan)
         requirements = self.repository.list_requirements(recipe_ids)
         by_recipe: dict[str, list[RecipeEquipmentRequirementORM]] = {}
@@ -50,39 +192,32 @@ class EquipmentListService:
                 previous = calculated.get(key)
                 if previous is None or item[1] > previous[1]:
                     calculated[key] = item
+        return calculated
 
-        equipment_list = self.repository.get_by_project_id(resolved_project_id)
+    def _require_list(self, project_id: int) -> EquipmentListORM:
+        equipment_list = self.repository.get_by_project_id(project_id)
         if equipment_list is None:
-            equipment_list = EquipmentListORM(
-                id=str(uuid4()),
-                project_id=resolved_project_id,
-                meal_plan_id=meal_plan_id,
-                status="prepared",
-            )
-            self.repository.add(equipment_list)
-        else:
-            equipment_list.meal_plan_id = meal_plan_id
-            equipment_list.status = "prepared"
-            equipment_list.items.clear()
-            self.repository.flush()
-
-        for name, quantity in sorted(
-            calculated.values(),
-            key=lambda item: item[0].casefold(),
-        ):
-            equipment_list.items.append(
-                EquipmentListItemORM(
-                    id=str(uuid4()),
-                    equipment_name=name,
-                    required_quantity=quantity,
-                )
-            )
-
-        self.repository.commit()
+            raise LookupError("Equipment list not found")
         return equipment_list
 
-    def get_by_project_id(self, project_id: int) -> EquipmentListORM | None:
-        return self.repository.get_by_project_id(project_id)
+    def _require_item(self, project_id: int, item_id: str) -> EquipmentListItemORM:
+        equipment_list = self._require_list(project_id)
+        for item in equipment_list.items:
+            if item.id == item_id:
+                return item
+        raise LookupError("Equipment item not found")
+
+    @classmethod
+    def _find_by_name(
+        cls,
+        equipment_list: EquipmentListORM,
+        equipment_name: str,
+    ) -> EquipmentListItemORM | None:
+        key = cls._key(equipment_name)
+        for item in equipment_list.items:
+            if cls._key(item.equipment_name) == key:
+                return item
+        return None
 
     @classmethod
     def _recipe_ids(cls, meal_plan: MealPlanORM) -> set[str]:
@@ -104,6 +239,13 @@ class EquipmentListService:
                 by_type.setdefault(item.meal_type, []).append(item.dish.recipe_id)
             groups.extend(by_type.values())
         return groups
+
+    @staticmethod
+    def _normalize_name(value: str) -> str:
+        normalized = " ".join(value.split())
+        if not normalized:
+            raise ValueError("Equipment name must not be empty")
+        return normalized
 
     @staticmethod
     def _key(value: str) -> str:
