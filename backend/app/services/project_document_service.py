@@ -1,3 +1,5 @@
+from typing import cast
+
 from app.engines.documents.dto import GeneratedDocument
 from app.engines.documents.equipment_excel import EquipmentExcelDocumentGenerator
 from app.engines.documents.equipment_pdf import EquipmentPDFDocumentGenerator
@@ -67,8 +69,9 @@ class ProjectDocumentService:
         return self.equipment_excel_generator.generate(dto)
 
     def _get_purchase_list(self, project: ProjectORM) -> PurchaseListORM:
-        if project.purchase_lists:
-            return project.purchase_lists[0]
+        purchase_lists = cast(list[PurchaseListORM], project.purchase_lists)
+        if purchase_lists:
+            return purchase_lists[0]
 
         if self.purchase_list_repository is not None:
             purchase_list = self.purchase_list_repository.get_by_project_id(project.id)
