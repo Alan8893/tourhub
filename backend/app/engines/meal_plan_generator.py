@@ -58,15 +58,16 @@ class MealPlanGenerator:
         meals_per_day: list[str] | None = None,
         schedule: Sequence[MealScheduleDayInput] | None = None,
         dishes_per_meal: int = 1,
+        role_aware: bool = False,
     ) -> MealPlanGenerationResult:
-        if not dishes:
-            return MealPlanGenerationResult(items=[], slots=[], warnings=["No dishes available"])
         if dishes_per_meal < 1:
             raise ValueError("dishes_per_meal must be greater than zero")
 
         meal_sequence = self._meal_sequence(days, meals_per_day, schedule)
-        if any(dish.meal_roles for dish in dishes):
+        if role_aware:
             return self._generate_role_aware(dishes, meal_sequence)
+        if not dishes:
+            return MealPlanGenerationResult(items=[], slots=[], warnings=["No dishes available"])
         return self._generate_legacy(dishes, meal_sequence, dishes_per_meal)
 
     @staticmethod
@@ -89,7 +90,7 @@ class MealPlanGenerator:
         meal_sequence: list[tuple[int, str]],
     ) -> MealPlanGenerationResult:
         warnings: list[str] = []
-        warned_missing: set[tuple[str, str]] = set()
+        warned_missing: set[tuple[str, str, str]] = set()
         items: list[MealPlanItemResult] = []
         slots: list[MealSlotResult] = []
         indexes: dict[tuple[str, str], int] = {}
@@ -112,10 +113,14 @@ class MealPlanGenerator:
             for role, required in composition:
                 candidates = self._candidates(dishes, role, meal_type)
                 if not candidates:
-                    key = (meal_type, role)
-                    if required and key not in warned_missing:
-                        warned_missing.add(key)
-                        warnings.append(f"No {role} dishes available for {meal_type}")
+                    self._warn_required_gap(
+                        warnings,
+                        warned_missing,
+                        meal_type,
+                        role,
+                        required,
+                        reason="catalogue",
+                    )
                     continue
 
                 index_key = (meal_type, role)
@@ -129,6 +134,14 @@ class MealPlanGenerator:
                 )
                 indexes[index_key] = next_index
                 if chosen is None:
+                    self._warn_required_gap(
+                        warnings,
+                        warned_missing,
+                        meal_type,
+                        role,
+                        required,
+                        reason="eligible",
+                    )
                     continue
                 selected.append(chosen)
                 selected_ids.add(chosen.id)
@@ -138,6 +151,26 @@ class MealPlanGenerator:
             slots.append(MealSlotResult(day_number, meal_type, selected))
 
         return MealPlanGenerationResult(items=items, slots=slots, warnings=warnings)
+
+    @staticmethod
+    def _warn_required_gap(
+        warnings: list[str],
+        warned_missing: set[tuple[str, str, str]],
+        meal_type: str,
+        role: str,
+        required: bool,
+        reason: str,
+    ) -> None:
+        if not required:
+            return
+        key = (meal_type, role, reason)
+        if key in warned_missing:
+            return
+        warned_missing.add(key)
+        if reason == "eligible":
+            warnings.append(f"No eligible {role} dishes available for {meal_type}")
+        else:
+            warnings.append(f"No {role} dishes available for {meal_type}")
 
     @staticmethod
     def _candidates(dishes: list[DishInput], role: str, meal_type: str) -> list[DishInput]:

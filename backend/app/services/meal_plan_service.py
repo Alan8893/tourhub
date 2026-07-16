@@ -52,6 +52,7 @@ class MealPlanService:
             dishes=self._generation_dishes(),
             days=days,
             meals_per_day=meals_per_day,
+            role_aware=True,
         )
 
     def generate_and_save(
@@ -98,12 +99,14 @@ class MealPlanService:
                 dishes=dishes,
                 days=days,
                 schedule=schedule,
+                role_aware=True,
             )
         else:
             result = self.generator.generate(
                 dishes=dishes,
                 days=days,
                 meals_per_day=meals_per_day,
+                role_aware=True,
             )
 
         meal_plan = MealPlanORM(
