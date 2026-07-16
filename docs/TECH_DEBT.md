@@ -12,28 +12,28 @@ No open P0 release blockers are recorded after TH-0070 / PR #54.
 
 ### TD-005 — Ruff backlog
 
-The audited snapshot contained 195 Ruff violations. Critical and selected workflow baselines are enforced.
+The audited snapshot contained 195 Ruff violations. Critical and selected project, menu, shopping, and equipment workflow baselines are enforced.
 
 ### TD-006 — Strict mypy backlog
 
-The audited snapshot contained 74 strict mypy errors. Selected project, menu, shopping, and equipment workflow modules are clean and enforced.
+The audited snapshot contained 74 strict mypy errors. Selected project, menu, shopping, equipment override, and regeneration modules are clean and enforced.
 
 ### TD-007 — Frontend and browser automated tests
 
-Coverage includes menu editing, Dish classification, catalogue readiness, navigation, editable purchase progress, package review, purchasing-contact persistence, equipment formatting, responsive no-overflow checks, and screenshots.
+Coverage includes menu editing, Dish classification, catalogue readiness, navigation, purchasing review, equipment aggregation, project equipment CRUD, mutation refetch, responsive no-overflow checks, and screenshots.
 
-Draft PR #73 adds real-browser coverage for persisted project equipment loading, summary quantities, exact API access, and 360 px layout.
+PR #74 adds real-browser acceptance for quantity override, manual addition, calculated-row removal, refetch after each mutation, and 360 px layout.
 
 Remaining critical coverage:
 
-- complete guided project preparation;
+- direct recipe-equipment mutation impact on prepared projects;
 - active deployment catalogue acceptance data;
 - catalogue import interaction and error rendering;
 - final end-to-end release acceptance.
 
 ### TD-008 — Continuous Integration
 
-Implemented gates include backend tests, Ruff/mypy, Alembic single-head, frontend tests/build/audit, browser acceptance, build diagnostics, and PostgreSQL backup/restore.
+Implemented gates include backend tests, stabilized Ruff and strict mypy, Alembic single-head, frontend tests/build/audit, browser acceptance, build diagnostics, and PostgreSQL backup/restore.
 
 Remaining:
 
@@ -43,7 +43,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical status, roadmap, technical debt, and TH-0061 are synchronized through merged PR #72 and draft PR #73. ADR-013 remains authoritative for Dish role and meal-type ownership.
+Canonical status, roadmap, technical debt, and TH-0061 are synchronized through merged PR #73 and draft PR #74. ADR-013 remains authoritative for Dish role and meal-type ownership.
 
 ### TD-024 — Legacy MealPlanItem compatibility
 
@@ -65,22 +65,21 @@ Approved implementation is merged through PR #69. Remaining work is operational 
 
 ### TD-013 — Equipment domain completion
 
-Draft PR #73 delivers:
+Merged PR #73 delivers persisted recipe requirements, project aggregation, repeated preparation, Russian review UI, and browser/mobile coverage.
 
-- persisted recipe equipment requirements;
-- validated add, update, and delete API;
-- persisted project EquipmentList;
-- sum within one meal occurrence and maximum simultaneous aggregation across occurrences;
-- safe repeated regeneration;
-- Russian recipe and project review UI;
-- backend, unit, build, browser, and mobile coverage.
+Draft PR #74 delivers:
 
-Remaining after PR #73:
-
-- project-level manual additions and removals;
+- separate calculated baseline and final quantity through Alembic `h10006`;
+- manual project additions and removals;
 - manual quantity overrides;
-- preservation of overrides during recalculation;
-- automatic refresh after participant, menu, and recipe mutations;
+- persisted removal tombstones for generated rows;
+- preservation of overrides during repeated preparation and recalculation;
+- refresh after meal-slot edits, Dish recipe changes, participant changes, and full menu regeneration;
+- Russian editing UI and real-browser CRUD acceptance.
+
+Remaining after PR #74:
+
+- refresh prepared project lists after direct recipe-equipment requirement mutations;
 - equipment export in final Russian documents.
 
 ### TD-014 — Export templates and branding
@@ -110,7 +109,7 @@ Merged PRs #70–#72 deliver editable purchase progress, package review, surplus
 Remaining:
 
 - complete guided-preparation acceptance;
-- verify recalculation visibility without losing user progress.
+- verify all derived-document updates remain visible without losing user progress.
 
 ## Completed history
 
