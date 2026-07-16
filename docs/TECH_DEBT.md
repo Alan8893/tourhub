@@ -16,17 +16,16 @@ The audited snapshot contained 195 Ruff violations. Critical and selected projec
 
 ### TD-006 — Strict mypy backlog
 
-The audited snapshot contained 74 strict mypy errors. Selected project, menu, shopping, equipment override, and regeneration modules are clean and enforced.
+The audited snapshot contained 74 strict mypy errors. Selected project, menu, shopping, equipment override, regeneration, and recipe-recalculation modules are clean and enforced.
 
 ### TD-007 — Frontend and browser automated tests
 
-Coverage includes menu editing, Dish classification, catalogue readiness, navigation, purchasing review, equipment aggregation, project equipment CRUD, mutation refetch, responsive no-overflow checks, and screenshots.
+Coverage includes menu editing, Dish classification, catalogue readiness, purchasing review, equipment aggregation, project equipment CRUD, mutation refetch, responsive no-overflow checks, and screenshots.
 
-PR #74 adds real-browser acceptance for quantity override, manual addition, calculated-row removal, refetch after each mutation, and 360 px layout.
+Merged PR #74 covers project-level equipment overrides. Draft PR #75 adds backend acceptance for direct recipe-equipment changes across multiple prepared projects and transaction rollback on refresh failure.
 
 Remaining critical coverage:
 
-- direct recipe-equipment mutation impact on prepared projects;
 - active deployment catalogue acceptance data;
 - catalogue import interaction and error rendering;
 - final end-to-end release acceptance.
@@ -43,7 +42,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical status, roadmap, technical debt, and TH-0061 are synchronized through merged PR #73 and draft PR #74. ADR-013 remains authoritative for Dish role and meal-type ownership.
+Canonical status, roadmap, technical debt, and TH-0061 are synchronized through merged PR #74 and draft PR #75. ADR-013 remains authoritative for Dish role and meal-type ownership.
 
 ### TD-024 — Legacy MealPlanItem compatibility
 
@@ -65,21 +64,19 @@ Approved implementation is merged through PR #69. Remaining work is operational 
 
 ### TD-013 — Equipment domain completion
 
-Merged PR #73 delivers persisted recipe requirements, project aggregation, repeated preparation, Russian review UI, and browser/mobile coverage.
+Merged PRs #73 and #74 deliver persisted recipe requirements, maximum-simultaneous aggregation, project editing, override preservation, recalculation after menu and participant changes, Russian UI, and browser/mobile coverage.
 
-Draft PR #74 delivers:
+Draft PR #75 delivers:
 
-- separate calculated baseline and final quantity through Alembic `h10006`;
-- manual project additions and removals;
-- manual quantity overrides;
-- persisted removal tombstones for generated rows;
-- preservation of overrides during repeated preparation and recalculation;
-- refresh after meal-slot edits, Dish recipe changes, participant changes, and full menu regeneration;
-- Russian editing UI and real-browser CRUD acceptance.
+- refresh after direct recipe-equipment requirement POST, PUT, and DELETE;
+- multi-project fan-out for every prepared EquipmentList using the recipe;
+- one transaction for source mutation and derived refresh;
+- preservation of overrides, removals, and manual rows;
+- no implicit EquipmentList creation for unprepared projects;
+- rollback coverage when refresh fails.
 
-Remaining after PR #74:
+Remaining after PR #75:
 
-- refresh prepared project lists after direct recipe-equipment requirement mutations;
 - equipment export in final Russian documents.
 
 ### TD-014 — Export templates and branding
@@ -104,7 +101,7 @@ Product update and guarded delete remain unimplemented.
 
 ### TD-026 — Shopping and packaging review
 
-Merged PRs #70–#72 deliver editable purchase progress, package review, surplus, and the optional purchasing contact with recalculation preservation.
+Merged PRs #70–#72 deliver editable purchase progress, package review, surplus, and the purchasing contact with recalculation preservation.
 
 Remaining:
 

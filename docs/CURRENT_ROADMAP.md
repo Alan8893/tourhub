@@ -24,54 +24,47 @@ Project
 - PostgreSQL backup/restore CI;
 - LAN-safe routing and responsive navigation.
 
-### Project, menu, and shopping through PR #72
+### Core preparation through PR #72
 
 - project creation, workspace, participants, duration, and meal boundaries;
-- recipe/product/Dish catalogues and CSV import;
-- role-aware menu generation, diversity, manual-slot preservation, and warnings;
-- PurchaseList and PurchaseChecklist persistence;
-- editable purchasing, package counts, total purchase quantities, surplus, and purchasing contact;
+- catalogues and CSV import;
+- role-aware menu generation and manual editing;
+- persisted shopping, package review, surplus, and purchasing contact;
 - transactional purchasing recalculation.
 
-### Equipment foundation — merged PR #73
+### Equipment through merged PR #74
 
-- persisted recipe equipment requirements through Alembic `h10005`;
-- validated CRUD and archived-recipe read-only behavior;
-- persisted project EquipmentList;
-- sum within one meal occurrence and maximum simultaneous aggregation across occurrences;
-- safe repeated preparation;
-- Russian recipe and project UI with browser and mobile acceptance.
+- recipe equipment requirements through Alembic `h10005`;
+- persisted maximum-simultaneous EquipmentList projection;
+- calculated baseline and user-controlled final quantity through `h10006`;
+- manual additions, quantity overrides, and removals;
+- preservation during repeated preparation and recalculation;
+- refresh after meal, Dish recipe, participant, and full-menu changes;
+- Russian editing UI with browser and mobile acceptance.
 
-PR #73 passed exact-head Quality #334 and merged as `cf4d39b9d7834e13763a4a02b8b2a13f25e44f5a`.
+PR #74 passed Quality #350 and merged as `4bde39c480776d46bf25894cb77602a4e1adb0cd`.
 
 ## IN PROGRESS
 
-### PR #74 — project equipment overrides
+### PR #75 — recipe-equipment mutation refresh
 
-- add Alembic `h10006` for calculated baseline, manual state, and removal tombstones;
-- support manual project additions, quantity overrides, and removals;
-- preserve user decisions while recalculating the generated baseline;
-- refresh equipment after meal-slot edits, Dish recipe changes, participant changes, repeated preparation, and full menu regeneration;
-- provide Russian editing controls and real-browser CRUD/refetch/mobile acceptance;
-- include all new modules in stabilized Ruff and strict mypy gates.
+- refresh prepared project equipment lists after requirement POST, PUT, or DELETE;
+- keep the requirement mutation and derived refresh in one transaction;
+- preserve overrides, removals, and manual rows;
+- leave unprepared projects unchanged;
+- cover multiple affected projects and rollback on refresh failure;
+- enforce the service in stabilized Ruff and strict mypy gates.
 
-The functional head passed Quality #349 before documentation synchronization.
+The functional head passed Quality #353 before documentation synchronization.
 
 ## NEXT
 
-### Equipment and documents
-
-- refresh EquipmentList after direct recipe-equipment requirement mutations;
 - include equipment in final Russian PDF and Excel;
 - add club name and logo settings;
-- complete desktop and mobile guided-preparation acceptance.
-
-### Release engineering
-
-- installation/update documentation;
-- Docker image/build CI gate;
-- PostgreSQL migration upgrade/downgrade smoke;
-- final release workflow.
+- complete guided desktop and mobile acceptance;
+- add installation/update documentation;
+- add Docker build and migration smoke gates;
+- complete the final release workflow.
 
 ## LATER
 
