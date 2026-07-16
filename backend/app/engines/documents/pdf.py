@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -123,6 +123,6 @@ class PDFDocumentGenerator:
         return GeneratedDocument(
             filename="purchase_list.pdf",
             content_type="application/pdf",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             content=buffer.getvalue(),
         )
