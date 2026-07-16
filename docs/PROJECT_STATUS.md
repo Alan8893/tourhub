@@ -4,7 +4,7 @@ Status date: 2026-07-16
 
 ## Current phase
 
-TH-0061.5 remains active, but its persisted classification and first production generation slice are complete.
+TH-0061.5 remains active. Its persisted classification and first production generation slice are complete, and stacked PR #66 implements calendar-day three-day diversity for `main` dishes on top of documentation PR #65.
 
 Merged delivery chain:
 
@@ -14,13 +14,19 @@ Merged delivery chain:
 - PR #62 — responsive mobile navigation drawer;
 - PR #64 — role- and meal-type-aware project meal-plan generation.
 
-The Product Owner verified the updated local deployment after PR #64. Automatic generation now uses only explicitly classified, active-recipe dishes.
+Open stack:
+
+- PR #65 — canonical documentation synchronization after PR #64;
+- PR #66 — calendar-day three-day diversity for `main` dishes.
+
+The Product Owner verified the updated local deployment after PR #64. Automatic generation uses only explicitly classified, active-recipe dishes.
 
 ## Verified baseline
 
 - Current `main` includes PR #64 at squash commit `cdc211ed6bbcc12779c28d692a312022d297cf01`.
 - Alembic has one head: `h10001`.
 - Quality run #254 passed on the exact PR #64 head with 175 backend tests, Ruff, strict mypy, Alembic validation, frontend tests/build/browser acceptance, and PostgreSQL backup/restore.
+- Documentation PR #65 is Ready for review, mergeable, and has successful exact-head Quality #256.
 - MealSlot and MealSlotDish are the primary menu-composition persistence model.
 - MealPlanItem remains a legacy compatibility path.
 - MealSlot API responses expose persisted relation identifiers separately from source `dish_id` values.
@@ -64,13 +70,21 @@ Still required:
 - generated compositions persisted through MealSlot/MealSlotDish and compatibility MealPlanItem rows;
 - transactional purchasing recalculation after MealSlot edits.
 
-Still required for TH-0061.5:
+PR #66 adds:
+
+- trip-calendar-day tracking in the pure selection context;
+- a rolling three-day diversity window only for non-repeatable `main` assignments;
+- day-one `main` reuse on day four;
+- repeatable `main` bypass of the diversity restriction;
+- deterministic empty required slots and warnings when the diversity-eligible pool is exhausted;
+- pure engine, service, persistence, and public API regressions.
+
+Still required for TH-0061.5 after PR #66:
 
 - maintain and complete explicit classification of the active deployment catalogue;
-- calendar-day three-day diversity for main dishes;
 - preservation of manual selections during regeneration;
 - persistence or deterministic reconstruction of generation warnings for later GET responses;
-- larger diversity thresholds and future preference modes.
+- larger diversity thresholds and future preference modes only after approved product requirements.
 
 ### Dishes and recipes
 
@@ -139,6 +153,17 @@ PR #64 / Quality #254 specifically verifies:
 - stable multi-dish persistence order;
 - project generation through real ORM role relationships and public API serialization.
 
+PR #66 regression scope verifies:
+
+- calendar-day rather than selection-count diversity;
+- one-day same-day uniqueness remains unchanged;
+- three candidates rotate across days one through three and can reuse on day four;
+- repeatable `main` can repeat inside the window;
+- exhausted eligible pools leave required slots empty and return a deterministic warning;
+- service mapping still excludes archived and unclassified dishes;
+- MealSlot/MealSlotDish and legacy MealPlanItem persistence remain aligned;
+- the public project-generation API exposes the same deterministic behavior.
+
 Open quality debt:
 
 - guided preparation browser coverage;
@@ -151,12 +176,12 @@ Open quality debt:
 ## Active tasks
 
 - TH-0061 — guided project preparation journey;
-- TH-0061.5 — remaining composition diversity, regeneration, and warning-lifecycle rules.
+- TH-0061.5 — calendar-day diversity, then regeneration and warning-lifecycle rules.
 
 ## Immediate sequence
 
 1. Keep the active catalogue explicitly classified and verify readiness on real deployment data.
-2. Implement calendar-day three-day main-dish diversity.
+2. Complete exact-head Quality and review for stacked PR #66 after PR #65.
 3. Preserve manual selections as authoritative during regeneration.
 4. Persist or deterministically reconstruct generation warnings for later reads.
 5. Complete the guided preparation, packaging, equipment, and export acceptance workflow.
