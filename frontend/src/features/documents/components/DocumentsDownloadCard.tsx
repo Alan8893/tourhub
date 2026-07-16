@@ -65,7 +65,7 @@ export default function DocumentsDownloadCard({ projectId, ready }: Props) {
   }
 
   return (
-    <Card>
+    <Card sx={{ "& .MuiButton-root": { textTransform: "none" } }}>
       <CardContent>
         <Stack spacing={1.5}>
           <Typography variant="h6">Документы</Typography>
