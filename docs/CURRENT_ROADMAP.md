@@ -20,128 +20,84 @@ Project
 ### Infrastructure
 
 - Dockerfiles and Docker Compose;
-- PostgreSQL 18 and Redis runtime configuration;
-- Alembic migrations with one-head CI validation;
-- backend tests, selected Ruff, and strict mypy gates;
-- frontend tests, dependency audit, production build, and browser acceptance;
-- PostgreSQL backup/restore scripts and CI smoke test;
-- LAN-safe same-origin frontend API routing;
-- responsive temporary mobile drawer with permanent desktop sidebar.
+- PostgreSQL and Redis runtime configuration;
+- Alembic one-head validation;
+- backend Ruff, strict mypy, pytest, frontend tests/build/browser acceptance;
+- PostgreSQL backup/restore CI;
+- LAN-safe same-origin routing and responsive navigation.
 
-### Projects
+### Projects, recipes, and menu
 
-- project creation and catalogue;
-- project workspace routing;
-- participant count and duration;
-- first and last meal persistence;
-- backend meal-boundary validation;
-- participant-count purchasing recalculation.
+- project creation, catalogue, workspace, participants, duration, and meal boundaries;
+- recipe components, notes, archive/restore, products, CSV import, and Dish catalogue;
+- persisted Dish roles, meal compatibility, and repeatability;
+- catalogue readiness and Russian classification editor;
+- role-aware menu generation with required and optional composition roles;
+- same-day uniqueness and calendar-day three-day `main` diversity;
+- authoritative manual slots across regeneration;
+- persisted generation-warning snapshot through Alembic `h10003`;
+- transactional purchasing recalculation after project, menu, and recipe changes.
 
-### Recipes, products, and dishes
+TH-0061.5 approved rules are merged through PR #69. Operational catalogue classification remains ongoing.
 
-- recipe list/detail/create/rename;
-- RecipeComponent CRUD and practical quantity modes;
-- recipe notes and ordering;
-- archive, restore, and guarded delete;
-- product list and creation;
-- transactional CSV preview/apply;
-- dish catalogue, create, rename, and active-recipe assignment;
-- archived-recipe historical visibility;
-- purchasing recalculation after Dish recipe replacement;
-- normalized Dish roles and role-specific meal-type compatibility;
-- per-role repeatability;
-- atomic classification replacement API;
-- Russian role/meal-type editor;
-- deterministic catalogue-readiness API and warnings.
-
-### Menu and TH-0061.5 rules
-
-Merged through PR #59, #60, #61, #64, #65, #66, #67, and #69:
-
-- persisted MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
-- first/last meal scheduling and multiple dishes per slot;
-- compact responsive Russian editor;
-- persisted roles `main`, `addition`, `drink`, and `snack`;
-- compatibility per `(dish, role, meal_type)`;
-- no inference from names, recipes, ingredients, history, or manual placement;
-- role-aware generation with required and optional composition roles;
-- stable `main → addition → drink` order;
-- same-day uniqueness and repeatability per role assignment;
-- trip-calendar-day three-day diversity for non-repeatable `main` dishes;
-- day-four reuse and repeatable-main bypass;
-- exclusion of archived-recipe and unclassified dishes from automatic generation;
-- explicit warnings instead of hidden incompatible fallback;
-- persisted manual-slot marker through Alembic revision `h10002`;
-- authoritative preservation of non-empty and empty manual slots during regeneration;
-- reuse of one MealPlan per project;
-- ordered generation-warning snapshot through Alembic revision `h10003`;
-- identical warnings on generation and later reads;
-- atomic warning replacement and clearing on regeneration;
-- transactional purchasing recalculation after MealSlot changes.
-
-Quality #271 passed before PR #66 merge, Quality #273 before PR #67 merge, and Quality #280 before PR #69 merge.
-
-### Shopping and documents foundation
+### Shopping foundation
 
 - ingredient aggregation;
-- package-rounding foundation;
-- purchase list and purchase checklist persistence;
+- package-rounding calculation;
+- PurchaseList and PurchaseChecklist persistence;
 - purchased quantity and checked-state persistence;
-- transactional refresh and checklist-state preservation;
+- checklist-state preservation during recalculation;
 - PDF/Excel/package export foundations.
+
+### PR #70 — editable purchase checklist
+
+Merged with exact-head Quality #287:
+
+- product names in checklist responses;
+- required, purchased, and non-negative remaining quantities;
+- validation against negative purchased quantities;
+- editable Russian checklist in the project workspace;
+- progress, feedback states, responsive layout, and browser acceptance.
 
 ## IN PROGRESS
 
-### TH-0061 — Guided project preparation
+### PR #71 — package count and surplus review
 
-Draft PR #70 implements the first shopping-review slice:
-
-- product names in checklist responses;
-- required, purchased, and remaining quantity presentation;
-- non-negative remaining calculation and purchased-quantity validation;
-- editable Russian purchase checklist in the project workspace;
-- completion progress and explicit loading/error/success states;
-- responsive controls and 360 px no-overflow browser acceptance;
-- backend API and frontend state regression coverage.
-
-The slice intentionally keeps shopping aggregation and package-rounding calculations unchanged.
+- product names in PurchaseList responses;
+- total purchase quantity derived from package size and package count;
+- non-negative package surplus;
+- required quantity, package size, package count, total purchase quantity, and surplus in the workspace;
+- backend API, frontend helper, and combined purchase browser acceptance;
+- no change to aggregation, rounding, persistence, or recalculation algorithms.
 
 ## NEXT
 
 ### Shopping and packaging
 
-- complete package-count and package-surplus review presentation;
 - add optional responsible-person text;
-- connect shopping review to the complete guided preparation sequence.
+- connect the completed shopping review to the guided preparation sequence.
 
 ### Equipment
 
 - persist recipe equipment requirements;
-- aggregate maximum simultaneous equipment need;
-- support manual equipment overrides;
-- recalculate equipment after participant and menu changes.
+- aggregate maximum simultaneous need;
+- support manual overrides;
+- recalculate after participant and menu changes.
 
 ### Documents and acceptance
 
-- final Russian PDF;
-- final Russian Excel workbook;
+- final Russian PDF and Excel;
 - club name and logo settings;
 - installation/update documentation;
 - Docker image/build CI gate;
-- full desktop and mobile release acceptance.
+- complete desktop and mobile release acceptance.
 
 ## LATER
 
-- invitation-only registration;
-- Administrator, Instructor, and Verified Instructor roles;
-- backend permission enforcement;
-- recipe ownership and multiple variants;
-- publication and moderation;
+- invitation-only registration and roles;
+- recipe ownership, variants, publication, and moderation;
 - audit log;
-- participant profiles;
-- routes and GPX;
-- logistics and load distribution;
-- warehouse balances;
-- price aggregation.
+- participant profiles, routes, logistics, and load distribution;
+- warehouse balances and price aggregation.
 
 Multi-tenant support and microservices remain prohibited.
