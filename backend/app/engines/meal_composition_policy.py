@@ -12,11 +12,14 @@ class DishSelectionInput(typing.Protocol):
 
 @dataclass
 class SelectionContext:
+    """Track same-day use and calendar-day history for non-repeatable main dishes."""
+
     used_for_day: set[str]
     current_day: int | None = None
     main_last_selected_day: dict[str, int] = field(default_factory=dict)
 
     def begin_day(self, day_number: int) -> None:
+        """Advance generation to a trip calendar day and reset same-day state."""
         if self.current_day is not None and day_number < self.current_day:
             raise ValueError("day_number must not move backwards")
         if day_number == self.current_day:
