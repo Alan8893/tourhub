@@ -2,14 +2,19 @@ import fsPromises from "node:fs/promises";
 import { syncBuiltinESMExports } from "node:module";
 
 const originalRm = fsPromises.rm.bind(fsPromises);
-const chromeProfileSuffix = "tourhub-browser-acceptance-profile";
+const chromeProfileSuffixes = [
+  "tourhub-browser-acceptance-profile",
+  "tourhub-purchase-checklist-profile",
+];
 let profileRemovalCalls = 0;
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 fsPromises.rm = async (target, options) => {
-  const isMealPlanChromeProfile = String(target).endsWith(chromeProfileSuffix);
-  if (!isMealPlanChromeProfile) {
+  const isAcceptanceChromeProfile = chromeProfileSuffixes.some((suffix) =>
+    String(target).endsWith(suffix),
+  );
+  if (!isAcceptanceChromeProfile) {
     return originalRm(target, options);
   }
 
