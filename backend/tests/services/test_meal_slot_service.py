@@ -1,22 +1,19 @@
-from types import SimpleNamespace
-
 from app.models.meal_slot import MealSlotORM
 from app.models.meal_slot_dish import MealSlotDishORM
 from app.services.meal_slot_service import MealSlotService
-
 
 
 def make_slot():
     slot = MealSlotORM(
         id="slot-1",
         meal_type="breakfast",
+        is_manually_edited=False,
     )
     slot.dishes = []
     return slot
 
 
-
-def test_add_dish_to_slot():
+def test_add_dish_to_slot_marks_slot_as_manual():
     service = MealSlotService()
     slot = make_slot()
 
@@ -25,10 +22,10 @@ def test_add_dish_to_slot():
     assert item.dish_id == "dish-1"
     assert len(slot.dishes) == 1
     assert slot.dishes[0].order == 0
+    assert slot.is_manually_edited is True
 
 
-
-def test_replace_dish_in_slot():
+def test_replace_dish_in_slot_marks_slot_as_manual():
     service = MealSlotService()
     slot = make_slot()
 
@@ -42,10 +39,10 @@ def test_replace_dish_in_slot():
     service.replace_dish(slot, "slot-dish-1", "new-dish")
 
     assert slot.dishes[0].dish_id == "new-dish"
+    assert slot.is_manually_edited is True
 
 
-
-def test_remove_dish_reorders_items():
+def test_remove_dish_reorders_items_and_marks_empty_slot_as_manual():
     service = MealSlotService()
     slot = make_slot()
 
@@ -59,3 +56,4 @@ def test_remove_dish_reorders_items():
     assert len(slot.dishes) == 1
     assert slot.dishes[0].dish_id == "dish-2"
     assert slot.dishes[0].order == 0
+    assert slot.is_manually_edited is True
