@@ -1,6 +1,6 @@
 # TourHub Technical Debt
 
-Status date: 2026-07-15
+Status date: 2026-07-16
 
 Technical debt is prioritized by product risk.
 
@@ -16,7 +16,7 @@ The audited snapshot contained 195 Ruff violations. A critical baseline and sele
 
 ### TD-006 — Strict mypy backlog
 
-The audited snapshot contained 74 strict mypy errors. Selected workflow modules, including the menu policy, generator, and catalogue readiness service, are clean and enforced.
+The audited snapshot contained 74 strict mypy errors. Selected workflow modules, including the menu policy, role-aware generator, meal-plan service, and catalogue readiness service, are clean and enforced.
 
 ### TD-007 — Frontend automated tests
 
@@ -47,17 +47,26 @@ PR #61 adds real-browser coverage for:
 - readiness refresh after role mutation without page reload;
 - desktop and 360 px no-overflow screenshots.
 
+PR #62 adds real-browser coverage for:
+
+- a closed-by-default temporary mobile navigation drawer;
+- full-width phone content;
+- opening and closing navigation after a route change;
+- preserved permanent desktop navigation;
+- no horizontal overflow at 360 and 1280 px.
+
 Remaining critical coverage:
 
 - project creation and guided preparation;
 - active deployment catalogue data acceptance;
+- optional generated addition/drink presentation;
 - shopping recalculation presentation;
 - catalogue import interaction and error rendering;
 - final end-to-end release acceptance.
 
 ### TD-008 — Continuous Integration
 
-Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, Meal Plan Editor browser acceptance, Dish role/meal compatibility and readiness browser acceptance, and PostgreSQL backup/restore.
+Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, Meal Plan Editor browser acceptance, Dish role/meal compatibility and readiness browser acceptance, responsive navigation acceptance, and PostgreSQL backup/restore.
 
 Remaining:
 
@@ -67,7 +76,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical current documents and the active task index are synchronized after TH-0070, TH-0065, the role/meal-compatibility design correction, and the minimal readiness policy. ADR-013 supersedes obsolete MealPlanItem-primary wording in ADR-006 and prevents role-only misclassification such as borscht at breakfast. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
+Canonical current documents and the active task index are synchronized after TH-0070, TH-0065, the role/meal-compatibility design correction, minimum readiness policy, and required role-aware selection. ADR-013 supersedes obsolete MealPlanItem-primary wording in ADR-006 and prevents role-only misclassification such as borscht at breakfast. Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
 ### TD-024 — Legacy MealPlanItem compatibility
 
@@ -121,16 +130,27 @@ PR #61 implements:
 - archived-recipe exclusion and classification counts;
 - Russian warning presentation and browser refresh coverage.
 
+PR #63 implements required role-aware generation:
+
+- candidate filtering by both persisted role and current meal type;
+- one required `main` for breakfast, lunch, and dinner;
+- one required `snack` for the snack slot;
+- exclusion of unclassified Dishes and Dishes with archived selected Recipes;
+- empty persisted MealSlots and explicit warnings when a required pool is missing;
+- per-role repeatability during same-day selection;
+- deterministic fallback and warning when a non-repeatable compatible pool is exhausted;
+- pure policy, service, persistence, and API regression coverage.
+
 Remaining implementation work:
 
 - explicit classification of the active deployment catalogue;
-- role and meal-type composition for breakfast, snack, lunch, and dinner;
+- optional `addition` and `drink` generation for main meals;
 - larger candidate thresholds and calendar-day three-day main-dish diversity;
-- manual-selection preservation;
+- manual-selection preservation during regeneration;
 - generation-warning persistence or reconstruction;
 - preference modes after multi-variant recipes.
 
-Same-day uniqueness, immediate generation warning fallback, and minimal catalogue readiness are no longer open parts of TD-012.
+Same-day uniqueness, immediate generation warning fallback, minimum catalogue readiness, and required role/meal-type selection are no longer open parts of TD-012.
 
 ### TD-013 — Equipment domain completion
 

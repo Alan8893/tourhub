@@ -1,15 +1,26 @@
 from app.engines.meal_plan_generator import (
     DishInput,
+    DishRoleInput,
     MealPlanGenerator,
 )
 
 
+def classified_dish(dish_id: str, name: str) -> DishInput:
+    return DishInput(
+        id=dish_id,
+        name=name,
+        meal_roles=(
+            DishRoleInput(
+                role="main",
+                allowed_meal_types=frozenset(("breakfast", "lunch", "dinner")),
+            ),
+        ),
+    )
+
 
 def test_generator_creates_single_dish_slot():
     result = MealPlanGenerator().generate(
-        dishes=[
-            DishInput(id="1", name="Porridge"),
-        ],
+        dishes=[classified_dish("1", "Porridge")],
         days=1,
         meals_per_day=["breakfast"],
     )
@@ -19,12 +30,11 @@ def test_generator_creates_single_dish_slot():
     assert len(result.slots[0].dishes) == 1
 
 
-
 def test_generator_creates_slot_with_multiple_dishes():
     result = MealPlanGenerator().generate(
         dishes=[
-            DishInput(id="1", name="Porridge"),
-            DishInput(id="2", name="Tea"),
+            classified_dish("1", "Porridge"),
+            classified_dish("2", "Tea"),
         ],
         days=1,
         meals_per_day=["breakfast"],
@@ -35,12 +45,9 @@ def test_generator_creates_slot_with_multiple_dishes():
     assert len(result.slots[0].dishes) == 2
 
 
-
 def test_generator_keeps_legacy_items():
     result = MealPlanGenerator().generate(
-        dishes=[
-            DishInput(id="1", name="Soup"),
-        ],
+        dishes=[classified_dish("1", "Soup")],
         days=1,
         meals_per_day=["lunch"],
     )

@@ -1,10 +1,10 @@
 # TourHub Project Status
 
-Status date: 2026-07-15
+Status date: 2026-07-16
 
 ## Current phase
 
-TH-0061.5 — persisted Dish roles and meal-type compatibility are implemented on PR #59, the Russian catalogue editor is implemented on PR #60, and deterministic catalogue readiness with visible Russian warnings is implemented on stacked PR #61. Role-aware generation remains deferred until the active deployment catalogue is classified and the selection policy is connected to this metadata.
+TH-0061.5 — persisted Dish classification, the Russian catalogue editor, deterministic readiness warnings, and required role-aware generation are implemented through PRs #59–#63. Automatic generation now uses both Dish role and compatible meal type. The active deployment catalogue still requires explicit classification, while optional additions/drinks, calendar-day diversity, and manual-choice preservation remain later slices.
 
 ## Verified baseline
 
@@ -12,10 +12,10 @@ TH-0061.5 — persisted Dish roles and meal-type compatibility are implemented o
 - Remote-browser same-origin API routing was repaired through PR #56.
 - TH-0065 Meal Plan Editor UX was completed through PR #55 and PR #57.
 - Quality run #169 verified real-browser MealSlot mutations and responsive 1280, 768, and 360 px layouts before PR #57 merge.
-- Alembic has one head: `h10001` on PR #59.
-- Quality run #197 verifies the persisted role/meal-type backend contract on PR #59.
-- Quality run #206 verifies the stacked role editor and responsive browser acceptance on PR #60.
-- Quality run #225 verifies the initial catalogue-readiness API, frontend warnings, and browser refresh flow on PR #61.
+- Alembic has one head: `h10001`.
+- PRs #59, #60, and #61 merged persisted classification, its editor, and catalogue readiness into `main`.
+- PR #62 repaired the real mobile navigation drawer reported from the LAN deployment.
+- Quality run #240 verifies required role- and meal-type-aware generation on PR #63.
 - Backend tests, selected Ruff and strict mypy baselines, frontend tests/build/audit/browser acceptance, and PostgreSQL backup/restore are enforced in GitHub Actions.
 - Docker Compose, automatic migrations, project creation, menu generation, preparation, and export foundations were verified during stabilization.
 - Recipe library, dish catalogue, project catalogue, CSV import, and purchasing recalculation are present in `main`.
@@ -72,15 +72,20 @@ Implemented:
 - Russian catalogue editor for roles, meal types, and repeatability;
 - deterministic minimum catalogue-readiness evaluation;
 - required `main` pools for breakfast/lunch/dinner and required `snack` pool for snack;
-- optional addition/drink recommendations;
-- visible Russian readiness warnings refreshed after role edits.
+- optional addition/drink readiness recommendations;
+- visible Russian readiness warnings refreshed after role edits;
+- automatic selection filtered by both persisted role and current meal type;
+- one compatible `main` generated for breakfast, lunch, and dinner;
+- one compatible `snack` generated for the snack slot;
+- unclassified and archived-recipe Dishes excluded from automatic selection;
+- missing required pools persisted as empty MealSlots with explicit warnings;
+- per-role `is_repeatable` respected during same-day required-role selection.
 
 Needs later completion:
 
 - explicit classification of the active deployment catalogue;
-- role- and meal-type-aware generation;
+- optional `addition` and `drink` composition inside generated MealSlots;
 - larger candidate thresholds for diversity;
-- repeatable drink/addition behavior in generation;
 - calendar-day three-day main-dish diversity;
 - manual-selection preservation during regeneration;
 - generation-warning persistence or deterministic reconstruction for later GET responses.
@@ -96,7 +101,7 @@ Implemented:
 - persisted multi-role classification and per-role meal compatibility backend/API;
 - Russian role/meal-type management UI with responsive browser coverage;
 - active/classified/unclassified Dish readiness counts;
-- exclusion of archived-recipe dishes from readiness candidates;
+- exclusion of archived-recipe dishes from readiness and generation candidates;
 - recipe library and editor;
 - RecipeComponent CRUD and quantity modes;
 - product reading and creation;
@@ -148,6 +153,7 @@ Enforced:
 - Meal Plan Editor real-browser acceptance;
 - Dish role/meal-compatibility real-browser acceptance;
 - Dish catalogue-readiness real-browser acceptance;
+- responsive application-navigation real-browser acceptance;
 - desktop, tablet, and 360 px screenshot artifacts;
 - PostgreSQL backup/restore smoke test.
 
@@ -169,7 +175,7 @@ Verified on PR #60 Quality run #206:
 - lunch-only main classification and repeatable drink classification;
 - no horizontal overflow at 1280, 768, and 360 px.
 
-Verified on PR #61 Quality run #225:
+Verified on PR #61 Quality run #234 after retargeting to `main`:
 
 - stable readiness coverage order and thresholds;
 - optional coverage does not block readiness;
@@ -177,7 +183,19 @@ Verified on PR #61 Quality run #225:
 - Russian required/recommended warning presentation;
 - readiness refresh after classification mutation;
 - desktop and 360 px no-overflow screenshots;
-- the new readiness service is included in Ruff and strict mypy gates.
+- the readiness service is included in Ruff and strict mypy gates.
+
+Verified on PR #63 Quality run #240:
+
+- breakfast-only porridge cannot be selected for lunch or dinner;
+- lunch/dinner-only borscht cannot be selected for breakfast;
+- snack slots use only `snack` assignments;
+- unclassified and archived-recipe Dishes are excluded;
+- missing required pools create empty persisted MealSlots and warnings;
+- repeatable assignments may be reused without an insufficient-catalogue warning;
+- non-repeatable pool exhaustion remains deterministic and warns;
+- MealSlotDish relation IDs remain distinct from Dish IDs;
+- all existing frontend/browser, Alembic, and PostgreSQL gates remain green.
 
 Open quality debt:
 
@@ -195,10 +213,10 @@ Open quality debt:
 
 ## Immediate sequence
 
-1. Merge PR #59.
-2. Retarget PR #60 to `main`, rerun Quality, and merge it.
-3. Retarget PR #61 to `main`, rerun Quality, and merge it.
-4. Classify the active deployment catalogue explicitly using roles and meal types.
-5. Implement role-aware composition and calendar-day diversity.
+1. Merge PR #63 after review.
+2. Classify the active deployment catalogue explicitly using roles and meal types.
+3. Add optional repeatable `addition` and `drink` composition.
+4. Implement calendar-day three-day main-dish diversity.
+5. Preserve manual selections during regeneration and reconstruct warnings on later reads.
 6. Complete packaging, equipment, exports, and release acceptance.
 7. Introduce invitation-only access and roles.
