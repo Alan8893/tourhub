@@ -24,6 +24,7 @@ export default function PurchaseResponsiblePersonEditor({
   const [feedback, setFeedback] = useState<string>();
   const updateMutation = useUpdatePurchaseList(projectId);
   const isValid = isResponsiblePersonValid(value);
+  const hasChanges = normalizeResponsiblePerson(value) !== responsiblePerson;
 
   useEffect(() => {
     setValue(responsiblePerson ?? "");
@@ -55,7 +56,7 @@ export default function PurchaseResponsiblePersonEditor({
     <Stack component="form" spacing={1} onSubmit={handleSubmit}>
       <Typography variant="subtitle2">Ответственный за закупку</Typography>
       <TextField
-        label="Имя или контакт"
+        label="Имя"
         value={value}
         onChange={(event) => {
           setValue(event.target.value);
@@ -79,7 +80,7 @@ export default function PurchaseResponsiblePersonEditor({
         <Button
           type="submit"
           variant="contained"
-          disabled={!isValid || updateMutation.isPending}
+          disabled={!isValid || !hasChanges || updateMutation.isPending}
         >
           Сохранить
         </Button>
