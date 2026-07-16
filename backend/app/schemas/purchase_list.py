@@ -12,11 +12,14 @@ class PurchaseListItemResponse(BaseModel):
 
     id: UUID
     product_id: UUID
+    product_name: str
     required_quantity: float
     required_unit: str
     package_size: float
     package_unit: str
     packages_count: int
+    purchase_quantity: float
+    surplus_quantity: float
 
 
 class PurchaseListResponse(BaseModel):

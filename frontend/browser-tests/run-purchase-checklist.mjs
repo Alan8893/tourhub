@@ -50,7 +50,7 @@ function findChromeExecutable() {
 
 function startMockApi() {
   const requests = [];
-  const item = {
+  const checklistItem = {
     id: "40000000-0000-0000-0000-000000000003",
     product_id: "40000000-0000-0000-0000-000000000004",
     product_name: "Гречка",
@@ -59,6 +59,18 @@ function startMockApi() {
     remaining_quantity: 400,
     unit: "gram",
     is_checked: false,
+  };
+  const purchaseListItem = {
+    id: "50000000-0000-0000-0000-000000000003",
+    product_id: "50000000-0000-0000-0000-000000000004",
+    product_name: "Рис",
+    required_quantity: 1000,
+    required_unit: "gram",
+    package_size: 400,
+    package_unit: "gram",
+    packages_count: 3,
+    purchase_quantity: 1200,
+    surplus_quantity: 200,
   };
 
   const server = createServer((request, response) => {
@@ -76,34 +88,48 @@ function startMockApi() {
 
       if (
         request.method === "GET" &&
+        url.pathname === "/api/v1/purchase-lists/project/71"
+      ) {
+        sendJson(200, {
+          id: "50000000-0000-0000-0000-000000000002",
+          project_id: 71,
+          meal_plan_id: "50000000-0000-0000-0000-000000000001",
+          status: "prepared",
+          items: [purchaseListItem],
+        });
+        return;
+      }
+
+      if (
+        request.method === "GET" &&
         url.pathname === "/api/v1/purchase-checklists/project/71"
       ) {
         sendJson(200, {
           id: "40000000-0000-0000-0000-000000000002",
           project_id: 71,
           meal_plan_id: "40000000-0000-0000-0000-000000000001",
-          status: item.is_checked ? "completed" : "draft",
-          items: [item],
+          status: checklistItem.is_checked ? "completed" : "draft",
+          items: [checklistItem],
         });
         return;
       }
 
       if (
         request.method === "PATCH" &&
-        url.pathname === `/api/v1/purchase-checklists/items/${item.id}`
+        url.pathname === `/api/v1/purchase-checklists/items/${checklistItem.id}`
       ) {
         const payload = body ? JSON.parse(body) : {};
         if (typeof payload.purchased_quantity === "number") {
-          item.purchased_quantity = payload.purchased_quantity;
-          item.remaining_quantity = Math.max(
-            item.required_quantity - item.purchased_quantity,
+          checklistItem.purchased_quantity = payload.purchased_quantity;
+          checklistItem.remaining_quantity = Math.max(
+            checklistItem.required_quantity - checklistItem.purchased_quantity,
             0,
           );
         }
         if (typeof payload.is_checked === "boolean") {
-          item.is_checked = payload.is_checked;
+          checklistItem.is_checked = payload.is_checked;
         }
-        sendJson(200, item);
+        sendJson(200, checklistItem);
         return;
       }
 
@@ -290,8 +316,18 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body.innerText.includes("Гречка") && document.body.innerText.includes("Осталось: 400 gram")`,
-      "initial purchase checklist",
+      `document.body.innerText.includes("Гречка") &&
+       document.body.innerText.includes("Осталось: 400 gram") &&
+       document.body.innerText.includes("Фасовка и объём закупки") &&
+       document.body.innerText.includes("Купить: 1 200 г") &&
+       document.body.innerText.includes("Излишек 200 г")`,
+      "initial purchase checklist and package review",
+    );
+
+    await waitForRequest(
+      mockApi.requests,
+      (request) => request.method === "GET" && request.path === "/api/v1/purchase-lists/project/71",
+      "project purchase-list GET",
     );
 
     await setInputValue(client, "Куплено для Гречка", "600");
@@ -322,7 +358,7 @@ async function run() {
 
     await client.send("Emulation.setDeviceMetricsOverride", {
       width: 360,
-      height: 800,
+      height: 900,
       deviceScaleFactor: 1,
       mobile: true,
     });
@@ -342,12 +378,12 @@ async function run() {
       captureBeyondViewport: false,
     });
     await writeFile(
-      path.join(artifactDir, "purchase-checklist-mobile.png"),
+      path.join(artifactDir, "purchase-workflow-mobile.png"),
       Buffer.from(screenshot.data, "base64"),
     );
 
     client.close();
-    console.log("Purchase checklist browser acceptance passed.");
+    console.log("Purchase checklist and package review browser acceptance passed.");
   } finally {
     await cleanup();
   }
