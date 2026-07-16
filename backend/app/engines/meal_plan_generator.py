@@ -29,6 +29,13 @@ class DishInput:
 
 
 @dataclass(frozen=True)
+class PreservedMealSlotInput:
+    day_number: int
+    meal_type: str
+    dishes: list[DishInput]
+
+
+@dataclass(frozen=True)
 class MealPlanItemResult:
     day_number: int
     meal_type: str
@@ -41,6 +48,7 @@ class MealSlotResult:
     day_number: int
     meal_type: str
     dishes: list[DishInput]
+    is_manually_edited: bool = False
 
 
 @dataclass(frozen=True)
@@ -59,13 +67,14 @@ class MealPlanGenerator:
         schedule: Sequence[MealScheduleDayInput] | None = None,
         dishes_per_meal: int = 1,
         role_aware: bool = False,
+        preserved_slots: Sequence[PreservedMealSlotInput] | None = None,
     ) -> MealPlanGenerationResult:
         if dishes_per_meal < 1:
             raise ValueError("dishes_per_meal must be greater than zero")
 
         meal_sequence = self._meal_sequence(days, meals_per_day, schedule)
         if role_aware:
-            return self._generate_role_aware(dishes, meal_sequence)
+            return self._generate_role_aware(dishes, meal_sequence, preserved_slots)
         if not dishes:
             return MealPlanGenerationResult(items=[], slots=[], warnings=["No dishes available"])
         return self._generate_legacy(dishes, meal_sequence, dishes_per_meal)
@@ -84,10 +93,23 @@ class MealPlanGenerator:
             for meal_type in (meals_per_day or [])
         ]
 
+    @staticmethod
+    def _preserved_slot_map(
+        preserved_slots: Sequence[PreservedMealSlotInput] | None,
+    ) -> dict[tuple[int, str], PreservedMealSlotInput]:
+        result: dict[tuple[int, str], PreservedMealSlotInput] = {}
+        for slot in preserved_slots or ():
+            key = (slot.day_number, slot.meal_type)
+            if key in result:
+                raise ValueError("preserved meal slots must be unique by day and meal type")
+            result[key] = slot
+        return result
+
     def _generate_role_aware(
         self,
         dishes: list[DishInput],
         meal_sequence: list[tuple[int, str]],
+        preserved_slots: Sequence[PreservedMealSlotInput] | None,
     ) -> MealPlanGenerationResult:
         warnings: list[str] = []
         warned_missing: set[tuple[str, str, str]] = set()
@@ -95,9 +117,26 @@ class MealPlanGenerator:
         slots: list[MealSlotResult] = []
         indexes: dict[tuple[str, str], int] = {}
         context = SelectionContext(used_for_day=set())
+        preserved_by_key = self._preserved_slot_map(preserved_slots)
 
         for day_number, meal_type in meal_sequence:
             context.begin_day(day_number)
+            preserved = preserved_by_key.get((day_number, meal_type))
+            if preserved is not None:
+                preserved_dishes = list(preserved.dishes)
+                slots.append(
+                    MealSlotResult(
+                        day_number=day_number,
+                        meal_type=meal_type,
+                        dishes=preserved_dishes,
+                        is_manually_edited=True,
+                    )
+                )
+                items.extend(
+                    MealPlanItemResult(day_number, meal_type, dish.id, dish.name)
+                    for dish in preserved_dishes
+                )
+                continue
 
             composition = (("snack", True),) if meal_type == "snack" else (
                 ("main", True),
