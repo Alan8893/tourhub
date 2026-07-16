@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 
 from reportlab.lib import colors
@@ -68,6 +68,6 @@ class EquipmentPDFDocumentGenerator(PDFDocumentGenerator):
         return GeneratedDocument(
             filename="equipment_list.pdf",
             content_type="application/pdf",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             content=buffer.getvalue(),
         )
