@@ -13,6 +13,7 @@ const frontendPort = 5180;
 const apiPort = 18082;
 const debuggingPort = 9232;
 const baseUrl = `http://127.0.0.1:${frontendPort}`;
+const pageUrl = `${baseUrl}/browser-tests/documents.html`;
 const chromeProfileDir = path.join("/tmp", "tourhub-documents-profile");
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
@@ -30,6 +31,21 @@ async function waitForHttp(url, timeoutMs = 30_000) {
     await sleep(250);
   }
   throw lastError ?? new Error(`Timed out waiting for ${url}`);
+}
+
+async function waitForPageTarget(timeoutMs = 15_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const targets = await fetch(`http://127.0.0.1:${debuggingPort}/json/list`).then(
+      (response) => response.json(),
+    );
+    const target = targets.find(
+      (candidate) => candidate.type === "page" && candidate.url.includes("documents.html"),
+    );
+    if (target?.webSocketDebuggerUrl) return target;
+    await sleep(100);
+  }
+  throw new Error("Chrome documents page target was not found");
 }
 
 function findChromeExecutable() {
@@ -131,7 +147,11 @@ class CdpClient {
       returnByValue: true,
     });
     if (result.exceptionDetails) {
-      throw new Error(result.exceptionDetails.text ?? "Browser evaluation failed");
+      throw new Error(
+        result.exceptionDetails.exception?.description ??
+          result.exceptionDetails.text ??
+          "Browser evaluation failed",
+      );
     }
     return result.result?.value;
   }
@@ -141,24 +161,41 @@ class CdpClient {
   }
 }
 
-async function waitForExpression(client, expression, description, timeoutMs = 10_000) {
+async function waitForExpression(client, expression, description, timeoutMs = 15_000) {
   const deadline = Date.now() + timeoutMs;
+  let lastError;
   while (Date.now() < deadline) {
-    if (await client.evaluate(`Boolean(${expression})`)) return;
+    try {
+      if (await client.evaluate(`Boolean(${expression})`)) return;
+    } catch (error) {
+      lastError = error;
+    }
     await sleep(100);
   }
-  throw new Error(`Timed out waiting for ${description}`);
+  const snapshot = await client.evaluate(`(() => ({
+    href: location.href,
+    title: document.title,
+    text: document.body?.innerText ?? "",
+    root: document.getElementById("root")?.innerHTML ?? "",
+  }))()`);
+  throw new Error(
+    `Timed out waiting for ${description}. ${lastError ?? ""} Snapshot: ${JSON.stringify(snapshot)}`,
+  );
 }
 
-async function waitForRequest(requests, pathName, timeoutMs = 5_000) {
+async function waitForRequest(requests, requestPath, timeoutMs = 5_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    if (requests.some((request) => request.method === "GET" && request.path === pathName)) {
+    if (
+      requests.some(
+        (request) => request.method === "GET" && request.path === requestPath,
+      )
+    ) {
       return;
     }
     await sleep(50);
   }
-  assert.fail(`Request not observed: ${pathName}`);
+  assert.fail(`Request not observed: ${requestPath}`);
 }
 
 async function clickButton(client, label) {
@@ -181,6 +218,15 @@ async function clickButton(client, label) {
     return true;
   })()`);
   assert.equal(clicked, true, `Could not click ${label}`);
+}
+
+async function stopProcess(child) {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  child.kill("SIGKILL");
+  await Promise.race([
+    new Promise((resolve) => child.once("exit", resolve)),
+    sleep(2_000),
+  ]);
 }
 
 async function run() {
@@ -206,6 +252,7 @@ async function run() {
     },
   );
 
+  await waitForHttp(pageUrl);
   const chrome = spawn(
     findChromeExecutable(),
     [
@@ -215,43 +262,33 @@ async function run() {
       "--disable-gpu",
       `--remote-debugging-port=${debuggingPort}`,
       `--user-data-dir=${chromeProfileDir}`,
-      "about:blank",
+      pageUrl,
     ],
     { stdio: "ignore" },
   );
 
   const cleanup = async () => {
-    chrome.kill("SIGKILL");
-    vite.kill("SIGKILL");
+    await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await mockApi.close();
     await rm(chromeProfileDir, { recursive: true, force: true });
   };
 
   try {
-    await waitForHttp(`${baseUrl}/browser-tests/documents.html`);
     await waitForHttp(`http://127.0.0.1:${debuggingPort}/json/version`);
-    const targets = await fetch(`http://127.0.0.1:${debuggingPort}/json/list`).then(
-      (response) => response.json(),
-    );
-    const pageTarget = targets.find((target) => target.type === "page");
-    assert.ok(pageTarget?.webSocketDebuggerUrl, "Chrome page target was not found");
-
+    const pageTarget = await waitForPageTarget();
     const client = await CdpClient.connect(pageTarget.webSocketDebuggerUrl);
-    await client.send("Page.enable");
     await client.send("Runtime.enable");
+    await client.send("Page.enable");
     await client.send("Emulation.setDeviceMetricsOverride", {
       width: 1280,
       height: 900,
       deviceScaleFactor: 1,
       mobile: false,
     });
-    await client.send("Page.navigate", {
-      url: `${baseUrl}/browser-tests/documents.html`,
-    });
 
     await waitForExpression(
       client,
-      `document.body.innerText.includes("Русские документы закупки и оборудования готовы") &&
+      `document.body?.innerText?.includes("Русские документы закупки и оборудования готовы") &&
        document.body.innerText.includes("Закупка PDF") &&
        document.body.innerText.includes("Закупка Excel") &&
        document.body.innerText.includes("Оборудование PDF") &&
