@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.modules.api import equipment_list_router, recipe_equipment_router
 from app.modules.api.catalog_import_router import router as catalog_import_router
 from app.modules.api.dish_router import router as dish_router
 from app.modules.api.meal_plan_router import router as meal_plan_router
@@ -17,6 +18,7 @@ router = APIRouter(prefix="/api/v1")
 
 router.include_router(catalog_import_router)
 router.include_router(dish_router)
+router.include_router(equipment_list_router.router)
 router.include_router(meal_plan_router)
 router.include_router(meal_slot_router)
 router.include_router(meta_router)
@@ -26,6 +28,7 @@ router.include_router(purchase_list_router)
 router.include_router(purchase_dashboard_router)
 router.include_router(project_router)
 router.include_router(recipe_router)
+router.include_router(recipe_equipment_router.router)
 router.include_router(recipe_note_router)
 
 

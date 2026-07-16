@@ -45,6 +45,7 @@ export default function NextWorkflowAction() {
                       meal_plan_id: result.id,
                       purchase_list_id: "",
                       purchase_checklist_id: "",
+                      equipment_list_id: "",
                     }),
                 })
               }

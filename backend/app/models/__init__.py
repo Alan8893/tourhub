@@ -5,6 +5,7 @@ from app.models.ingredient import IngredientORM
 from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_component_type import RecipeComponentType
+from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
 from app.models.dish import DishORM
 from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
 from app.models.meal_plan import MealPlanORM
@@ -16,6 +17,8 @@ from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
 from app.models.purchase_list import PurchaseListORM
 from app.models.purchase_list_item import PurchaseListItemORM
+from app.models.equipment_list import EquipmentListORM
+from app.models.equipment_list_item import EquipmentListItemORM
 from app.modules.projects.models.project import ProjectORM
 
 
@@ -26,6 +29,7 @@ __all__ = [
     "RecipeORM",
     "RecipeComponentORM",
     "RecipeComponentType",
+    "RecipeEquipmentRequirementORM",
     "DishORM",
     "DishMealRoleORM",
     "DishMealRoleMealTypeORM",
@@ -38,5 +42,7 @@ __all__ = [
     "PurchaseChecklistItemORM",
     "PurchaseListORM",
     "PurchaseListItemORM",
+    "EquipmentListORM",
+    "EquipmentListItemORM",
     "ProjectORM",
 ]

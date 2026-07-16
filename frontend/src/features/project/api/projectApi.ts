@@ -11,9 +11,7 @@ export interface Project {
   status: string;
 }
 
-export interface ProjectListResponse {
-  items: Project[];
-}
+export interface ProjectListResponse { items: Project[]; }
 
 export interface CreateProjectRequest {
   name: string;
@@ -29,35 +27,27 @@ export interface ProjectPreparationResponse {
   meal_plan_id: string;
   purchase_list_id: string;
   purchase_checklist_id: string;
+  equipment_list_id: string;
 }
 
-export async function createProject(
-  data: CreateProjectRequest,
-): Promise<Project> {
-  const response = await apiClient.post<Project>("/projects", data);
-
-  return response.data;
+export async function createProject(data: CreateProjectRequest): Promise<Project> {
+  return (await apiClient.post<Project>("/projects", data)).data;
 }
 
 export async function getProjects(): Promise<ProjectListResponse> {
-  const response = await apiClient.get<ProjectListResponse>("/projects");
-  return response.data;
+  return (await apiClient.get<ProjectListResponse>("/projects")).data;
 }
 
 export async function getProject(projectId: number): Promise<Project> {
-  const response = await apiClient.get<Project>(
-    `/projects/${projectId}`,
-  );
-
-  return response.data;
+  return (await apiClient.get<Project>("/projects/" + projectId)).data;
 }
 
 export async function prepareProject(
   projectId: number,
 ): Promise<ProjectPreparationResponse> {
-  const response = await apiClient.post<ProjectPreparationResponse>(
-    `/projects/${projectId}/prepare`,
-  );
-
-  return response.data;
+  return (
+    await apiClient.post<ProjectPreparationResponse>(
+      "/projects/" + projectId + "/prepare",
+    )
+  ).data;
 }
