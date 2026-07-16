@@ -45,7 +45,7 @@ Remaining:
 
 Canonical status, roadmap, technical debt, and TH-0061 are synchronized through merged PR #72 and draft PR #73. ADR-013 remains authoritative for Dish role and meal-type ownership.
 
-### TD-024 — Legacy MealPlanSlot compatibility
+### TD-024 — Legacy MealPlanItem compatibility
 
 MealSlot is primary. MealPlanItem remains persisted for compatibility. Consumer audit and approved removal planning remain required.
 

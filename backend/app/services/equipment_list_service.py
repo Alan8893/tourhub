@@ -3,6 +3,7 @@ from uuid import uuid4
 from app.models.equipment_list import EquipmentListORM
 from app.models.equipment_list_item import EquipmentListItemORM
 from app.models.meal_plan import MealPlanORM
+from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 
@@ -30,7 +31,7 @@ class EquipmentListService:
 
         recipe_ids = self._recipe_ids(meal_plan)
         requirements = self.repository.list_requirements(recipe_ids)
-        by_recipe: dict[str, list[object]] = {}
+        by_recipe: dict[str, list[RecipeEquipmentRequirementORM]] = {}
         for requirement in requirements:
             by_recipe.setdefault(requirement.recipe_id, []).append(requirement)
 
