@@ -1,4 +1,5 @@
 from app.models.dish import DishORM
+from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
 from app.models.meal_plan import MealPlanORM
 from app.models.recipe import RecipeORM
 from app.modules.projects.models.project import ProjectORM
@@ -7,6 +8,32 @@ from app.modules.projects.models.project import ProjectORM
 MEAL_PLAN_ID = "ea557e05-d89b-4403-9822-5bc3a95c8f2c"
 DISH_ID = "550e8400-e29b-41d4-a716-446655440001"
 RECIPE_ID = "660e8400-e29b-41d4-a716-446655440001"
+
+
+def _classified_dish(
+    dish_id: str,
+    name: str,
+    role: str,
+    meal_types: tuple[str, ...],
+    *,
+    is_repeatable: bool = False,
+) -> tuple[RecipeORM, DishORM]:
+    recipe = RecipeORM(id=f"recipe-{dish_id}", name=f"{name} recipe")
+    dish = DishORM(id=dish_id, name=name, recipe=recipe)
+    assignment = DishMealRoleORM(
+        dish=dish,
+        role=role,
+        is_repeatable=is_repeatable,
+    )
+    assignment.meal_types = [
+        DishMealRoleMealTypeORM(
+            dish_id=dish_id,
+            role=role,
+            meal_type=meal_type,
+        )
+        for meal_type in meal_types
+    ]
+    return recipe, dish
 
 
 def test_get_project_meal_plan_endpoint(client, db_session):
@@ -78,3 +105,69 @@ def test_generate_project_meal_plan_exposes_catalogue_warning_and_relation_ids(
     assert all(meal["id"] for meal in data["meals"])
     assert all(meal["dishes"] == [] for meal in data["meals"])
     assert data["items"] == []
+
+
+def test_generate_project_meal_plan_uses_role_and_meal_type_compatibility(
+    client,
+    db_session,
+):
+    project = ProjectORM(
+        id=3,
+        name="Classified Catalogue",
+        participants=6,
+        days=1,
+        first_meal="breakfast",
+        last_meal="dinner",
+        status="draft",
+    )
+    classified = [
+        _classified_dish("oatmeal", "Овсяная каша", "main", ("breakfast",)),
+        _classified_dish("apple", "Яблоко", "snack", ("snack",)),
+        _classified_dish("borscht", "Борщ", "main", ("lunch",)),
+        _classified_dish("buckwheat", "Гречка с мясом", "main", ("dinner",)),
+        _classified_dish(
+            "bread",
+            "Хлеб",
+            "addition",
+            ("breakfast", "lunch", "dinner"),
+            is_repeatable=True,
+        ),
+        _classified_dish(
+            "tea",
+            "Чай",
+            "drink",
+            ("breakfast", "lunch", "dinner"),
+            is_repeatable=True,
+        ),
+    ]
+    db_session.add(project)
+    for recipe, dish in classified:
+        db_session.add_all([recipe, dish])
+    db_session.commit()
+
+    response = client.post("/api/v1/meal-plans/project/3/generate")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["warnings"] == []
+    assert {
+        meal["meal_type"]: [dish["id"] for dish in meal["dishes"]]
+        for meal in data["meals"]
+    } == {
+        "breakfast": ["oatmeal", "bread", "tea"],
+        "snack": ["apple"],
+        "lunch": ["borscht", "bread", "tea"],
+        "dinner": ["buckwheat", "bread", "tea"],
+    }
+    assert [item["dish_id"] for item in data["items"]] == [
+        "oatmeal",
+        "bread",
+        "tea",
+        "apple",
+        "borscht",
+        "bread",
+        "tea",
+        "buckwheat",
+        "bread",
+        "tea",
+    ]
