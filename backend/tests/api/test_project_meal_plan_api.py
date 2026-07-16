@@ -8,6 +8,9 @@ from app.modules.projects.models.project import ProjectORM
 MEAL_PLAN_ID = "ea557e05-d89b-4403-9822-5bc3a95c8f2c"
 DISH_ID = "550e8400-e29b-41d4-a716-446655440001"
 RECIPE_ID = "660e8400-e29b-41d4-a716-446655440001"
+OATMEAL_DISH_ID = "550e8400-e29b-41d4-a716-446655440002"
+SNACK_DISH_ID = "550e8400-e29b-41d4-a716-446655440003"
+BORSCHT_DISH_ID = "550e8400-e29b-41d4-a716-446655440004"
 
 
 def assign_role(
@@ -117,9 +120,9 @@ def test_generate_project_meal_plan_respects_role_and_meal_type_compatibility(
     oatmeal_recipe = RecipeORM(id="recipe-oatmeal", name="Oatmeal recipe")
     snack_recipe = RecipeORM(id="recipe-snack", name="Snack recipe")
     borscht_recipe = RecipeORM(id="recipe-borscht", name="Borscht recipe")
-    oatmeal = DishORM(id="dish-oatmeal", name="Oatmeal", recipe=oatmeal_recipe)
-    snack = DishORM(id="dish-snack", name="Trail snack", recipe=snack_recipe)
-    borscht = DishORM(id="dish-borscht", name="Borscht", recipe=borscht_recipe)
+    oatmeal = DishORM(id=OATMEAL_DISH_ID, name="Oatmeal", recipe=oatmeal_recipe)
+    snack = DishORM(id=SNACK_DISH_ID, name="Trail snack", recipe=snack_recipe)
+    borscht = DishORM(id=BORSCHT_DISH_ID, name="Borscht", recipe=borscht_recipe)
     assign_role(oatmeal, "main", ("breakfast",))
     assign_role(snack, "snack", ("snack",))
     assign_role(borscht, "main", ("lunch", "dinner"))
@@ -145,7 +148,7 @@ def test_generate_project_meal_plan_respects_role_and_meal_type_compatibility(
         (meal["meal_type"], [dish["id"] for dish in meal["dishes"]])
         for meal in data["meals"]
     ] == [
-        ("breakfast", ["dish-oatmeal"]),
-        ("snack", ["dish-snack"]),
-        ("lunch", ["dish-borscht"]),
+        ("breakfast", [OATMEAL_DISH_ID]),
+        ("snack", [SNACK_DISH_ID]),
+        ("lunch", [BORSCHT_DISH_ID]),
     ]
