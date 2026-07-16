@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from app.engines.meal_plan_generator import (
     DishInput,
+    DishRoleInput,
     MealPlanGenerationResult,
     MealPlanGenerator,
 )
@@ -29,15 +30,29 @@ class MealPlanService:
         self.generator = generator or MealPlanGenerator()
         self.schedule_engine = schedule_engine or MealScheduleEngine()
 
+    def _generation_dishes(self) -> list[DishInput]:
+        result: list[DishInput] = []
+        for dish in self.dish_repository.list():
+            recipe = getattr(dish, "recipe", None)
+            if recipe is not None and getattr(recipe, "is_archived", False):
+                continue
+            roles = tuple(
+                DishRoleInput(
+                    role=assignment.role,
+                    is_repeatable=assignment.is_repeatable,
+                    allowed_meal_types=tuple(item.meal_type for item in assignment.meal_types),
+                )
+                for assignment in getattr(dish, "meal_roles", [])
+            )
+            result.append(DishInput(id=dish.id, name=dish.name, meal_roles=roles))
+        return result
+
     def generate(self, days: int, meals_per_day: list[str]) -> MealPlanGenerationResult:
-        dishes = [
-            DishInput(id=dish.id, name=dish.name)
-            for dish in self.dish_repository.list()
-        ]
         return self.generator.generate(
-            dishes=dishes,
+            dishes=self._generation_dishes(),
             days=days,
             meals_per_day=meals_per_day,
+            role_aware=True,
         )
 
     def generate_and_save(
@@ -73,10 +88,7 @@ class MealPlanService:
         if self.meal_plan_repository is None:
             raise ValueError("MealPlanRepository is required")
 
-        dishes = [
-            DishInput(id=dish.id, name=dish.name)
-            for dish in self.dish_repository.list()
-        ]
+        dishes = self._generation_dishes()
         if start_meal and end_meal:
             schedule = self.schedule_engine.build(
                 days=days,
@@ -87,12 +99,14 @@ class MealPlanService:
                 dishes=dishes,
                 days=days,
                 schedule=schedule,
+                role_aware=True,
             )
         else:
             result = self.generator.generate(
                 dishes=dishes,
                 days=days,
                 meals_per_day=meals_per_day,
+                role_aware=True,
             )
 
         meal_plan = MealPlanORM(

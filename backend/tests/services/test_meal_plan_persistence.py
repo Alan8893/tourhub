@@ -1,17 +1,38 @@
-from app.models.dish import DishORM
+from types import SimpleNamespace
+
 from app.services.meal_plan_service import MealPlanService
 
 
+def _assignment(role: str, *meal_types: str, is_repeatable: bool = False):
+    return SimpleNamespace(
+        role=role,
+        is_repeatable=is_repeatable,
+        meal_types=[SimpleNamespace(meal_type=meal_type) for meal_type in meal_types],
+    )
+
+
+def _dish(
+    dish_id: str,
+    name: str,
+    *assignments,
+):
+    return SimpleNamespace(
+        id=dish_id,
+        name=name,
+        recipe=SimpleNamespace(is_archived=False),
+        meal_roles=list(assignments),
+    )
+
+
 class FakeDishRepository:
-    def __init__(self, dish_count: int = 2):
-        self.dish_count = dish_count
+    def __init__(self, dishes=None):
+        self.dishes = dishes or [
+            _dish("dish-1", "Овсяная каша", _assignment("main", "breakfast")),
+            _dish("dish-2", "Борщ", _assignment("main", "dinner")),
+        ]
 
     def list(self):
-        dishes = [
-            DishORM(id="dish-1", name="Pilaf", recipe_id="recipe-1"),
-            DishORM(id="dish-2", name="Soup", recipe_id="recipe-2"),
-        ]
-        return dishes[: self.dish_count]
+        return self.dishes
 
 
 class FakeMealPlanRepository:
@@ -76,7 +97,15 @@ def test_generate_and_save_meal_plan():
 def test_generate_and_save_result_preserves_generator_warnings():
     repository = FakeMealPlanRepository()
     service = MealPlanService(
-        dish_repository=FakeDishRepository(dish_count=1),
+        dish_repository=FakeDishRepository(
+            dishes=[
+                _dish(
+                    "dish-1",
+                    "Овсяная каша",
+                    _assignment("main", "breakfast"),
+                ),
+            ]
+        ),
         meal_plan_repository=repository,
     )
 
@@ -88,4 +117,50 @@ def test_generate_and_save_result_preserves_generator_warnings():
     )
 
     assert saved.meal_plan.name == "Short catalogue"
-    assert saved.warnings == ["Dish database is insufficient"]
+    assert saved.warnings == ["No main dishes available for dinner"]
+
+
+def test_generate_and_save_preserves_composition_order():
+    repository = FakeMealPlanRepository()
+    service = MealPlanService(
+        dish_repository=FakeDishRepository(
+            dishes=[
+                _dish(
+                    "main",
+                    "Овсяная каша",
+                    _assignment("main", "breakfast"),
+                ),
+                _dish(
+                    "addition",
+                    "Бутерброд",
+                    _assignment("addition", "breakfast"),
+                ),
+                _dish(
+                    "drink",
+                    "Чай",
+                    _assignment("drink", "breakfast"),
+                ),
+            ]
+        ),
+        meal_plan_repository=repository,
+    )
+
+    saved = service.generate_and_save_result(
+        name="Breakfast composition",
+        participants=4,
+        days=1,
+        meals_per_day=["breakfast"],
+    )
+
+    assert saved.warnings == []
+    assert [item.dish_id for item in repository.items] == [
+        "main",
+        "addition",
+        "drink",
+    ]
+    assert [slot_dish.dish_id for slot_dish in repository.slot_dishes] == [
+        "main",
+        "addition",
+        "drink",
+    ]
+    assert [slot_dish.order for slot_dish in repository.slot_dishes] == [0, 1, 2]
