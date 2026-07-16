@@ -5,6 +5,7 @@ import { useProjectWorkflow } from "@/features/project-workflow";
 
 import {
   downloadDocumentPackage,
+  downloadEquipmentDocument,
   downloadPurchaseDocument,
 } from "../api/documentsApi";
 
@@ -29,7 +30,8 @@ export default function DocumentsWidget() {
   const ready = Boolean(
     projectId &&
       preparationResult?.purchase_list_id &&
-      preparationResult.purchase_checklist_id,
+      preparationResult.purchase_checklist_id &&
+      preparationResult.equipment_list_id,
   );
 
   async function runDownload(action: () => Promise<Blob>, filename: string) {
@@ -46,18 +48,24 @@ export default function DocumentsWidget() {
     }
   }
 
-  async function handleDownload(format: "pdf" | "excel") {
+  async function handlePurchaseDownload(format: "pdf" | "excel") {
     if (!projectId) return;
-
     await runDownload(
       () => downloadPurchaseDocument(projectId, format),
       format === "pdf" ? "закупка.pdf" : "закупка.xlsx",
     );
   }
 
+  async function handleEquipmentDownload(format: "pdf" | "excel") {
+    if (!projectId) return;
+    await runDownload(
+      () => downloadEquipmentDocument(projectId, format),
+      format === "pdf" ? "оборудование.pdf" : "оборудование.xlsx",
+    );
+  }
+
   async function handlePackageDownload() {
     if (!projectId) return;
-
     await runDownload(
       () => downloadDocumentPackage(projectId),
       "документы-похода.zip",
@@ -72,22 +80,56 @@ export default function DocumentsWidget() {
 
           <Typography>
             {ready
-              ? "Документы готовы к формированию и скачиванию."
-              : "Сначала рассчитайте закупку и создайте чек-лист."}
+              ? "Русские документы закупки и оборудования готовы к скачиванию."
+              : "Сначала подготовьте закупку, чек-лист и список оборудования."}
           </Typography>
 
           {error && <Alert severity="error">{error}</Alert>}
 
           {ready && (
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-              <Button disabled={isDownloading} onClick={() => handleDownload("pdf")}>
-                Скачать PDF
-              </Button>
-              <Button disabled={isDownloading} onClick={() => handleDownload("excel")}>
-                Скачать Excel
-              </Button>
-              <Button disabled={isDownloading} onClick={handlePackageDownload}>
-                Скачать пакет
+            <Stack spacing={1.5}>
+              <Stack spacing={0.75}>
+                <Typography variant="subtitle2">Закупка</Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <Button
+                    disabled={isDownloading}
+                    onClick={() => handlePurchaseDownload("pdf")}
+                  >
+                    Закупка PDF
+                  </Button>
+                  <Button
+                    disabled={isDownloading}
+                    onClick={() => handlePurchaseDownload("excel")}
+                  >
+                    Закупка Excel
+                  </Button>
+                </Stack>
+              </Stack>
+
+              <Stack spacing={0.75}>
+                <Typography variant="subtitle2">Оборудование</Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <Button
+                    disabled={isDownloading}
+                    onClick={() => handleEquipmentDownload("pdf")}
+                  >
+                    Оборудование PDF
+                  </Button>
+                  <Button
+                    disabled={isDownloading}
+                    onClick={() => handleEquipmentDownload("excel")}
+                  >
+                    Оборудование Excel
+                  </Button>
+                </Stack>
+              </Stack>
+
+              <Button
+                variant="contained"
+                disabled={isDownloading}
+                onClick={handlePackageDownload}
+              >
+                Скачать полный пакет
               </Button>
             </Stack>
           )}
