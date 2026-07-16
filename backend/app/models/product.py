@@ -48,3 +48,8 @@ class ProductORM(Base):
         "PurchaseListItemORM",
         back_populates="product",
     )
+
+    purchase_checklist_items = relationship(
+        "PurchaseChecklistItemORM",
+        back_populates="product",
+    )

@@ -1,13 +1,13 @@
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.workflows.purchase_checklist import PurchaseChecklistStatus
 
 
 class PurchaseChecklistItemUpdate(BaseModel):
     is_checked: bool | None = None
-    purchased_quantity: float | None = None
+    purchased_quantity: float | None = Field(default=None, ge=0)
 
 
 class PurchaseChecklistItemResponse(BaseModel):
@@ -17,8 +17,10 @@ class PurchaseChecklistItemResponse(BaseModel):
 
     id: UUID
     product_id: UUID
+    product_name: str
     required_quantity: float
     purchased_quantity: float
+    remaining_quantity: float
     unit: str
     is_checked: bool
 

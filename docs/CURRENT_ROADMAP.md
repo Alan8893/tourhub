@@ -54,29 +54,17 @@ Project
 - Russian role/meal-type editor;
 - deterministic catalogue-readiness API and warnings.
 
-### Menu foundation and editor
+### Menu and TH-0061.5 rules
+
+Merged through PR #59, #60, #61, #64, #65, #66, #67, and #69:
 
 - persisted MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
-- first/last meal schedule and one-day handling;
-- domain order `breakfast`, `snack`, `lunch`, `dinner`;
-- multiple dishes per MealSlot;
-- backend add, replace, and remove operations;
-- correct MealSlotDish relation identifiers in API and frontend mutations;
-- compact Russian editor, explicit actions, confirmations, loading/error/success states;
-- responsive desktop, tablet, and mobile layouts;
-- transactional purchasing recalculation after MealSlot changes.
-
-### TH-0061.5 delivered menu rules
-
-Merged through PR #59, #60, #61, #64, #65, #66, and #67:
-
+- first/last meal scheduling and multiple dishes per slot;
+- compact responsive Russian editor;
 - persisted roles `main`, `addition`, `drink`, and `snack`;
 - compatibility per `(dish, role, meal_type)`;
 - no inference from names, recipes, ingredients, history, or manual placement;
-- readiness minimums for breakfast, snack, lunch, and dinner;
-- role-aware project meal-plan generation;
-- required `main` for breakfast/lunch/dinner and required `snack` for snack;
-- optional compatible `addition` and `drink`;
+- role-aware generation with required and optional composition roles;
 - stable `main → addition → drink` order;
 - same-day uniqueness and repeatability per role assignment;
 - trip-calendar-day three-day diversity for non-repeatable `main` dishes;
@@ -86,15 +74,19 @@ Merged through PR #59, #60, #61, #64, #65, #66, and #67:
 - persisted manual-slot marker through Alembic revision `h10002`;
 - authoritative preservation of non-empty and empty manual slots during regeneration;
 - reuse of one MealPlan per project;
-- API, engine, service, persistence, migration, and real ORM integration coverage.
+- ordered generation-warning snapshot through Alembic revision `h10003`;
+- identical warnings on generation and later reads;
+- atomic warning replacement and clearing on regeneration;
+- transactional purchasing recalculation after MealSlot changes.
 
-Quality #271 passed before PR #66 merge and Quality #273 passed before PR #67 merge.
+Quality #271 passed before PR #66 merge, Quality #273 before PR #67 merge, and Quality #280 before PR #69 merge.
 
-### Shopping and documents
+### Shopping and documents foundation
 
 - ingredient aggregation;
 - package-rounding foundation;
-- purchase list and checklist;
+- purchase list and purchase checklist persistence;
+- purchased quantity and checked-state persistence;
 - transactional refresh and checklist-state preservation;
 - PDF/Excel/package export foundations.
 
@@ -102,32 +94,28 @@ Quality #271 passed before PR #66 merge and Quality #273 passed before PR #67 me
 
 ### TH-0061 — Guided project preparation
 
-- complete the guided Russian preparation workflow;
-- connect menu, purchasing, packaging, equipment, and export steps;
-- verify the complete single-club preparation journey.
+Draft PR #70 implements the first shopping-review slice:
 
-### TH-0061.5 — Generation warning lifecycle
+- product names in checklist responses;
+- required, purchased, and remaining quantity presentation;
+- non-negative remaining calculation and purchased-quantity validation;
+- editable Russian purchase checklist in the project workspace;
+- completion progress and explicit loading/error/success states;
+- responsive controls and 360 px no-overflow browser acceptance;
+- backend API and frontend state regression coverage.
 
-Draft PR #69 implements the final currently approved rules-engine slice:
-
-- Alembic revision `h10003` adds an ordered warning snapshot to MealPlan;
-- POST generation persists the warnings from that exact generation;
-- subsequent GET responses return the persisted snapshot;
-- catalogue changes do not rewrite historical warnings without regeneration;
-- regeneration replaces the snapshot atomically, including clearing it to `[]`;
-- public API regression coverage verifies the complete lifecycle.
-
-Remaining operational work after PR #69:
-
-1. maintain and complete explicit classification of the active deployment catalogue;
-2. define larger candidate thresholds or preference modes only after approved requirements.
+The slice intentionally keeps shopping aggregation and package-rounding calculations unchanged.
 
 ## NEXT
 
-### Shopping and equipment
+### Shopping and packaging
 
-- complete required/purchased/remainder presentation;
-- optional responsible-person text;
+- complete package-count and package-surplus review presentation;
+- add optional responsible-person text;
+- connect shopping review to the complete guided preparation sequence.
+
+### Equipment
+
 - persist recipe equipment requirements;
 - aggregate maximum simultaneous equipment need;
 - support manual equipment overrides;

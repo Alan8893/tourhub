@@ -20,9 +20,9 @@ The audited snapshot contained 74 strict mypy errors. Selected workflow modules,
 
 ### TD-007 — Frontend and browser automated tests
 
-Current coverage includes pure state, command, validation, ordering, summary, feedback, readiness presentation, and responsive-policy helpers.
+Current coverage includes pure state, command, validation, ordering, summary, feedback, readiness presentation, quantity parsing, and responsive-policy helpers.
 
-Real-browser coverage now includes:
+Real-browser coverage includes:
 
 - MealSlot add, replace, and remove operations;
 - explicit removal confirmation;
@@ -30,23 +30,32 @@ Real-browser coverage now includes:
 - Dish role and meal-type classification through React Query and Axios;
 - exact atomic classification payload;
 - readiness warning refresh after role mutation;
-- responsive mobile navigation closed by default, open on demand, and closed after navigation;
-- no horizontal overflow at desktop, tablet, and 360 px mobile widths;
+- responsive mobile navigation;
+- desktop, tablet, and 360 px no-overflow checks;
 - stable screenshot artifacts.
 
-PR #64 adds role-aware project-generation integration coverage. PR #66 adds calendar-day `main` diversity coverage. PR #67 adds manual-slot regeneration coverage. Draft PR #69 adds API coverage for the persisted warning lifecycle. No frontend behavior changes are required by PR #66, #67, or #69.
+Merged PR #64, #66, #67, and #69 add backend integration coverage for role-aware generation, calendar-day diversity, manual-slot regeneration, and warning persistence.
+
+Draft PR #70 adds:
+
+- frontend pure tests for purchased-quantity parsing, formatting, progress, and responsive layout;
+- real-browser checklist loading through React Query and Axios;
+- purchased-quantity PATCH verification;
+- remaining-quantity refresh after mutation;
+- checked-state PATCH and progress verification;
+- 360 px no-overflow coverage and screenshot output.
 
 Remaining critical coverage:
 
-- guided project preparation;
+- complete guided project preparation;
 - active deployment catalogue acceptance data;
-- shopping recalculation presentation;
+- package-count and package-surplus presentation;
 - catalogue import interaction and error rendering;
 - final end-to-end release acceptance.
 
 ### TD-008 — Continuous Integration
 
-Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, all browser acceptance suites, and PostgreSQL backup/restore.
+Implemented gates include backend tests, selected Ruff/mypy, Alembic single-head, frontend tests/build/audit, browser acceptance suites, and PostgreSQL backup/restore.
 
 Remaining:
 
@@ -56,7 +65,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical status, roadmap, context, domain, architecture, and active TH-0061.5 documentation are synchronized through merged PR #65, #66, and #67. Draft PR #69 updates the status, roadmap, technical debt, and active task for warning persistence. ADR-013 remains the accepted source for persisted role and meal-type ownership. ADR-006 is superseded where it described MealPlanItem as primary.
+Canonical status, roadmap, context, domain, architecture, and active menu task are synchronized through merged PR #65, #66, #67, and #69. Draft PR #70 advances the status, roadmap, technical debt, and TH-0061 task into shopping review. ADR-013 remains the accepted source for persisted role and meal-type ownership. ADR-006 is superseded where it described MealPlanItem as primary.
 
 Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
@@ -64,7 +73,7 @@ Historical archive documents and duplicate ADR-011 history still require explici
 
 MealSlot is primary. MealPlanItem remains persisted for compatibility and increases mapping and recalculation complexity.
 
-PR #67 rebuilds compatibility MealPlanItem rows while regenerating the same persisted MealPlan, including authoritative manual-slot dishes. This keeps current responses aligned but does not remove the legacy path.
+PR #67 rebuilds compatibility MealPlanItem rows while regenerating the same persisted MealPlan, including authoritative manual-slot dishes.
 
 Required later:
 
@@ -85,52 +94,30 @@ Remaining work covers CLUB/PERSONAL ownership, multiple recipe variants, publica
 
 ### TD-012 — Meal composition and diversity
 
-Implemented through merged PR #59, #60, #61, #64, #65, #66, and #67:
+Implemented through merged PR #59, #60, #61, #64, #65, #66, #67, and #69:
 
-- normalized `dish_meal_roles` owned by Dish;
-- normalized `dish_meal_role_meal_types` owned by each role assignment;
+- normalized Dish-owned role and meal-type compatibility;
 - roles `main`, `addition`, `drink`, and `snack`;
-- meal types `breakfast`, `snack`, `lunch`, and `dinner`;
-- multiple roles per Dish;
 - repeatability per `(dish, role)`;
-- compatibility per `(dish, role, meal_type)`;
-- Alembic revision `h10001` without heuristic backfill;
-- Dish response contracts and atomic classification replacement API;
-- Russian role/meal-type management UI;
-- deterministic structured catalogue readiness;
-- required `main` coverage for breakfast/lunch/dinner and `snack` coverage for snack;
-- optional addition/drink recommendations;
-- archived-recipe exclusion and classification counts;
+- deterministic catalogue readiness;
 - role- and meal-type-aware production generation;
 - stable composition persistence order;
 - explicit required-pool warnings without incompatible fallback;
-- exclusion of unclassified and archived-recipe dishes from automatic selection;
-- same-day uniqueness with per-role repeatability exceptions;
-- trip-calendar-day three-day diversity for non-repeatable `main` assignments;
+- archived and unclassified automatic exclusion;
+- same-day uniqueness and calendar-day three-day `main` diversity;
 - day-four reuse and repeatable-main bypass;
-- deterministic empty required slots and warnings when the diversity-eligible pool is exhausted;
-- Alembic revision `h10002` for an explicit manual MealSlot marker;
-- manual add, replace, and remove operations marking the complete slot as authoritative;
+- Alembic revision `h10002` and authoritative manual slots;
 - preservation of non-empty and empty manual slots across regeneration;
-- reuse of the existing project MealPlan instead of duplicate plan creation;
-- no inference of a manual dish role from its name, recipe, ingredients, or placement;
-- pure, service, persistence, mutation, migration, and public API integration coverage.
-
-Draft PR #69 adds:
-
-- Alembic revision `h10003` for the ordered warning snapshot on MealPlan;
-- persistence of warnings from the latest generation;
+- one project MealPlan reused during regeneration;
+- Alembic revision `h10003` and persisted warning snapshot;
 - identical warnings on later GET responses;
-- stability across catalogue-only changes;
-- atomic replacement and clearing on regeneration;
-- public API lifecycle coverage.
+- atomic warning replacement and clearing;
+- pure, service, persistence, mutation, migration, and public API coverage.
 
-Remaining implementation work after PR #69:
+Remaining work is operational or requirement-dependent:
 
-- maintain and complete explicit classification of the active deployment catalogue;
-- larger candidate thresholds and preference modes after approved product requirements and multi-variant recipes.
-
-Minimal readiness, role-aware composition, optional repeatable roles, archived-recipe filtering, immediate warnings, calendar-day `main` diversity, manual-slot preservation, and warning persistence are no longer open implementation parts of TD-012 after PR #69 lands.
+- maintain explicit classification of the active deployment catalogue;
+- define larger candidate thresholds and preference modes only after approved requirements.
 
 ### TD-013 — Equipment domain completion
 
@@ -155,6 +142,25 @@ Apply the prohibition consistently in backend product, recipe, dish, and import 
 ### TD-025 — Complete Product CRUD
 
 Product currently supports list and create. Update and guarded delete remain unimplemented.
+
+### TD-026 — Shopping and packaging review
+
+The calculation and persistence foundations exist, but the complete user review is not finished.
+
+Draft PR #70 delivers:
+
+- project checklist product names;
+- required, purchased, and non-negative remaining quantities;
+- negative purchased-quantity validation;
+- editable checked state and purchased quantities;
+- progress and responsive feedback presentation.
+
+Required after PR #70:
+
+- present calculated package count and package surplus/remainder clearly;
+- add optional responsible-person text;
+- integrate shopping review into the complete guided preparation acceptance flow;
+- verify recalculation changes remain visible without losing user purchase progress.
 
 ## Completed history
 

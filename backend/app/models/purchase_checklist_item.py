@@ -57,3 +57,19 @@ class PurchaseChecklistItemORM(Base):
         "PurchaseChecklistORM",
         back_populates="items",
     )
+
+    product = relationship(
+        "ProductORM",
+        back_populates="purchase_checklist_items",
+    )
+
+    @property
+    def product_name(self) -> str:
+        return self.product.name if self.product is not None else str(self.product_id)
+
+    @property
+    def remaining_quantity(self) -> Decimal:
+        return max(
+            self.required_quantity - self.purchased_quantity,
+            Decimal("0"),
+        )

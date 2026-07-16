@@ -4,7 +4,7 @@ Status date: 2026-07-16
 
 ## Current phase
 
-TH-0061.5 remains active only for generation-warning persistence. Persisted classification, role-aware generation, calendar-day `main` diversity, and manual-slot preservation are merged in `main`.
+TH-0061.5 approved menu-rule implementation is complete in `main` through PR #69. The active product phase is TH-0061 guided preparation, starting with a usable Russian purchase checklist in draft PR #70.
 
 Merged delivery chain:
 
@@ -15,24 +15,25 @@ Merged delivery chain:
 - PR #64 — role- and meal-type-aware project meal-plan generation;
 - PR #65 — canonical documentation synchronization;
 - PR #66 — calendar-day three-day diversity for `main` dishes;
-- PR #67 — authoritative preservation of manually edited MealSlots during regeneration.
+- PR #67 — authoritative preservation of manually edited MealSlots during regeneration;
+- PR #69 — persisted generation-warning lifecycle.
 
 Open implementation:
 
-- draft PR #69 — persistence of the latest generation-warning snapshot for later GET responses.
+- draft PR #70 — editable project purchase checklist with required, purchased, and remaining quantities.
 
-The Product Owner verified the deployed role-aware generation after PR #64. Automatic generation uses only explicitly classified, active-recipe dishes, while manual choices remain available independently of automatic classification.
+Automatic menu generation uses only explicitly classified, active-recipe dishes. Manual choices remain available independently of automatic classification.
 
 ## Verified baseline
 
-- Current `main` includes PR #67 at squash commit `10e4756c4bfc6f45414c0afcb297ad149f6e4b8b`.
-- Alembic has one head: `h10002`; draft PR #69 adds `h10003`.
+- Current `main` includes PR #69 at squash commit `3a368203c1a1308bea736d799a0e1a6136cd11f2`.
+- Alembic has one head: `h10003`.
 - Exact-head Quality #271 passed before PR #66 merge.
-- Exact-head Quality #273 passed before PR #67 merge with backend, frontend, Alembic, browser, and PostgreSQL gates green.
+- Exact-head Quality #273 passed before PR #67 merge.
+- Exact-head Quality #280 passed before PR #69 merge with backend, frontend, Alembic, browser, and PostgreSQL gates green.
 - MealSlot and MealSlotDish are the primary menu-composition persistence model.
 - MealPlanItem remains a legacy compatibility path.
-- MealSlot API responses expose persisted relation identifiers separately from source `dish_id` values.
-- Docker Compose, automatic migrations, LAN-safe same-origin routing, mobile navigation, project creation, menu editing, purchasing recalculation, and export foundations are operational.
+- Docker Compose, automatic migrations, LAN-safe same-origin routing, project creation, menu editing, purchasing recalculation, and export foundations are operational.
 
 ## Implemented product areas
 
@@ -61,36 +62,28 @@ Still required:
 - compact responsive Russian editor;
 - normalized Dish role and meal-type compatibility;
 - catalogue-readiness evaluation and visible warnings;
-- automatic filtering by both persisted role and current meal type;
+- automatic filtering by persisted role and meal type;
 - required `main` for breakfast/lunch/dinner and required `snack` for snack;
 - optional compatible `addition` and `drink` selection;
 - stable composition order `main → addition → drink`;
 - repeatability evaluated per `(dish, role)` assignment;
-- same-day uniqueness for non-repeatable assignments;
-- trip-calendar-day three-day diversity for non-repeatable `main` assignments;
+- same-day uniqueness and calendar-day three-day `main` diversity;
 - day-four reuse and repeatable-main bypass;
 - archived-recipe and unclassified dishes excluded from automatic generation;
 - explicit required-pool warnings instead of hidden incompatible fallback;
 - generated compositions persisted through MealSlot/MealSlotDish and compatibility MealPlanItem rows;
 - explicit `MealSlot.is_manually_edited` marker through Alembic revision `h10002`;
-- manual add, replace, and remove marking the complete slot as authoritative;
 - preservation of non-empty and empty manual slots during regeneration;
 - reuse of one project MealPlan instead of duplicate-plan creation;
-- no role inference for unclassified manual dishes;
+- persisted ordered warning snapshot through Alembic revision `h10003`;
+- identical warnings on generation and later GET responses;
+- warning replacement and clearing on regeneration;
 - transactional purchasing recalculation after MealSlot edits.
 
-Draft PR #69 adds:
+Operational follow-up:
 
-- an ordered persisted `MealPlan.warnings` snapshot through Alembic revision `h10003`;
-- the same warnings in POST generation and later GET responses;
-- snapshot stability when catalogue data changes without regeneration;
-- atomic replacement and clearing on the next regeneration;
-- public API lifecycle regression coverage.
-
-Still required for TH-0061.5 after PR #69:
-
-- maintain and complete explicit classification of the active deployment catalogue;
-- larger diversity thresholds and preference modes only after approved product requirements.
+- maintain explicit classification of the active deployment catalogue;
+- add larger thresholds or preference modes only after approved requirements.
 
 ### Dishes and recipes
 
@@ -115,18 +108,31 @@ Still required:
 
 ### Shopping and documents
 
+Implemented:
+
 - ingredient aggregation;
-- shopping list and purchase checklist;
+- purchase list and purchase checklist persistence;
 - package-rounding foundation;
+- purchased-quantity and checked-state persistence;
 - transactional recalculation after participant, MealSlot, and Dish recipe changes;
 - checklist-state preservation;
 - PDF/Excel/package export foundations;
 - PostgreSQL backup/restore scripts and CI smoke test.
 
-Still required:
+Draft PR #70 adds:
 
-- complete package and remainder presentation;
-- responsible-person field;
+- product names in checklist API responses;
+- non-negative computed remaining quantities;
+- validation against negative purchased quantities;
+- editable Russian checklist inside the project workspace;
+- required, purchased, and remaining quantity presentation;
+- completion progress, loading/error/success feedback, and responsive layout;
+- backend API, frontend state, and browser acceptance coverage.
+
+Still required after PR #70:
+
+- package-count and package-surplus review presentation;
+- optional responsible-person text;
 - equipment pipeline;
 - final Russian templates and club branding.
 
@@ -147,29 +153,27 @@ Enforced gates:
 - desktop, tablet, and 360 px no-overflow checks and screenshots;
 - PostgreSQL backup/restore smoke test.
 
-PR #66 regression scope verifies calendar-day diversity, repeatable-main bypass, pool exhaustion, service mapping, persistence alignment, and public API behavior.
-
-PR #67 regression scope verifies manual mutation marking, authoritative non-empty and empty slots, no role inference, one-plan reuse, subsequent GET persistence, and unchanged generation of unmarked slots.
-
-PR #69 regression scope verifies persisted warning order, later GET behavior, stability across catalogue-only changes, and replacement after regeneration.
+Draft PR #70 extends this with purchase-checklist browser acceptance for quantity editing, remainder refresh, checked-state updates, and 360 px overflow protection.
 
 Open quality debt:
 
-- guided preparation browser coverage;
+- complete guided preparation browser coverage;
 - active deployment catalogue acceptance data;
-- shopping and catalogue-import browser coverage;
+- package review and recalculation presentation;
+- catalogue import interaction and error rendering;
 - explicit PostgreSQL migration upgrade/downgrade smoke;
 - Docker image/build CI validation;
 - final release-acceptance workflow.
 
 ## Active tasks
 
-- TH-0061 — guided project preparation journey;
-- TH-0061.5 — complete generation-warning lifecycle, then maintain real catalogue data.
+- TH-0061 — guided project preparation journey and purchase workflow;
+- TH-0061.5 — operational catalogue maintenance only; approved rules implementation is complete.
 
 ## Immediate sequence
 
-1. Complete exact-head Quality and review for draft PR #69.
-2. Keep the active catalogue explicitly classified and verify readiness on real deployment data.
-3. Complete the guided preparation, packaging, equipment, and export acceptance workflow.
-4. Introduce invitation-only access and roles only after single-user acceptance.
+1. Complete exact-head Quality and review for draft PR #70.
+2. Add package-count/surplus review and optional responsible-person text.
+3. Implement equipment requirements, aggregation, overrides, and recalculation.
+4. Complete final Russian documents and end-to-end release acceptance.
+5. Introduce invitation-only access and roles only after single-user acceptance.
