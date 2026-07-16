@@ -7,7 +7,6 @@ from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
 from app.services.equipment_list_service import EquipmentListService
-from app.services.meal_plan_derived_refresh_service import MealPlanDerivedRefreshService
 from app.services.meal_plan_purchasing_refresh_service import (
     MealPlanPurchasingRefreshService,
 )
@@ -28,16 +27,14 @@ class ProjectParticipantRecalculationService:
         self.meal_plan_repository = MealPlanRepository(session)
         self.purchase_list_repository = PurchaseListRepository(session)
         self.checklist_repository = PurchaseChecklistRepository(session)
-        self.derived_refresh_service = MealPlanDerivedRefreshService(
-            MealPlanPurchasingRefreshService(
-                self.purchase_list_repository,
-                self.checklist_repository,
-                self.shopping_service,
-            ),
-            EquipmentListService(
-                EquipmentListRepository(session),
-                self.meal_plan_repository,
-            ),
+        self.purchasing_refresh_service = MealPlanPurchasingRefreshService(
+            self.purchase_list_repository,
+            self.checklist_repository,
+            self.shopping_service,
+        )
+        self.equipment_list_service = EquipmentListService(
+            EquipmentListRepository(session),
+            self.meal_plan_repository,
         )
 
     def update_participants(self, project_id: int, participants: int) -> ProjectORM:
@@ -60,7 +57,8 @@ class ProjectParticipantRecalculationService:
                     raise LookupError("Meal plan not found")
 
                 detailed_meal_plan.participants = participants
-                self.derived_refresh_service.refresh(detailed_meal_plan)
+                self.purchasing_refresh_service.refresh(detailed_meal_plan)
+                self.equipment_list_service.refresh_existing(detailed_meal_plan)
 
             self.session.commit()
         except Exception:
