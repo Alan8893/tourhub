@@ -13,7 +13,7 @@ const frontendPort = 5173;
 const apiPort = 18080;
 const debuggingPort = 9228;
 const baseUrl = `http://127.0.0.1:${frontendPort}`;
-const chromeProfileDir = path.join("/tmp", "tourhub-purchase-checklist-profile");
+const chromeProfileDir = path.join("/tmp", "tourhub-equipment-list-profile");
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 async function waitForHttp(url, timeoutMs = 30_000) {
@@ -45,6 +45,13 @@ function findChromeExecutable() {
   return executable;
 }
 
+async function readJsonBody(request) {
+  const chunks = [];
+  for await (const chunk of request) chunks.push(chunk);
+  const text = Buffer.concat(chunks).toString("utf8");
+  return text ? JSON.parse(text) : undefined;
+}
+
 function startMockApi() {
   const requests = [];
   const equipmentList = {
@@ -57,26 +64,75 @@ function startMockApi() {
         id: "73000000-0000-0000-0000-000000000003",
         equipment_name: "Котёл",
         required_quantity: 3,
+        calculated_quantity: 3,
+        is_manual: false,
+        is_overridden: false,
       },
       {
         id: "73000000-0000-0000-0000-000000000004",
         equipment_name: "Горелка",
         required_quantity: 2,
+        calculated_quantity: 2,
+        is_manual: false,
+        is_overridden: false,
       },
     ],
   };
 
-  const server = createServer((request, response) => {
+  const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
-    requests.push({ method: request.method ?? "GET", path: url.pathname });
-
+    const body = request.method === "GET" ? undefined : await readJsonBody(request);
+    requests.push({ method: request.method ?? "GET", path: url.pathname, body });
     response.setHeader("content-type", "application/json");
+
     if (
       request.method === "GET" &&
       url.pathname === "/api/v1/equipment-lists/project/73"
     ) {
       response.statusCode = 200;
       response.end(JSON.stringify(equipmentList));
+      return;
+    }
+
+    if (
+      request.method === "POST" &&
+      url.pathname === "/api/v1/equipment-lists/project/73/items"
+    ) {
+      const item = {
+        id: "73000000-0000-0000-0000-000000000005",
+        equipment_name: body.equipment_name,
+        required_quantity: body.required_quantity,
+        calculated_quantity: null,
+        is_manual: true,
+        is_overridden: false,
+      };
+      equipmentList.items.push(item);
+      response.statusCode = 201;
+      response.end(JSON.stringify(item));
+      return;
+    }
+
+    const itemMatch = url.pathname.match(
+      /^\/api\/v1\/equipment-lists\/project\/73\/items\/([^/]+)$/,
+    );
+    if (itemMatch && request.method === "PUT") {
+      const item = equipmentList.items.find((candidate) => candidate.id === itemMatch[1]);
+      assert.ok(item, "Equipment item for PUT was not found");
+      item.required_quantity = body.required_quantity;
+      item.is_overridden =
+        item.calculated_quantity !== null &&
+        item.required_quantity !== item.calculated_quantity;
+      response.statusCode = 200;
+      response.end(JSON.stringify(item));
+      return;
+    }
+
+    if (itemMatch && request.method === "DELETE") {
+      const index = equipmentList.items.findIndex((candidate) => candidate.id === itemMatch[1]);
+      assert.notEqual(index, -1, "Equipment item for DELETE was not found");
+      equipmentList.items.splice(index, 1);
+      response.statusCode = 204;
+      response.end();
       return;
     }
 
@@ -168,6 +224,18 @@ async function waitForRequest(requests, predicate, description, timeoutMs = 5_00
   assert.fail(`Request not observed: ${description}`);
 }
 
+function setInputExpression(label, value) {
+  return `(() => {
+    const input = document.querySelector('input[aria-label="${label}"]');
+    if (!input) return false;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+    setter.call(input, ${JSON.stringify(value)});
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  })()`;
+}
+
 async function run() {
   await rm(chromeProfileDir, { recursive: true, force: true });
   await mkdir(artifactDir, { recursive: true });
@@ -192,15 +260,19 @@ async function run() {
     },
   );
 
-  const chrome = spawn(findChromeExecutable(), [
-    "--headless=new",
-    "--no-sandbox",
-    "--disable-dev-shm-usage",
-    "--disable-gpu",
-    `--remote-debugging-port=${debuggingPort}`,
-    `--user-data-dir=${chromeProfileDir}`,
-    "about:blank",
-  ], { stdio: "ignore" });
+  const chrome = spawn(
+    findChromeExecutable(),
+    [
+      "--headless=new",
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      `--remote-debugging-port=${debuggingPort}`,
+      `--user-data-dir=${chromeProfileDir}`,
+      "about:blank",
+    ],
+    { stdio: "ignore" },
+  );
 
   const cleanup = async () => {
     chrome.kill("SIGKILL");
@@ -212,10 +284,9 @@ async function run() {
   try {
     await waitForHttp(`${baseUrl}/browser-tests/equipment-list.html`);
     await waitForHttp(`http://127.0.0.1:${debuggingPort}/json/version`);
-
-    const targets = await fetch(
-      `http://127.0.0.1:${debuggingPort}/json/list`,
-    ).then((response) => response.json());
+    const targets = await fetch(`http://127.0.0.1:${debuggingPort}/json/list`).then(
+      (response) => response.json(),
+    );
     const pageTarget = targets.find((target) => target.type === "page");
     assert.ok(pageTarget?.webSocketDebuggerUrl, "Chrome page target was not found");
 
@@ -235,21 +306,111 @@ async function run() {
     await waitForExpression(
       client,
       `document.body.innerText.includes("Оборудование") &&
-       document.body.innerText.includes("Максимальная одновременная потребность по всему меню.") &&
+       document.body.innerText.includes("Итоговый список можно изменить вручную") &&
        document.body.innerText.includes("Позиций: 2 · Всего единиц: 5") &&
        document.body.innerText.includes("Котёл") &&
-       document.body.innerText.includes("3 шт.") &&
-       document.body.innerText.includes("Горелка") &&
-       document.body.innerText.includes("2 шт.")`,
-      "persisted equipment list",
+       document.body.innerText.includes("Расчёт 3") &&
+       document.body.innerText.includes("Горелка")`,
+      "initial persisted equipment list",
     );
 
+    assert.equal(await client.evaluate(setInputExpression("Количество: Котёл", "5")), true);
+    await client.evaluate(`(() => {
+      const button = [...document.querySelectorAll("button")].find(
+        (candidate) => candidate.textContent.trim() === "Сохранить" && !candidate.disabled,
+      );
+      if (!button) return false;
+      button.click();
+      return true;
+    })()`);
     await waitForRequest(
       mockApi.requests,
       (request) =>
-        request.method === "GET" &&
-        request.path === "/api/v1/equipment-lists/project/73",
-      "project equipment-list GET",
+        request.method === "PUT" &&
+        request.path.endsWith("73000000-0000-0000-0000-000000000003") &&
+        request.body?.required_quantity === 5,
+      "equipment quantity override PUT",
+    );
+    await waitForExpression(
+      client,
+      `document.body.innerText.includes("Изменено · расчёт 3") &&
+       document.body.innerText.includes("Позиций: 2 · Всего единиц: 7")`,
+      "saved equipment override",
+    );
+
+    assert.equal(
+      await client.evaluate(setInputExpression("Новое оборудование проекта", "Фонарь")),
+      true,
+    );
+    assert.equal(
+      await client.evaluate(
+        setInputExpression("Количество нового оборудования проекта", "2"),
+      ),
+      true,
+    );
+    await client.evaluate(`(() => {
+      const button = [...document.querySelectorAll("button")].find(
+        (candidate) => candidate.textContent.trim() === "Добавить" && !candidate.disabled,
+      );
+      if (!button) return false;
+      button.click();
+      return true;
+    })()`);
+    await waitForRequest(
+      mockApi.requests,
+      (request) =>
+        request.method === "POST" &&
+        request.path === "/api/v1/equipment-lists/project/73/items" &&
+        request.body?.equipment_name === "Фонарь" &&
+        request.body?.required_quantity === 2,
+      "manual equipment POST",
+    );
+    await waitForExpression(
+      client,
+      `document.body.innerText.includes("Фонарь") &&
+       document.body.innerText.includes("Добавлено вручную") &&
+       document.body.innerText.includes("Позиций: 3 · Всего единиц: 9")`,
+      "manual equipment item",
+    );
+
+    await client.evaluate(`(() => {
+      window.confirm = () => true;
+      const input = document.querySelector('input[aria-label="Количество: Горелка"]');
+      let node = input;
+      while (node && !(
+        node.innerText?.includes("Горелка") &&
+        [...node.querySelectorAll("button")].some(
+          (button) => button.textContent.trim() === "Удалить"
+        )
+      )) node = node.parentElement;
+      const button = node && [...node.querySelectorAll("button")].find(
+        (candidate) => candidate.textContent.trim() === "Удалить"
+      );
+      if (!button) return false;
+      button.click();
+      return true;
+    })()`);
+    await waitForRequest(
+      mockApi.requests,
+      (request) =>
+        request.method === "DELETE" &&
+        request.path.endsWith("73000000-0000-0000-0000-000000000004"),
+      "equipment removal DELETE",
+    );
+    await waitForExpression(
+      client,
+      `!document.body.innerText.includes("Горелка") &&
+       document.body.innerText.includes("Позиций: 2 · Всего единиц: 7")`,
+      "removed calculated equipment item",
+    );
+
+    assert.ok(
+      mockApi.requests.filter(
+        (request) =>
+          request.method === "GET" &&
+          request.path === "/api/v1/equipment-lists/project/73",
+      ).length >= 4,
+      "Expected equipment refetch after each mutation",
     );
 
     await client.send("Emulation.setDeviceMetricsOverride", {
@@ -259,7 +420,6 @@ async function run() {
       mobile: true,
     });
     await sleep(250);
-
     const layout = await client.evaluate(`(() => ({
       clientWidth: document.documentElement.clientWidth,
       scrollWidth: document.documentElement.scrollWidth,
@@ -281,7 +441,7 @@ async function run() {
     );
 
     client.close();
-    console.log("Equipment list browser acceptance passed.");
+    console.log("Equipment list override browser acceptance passed.");
   } finally {
     await cleanup();
   }
