@@ -3,7 +3,9 @@ from typing import Protocol
 
 
 class DishSelectionInput(Protocol):
-    id: str
+    @property
+    def id(self) -> str:
+        ...
 
 
 @dataclass
