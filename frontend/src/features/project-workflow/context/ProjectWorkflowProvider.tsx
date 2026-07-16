@@ -7,6 +7,7 @@ interface ProjectWorkflowState {
     meal_plan_id: string;
     purchase_list_id: string;
     purchase_checklist_id: string;
+    equipment_list_id: string;
   };
   setPreparationResult: (result: ProjectWorkflowState["preparationResult"]) => void;
 }

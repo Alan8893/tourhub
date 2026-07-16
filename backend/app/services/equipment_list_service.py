@@ -43,7 +43,8 @@ class EquipmentListService:
                     key = self._key(name)
                     previous = current.get(key)
                     quantity = requirement.quantity + (previous[1] if previous else 0)
-                    current[key] = (name, quantity)
+                    display_name = previous[0] if previous else name
+                    current[key] = (display_name, quantity)
             for key, item in current.items():
                 previous = calculated.get(key)
                 if previous is None or item[1] > previous[1]:
