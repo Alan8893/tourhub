@@ -1,6 +1,8 @@
-import { Alert, Button, Chip, Paper, Stack, Typography } from "@mui/material";
+import { Alert, Button, Chip, Divider, Paper, Stack, Typography } from "@mui/material";
 import { isAxiosError } from "axios";
 import { useState } from "react";
+
+import RecipeEquipmentSection from "@/features/equipment/components/RecipeEquipmentSection";
 
 import type { RecipeNote, RecipeNoteWriteInput } from "../api/recipeApi";
 import {
@@ -74,6 +76,8 @@ export default function RecipeNotesSection({ recipeId, notes, readOnly = false }
 
   return (
     <Stack spacing={1.5}>
+      <RecipeEquipmentSection recipeId={recipeId} readOnly={readOnly} />
+      <Divider />
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between" alignItems={{ xs: "stretch", sm: "center" }}>
         <Typography variant="h6">Заметки</Typography>
         {!readOnly && <Button size="small" variant="contained" onClick={openCreate}>Добавить заметку</Button>}
