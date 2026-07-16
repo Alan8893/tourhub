@@ -1,17 +1,15 @@
 import { createContext, ReactNode, useContext, useState } from "react";
 
-interface ProjectPreparationResult {
-  project_id: number;
-  meal_plan_id: string;
-  purchase_list_id: string;
-  purchase_checklist_id: string;
-  equipment_list_id: string;
-}
-
 interface ProjectWorkflowState {
   projectId: number;
-  preparationResult?: ProjectPreparationResult;
-  setPreparationResult: (result: ProjectPreparationResult | undefined) => void;
+  preparationResult?: {
+    project_id: number;
+    meal_plan_id: string;
+    purchase_list_id: string;
+    purchase_checklist_id: string;
+    equipment_list_id: string;
+  };
+  setPreparationResult: (result: ProjectWorkflowState["preparationResult"]) => void;
 }
 
 const ProjectWorkflowContext = createContext<ProjectWorkflowState | undefined>(
@@ -21,15 +19,13 @@ const ProjectWorkflowContext = createContext<ProjectWorkflowState | undefined>(
 export function ProjectWorkflowProvider({
   projectId,
   children,
-  initialPreparationResult,
 }: {
   projectId: number;
   children: ReactNode;
-  initialPreparationResult?: ProjectPreparationResult;
 }) {
   const [preparationResult, setPreparationResult] = useState<
-    ProjectPreparationResult | undefined
-  >(initialPreparationResult);
+    ProjectWorkflowState["preparationResult"]
+  >();
 
   return (
     <ProjectWorkflowContext.Provider
