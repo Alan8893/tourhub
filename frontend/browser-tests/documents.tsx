@@ -18,6 +18,11 @@ async function renderDocuments() {
         </Container>
       </StrictMode>,
     );
+    (
+      window as Window & {
+        __documentsHarnessReady?: () => void;
+      }
+    ).__documentsHarnessReady?.();
   } catch (error) {
     const description = error instanceof Error ? error.stack ?? error.message : String(error);
     root.innerHTML = [
