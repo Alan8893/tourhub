@@ -3,6 +3,7 @@ from app.engines.meal_plan_generator import (
     DishRoleInput,
     MealPlanGenerator,
 )
+from app.engines.meal_schedule import MealScheduleDay
 
 
 def _role(
@@ -175,5 +176,138 @@ def test_role_aware_generation_allows_role_level_repetition():
     assert [[dish.id for dish in slot.dishes] for slot in result.slots] == [
         ["oatmeal-1", "tea"],
         ["oatmeal-2", "tea"],
+    ]
+    assert result.warnings == []
+
+
+def test_main_diversity_uses_calendar_days_not_selection_count():
+    generator = MealPlanGenerator()
+
+    result = generator.generate(
+        dishes=[
+            DishInput(
+                id="breakfast-a",
+                name="Каша A",
+                meal_roles=(_role("main", "breakfast"),),
+            ),
+            DishInput(
+                id="breakfast-b",
+                name="Каша B",
+                meal_roles=(_role("main", "breakfast"),),
+            ),
+            DishInput(
+                id="lunch",
+                name="Обед",
+                meal_roles=(_role("main", "lunch"),),
+            ),
+            DishInput(
+                id="dinner",
+                name="Ужин",
+                meal_roles=(_role("main", "dinner"),),
+            ),
+        ],
+        days=2,
+        schedule=[
+            MealScheduleDay(
+                day_number=1,
+                meals=["breakfast", "lunch", "dinner", "breakfast"],
+            ),
+            MealScheduleDay(day_number=2, meals=["breakfast"]),
+        ],
+        role_aware=True,
+    )
+
+    assert [[dish.id for dish in slot.dishes] for slot in result.slots] == [
+        ["breakfast-a"],
+        ["lunch"],
+        ["dinner"],
+        ["breakfast-b"],
+        [],
+    ]
+    assert result.warnings == ["No eligible main dishes available for breakfast"]
+
+
+def test_main_diversity_rotates_candidates_and_reuses_on_day_four():
+    generator = MealPlanGenerator()
+
+    result = generator.generate(
+        dishes=[
+            DishInput(
+                id="main-a",
+                name="Main A",
+                meal_roles=(_role("main", "lunch"),),
+            ),
+            DishInput(
+                id="main-b",
+                name="Main B",
+                meal_roles=(_role("main", "lunch"),),
+            ),
+            DishInput(
+                id="main-c",
+                name="Main C",
+                meal_roles=(_role("main", "lunch"),),
+            ),
+        ],
+        days=4,
+        meals_per_day=["lunch"],
+        role_aware=True,
+    )
+
+    assert [item.dish_id for item in result.items] == [
+        "main-a",
+        "main-b",
+        "main-c",
+        "main-a",
+    ]
+    assert result.warnings == []
+
+
+def test_main_diversity_warns_deterministically_when_pool_is_exhausted():
+    generator = MealPlanGenerator()
+
+    result = generator.generate(
+        dishes=[
+            DishInput(
+                id="main-a",
+                name="Main A",
+                meal_roles=(_role("main", "lunch"),),
+            ),
+        ],
+        days=4,
+        meals_per_day=["lunch"],
+        role_aware=True,
+    )
+
+    assert [[dish.id for dish in slot.dishes] for slot in result.slots] == [
+        ["main-a"],
+        [],
+        [],
+        ["main-a"],
+    ]
+    assert result.warnings == ["No eligible main dishes available for lunch"]
+
+
+def test_repeatable_main_bypasses_calendar_day_diversity():
+    generator = MealPlanGenerator()
+
+    result = generator.generate(
+        dishes=[
+            DishInput(
+                id="repeatable-main",
+                name="Repeatable main",
+                meal_roles=(
+                    _role("main", "dinner", is_repeatable=True),
+                ),
+            ),
+        ],
+        days=3,
+        meals_per_day=["dinner"],
+        role_aware=True,
+    )
+
+    assert [item.dish_id for item in result.items] == [
+        "repeatable-main",
+        "repeatable-main",
+        "repeatable-main",
     ]
     assert result.warnings == []
