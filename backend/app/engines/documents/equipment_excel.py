@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 
 from openpyxl import Workbook
@@ -46,6 +46,6 @@ class EquipmentExcelDocumentGenerator:
                 "application/vnd.openxmlformats-officedocument."
                 "spreadsheetml.sheet"
             ),
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             content=buffer.getvalue(),
         )
