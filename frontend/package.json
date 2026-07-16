@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "test:browser": "node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-meal-plan-editor.mjs && node browser-tests/run-dish-meal-role-editor.mjs && (node browser-tests/run-dish-catalogue-readiness.mjs || node browser-tests/run-dish-catalogue-readiness.mjs) && node browser-tests/run-app-layout-mobile.mjs && node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-purchase-checklist.mjs",
+    "test:browser": "node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-meal-plan-editor.mjs && node browser-tests/run-dish-meal-role-editor.mjs && (node browser-tests/run-dish-catalogue-readiness.mjs || node browser-tests/run-dish-catalogue-readiness.mjs) && node browser-tests/run-app-layout-mobile.mjs && node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-purchase-checklist.mjs && node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-purchase-responsible-person.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
