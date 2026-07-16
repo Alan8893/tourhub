@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getProjectEquipmentList } from "../api/equipmentListApi";
+import {
+  addProjectEquipmentItem,
+  getProjectEquipmentList,
+  removeProjectEquipmentItem,
+  updateProjectEquipmentItem,
+  type EquipmentListItemInput,
+} from "../api/equipmentListApi";
 import { addCampItem, getCampItems } from "../api/recipeCampItemApi";
 import { removeCampItem } from "../api/removeCampItem";
 import { updateCampItem } from "../api/updateCampItem";
@@ -44,11 +50,41 @@ export function useRemoveCampItem(recipeId: string) {
   });
 }
 
+function useInvalidateProjectEquipment(projectId: number) {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: ["project-equipment", projectId] });
+}
+
 export function useProjectEquipmentList(projectId: number, refreshKey?: string) {
   return useQuery({
     queryKey: ["project-equipment", projectId, refreshKey ?? "stored"],
     queryFn: () => getProjectEquipmentList(projectId),
     enabled: Number.isInteger(projectId) && projectId > 0,
     retry: false,
+  });
+}
+
+export function useAddProjectEquipmentItem(projectId: number) {
+  const invalidate = useInvalidateProjectEquipment(projectId);
+  return useMutation({
+    mutationFn: (input: EquipmentListItemInput) => addProjectEquipmentItem(projectId, input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateProjectEquipmentItem(projectId: number) {
+  const invalidate = useInvalidateProjectEquipment(projectId);
+  return useMutation({
+    mutationFn: ({ itemId, requiredQuantity }: { itemId: string; requiredQuantity: number }) =>
+      updateProjectEquipmentItem(projectId, itemId, requiredQuantity),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRemoveProjectEquipmentItem(projectId: number) {
+  const invalidate = useInvalidateProjectEquipment(projectId);
+  return useMutation({
+    mutationFn: (itemId: string) => removeProjectEquipmentItem(projectId, itemId),
+    onSuccess: invalidate,
   });
 }
