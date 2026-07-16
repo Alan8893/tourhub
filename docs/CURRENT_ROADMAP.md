@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-15
+Status date: 2026-07-16
 
 ## Product goal
 
@@ -20,159 +20,107 @@ Project
 ### Infrastructure
 
 - Dockerfiles and Docker Compose;
-- PostgreSQL 18;
-- Redis runtime service and configuration;
+- PostgreSQL 18 and Redis runtime configuration;
 - Alembic migrations with one-head CI validation;
-- backend tests;
-- selected Ruff and strict mypy gates;
+- backend tests, selected Ruff, and strict mypy gates;
 - frontend tests, dependency audit, production build, and browser acceptance;
-- PostgreSQL backup/restore scripts and CI smoke test.
+- PostgreSQL backup/restore scripts and CI smoke test;
+- LAN-safe same-origin frontend API routing;
+- responsive temporary mobile drawer with permanent desktop sidebar.
 
 ### Projects
 
-- project creation;
-- project catalogue and workspace routing;
+- project creation and catalogue;
+- project workspace routing;
 - participant count and duration;
 - first and last meal persistence;
 - backend meal-boundary validation;
-- participant-count purchasing recalculation;
-- LAN-safe same-origin frontend API routing.
+- participant-count purchasing recalculation.
 
 ### Recipes, products, and dishes
 
 - recipe list/detail/create/rename;
 - RecipeComponent CRUD and practical quantity modes;
-- recipe note CRUD and ordering;
+- recipe notes and ordering;
 - archive, restore, and guarded delete;
 - product list and creation;
 - transactional CSV preview/apply;
 - dish catalogue, create, rename, and active-recipe assignment;
 - archived-recipe historical visibility;
-- purchasing recalculation after Dish recipe replacement.
+- purchasing recalculation after Dish recipe replacement;
+- normalized Dish roles and role-specific meal-type compatibility;
+- per-role repeatability;
+- atomic classification replacement API;
+- Russian role/meal-type editor;
+- deterministic catalogue-readiness API and warnings.
 
-### Menu foundation
+### Menu foundation and editor
 
 - persisted MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
-- first/last meal schedule;
-- one-day range handling;
+- first/last meal schedule and one-day handling;
 - domain order `breakfast`, `snack`, `lunch`, `dinner`;
 - multiple dishes per MealSlot;
 - backend add, replace, and remove operations;
-- correct MealSlotDish identifiers in API and frontend mutations;
-- deterministic same-day uniqueness;
-- deterministic insufficient-catalogue fallback and immediate warning generation;
-- archived-recipe assignment guard;
-- purchasing recalculation after MealSlot changes;
-- removal of unsupported meal-plan placeholders and invalid pseudo three-day cooldown.
+- correct MealSlotDish relation identifiers in API and frontend mutations;
+- compact Russian editor, explicit actions, confirmations, loading/error/success states;
+- responsive desktop, tablet, and mobile layouts;
+- transactional purchasing recalculation after MealSlot changes.
 
-### TH-0065 — Meal Plan Editor UX
+### TH-0061.5 delivered slices
 
-Completed across PR #55 and PR #57:
+Merged through PR #59, #60, #61, and #64:
 
-- compact Russian dish rows;
-- explicit replace, add, and confirmed remove flows;
-- mutation loading, success, and error feedback;
-- collapsible day sections with dish counts;
-- full-width editor workspace;
-- browser-level React/API acceptance for mutations and errors;
-- no-overflow checks and screenshots at desktop, tablet, and 360 px mobile widths.
+- persisted roles `main`, `addition`, `drink`, and `snack`;
+- compatibility per `(dish, role, meal_type)`;
+- no inference from names, recipes, ingredients, or history;
+- readiness minimums for breakfast, snack, lunch, and dinner;
+- role-aware project meal-plan generation;
+- required `main` for breakfast/lunch/dinner and required `snack` for snack;
+- optional compatible `addition` and `drink`;
+- stable `main → addition → drink` order;
+- repeatability per role assignment;
+- exclusion of archived-recipe and unclassified dishes;
+- explicit warnings instead of hidden incompatible fallback;
+- API, persistence, and real ORM integration coverage.
 
-Quality run #169 passed before squash merge of PR #57. Product Owner visual acceptance was recorded and the task is closed.
+Quality run #254 passed on the exact PR #64 head with 175 backend tests and all existing frontend/browser/PostgreSQL gates. The Product Owner verified the deployed result locally.
 
 ### Shopping and documents
 
 - ingredient aggregation;
-- package rounding foundation;
+- package-rounding foundation;
 - purchase list and checklist;
 - transactional refresh and checklist-state preservation;
 - PDF/Excel/package export foundations.
-
-### TH-0070 — Critical meal-plan stabilization
-
-Completed by PR #54. Quality passed for backend tests, selected Ruff and strict mypy, Alembic, frontend tests/build/audit, and PostgreSQL backup/restore.
 
 ## IN PROGRESS
 
 ### TH-0061 — Guided project preparation
 
-- complete guided Russian preparation workflow;
-- connect the corrected editor, purchasing, and export steps;
+- complete the guided Russian preparation workflow;
+- connect menu, purchasing, packaging, equipment, and export steps;
 - verify the complete single-club preparation journey.
 
-### TH-0061.5 — Meal Composition Rules Engine
+### TH-0061.5 — Remaining Meal Composition Rules
 
-ADR-013 approves a two-dimensional persisted classification:
+The core persisted classification and role-aware generator are complete. Remaining scope:
 
-- normalized `dish_meal_roles` owned by Dish;
-- roles `main`, `addition`, `drink`, and `snack`;
-- normalized `dish_meal_role_meal_types` owned by each role assignment;
-- meal types `breakfast`, `snack`, `lunch`, and `dinner`;
-- multiple roles per Dish;
-- repeatability per `(dish, role)`;
-- compatibility per `(dish, role, meal_type)`;
-- no inference from names, recipes, ingredients, or historical placement.
-
-Backend persistence/API slice on PR #59:
-
-- `DishMealRoleORM` and `DishMealRoleMealTypeORM`;
-- Alembic revision `h10001` with both normalized tables;
-- role and meal-type database constraints with cascading foreign keys;
-- Dish list/detail response contracts;
-- atomic full classification replacement endpoint;
-- clearing, duplicate, empty, invalid, incompatible, and missing-dish coverage;
-- unchanged current generation behavior.
-
-Frontend editor slice on PR #60:
-
-- Russian role and meal-type controls in the Dish catalogue;
-- multiple roles and per-role repeatability;
-- explicit compatible meal types for every selected role;
-- local validation before API mutation;
-- visible role/meal-type classification in list and detail views;
-- exact Axios/React Query API acceptance;
-- backend error rendering and responsive 1280/768/360 px screenshots.
-
-Catalogue readiness slice on stacked PR #61:
-
-- structured `GET /api/v1/dishes/catalogue-readiness`;
-- blocking minimums: one `main` for breakfast/lunch/dinner and one `snack` for snack;
-- non-blocking `addition` and `drink` recommendations;
-- active/classified/unclassified counts;
-- archived-recipe exclusion;
-- Russian warnings refreshed after role mutation;
-- desktop and 360 px Chrome acceptance.
-
-Quality run #197 is successful for PR #59. Quality run #206 is successful for PR #60. Quality run #225 is successful for the initial PR #61 implementation.
+1. maintain and complete explicit classification of the active deployment catalogue;
+2. implement calendar-day three-day diversity for `main` dishes;
+3. preserve manual selections as authoritative during regeneration;
+4. persist or deterministically reconstruct generation warnings for later GET responses;
+5. define larger candidate thresholds and preference modes only when product requirements are approved.
 
 ## NEXT
-
-### Merge and deployment sequence
-
-1. Merge PR #59.
-2. Retarget PR #60 to `main`, rerun Quality, and merge it.
-3. Retarget PR #61 to `main`, rerun Quality, and merge it.
-4. Classify the active deployment catalogue explicitly by role and meal type.
-
-### Role-aware composition
-
-1. Filter candidates by both persisted role and current meal type.
-2. Implement breakfast, snack, lunch, and dinner composition.
-3. Use catalogue readiness before generation and preserve visible warnings.
-4. Implement calendar-day three-day diversity for main dishes.
-5. Allow explicitly repeatable drinks and additions.
-6. Preserve manual selections as authoritative.
-7. Exclude archived-recipe dishes from automatic selection.
-8. Persist or reconstruct warnings for later reads.
-9. Add unit, service, API, frontend, and recalculation coverage.
 
 ### Shopping and equipment
 
 - complete required/purchased/remainder presentation;
 - optional responsible-person text;
-- recipe equipment requirements;
-- maximum simultaneous equipment aggregation;
-- manual equipment overrides;
-- equipment recalculation after participant and menu changes.
+- persist recipe equipment requirements;
+- aggregate maximum simultaneous equipment need;
+- support manual equipment overrides;
+- recalculate equipment after participant and menu changes.
 
 ### Documents and acceptance
 
@@ -181,7 +129,7 @@ Quality run #197 is successful for PR #59. Quality run #206 is successful for PR
 - club name and logo settings;
 - installation/update documentation;
 - Docker image/build CI gate;
-- desktop and mobile acceptance.
+- full desktop and mobile release acceptance.
 
 ## LATER
 
