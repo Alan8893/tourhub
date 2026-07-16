@@ -7,10 +7,13 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.session import get_session
 from app.models.dish import DishORM
 from app.models.meal_slot import MealSlotORM
+from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.meal_slot_repository import MealSlotRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.services.equipment_list_service import EquipmentListService
+from app.services.meal_plan_derived_refresh_service import MealPlanDerivedRefreshService
 from app.services.meal_plan_purchasing_refresh_service import (
     MealPlanPurchasingRefreshService,
 )
@@ -42,15 +45,22 @@ def _get_selectable_dish(session: Session, dish_id: str) -> DishORM:
     return dish
 
 
-def _refresh_purchasing(session: Session, slot: MealSlotORM) -> None:
-    meal_plan = MealPlanRepository(session).get_with_details(str(slot.day.meal_plan_id))
+def _refresh_derived_data(session: Session, slot: MealSlotORM) -> None:
+    meal_plan_repository = MealPlanRepository(session)
+    meal_plan = meal_plan_repository.get_with_details(str(slot.day.meal_plan_id))
     if meal_plan is None:
         raise HTTPException(status_code=404, detail="Meal plan not found")
 
-    MealPlanPurchasingRefreshService(
-        PurchaseListRepository(session),
-        PurchaseChecklistRepository(session),
-        MealPlanShoppingService(ShoppingListService(session)),
+    MealPlanDerivedRefreshService(
+        MealPlanPurchasingRefreshService(
+            PurchaseListRepository(session),
+            PurchaseChecklistRepository(session),
+            MealPlanShoppingService(ShoppingListService(session)),
+        ),
+        EquipmentListService(
+            EquipmentListRepository(session),
+            meal_plan_repository,
+        ),
     ).refresh(meal_plan)
 
 
@@ -83,7 +93,7 @@ def add_dish(
         item = service.add_dish(slot, dish_id)
         session.add(item)
         session.flush()
-        _refresh_purchasing(session, slot)
+        _refresh_derived_data(session, slot)
         return {"id": item.id, "dish_id": item.dish_id}
 
     return _commit_recalculation(session, operation)
@@ -106,7 +116,7 @@ def remove_dish(
         except ValueError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         session.flush()
-        _refresh_purchasing(session, slot)
+        _refresh_derived_data(session, slot)
         return {"status": "ok"}
 
     return _commit_recalculation(session, operation)
@@ -131,7 +141,7 @@ def replace_dish(
         except ValueError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         session.flush()
-        _refresh_purchasing(session, slot)
+        _refresh_derived_data(session, slot)
         return {"id": item.id, "dish_id": item.dish_id}
 
     return _commit_recalculation(session, operation)
