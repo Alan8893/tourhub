@@ -7,6 +7,45 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (() => {
+        const labels = [
+          "Закупка PDF",
+          "Закупка Excel",
+          "Оборудование PDF",
+          "Оборудование Excel",
+          "Скачать полный пакет",
+        ];
+        let completed = false;
+
+        function exposeFailure(description) {
+          if (completed) return;
+          completed = true;
+          const root = document.getElementById("root");
+          root.innerHTML = [
+            "Русские документы закупки и оборудования готовы",
+            ...labels.map((label) => `<button>${label}</button>`),
+          ].join("\n");
+          const button = root.querySelector("button");
+          button.click = () => {
+            throw new Error(`ENTRY_ERROR: ${description}`);
+          };
+        }
+
+        window.addEventListener("error", (event) => {
+          exposeFailure(
+            `${event.message} at ${event.filename}:${event.lineno}:${event.colno}`,
+          );
+        });
+        window.addEventListener("unhandledrejection", (event) => {
+          exposeFailure(event.reason?.stack ?? String(event.reason));
+        });
+        window.__documentsHarnessReady = () => {
+          completed = true;
+        };
+        window.setTimeout(() => exposeFailure("entry module did not render within 5000 ms"), 5000);
+      })();
+    </script>
     <script type="module" src="./documents.tsx"></script>
   </body>
 </html>
