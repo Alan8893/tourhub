@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-15
+Status date: 2026-07-16
 
 ## Product goal
 
@@ -48,6 +48,9 @@ Project
 - transactional CSV preview/apply;
 - dish catalogue, create, rename, and active-recipe assignment;
 - archived-recipe historical visibility;
+- persisted Dish roles and per-role meal-type compatibility;
+- Russian role/meal compatibility editor;
+- deterministic catalogue-readiness reporting and warnings;
 - purchasing recalculation after Dish recipe replacement.
 
 ### Menu foundation
@@ -63,7 +66,12 @@ Project
 - deterministic insufficient-catalogue fallback and immediate warning generation;
 - archived-recipe assignment guard;
 - purchasing recalculation after MealSlot changes;
-- removal of unsupported meal-plan placeholders and invalid pseudo three-day cooldown.
+- removal of unsupported meal-plan placeholders and invalid pseudo three-day cooldown;
+- required-role automatic candidate filtering by persisted role and meal type;
+- `main` selection for breakfast/lunch/dinner and `snack` selection for snack;
+- unclassified and archived-recipe Dish exclusion from automatic generation;
+- empty persisted MealSlots and explicit warnings when a required pool is missing;
+- per-role repeatability during same-day selection.
 
 ### TH-0065 — Meal Plan Editor UX
 
@@ -78,6 +86,15 @@ Completed across PR #55 and PR #57:
 - no-overflow checks and screenshots at desktop, tablet, and 360 px mobile widths.
 
 Quality run #169 passed before squash merge of PR #57. Product Owner visual acceptance was recorded and the task is closed.
+
+### Mobile navigation
+
+Completed by PR #62:
+
+- closed-by-default temporary drawer on phones;
+- permanent sidebar retained for tablet/desktop;
+- mobile menu button and automatic close after navigation;
+- full-width phone content and real-Chrome 360/1280 px acceptance.
 
 ### Shopping and documents
 
@@ -112,58 +129,43 @@ ADR-013 approves a two-dimensional persisted classification:
 - compatibility per `(dish, role, meal_type)`;
 - no inference from names, recipes, ingredients, or historical placement.
 
-Backend persistence/API slice on PR #59:
+Merged persistence, editor, and readiness slices:
 
-- `DishMealRoleORM` and `DishMealRoleMealTypeORM`;
-- Alembic revision `h10001` with both normalized tables;
-- role and meal-type database constraints with cascading foreign keys;
-- Dish list/detail response contracts;
-- atomic full classification replacement endpoint;
-- clearing, duplicate, empty, invalid, incompatible, and missing-dish coverage;
-- unchanged current generation behavior.
+- PR #59: normalized persistence, Alembic `h10001`, API contracts, and atomic classification replacement;
+- PR #60: Russian role/meal-type editor, local validation, and responsive browser acceptance;
+- PR #61: structured catalogue readiness, blocking required pools, optional recommendations, and Russian warnings.
 
-Frontend editor slice on PR #60:
+Required composition slice on PR #63:
 
-- Russian role and meal-type controls in the Dish catalogue;
-- multiple roles and per-role repeatability;
-- explicit compatible meal types for every selected role;
-- local validation before API mutation;
-- visible role/meal-type classification in list and detail views;
-- exact Axios/React Query API acceptance;
-- backend error rendering and responsive 1280/768/360 px screenshots.
+- filters every automatic candidate by both role and current meal type;
+- requires `main` for breakfast, lunch, and dinner;
+- requires `snack` for the snack slot;
+- excludes unclassified Dishes and Dishes with archived selected Recipes;
+- persists an empty MealSlot and warning instead of silently using an incompatible Dish;
+- respects `is_repeatable` for same-day reuse;
+- retains deterministic warning fallback when a non-repeatable compatible pool is exhausted;
+- keeps MealSlotDish relation identifiers and legacy MealPlanItem compatibility intact.
 
-Catalogue readiness slice on stacked PR #61:
-
-- structured `GET /api/v1/dishes/catalogue-readiness`;
-- blocking minimums: one `main` for breakfast/lunch/dinner and one `snack` for snack;
-- non-blocking `addition` and `drink` recommendations;
-- active/classified/unclassified counts;
-- archived-recipe exclusion;
-- Russian warnings refreshed after role mutation;
-- desktop and 360 px Chrome acceptance.
-
-Quality run #197 is successful for PR #59. Quality run #206 is successful for PR #60. Quality run #225 is successful for the initial PR #61 implementation.
+Quality run #240 is successful for PR #63.
 
 ## NEXT
 
-### Merge and deployment sequence
+### Deployment catalogue
 
-1. Merge PR #59.
-2. Retarget PR #60 to `main`, rerun Quality, and merge it.
-3. Retarget PR #61 to `main`, rerun Quality, and merge it.
-4. Classify the active deployment catalogue explicitly by role and meal type.
+1. Merge PR #63.
+2. Classify the active deployment catalogue explicitly by role and meal type.
+3. Verify that every generated project has required breakfast/snack/lunch/dinner coverage.
+4. Keep unclassified Dishes manually selectable and excluded from automatic generation.
 
-### Role-aware composition
+### Complete meal composition
 
-1. Filter candidates by both persisted role and current meal type.
-2. Implement breakfast, snack, lunch, and dinner composition.
-3. Use catalogue readiness before generation and preserve visible warnings.
+1. Add optional `addition` and `drink` components to generated main-meal slots.
+2. Respect explicitly repeatable additions and drinks.
+3. Keep optional gaps as warnings/recommendations rather than required-pool blockers.
 4. Implement calendar-day three-day diversity for main dishes.
-5. Allow explicitly repeatable drinks and additions.
-6. Preserve manual selections as authoritative.
-7. Exclude archived-recipe dishes from automatic selection.
-8. Persist or reconstruct warnings for later reads.
-9. Add unit, service, API, frontend, and recalculation coverage.
+5. Preserve manual selections as authoritative during regeneration.
+6. Persist or deterministically reconstruct warnings for later reads.
+7. Add recalculation and end-to-end coverage for multi-component generated slots.
 
 ### Shopping and equipment
 
