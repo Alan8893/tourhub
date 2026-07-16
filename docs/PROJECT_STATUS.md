@@ -4,7 +4,7 @@ Status date: 2026-07-16
 
 ## Current phase
 
-TH-0061.5 remains active. Its persisted classification and first production generation slice are complete, and stacked PR #66 implements calendar-day three-day diversity for `main` dishes on top of documentation PR #65.
+TH-0061.5 remains active. Persisted classification and production role-aware generation are merged; the open stack now contains documentation synchronization, calendar-day `main` diversity, and manual-slot preservation during regeneration.
 
 Merged delivery chain:
 
@@ -17,16 +17,18 @@ Merged delivery chain:
 Open stack:
 
 - PR #65 — canonical documentation synchronization after PR #64;
-- PR #66 — calendar-day three-day diversity for `main` dishes.
+- PR #66 — calendar-day three-day diversity for `main` dishes;
+- PR #67 — preservation of manually edited MealSlots during regeneration.
 
-The Product Owner verified the updated local deployment after PR #64. Automatic generation uses only explicitly classified, active-recipe dishes.
+The Product Owner verified the updated local deployment after PR #64. Automatic generation uses only explicitly classified, active-recipe dishes, while manual choices remain available independently of automatic classification.
 
 ## Verified baseline
 
 - Current `main` includes PR #64 at squash commit `cdc211ed6bbcc12779c28d692a312022d297cf01`.
-- Alembic has one head: `h10001`.
+- `main` currently has Alembic head `h10001`; stacked PR #67 adds `h10002` for the manual-slot marker.
 - Quality run #254 passed on the exact PR #64 head with 175 backend tests, Ruff, strict mypy, Alembic validation, frontend tests/build/browser acceptance, and PostgreSQL backup/restore.
 - Documentation PR #65 is Ready for review, mergeable, and has successful exact-head Quality #256.
+- Diversity PR #66 is Ready for review, mergeable, and has successful exact-head Quality #264.
 - MealSlot and MealSlotDish are the primary menu-composition persistence model.
 - MealPlanItem remains a legacy compatibility path.
 - MealSlot API responses expose persisted relation identifiers separately from source `dish_id` values.
@@ -79,10 +81,19 @@ PR #66 adds:
 - deterministic empty required slots and warnings when the diversity-eligible pool is exhausted;
 - pure engine, service, persistence, and public API regressions.
 
-Still required for TH-0061.5 after PR #66:
+PR #67 adds:
+
+- persisted `MealSlot.is_manually_edited` through Alembic revision `h10002`;
+- manual marking after successful add, replace, or remove, including a fully emptied slot;
+- regeneration in place for an existing project MealPlan rather than duplicate-plan creation;
+- exact preservation of marked slots while unmarked slots are regenerated;
+- preservation of unclassified manual dishes without guessing a role;
+- no automatic required-role warning for an authoritative preserved slot;
+- continued separation of warning persistence into the next slice.
+
+Still required for TH-0061.5 after PR #67:
 
 - maintain and complete explicit classification of the active deployment catalogue;
-- preservation of manual selections during regeneration;
 - persistence or deterministic reconstruction of generation warnings for later GET responses;
 - larger diversity thresholds and future preference modes only after approved product requirements.
 
@@ -94,7 +105,7 @@ Still required for TH-0061.5 after PR #66:
 - atomic classification replacement API;
 - Russian role/meal-type editor;
 - active/classified/unclassified readiness counts;
-- archived-recipe exclusion from readiness and generation candidates;
+- archived-recipe exclusion from readiness and automatic generation candidates;
 - recipe components, quantity modes, notes, archive/restore, and guarded deletion;
 - transactional CSV import;
 - purchasing recalculation after Dish recipe replacement.
@@ -141,28 +152,17 @@ Enforced gates:
 - desktop, tablet, and 360 px no-overflow checks and screenshots;
 - PostgreSQL backup/restore smoke test.
 
-PR #64 / Quality #254 specifically verifies:
+PR #66 regression scope verifies calendar-day diversity, repeatable-main bypass, pool exhaustion, service mapping, persistence alignment, and public API behavior.
 
-- oatmeal restricted to breakfast;
-- borscht restricted to lunch;
-- separate dinner-main and snack pools;
-- optional repeatable addition/drink composition;
-- exclusion of unclassified and archived-recipe dishes;
-- explicit warnings for missing or exhausted required pools;
-- no warning for absent optional roles;
-- stable multi-dish persistence order;
-- project generation through real ORM role relationships and public API serialization.
+PR #67 regression scope verifies:
 
-PR #66 regression scope verifies:
-
-- calendar-day rather than selection-count diversity;
-- one-day same-day uniqueness remains unchanged;
-- three candidates rotate across days one through three and can reuse on day four;
-- repeatable `main` can repeat inside the window;
-- exhausted eligible pools leave required slots empty and return a deterministic warning;
-- service mapping still excludes archived and unclassified dishes;
-- MealSlot/MealSlotDish and legacy MealPlanItem persistence remain aligned;
-- the public project-generation API exposes the same deterministic behavior.
+- manual mutation marking for add, replace, and remove;
+- authoritative preservation of non-empty and empty manual slots;
+- no role inference for an unclassified manual dish;
+- suppression of irrelevant automatic warnings for preserved slots;
+- reuse of one project MealPlan across regeneration;
+- persistence of the regenerated composition through a subsequent GET;
+- unchanged automatic generation for unmarked slots.
 
 Open quality debt:
 
@@ -176,13 +176,12 @@ Open quality debt:
 ## Active tasks
 
 - TH-0061 — guided project preparation journey;
-- TH-0061.5 — calendar-day diversity, then regeneration and warning-lifecycle rules.
+- TH-0061.5 — finish the open diversity/regeneration stack, then warning lifecycle.
 
 ## Immediate sequence
 
 1. Keep the active catalogue explicitly classified and verify readiness on real deployment data.
-2. Complete exact-head Quality and review for stacked PR #66 after PR #65.
-3. Preserve manual selections as authoritative during regeneration.
-4. Persist or deterministically reconstruct generation warnings for later reads.
-5. Complete the guided preparation, packaging, equipment, and export acceptance workflow.
-6. Introduce invitation-only access and roles only after single-user acceptance.
+2. Review and merge PR #65, #66, and #67 only by explicit Product Owner command and in dependency order.
+3. Persist or deterministically reconstruct generation warnings for later reads.
+4. Complete the guided preparation, packaging, equipment, and export acceptance workflow.
+5. Introduce invitation-only access and roles only after single-user acceptance.
