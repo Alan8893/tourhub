@@ -33,9 +33,15 @@ class ProjectDocumentService:
         self.excel_generator = excel_generator or ExcelDocumentGenerator()
         self.print_generator = print_generator or PrintDocumentGenerator()
         self.purchase_list_repository = purchase_list_repository
-        self.equipment_document_mapper = equipment_document_mapper or EquipmentDocumentMapper()
-        self.equipment_pdf_generator = equipment_pdf_generator or EquipmentPDFDocumentGenerator()
-        self.equipment_excel_generator = equipment_excel_generator or EquipmentExcelDocumentGenerator()
+        self.equipment_document_mapper = (
+            equipment_document_mapper or EquipmentDocumentMapper()
+        )
+        self.equipment_pdf_generator = (
+            equipment_pdf_generator or EquipmentPDFDocumentGenerator()
+        )
+        self.equipment_excel_generator = (
+            equipment_excel_generator or EquipmentExcelDocumentGenerator()
+        )
         self.equipment_list_repository = equipment_list_repository
 
     def generate_purchase_pdf(self, project: ProjectORM) -> GeneratedDocument:
