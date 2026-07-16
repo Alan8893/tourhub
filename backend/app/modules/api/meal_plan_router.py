@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.session import get_session
-from app.modules.projects.repositories.project_repository import ProjectRepository
+from app.modules.projects.repositories.project_repository import (
+    ProjectRepository,
+)
 from app.repositories.dish_repository import DishRepository
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
