@@ -22,17 +22,17 @@ function saveBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export default function DocumentsWidget() {
-  const { projectId, preparationResult } = useProjectWorkflow();
+interface DocumentsDownloadCardProps {
+  projectId: number;
+  ready: boolean;
+}
+
+export function DocumentsDownloadCard({
+  projectId,
+  ready,
+}: DocumentsDownloadCardProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const ready = Boolean(
-    projectId &&
-      preparationResult?.purchase_list_id &&
-      preparationResult.purchase_checklist_id &&
-      preparationResult.equipment_list_id,
-  );
 
   async function runDownload(action: () => Promise<Blob>, filename: string) {
     setIsDownloading(true);
@@ -49,7 +49,6 @@ export default function DocumentsWidget() {
   }
 
   async function handlePurchaseDownload(format: "pdf" | "excel") {
-    if (!projectId) return;
     await runDownload(
       () => downloadPurchaseDocument(projectId, format),
       format === "pdf" ? "закупка.pdf" : "закупка.xlsx",
@@ -57,7 +56,6 @@ export default function DocumentsWidget() {
   }
 
   async function handleEquipmentDownload(format: "pdf" | "excel") {
-    if (!projectId) return;
     await runDownload(
       () => downloadEquipmentDocument(projectId, format),
       format === "pdf" ? "оборудование.pdf" : "оборудование.xlsx",
@@ -65,7 +63,6 @@ export default function DocumentsWidget() {
   }
 
   async function handlePackageDownload() {
-    if (!projectId) return;
     await runDownload(
       () => downloadDocumentPackage(projectId),
       "документы-похода.zip",
@@ -137,4 +134,16 @@ export default function DocumentsWidget() {
       </CardContent>
     </Card>
   );
+}
+
+export default function DocumentsWidget() {
+  const { projectId, preparationResult } = useProjectWorkflow();
+  const ready = Boolean(
+    projectId &&
+      preparationResult?.purchase_list_id &&
+      preparationResult.purchase_checklist_id &&
+      preparationResult.equipment_list_id,
+  );
+
+  return <DocumentsDownloadCard projectId={projectId} ready={ready} />;
 }
