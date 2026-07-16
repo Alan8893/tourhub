@@ -18,12 +18,28 @@ export interface PurchaseList {
   project_id: number | null;
   meal_plan_id: string;
   status: string;
+  responsible_person: string | null;
   items: PurchaseListItem[];
+}
+
+export interface PurchaseListUpdate {
+  responsible_person: string | null;
 }
 
 export async function getProjectPurchaseList(projectId: number): Promise<PurchaseList> {
   const response = await apiClient.get<PurchaseList>(
     `/purchase-lists/project/${projectId}`,
+  );
+  return response.data;
+}
+
+export async function updatePurchaseList(
+  purchaseListId: string,
+  input: PurchaseListUpdate,
+): Promise<PurchaseList> {
+  const response = await apiClient.patch<PurchaseList>(
+    `/purchase-lists/${purchaseListId}`,
+    input,
   );
   return response.data;
 }

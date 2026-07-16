@@ -1,8 +1,12 @@
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.workflows.purchase_list import PurchaseListStatus
+
+
+class PurchaseListUpdate(BaseModel):
+    responsible_person: str | None = Field(default=None, max_length=255)
 
 
 class PurchaseListItemResponse(BaseModel):
@@ -31,6 +35,7 @@ class PurchaseListResponse(BaseModel):
     project_id: int | None
     meal_plan_id: UUID
     status: PurchaseListStatus
+    responsible_person: str | None
     items: list[PurchaseListItemResponse]
 
 

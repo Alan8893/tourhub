@@ -1,6 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getProjectPurchaseList } from "../api/purchaseListApi";
+import {
+  getProjectPurchaseList,
+  PurchaseListUpdate,
+  updatePurchaseList,
+} from "../api/purchaseListApi";
 
 export function useProjectPurchaseList(
   projectId: number,
@@ -11,5 +15,24 @@ export function useProjectPurchaseList(
     queryFn: () => getProjectPurchaseList(projectId),
     enabled: Number.isInteger(projectId) && projectId > 0,
     retry: false,
+  });
+}
+
+export function useUpdatePurchaseList(projectId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      purchaseListId,
+      input,
+    }: {
+      purchaseListId: string;
+      input: PurchaseListUpdate;
+    }) => updatePurchaseList(purchaseListId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["purchase-list", projectId],
+      });
+    },
   });
 }

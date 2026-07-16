@@ -19,63 +19,40 @@ Project
 
 ### Infrastructure
 
-- Dockerfiles and Docker Compose;
-- PostgreSQL and Redis runtime configuration;
-- Alembic one-head validation;
+- Docker Compose, PostgreSQL, Redis, and Alembic one-head validation;
 - backend Ruff, strict mypy, pytest, frontend tests/build/browser acceptance;
 - PostgreSQL backup/restore CI;
-- LAN-safe same-origin routing and responsive navigation.
+- LAN-safe routing and responsive navigation.
 
-### Projects, recipes, and menu
+### Project, recipes, and menu
 
-- project creation, catalogue, workspace, participants, duration, and meal boundaries;
-- recipe components, notes, archive/restore, products, CSV import, and Dish catalogue;
-- persisted Dish roles, meal compatibility, and repeatability;
-- catalogue readiness and Russian classification editor;
-- role-aware menu generation with required and optional composition roles;
-- same-day uniqueness and calendar-day three-day `main` diversity;
-- authoritative manual slots across regeneration;
-- persisted generation-warning snapshot through Alembic `h10003`;
-- transactional purchasing recalculation after project, menu, and recipe changes.
+- project creation, workspace, participants, duration, and meal boundaries;
+- recipe/product/Dish catalogues and CSV import;
+- persisted Dish roles, compatibility, repeatability, and readiness;
+- role-aware generation, diversity, manual-slot preservation, and persisted warnings;
+- transactional purchasing recalculation.
 
-TH-0061.5 approved rules are merged through PR #69. Operational catalogue classification remains ongoing.
+### Shopping and packaging through PR #71
 
-### Shopping foundation
-
-- ingredient aggregation;
-- package-rounding calculation;
+- ingredient aggregation and package rounding;
 - PurchaseList and PurchaseChecklist persistence;
-- purchased quantity and checked-state persistence;
-- checklist-state preservation during recalculation;
-- PDF/Excel/package export foundations.
+- required, purchased, and remaining quantity review;
+- editable purchase progress;
+- package size, package count, total quantity to buy, and surplus;
+- responsive Russian UI and browser acceptance.
 
-### PR #70 — editable purchase checklist
-
-Merged with exact-head Quality #287:
-
-- product names in checklist responses;
-- required, purchased, and non-negative remaining quantities;
-- validation against negative purchased quantities;
-- editable Russian checklist in the project workspace;
-- progress, feedback states, responsive layout, and browser acceptance.
+PR #70 passed exact-head Quality #287. PR #71 passed exact-head Quality #296 and merged as `ed2ab62a70cefbd41425e9cdbaab0f81a6777298`.
 
 ## IN PROGRESS
 
-### PR #71 — package count and surplus review
+### PR #72 — optional purchasing contact
 
-- product names in PurchaseList responses;
-- total purchase quantity derived from package size and package count;
-- non-negative package surplus;
-- required quantity, package size, package count, total purchase quantity, and surplus in the workspace;
-- backend API, frontend helper, and combined purchase browser acceptance;
-- no change to aggregation, rounding, persistence, or recalculation algorithms.
+- nullable PurchaseList field through Alembic `h10004`;
+- GET/PATCH contract with trim, clear, and length validation;
+- preservation during purchasing recalculation;
+- save/clear editor with unit and browser coverage.
 
 ## NEXT
-
-### Shopping and packaging
-
-- add optional responsible-person text;
-- connect the completed shopping review to the guided preparation sequence.
 
 ### Equipment
 

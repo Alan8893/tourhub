@@ -95,6 +95,20 @@ class PurchaseListService:
     def get(self, purchase_list_id: str) -> PurchaseListORM | None:
         return self.repository.get_by_id(purchase_list_id)
 
+    def update_responsible_person(
+        self,
+        purchase_list_id: str,
+        responsible_person: str | None,
+    ) -> PurchaseListORM:
+        purchase_list = self.get(purchase_list_id)
+        if not purchase_list:
+            raise ValueError("Purchase list not found")
+
+        normalized = responsible_person.strip() if responsible_person else None
+        purchase_list.responsible_person = normalized or None
+        self.repository.commit()
+        return purchase_list
+
     def get_summary(self, purchase_list_id: str) -> PurchaseListSummary:
         purchase_list = self.get(purchase_list_id)
 

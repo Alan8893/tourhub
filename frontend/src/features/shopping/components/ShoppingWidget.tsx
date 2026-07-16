@@ -12,6 +12,7 @@ import { useProjectWorkflow } from "@/features/project-workflow";
 import { useProjectPurchaseList } from "../hooks/usePurchaseList";
 import { getPurchaseListSummary } from "../model/purchaseListState";
 import PurchaseListItemRow from "./PurchaseListItemRow";
+import PurchaseResponsiblePersonEditor from "./PurchaseResponsiblePersonEditor";
 
 export default function ShoppingWidget() {
   const { projectId, preparationResult } = useProjectWorkflow();
@@ -50,6 +51,14 @@ export default function ShoppingWidget() {
 
           {purchaseList && summary ? (
             <>
+              <PurchaseResponsiblePersonEditor
+                projectId={projectId}
+                purchaseListId={purchaseList.id}
+                responsiblePerson={purchaseList.responsible_person}
+              />
+
+              <Divider />
+
               <Typography variant="body2" color="text.secondary">
                 Позиций: {summary.itemsTotal} · Упаковок: {summary.packagesTotal} · С
                 излишком: {summary.surplusItems}
