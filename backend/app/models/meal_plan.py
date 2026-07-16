@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import JSON, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -37,6 +37,12 @@ class MealPlanORM(Base):
     days_count: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
+    )
+
+    warnings: Mapped[list[str]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=list,
     )
 
     project = relationship(

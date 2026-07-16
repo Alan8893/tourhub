@@ -66,24 +66,29 @@ Project
 - responsive desktop, tablet, and mobile layouts;
 - transactional purchasing recalculation after MealSlot changes.
 
-### TH-0061.5 delivered baseline
+### TH-0061.5 delivered menu rules
 
-Merged through PR #59, #60, #61, and #64:
+Merged through PR #59, #60, #61, #64, #65, #66, and #67:
 
 - persisted roles `main`, `addition`, `drink`, and `snack`;
 - compatibility per `(dish, role, meal_type)`;
-- no inference from names, recipes, ingredients, or history;
+- no inference from names, recipes, ingredients, history, or manual placement;
 - readiness minimums for breakfast, snack, lunch, and dinner;
 - role-aware project meal-plan generation;
 - required `main` for breakfast/lunch/dinner and required `snack` for snack;
 - optional compatible `addition` and `drink`;
 - stable `main → addition → drink` order;
-- repeatability per role assignment;
-- exclusion of archived-recipe and unclassified dishes;
+- same-day uniqueness and repeatability per role assignment;
+- trip-calendar-day three-day diversity for non-repeatable `main` dishes;
+- day-four reuse and repeatable-main bypass;
+- exclusion of archived-recipe and unclassified dishes from automatic generation;
 - explicit warnings instead of hidden incompatible fallback;
-- API, persistence, and real ORM integration coverage.
+- persisted manual-slot marker through Alembic revision `h10002`;
+- authoritative preservation of non-empty and empty manual slots during regeneration;
+- reuse of one MealPlan per project;
+- API, engine, service, persistence, migration, and real ORM integration coverage.
 
-Quality run #254 passed on the exact PR #64 head with 175 backend tests and all existing frontend/browser/PostgreSQL gates. The Product Owner verified the deployed result locally.
+Quality #271 passed before PR #66 merge and Quality #273 passed before PR #67 merge.
 
 ### Shopping and documents
 
@@ -101,35 +106,21 @@ Quality run #254 passed on the exact PR #64 head with 175 backend tests and all 
 - connect menu, purchasing, packaging, equipment, and export steps;
 - verify the complete single-club preparation journey.
 
-### TH-0061.5 — Stacked generator completion
+### TH-0061.5 — Generation warning lifecycle
 
-PR #66 implements calendar-day three-day diversity for `main` dishes:
+Draft PR #69 implements the final currently approved rules-engine slice:
 
-- trip-calendar-day selection context;
-- rolling three-day diversity only for non-repeatable `main` assignments;
-- day-four reuse after a day-one selection;
-- explicitly repeatable `main` bypass;
-- unchanged same-day uniqueness and role/meal-type compatibility;
-- deterministic empty required slots and warnings on eligible-pool exhaustion.
+- Alembic revision `h10003` adds an ordered warning snapshot to MealPlan;
+- POST generation persists the warnings from that exact generation;
+- subsequent GET responses return the persisted snapshot;
+- catalogue changes do not rewrite historical warnings without regeneration;
+- regeneration replaces the snapshot atomically, including clearing it to `[]`;
+- public API regression coverage verifies the complete lifecycle.
 
-Stacked PR #67 implements manual-slot preservation during regeneration:
-
-- Alembic revision `h10002` adds an explicit `MealSlot.is_manually_edited` marker;
-- successful add, replace, and remove mutations mark the whole slot as manual;
-- an emptied manual slot remains authoritative;
-- repeated project generation reuses the existing MealPlan instead of creating duplicates;
-- marked slots are preserved exactly while unmarked schedule slots are generated again;
-- unclassified manual dishes remain valid without role inference;
-- preserved manual slots bypass automatic composition warnings and diversity rules because their selected role is not persisted on MealSlotDish;
-- pure generator, service/persistence, mutation, migration, and public API regressions cover the behavior.
-
-Warning persistence or deterministic reconstruction is intentionally not mixed into PR #67.
-
-Remaining TH-0061.5 scope after PR #67:
+Remaining operational work after PR #69:
 
 1. maintain and complete explicit classification of the active deployment catalogue;
-2. persist or deterministically reconstruct generation warnings for later GET responses;
-3. define larger candidate thresholds and preference modes only when product requirements are approved.
+2. define larger candidate thresholds or preference modes only after approved requirements.
 
 ## NEXT
 

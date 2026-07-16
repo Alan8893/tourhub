@@ -161,6 +161,8 @@ class MealPlanService:
             meal_plan.days_count = days
             cast(list[MealPlanDayORM], meal_plan.days).clear()
 
+        meal_plan.warnings = list(result.warnings)
+
         days_map: dict[int, MealPlanDayORM] = {}
         for item in result.items:
             day = self._get_or_create_day(meal_plan, days_map, item.day_number)
@@ -203,7 +205,7 @@ class MealPlanService:
             raise ValueError(f"Meal plan not found after save: {meal_plan.id}")
         return SavedMealPlanResult(
             meal_plan=loaded_meal_plan,
-            warnings=result.warnings,
+            warnings=list(loaded_meal_plan.warnings),
         )
 
     def _get_or_create_day(
