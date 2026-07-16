@@ -63,12 +63,18 @@ def test_generate_project_meal_plan_exposes_catalogue_warning_and_relation_ids(
 
     assert response.status_code == 200
     data = response.json()
-    assert data["warnings"] == ["Dish database is insufficient"]
+    assert data["warnings"] == [
+        "No main dishes available for breakfast",
+        "No snack dishes available for snack",
+        "No main dishes available for lunch",
+        "No main dishes available for dinner",
+    ]
     assert [meal["meal_type"] for meal in data["meals"]] == [
         "breakfast",
         "snack",
         "lunch",
         "dinner",
     ]
-    assert all(meal["dishes"][0]["id"] for meal in data["meals"])
-    assert len(data["items"]) == 4
+    assert all(meal["id"] for meal in data["meals"])
+    assert all(meal["dishes"] == [] for meal in data["meals"])
+    assert data["items"] == []
