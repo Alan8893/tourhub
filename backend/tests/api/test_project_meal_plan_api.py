@@ -158,8 +158,13 @@ def test_generate_project_meal_plan_uses_role_and_meal_type_compatibility(
     assert response.status_code == 200
     data = response.json()
     assert data["warnings"] == []
+    assert all(
+        dish["id"]
+        for meal in data["meals"]
+        for dish in meal["dishes"]
+    )
     assert {
-        meal["meal_type"]: [dish["id"] for dish in meal["dishes"]]
+        meal["meal_type"]: [dish["dish_id"] for dish in meal["dishes"]]
         for meal in data["meals"]
     } == {
         "breakfast": [OATMEAL_ID, BREAD_ID, TEA_ID],
