@@ -4,9 +4,12 @@ from sqlalchemy.orm import Session
 from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_slot import MealSlotORM
 from app.models.meal_slot_dish import MealSlotDishORM
+from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.services.equipment_list_service import EquipmentListService
+from app.services.meal_plan_derived_refresh_service import MealPlanDerivedRefreshService
 from app.services.meal_plan_purchasing_refresh_service import (
     MealPlanPurchasingRefreshService,
 )
@@ -28,10 +31,16 @@ class DishRecipeRecalculationService:
         )
         meal_plan_ids = list(self.session.scalars(statement).all())
         meal_plan_repository = MealPlanRepository(self.session)
-        refresh_service = MealPlanPurchasingRefreshService(
-            PurchaseListRepository(self.session),
-            PurchaseChecklistRepository(self.session),
-            MealPlanShoppingService(ShoppingListService(self.session)),
+        refresh_service = MealPlanDerivedRefreshService(
+            MealPlanPurchasingRefreshService(
+                PurchaseListRepository(self.session),
+                PurchaseChecklistRepository(self.session),
+                MealPlanShoppingService(ShoppingListService(self.session)),
+            ),
+            EquipmentListService(
+                EquipmentListRepository(self.session),
+                meal_plan_repository,
+            ),
         )
 
         for meal_plan_id in meal_plan_ids:
