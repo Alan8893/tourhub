@@ -133,6 +133,21 @@ def prepare_project(project_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(error)) from error
 
 
+def _document_service(db: Session) -> ProjectDocumentService:
+    return ProjectDocumentService(
+        purchase_list_repository=PurchaseListRepository(db),
+        equipment_list_repository=EquipmentListRepository(db),
+    )
+
+
+def _download(document) -> Response:
+    return Response(
+        content=document.content,
+        media_type=document.content_type,
+        headers={"Content-Disposition": f'attachment; filename="{document.filename}"'},
+    )
+
+
 @router.get("/{project_id}/documents/purchase/{format}")
 def generate_purchase_document(
     project_id: int,
@@ -142,9 +157,7 @@ def generate_purchase_document(
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
-    service = ProjectDocumentService(
-        purchase_list_repository=PurchaseListRepository(db),
-    )
+    service = _document_service(db)
     generators = {
         "pdf": service.generate_purchase_pdf,
         "excel": service.generate_purchase_excel,
@@ -154,7 +167,7 @@ def generate_purchase_document(
     if generator is None:
         raise HTTPException(status_code=400, detail="Unsupported document format")
     try:
-        document = generator(project)
+        return _download(generator(project))
     except ValueError as error:
         if str(error) == "Purchase list not found":
             raise HTTPException(
@@ -162,11 +175,34 @@ def generate_purchase_document(
                 detail="Project purchasing is not prepared",
             ) from error
         raise
-    return Response(
-        content=document.content,
-        media_type=document.content_type,
-        headers={"Content-Disposition": f'attachment; filename="{document.filename}"'},
-    )
+
+
+@router.get("/{project_id}/documents/equipment/{format}")
+def generate_equipment_document(
+    project_id: int,
+    format: str,
+    db: Session = Depends(get_db),
+) -> Response:
+    project = ProjectRepository(db).get_by_id(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    service = _document_service(db)
+    generators = {
+        "pdf": service.generate_equipment_pdf,
+        "excel": service.generate_equipment_excel,
+    }
+    generator = generators.get(format)
+    if generator is None:
+        raise HTTPException(status_code=400, detail="Unsupported document format")
+    try:
+        return _download(generator(project))
+    except ValueError as error:
+        if str(error) == "Equipment list not found":
+            raise HTTPException(
+                status_code=409,
+                detail="Project equipment is not prepared",
+            ) from error
+        raise
 
 
 @router.get("/{project_id}/documents/package")
@@ -174,20 +210,18 @@ def generate_project_document_package(project_id: int, db: Session = Depends(get
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
-    document_service = ProjectDocumentService(
-        purchase_list_repository=PurchaseListRepository(db),
-    )
     try:
-        document = ProjectDocumentPackageService(document_service).generate_package(project)
+        document = ProjectDocumentPackageService(_document_service(db)).generate_package(project)
     except ValueError as error:
         if str(error) == "Purchase list not found":
             raise HTTPException(
                 status_code=409,
                 detail="Project purchasing is not prepared",
             ) from error
+        if str(error) == "Equipment list not found":
+            raise HTTPException(
+                status_code=409,
+                detail="Project equipment is not prepared",
+            ) from error
         raise
-    return Response(
-        content=document.content,
-        media_type=document.content_type,
-        headers={"Content-Disposition": f'attachment; filename="{document.filename}"'},
-    )
+    return _download(document)
