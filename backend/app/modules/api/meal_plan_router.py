@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session
 from app.core.session import get_session
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.repositories.dish_repository import DishRepository
+from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.schemas.meal_plan import MealPlanResponse
+from app.services.equipment_list_service import EquipmentListService
 from app.services.meal_plan_mapper import MealPlanMapper
 from app.services.meal_plan_service import MealPlanService
 
@@ -50,4 +52,14 @@ def generate_project_meal_plan(
         start_meal=project.first_meal or "breakfast",
         end_meal=project.last_meal or "dinner",
     )
+    equipment_service = EquipmentListService(
+        EquipmentListRepository(session),
+        MealPlanRepository(session),
+    )
+    try:
+        equipment_service.refresh_existing(saved.meal_plan)
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
     return MealPlanMapper.to_response(saved.meal_plan, warnings=saved.warnings)
