@@ -24,7 +24,7 @@ export default function PurchaseResponsiblePersonEditor({
   const [feedback, setFeedback] = useState<string>();
   const updateMutation = useUpdatePurchaseList(projectId);
   const isValid = isResponsiblePersonValid(value);
-  const hasChanges = normalizeResponsiblePerson(value) !== responsiblePerson;
+  const hasChanges = normalizeResponsiblePerson(value) !== (responsiblePerson ?? null);
 
   useEffect(() => {
     setValue(responsiblePerson ?? "");
