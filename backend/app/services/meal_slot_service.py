@@ -21,6 +21,7 @@ class MealSlotService:
             dish_id=dish_id,
             order=len(dishes),
         )
+        slot.is_manually_edited = True
 
         # SQLAlchemy relationship already attaches the item through slot=slot.
         # Do not append manually, otherwise the relationship collection receives
@@ -41,6 +42,7 @@ class MealSlotService:
         for index, dish in enumerate(dishes):
             dish.order = index
 
+        slot.is_manually_edited = True
         return slot
 
     def replace_dish(
@@ -53,6 +55,7 @@ class MealSlotService:
         for item in dishes:
             if item.id == slot_dish_id:
                 item.dish_id = new_dish_id
+                slot.is_manually_edited = True
                 return item
 
         raise ValueError("Meal slot dish not found")
