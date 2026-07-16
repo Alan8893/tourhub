@@ -1,10 +1,11 @@
-import { Container, CssBaseline } from "@mui/material";
+import { Container, CssBaseline, Stack } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { ProjectWorkflowProvider } from "@/features/project-workflow";
 import { PurchaseWidget } from "@/features/purchase";
+import { ShoppingWidget } from "@/features/shopping";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,7 +26,10 @@ createRoot(root).render(
       <ProjectWorkflowProvider projectId={71}>
         <CssBaseline />
         <Container maxWidth="md" sx={{ p: 1 }}>
-          <PurchaseWidget />
+          <Stack spacing={2}>
+            <ShoppingWidget />
+            <PurchaseWidget />
+          </Stack>
         </Container>
       </ProjectWorkflowProvider>
     </QueryClientProvider>
