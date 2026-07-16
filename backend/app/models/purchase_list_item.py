@@ -59,3 +59,18 @@ class PurchaseListItemORM(Base):
         "ProductORM",
         back_populates="purchase_list_items",
     )
+
+    @property
+    def product_name(self) -> str:
+        """Human-readable product name for purchase review responses."""
+        return self.product.name
+
+    @property
+    def purchase_quantity(self) -> Decimal:
+        """Total quantity supplied by the calculated package count."""
+        return self.package_size * self.packages_count
+
+    @property
+    def surplus_quantity(self) -> Decimal:
+        """Non-negative package surplus after covering the requirement."""
+        return max(self.purchase_quantity - self.required_quantity, Decimal("0"))
