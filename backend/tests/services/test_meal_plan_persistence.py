@@ -1,5 +1,25 @@
-from app.models.dish import DishORM
+from types import SimpleNamespace
+
 from app.services.meal_plan_service import MealPlanService
+
+
+def classified_dish(dish_id: str, name: str):
+    return SimpleNamespace(
+        id=dish_id,
+        name=name,
+        recipe=SimpleNamespace(is_archived=False),
+        meal_roles=[
+            SimpleNamespace(
+                role="main",
+                is_repeatable=False,
+                meal_types=[
+                    SimpleNamespace(meal_type="breakfast"),
+                    SimpleNamespace(meal_type="lunch"),
+                    SimpleNamespace(meal_type="dinner"),
+                ],
+            )
+        ],
+    )
 
 
 class FakeDishRepository:
@@ -8,8 +28,8 @@ class FakeDishRepository:
 
     def list(self):
         dishes = [
-            DishORM(id="dish-1", name="Pilaf", recipe_id="recipe-1"),
-            DishORM(id="dish-2", name="Soup", recipe_id="recipe-2"),
+            classified_dish("dish-1", "Pilaf"),
+            classified_dish("dish-2", "Soup"),
         ]
         return dishes[: self.dish_count]
 
@@ -89,3 +109,33 @@ def test_generate_and_save_result_preserves_generator_warnings():
 
     assert saved.meal_plan.name == "Short catalogue"
     assert saved.warnings == ["Dish database is insufficient"]
+
+
+def test_generate_and_save_persists_empty_slot_when_required_pool_is_missing():
+    repository = FakeMealPlanRepository()
+
+    class UnclassifiedRepository:
+        def list(self):
+            return [
+                SimpleNamespace(
+                    id="manual",
+                    name="Manual only",
+                    recipe=SimpleNamespace(is_archived=False),
+                    meal_roles=[],
+                )
+            ]
+
+    saved = MealPlanService(
+        dish_repository=UnclassifiedRepository(),
+        meal_plan_repository=repository,
+    ).generate_and_save_result(
+        name="Incomplete catalogue",
+        participants=4,
+        days=1,
+        meals_per_day=["breakfast"],
+    )
+
+    assert len(repository.slots) == 1
+    assert repository.slots[0].meal_type == "breakfast"
+    assert repository.slot_dishes == []
+    assert saved.warnings == ["No compatible main dishes available for breakfast"]
