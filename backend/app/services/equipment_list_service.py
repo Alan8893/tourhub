@@ -1,3 +1,4 @@
+from typing import cast
 from uuid import uuid4
 
 from app.models.equipment_list import EquipmentListORM
@@ -113,8 +114,15 @@ class EquipmentListService:
             item.is_removed = True
         self.repository.commit()
 
-    def visible_items(self, equipment_list: EquipmentListORM) -> list[EquipmentListItemORM]:
-        return [item for item in equipment_list.items if not item.is_removed]
+    def visible_items(
+        self,
+        equipment_list: EquipmentListORM,
+    ) -> list[EquipmentListItemORM]:
+        return [
+            cast(EquipmentListItemORM, item)
+            for item in equipment_list.items
+            if not item.is_removed
+        ]
 
     def _synchronize(
         self,
@@ -122,7 +130,10 @@ class EquipmentListService:
         meal_plan: MealPlanORM,
     ) -> None:
         calculated = self._calculate(meal_plan)
-        existing = {self._key(item.equipment_name): item for item in equipment_list.items}
+        existing = {
+            self._key(item.equipment_name): cast(EquipmentListItemORM, item)
+            for item in equipment_list.items
+        }
 
         for key, (name, quantity) in calculated.items():
             item = existing.get(key)
@@ -153,7 +164,8 @@ class EquipmentListService:
                     item.required_quantity = quantity
 
         calculated_keys = set(calculated)
-        for item in list(equipment_list.items):
+        for relationship_item in list(equipment_list.items):
+            item = cast(EquipmentListItemORM, relationship_item)
             key = self._key(item.equipment_name)
             if key in calculated_keys or item.is_manual:
                 continue
@@ -202,7 +214,8 @@ class EquipmentListService:
 
     def _require_item(self, project_id: int, item_id: str) -> EquipmentListItemORM:
         equipment_list = self._require_list(project_id)
-        for item in equipment_list.items:
+        for relationship_item in equipment_list.items:
+            item = cast(EquipmentListItemORM, relationship_item)
             if item.id == item_id:
                 return item
         raise LookupError("Equipment item not found")
@@ -214,7 +227,8 @@ class EquipmentListService:
         equipment_name: str,
     ) -> EquipmentListItemORM | None:
         key = cls._key(equipment_name)
-        for item in equipment_list.items:
+        for relationship_item in equipment_list.items:
+            item = cast(EquipmentListItemORM, relationship_item)
             if cls._key(item.equipment_name) == key:
                 return item
         return None
