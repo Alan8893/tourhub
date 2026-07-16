@@ -34,7 +34,7 @@ Real-browser coverage now includes:
 - no horizontal overflow at desktop, tablet, and 360 px mobile widths;
 - stable screenshot artifacts.
 
-PR #64 adds backend/persistence/API integration coverage for role-aware project generation. PR #66 adds pure-policy, service, persistence, and public API coverage for calendar-day `main` diversity. PR #67 adds backend mutation, regeneration, persistence, migration, and public API coverage for authoritative manual slots. No frontend behavior changes are required by PR #66 or #67.
+PR #64 adds role-aware project-generation integration coverage. PR #66 adds calendar-day `main` diversity coverage. PR #67 adds manual-slot regeneration coverage. Draft PR #69 adds API coverage for the persisted warning lifecycle. No frontend behavior changes are required by PR #66, #67, or #69.
 
 Remaining critical coverage:
 
@@ -56,7 +56,7 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical status, roadmap, context, domain, architecture, and active TH-0061.5 documentation are synchronized after PR #64 through documentation PR #65. PR #66 updates the status, roadmap, technical debt, and active task for calendar-day diversity. PR #67 updates the same canonical set for manual-slot regeneration. ADR-013 remains the accepted source for persisted role and meal-type ownership. ADR-006 is superseded where it described MealPlanItem as primary.
+Canonical status, roadmap, context, domain, architecture, and active TH-0061.5 documentation are synchronized through merged PR #65, #66, and #67. Draft PR #69 updates the status, roadmap, technical debt, and active task for warning persistence. ADR-013 remains the accepted source for persisted role and meal-type ownership. ADR-006 is superseded where it described MealPlanItem as primary.
 
 Historical archive documents and duplicate ADR-011 history still require explicit canonical labelling where ambiguity remains.
 
@@ -85,7 +85,7 @@ Remaining work covers CLUB/PERSONAL ownership, multiple recipe variants, publica
 
 ### TD-012 — Meal composition and diversity
 
-Implemented through PR #59, #60, #61, #64, and stacked PR #66 and #67:
+Implemented through merged PR #59, #60, #61, #64, #65, #66, and #67:
 
 - normalized `dish_meal_roles` owned by Dish;
 - normalized `dish_meal_role_meal_types` owned by each role assignment;
@@ -102,14 +102,12 @@ Implemented through PR #59, #60, #61, #64, and stacked PR #66 and #67:
 - optional addition/drink recommendations;
 - archived-recipe exclusion and classification counts;
 - role- and meal-type-aware production generation;
-- optional compatible `addition` and `drink` composition;
 - stable composition persistence order;
 - explicit required-pool warnings without incompatible fallback;
 - exclusion of unclassified and archived-recipe dishes from automatic selection;
 - same-day uniqueness with per-role repeatability exceptions;
 - trip-calendar-day three-day diversity for non-repeatable `main` assignments;
-- day-four reuse after a day-one `main` selection;
-- repeatable `main` bypass of the diversity restriction;
+- day-four reuse and repeatable-main bypass;
 - deterministic empty required slots and warnings when the diversity-eligible pool is exhausted;
 - Alembic revision `h10002` for an explicit manual MealSlot marker;
 - manual add, replace, and remove operations marking the complete slot as authoritative;
@@ -118,13 +116,21 @@ Implemented through PR #59, #60, #61, #64, and stacked PR #66 and #67:
 - no inference of a manual dish role from its name, recipe, ingredients, or placement;
 - pure, service, persistence, mutation, migration, and public API integration coverage.
 
-Remaining implementation work:
+Draft PR #69 adds:
+
+- Alembic revision `h10003` for the ordered warning snapshot on MealPlan;
+- persistence of warnings from the latest generation;
+- identical warnings on later GET responses;
+- stability across catalogue-only changes;
+- atomic replacement and clearing on regeneration;
+- public API lifecycle coverage.
+
+Remaining implementation work after PR #69:
 
 - maintain and complete explicit classification of the active deployment catalogue;
-- generation-warning persistence or deterministic reconstruction;
 - larger candidate thresholds and preference modes after approved product requirements and multi-variant recipes.
 
-Minimal readiness, role-aware composition, optional repeatable roles, archived-recipe filtering, immediate warnings, calendar-day `main` diversity, and manual-slot preservation are no longer open implementation parts of TD-012 after the PR #65/#66/#67 stack lands.
+Minimal readiness, role-aware composition, optional repeatable roles, archived-recipe filtering, immediate warnings, calendar-day `main` diversity, manual-slot preservation, and warning persistence are no longer open implementation parts of TD-012 after PR #69 lands.
 
 ### TD-013 — Equipment domain completion
 
