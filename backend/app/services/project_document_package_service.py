@@ -23,6 +23,8 @@ class ProjectDocumentPackageService:
             self.document_service.generate_purchase_pdf(project),
             self.document_service.generate_purchase_excel(project),
             self.document_service.generate_purchase_print(project),
+            self.document_service.generate_equipment_pdf(project),
+            self.document_service.generate_equipment_excel(project),
         ]
 
         archive = BytesIO()
