@@ -16,6 +16,11 @@ BORSCHT_ID = "00000000-0000-0000-0000-000000000103"
 BUCKWHEAT_ID = "00000000-0000-0000-0000-000000000104"
 BREAD_ID = "00000000-0000-0000-0000-000000000105"
 TEA_ID = "00000000-0000-0000-0000-000000000106"
+LUNCH_A_ID = "00000000-0000-0000-0000-000000000107"
+LUNCH_B_ID = "00000000-0000-0000-0000-000000000108"
+BREAKFAST_REPEATABLE_ID = "00000000-0000-0000-0000-000000000109"
+DINNER_REPEATABLE_ID = "00000000-0000-0000-0000-000000000110"
+SNACK_REPEATABLE_ID = "00000000-0000-0000-0000-000000000111"
 
 
 def _classified_dish(
@@ -183,4 +188,64 @@ def test_generate_project_meal_plan_uses_role_and_meal_type_compatibility(
         BUCKWHEAT_ID,
         BREAD_ID,
         TEA_ID,
+    ]
+
+
+def test_generate_project_meal_plan_applies_calendar_day_main_diversity(
+    client,
+    db_session,
+):
+    project = ProjectORM(
+        id=4,
+        name="Four day diversity",
+        participants=8,
+        days=4,
+        first_meal="lunch",
+        last_meal="lunch",
+        status="draft",
+    )
+    classified = [
+        _classified_dish(LUNCH_A_ID, "Lunch A", "main", ("lunch",)),
+        _classified_dish(LUNCH_B_ID, "Lunch B", "main", ("lunch",)),
+        _classified_dish(
+            BREAKFAST_REPEATABLE_ID,
+            "Repeatable breakfast",
+            "main",
+            ("breakfast",),
+            is_repeatable=True,
+        ),
+        _classified_dish(
+            DINNER_REPEATABLE_ID,
+            "Repeatable dinner",
+            "main",
+            ("dinner",),
+            is_repeatable=True,
+        ),
+        _classified_dish(
+            SNACK_REPEATABLE_ID,
+            "Repeatable snack",
+            "snack",
+            ("snack",),
+            is_repeatable=True,
+        ),
+    ]
+    db_session.add(project)
+    for recipe, dish in classified:
+        db_session.add_all([recipe, dish])
+    db_session.commit()
+
+    response = client.post("/api/v1/meal-plans/project/4/generate")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["warnings"] == ["No eligible main dishes available for lunch"]
+    lunches = [meal for meal in data["meals"] if meal["meal_type"] == "lunch"]
+    assert [
+        [dish["dish_id"] for dish in meal["dishes"]]
+        for meal in lunches
+    ] == [
+        [LUNCH_A_ID],
+        [LUNCH_B_ID],
+        [],
+        [LUNCH_A_ID],
     ]

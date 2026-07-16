@@ -29,8 +29,16 @@ def _dish(
 class FakeDishRepository:
     def list(self):
         return [
-            _dish("1", "Овсяная каша", _assignment("main", "breakfast")),
-            _dish("2", "Борщ", _assignment("main", "dinner")),
+            _dish(
+                "1",
+                "Овсяная каша",
+                _assignment("main", "breakfast", is_repeatable=True),
+            ),
+            _dish(
+                "2",
+                "Борщ",
+                _assignment("main", "dinner", is_repeatable=True),
+            ),
         ]
 
 
@@ -77,3 +85,32 @@ def test_meal_plan_service_excludes_archived_recipes():
     assert len(result.slots) == 1
     assert result.slots[0].dishes == []
     assert result.warnings == ["No main dishes available for breakfast"]
+
+
+def test_meal_plan_service_applies_calendar_day_main_diversity():
+    class DiverseDishRepository:
+        def list(self):
+            return [
+                _dish("main-a", "Main A", _assignment("main", "lunch")),
+                _dish("main-b", "Main B", _assignment("main", "lunch")),
+                _dish("main-c", "Main C", _assignment("main", "lunch")),
+                _dish(
+                    "archived-main",
+                    "Archived main",
+                    _assignment("main", "lunch"),
+                    is_archived=True,
+                ),
+                _dish("unclassified", "Unclassified"),
+            ]
+
+    service = MealPlanService(dish_repository=DiverseDishRepository())
+
+    result = service.generate(days=4, meals_per_day=["lunch"])
+
+    assert [item.dish_id for item in result.items] == [
+        "main-a",
+        "main-b",
+        "main-c",
+        "main-a",
+    ]
+    assert result.warnings == []
