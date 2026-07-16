@@ -12,211 +12,255 @@ The generator creates meal structure, not just a list of dishes.
 
 Structure:
 
-```
+```text
 Trip
  |
- Day
+Day
  |
- Meal
+MealSlot
  |
- Meal Components
+MealSlotDish
  |
- Dish
+Dish
  |
- Recipe
+Recipe
  |
- Product
+Product
 ```
 
----
-
-# Meal composition rules
-
-Meal templates are recommendations, not strict requirements.
-
-An instructor can override the composition for a specific project or meal.
+MealSlot is the primary persisted meal-composition model. MealPlanItem remains a legacy compatibility view.
 
 ---
+
+# Persisted candidate classification
+
+Automatic generation may use only persisted Dish metadata.
+
+Each candidate is evaluated by two dimensions:
+
+1. meal role;
+2. compatible meal type for that role assignment.
+
+Supported roles:
+
+- `main`;
+- `addition`;
+- `drink`;
+- `snack`.
+
+Supported meal types:
+
+- `breakfast`;
+- `snack`;
+- `lunch`;
+- `dinner`.
+
+A Dish may have multiple roles. Each `(dish, role)` assignment stores:
+
+- its own `is_repeatable` flag;
+- one or more allowed meal types.
+
+Classification belongs to Dish, not Recipe or MealSlotDish.
+
+The generator must not infer classification from:
+
+- the Dish name;
+- Recipe name or ingredients;
+- Product categories;
+- historical MealSlot placement.
+
+Unclassified Dishes remain available for manual selection but are excluded from automatic generation.
+
+A Dish whose selected Recipe is archived is excluded from automatic generation.
+
+---
+
+# Required generated composition
+
+The current required automatic composition is intentionally minimal.
 
 ## Breakfast
 
-Recommended structure:
+Required generated component:
 
-- main dish;
-- snacks/additional food;
-- drinks.
+- one `main` Dish explicitly compatible with `breakfast`.
 
 Example:
 
-- porridge;
-- sandwiches;
-- tea and coffee.
+- oatmeal classified as `main → breakfast`.
 
----
-
-## Lunch
-
-Recommended structure:
-
-- main dish;
-- snacks/additional food;
-- drinks.
-
-Example:
-
-- borscht;
-- sandwiches;
-- compote.
-
----
+A Dish classified as `main → lunch,dinner` is not a breakfast candidate.
 
 ## Snack
 
-Purpose:
+Required generated component:
 
-Energy support between main meals.
+- one `snack` Dish explicitly compatible with `snack`.
 
-Priority:
+The `snack` role is valid only for the snack MealSlot.
 
-1. fruits;
-2. dried fruits;
-3. sweets;
-4. cookies;
-5. energy bars;
-6. sandwiches rarely.
+## Lunch
+
+Required generated component:
+
+- one `main` Dish explicitly compatible with `lunch`.
 
 Example:
 
-- apple.
+- borscht classified as `main → lunch,dinner`.
 
----
+Breakfast-only porridge is not a lunch candidate.
 
 ## Dinner
 
-Recommended structure:
+Required generated component:
 
-- main dish;
-- salad/additional food;
-- drinks.
+- one `main` Dish explicitly compatible with `dinner`.
 
-Example:
+## Optional future components
 
-- merchant-style buckwheat;
-- vitamin salad;
-- tea and coffee.
+Recommended main-meal structure also includes:
+
+- an optional compatible `addition`;
+- an optional compatible `drink`.
+
+Optional addition/drink generation is a separate implementation slice. Missing optional pools do not block the minimum catalogue-readiness state.
+
+---
+
+# Candidate selection and fallback
+
+For every MealSlot, the generator follows this order:
+
+1. determine the required role for the current meal type;
+2. filter Dishes by that persisted role;
+3. filter the role assignment by compatibility with the current meal type;
+4. exclude Dishes with archived selected Recipes;
+5. apply same-day reuse and repeatability rules;
+6. select deterministically from the remaining compatible pool.
+
+The generator must never use an incompatible or unclassified Dish as a hidden fallback.
+
+If no required compatible pool exists:
+
+- persist the MealSlot;
+- leave its Dish list empty;
+- return an explicit warning for the missing role/meal-type pool.
+
+If a compatible non-repeatable pool is exhausted:
+
+- preserve deterministic fallback within that compatible pool;
+- return the insufficient-catalogue warning;
+- never widen the pool to incompatible Dishes.
+
+If a selected `(dish, role)` assignment has `is_repeatable=true`, same-day reuse is permitted for that role without the insufficient-catalogue warning.
+
+---
+
+# Diversity
+
+Implemented baseline:
+
+- prefer a Dish not yet used on the same trip day;
+- reset same-day usage context when the next trip day begins;
+- deterministic selection and deterministic compatible-pool fallback.
+
+Required later:
+
+- calendar-day three-day diversity for `main` Dishes;
+- larger readiness thresholds for realistic multi-day diversity;
+- project-level preferences and constraints.
+
+Selection count must not be described as a calendar-day cooldown.
 
 ---
 
 # Composition override
 
-Real hiking scenarios require flexible meal composition.
+An instructor may manually add, replace, or remove Dishes in a MealSlot.
 
-Examples:
+Manual selections are authoritative for the edited plan.
 
-## Last day before departure
+Preserving manual choices during future full regeneration is a separate implementation slice. Automatic generation must not silently reinterpret manual choices as classification metadata.
 
-A normal lunch may be replaced by a fast meal:
+---
 
-- salad;
-- cold food;
-- simple snack.
+# Project meal boundaries
 
-Reason:
+The project defines:
 
-The group must leave on time for transport.
+- trip duration;
+- first meal;
+- last meal.
 
-## One-day trip
-
-A project may contain only:
-
-- snack;
-
-or another minimal meal configuration chosen by the instructor.
-
-The generator must support reduced meal plans.
+The generated schedule must include only MealSlots inside these boundaries, including one-day projects and incomplete first or last days.
 
 ---
 
 # Project meal constraints
 
-Menu generation uses project-level restrictions.
-
-Examples:
+Future menu generation may apply project-level restrictions such as:
 
 - forbidden products;
 - unwanted products;
 - preferred dishes;
 - special preparation rules.
 
-Restrictions are applied through:
+Restrictions are evaluated through:
 
-```
+```text
 Dish
  |
- Recipe
+Recipe
  |
- Ingredients
+RecipeComponent
  |
- Products
+Product
 ```
 
-A dish containing forbidden ingredients cannot be selected.
+Strict restrictions must not be silently ignored. If they make a required compatible pool empty, generation must return a warning rather than select an invalid Dish.
 
 ---
 
 # Generation priority
 
-The generator follows this order:
+The intended long-term priority is:
 
-1. Forbidden products and strict restrictions.
-2. Day scenario constraints.
-3. Instructor manual settings.
-4. Project preferences.
-5. Favorite dishes.
-6. Season compatibility.
-7. Product availability.
-8. Menu diversity.
-9. Cooking simplicity.
-10. Weight and transportation convenience.
+1. forbidden products and strict restrictions;
+2. project meal boundaries and day scenarios;
+3. instructor manual settings;
+4. persisted role and meal-type compatibility;
+5. project preferences;
+6. menu diversity;
+7. cooking simplicity;
+8. weight and transportation convenience.
 
----
-
-# Day context
-
-Day context can affect meal generation.
-
-Examples:
-
-- first day;
-- last day;
-- incomplete day;
-- limited preparation time.
-
-Transport logistics are a separate future domain and are not implemented here.
+Only rules backed by persisted data may affect automatic selection.
 
 ---
 
-# Generation limitations
+# Warnings and persistence
 
-If the database does not contain enough dishes:
+Generation returns warnings immediately with the generated MealPlan response.
 
-- reuse available dishes;
-- generate warning;
-- preserve maximum possible diversity.
+Implemented warnings include:
 
-If restrictions make generation impossible:
+- no Dishes available;
+- no compatible required role pool for a meal type;
+- compatible catalogue pool exhausted.
 
-- do not silently ignore restrictions;
-- return warnings explaining the problem.
+Persisting warnings or deterministically reconstructing them on later GET responses remains future work.
 
 ---
 
-# Domain rule
+# Purchasing separation
 
-The generator works with dishes.
+The generator works with Dishes and persists MealSlotDish relations.
 
-Product calculation is a separate process:
+Product calculation is a separate transactional process:
 
+```text
+MealSlotDish → Dish → Recipe → RecipeComponent → Product
 ```
-Dish -> Recipe -> Product
-```
+
+Role-aware generation must preserve existing purchasing recalculation and legacy MealPlanItem compatibility.
