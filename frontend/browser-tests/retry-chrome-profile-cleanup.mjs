@@ -6,6 +6,7 @@ const chromeProfileSuffixes = [
   "tourhub-browser-acceptance-profile",
   "tourhub-purchase-checklist-profile",
   "tourhub-equipment-list-profile",
+  "tourhub-documents-profile",
 ];
 let profileRemovalCalls = 0;
 
@@ -31,8 +32,6 @@ fsPromises.rm = async (target, options) => {
     }
   }
 
-  // The first call prepares a clean browser profile and must succeed. The second
-  // call is best-effort cleanup after Chrome has already been terminated.
   if (profileRemovalCalls > 1) return undefined;
   throw lastError;
 };
