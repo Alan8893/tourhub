@@ -2,28 +2,16 @@ import { Container, CssBaseline } from "@mui/material";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import DocumentsWidget from "@/features/documents/components/DocumentsWidget";
-import { ProjectWorkflowProvider } from "@/features/project-workflow";
+import { DocumentsDownloadCard } from "@/features/documents/components/DocumentsWidget";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing root element");
 
 createRoot(root).render(
   <StrictMode>
-    <ProjectWorkflowProvider
-      projectId={76}
-      initialPreparationResult={{
-        project_id: 76,
-        meal_plan_id: "meal-plan-76",
-        purchase_list_id: "purchase-list-76",
-        purchase_checklist_id: "purchase-checklist-76",
-        equipment_list_id: "equipment-list-76",
-      }}
-    >
-      <CssBaseline />
-      <Container maxWidth="md" sx={{ p: 1 }}>
-        <DocumentsWidget />
-      </Container>
-    </ProjectWorkflowProvider>
+    <CssBaseline />
+    <Container maxWidth="md" sx={{ p: 1 }}>
+      <DocumentsDownloadCard projectId={76} ready />
+    </Container>
   </StrictMode>,
 );
