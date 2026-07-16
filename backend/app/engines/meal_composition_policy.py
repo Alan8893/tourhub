@@ -1,11 +1,11 @@
+import typing
 from dataclasses import dataclass, field
-from typing import Protocol
 
 
 MAIN_DIVERSITY_DAYS = 3
 
 
-class DishSelectionInput(Protocol):
+class DishSelectionInput(typing.Protocol):
     @property
     def id(self) -> str:
         ...
