@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from app.engines.meal_plan_generator import (
     DishInput,
+    DishRoleInput,
     MealPlanGenerationResult,
     MealPlanGenerator,
 )
@@ -30,12 +31,8 @@ class MealPlanService:
         self.schedule_engine = schedule_engine or MealScheduleEngine()
 
     def generate(self, days: int, meals_per_day: list[str]) -> MealPlanGenerationResult:
-        dishes = [
-            DishInput(id=dish.id, name=dish.name)
-            for dish in self.dish_repository.list()
-        ]
         return self.generator.generate(
-            dishes=dishes,
+            dishes=self._generation_dishes(),
             days=days,
             meals_per_day=meals_per_day,
         )
@@ -73,10 +70,7 @@ class MealPlanService:
         if self.meal_plan_repository is None:
             raise ValueError("MealPlanRepository is required")
 
-        dishes = [
-            DishInput(id=dish.id, name=dish.name)
-            for dish in self.dish_repository.list()
-        ]
+        dishes = self._generation_dishes()
         if start_meal and end_meal:
             schedule = self.schedule_engine.build(
                 days=days,
@@ -147,6 +141,32 @@ class MealPlanService:
             meal_plan=loaded_meal_plan,
             warnings=result.warnings,
         )
+
+    def _generation_dishes(self) -> list[DishInput]:
+        generation_dishes: list[DishInput] = []
+        for dish in self.dish_repository.list():
+            recipe = getattr(dish, "recipe", None)
+            if recipe is not None and getattr(recipe, "is_archived", False):
+                continue
+
+            assignments = tuple(
+                DishRoleInput(
+                    role=meal_role.role,
+                    is_repeatable=meal_role.is_repeatable,
+                    allowed_meal_types=frozenset(
+                        meal_type.meal_type for meal_type in meal_role.meal_types
+                    ),
+                )
+                for meal_role in dish.meal_roles
+            )
+            generation_dishes.append(
+                DishInput(
+                    id=dish.id,
+                    name=dish.name,
+                    meal_roles=assignments,
+                )
+            )
+        return generation_dishes
 
     def _get_or_create_day(
         self,
