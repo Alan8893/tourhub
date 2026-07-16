@@ -10,9 +10,11 @@ from app.modules.projects.schemas import (
     ProjectResponse,
 )
 from app.modules.projects.service import ProjectService
+from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.services.equipment_list_service import EquipmentListService
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
 from app.services.project_document_package_service import ProjectDocumentPackageService
 from app.services.project_document_service import ProjectDocumentService
@@ -40,7 +42,6 @@ def create_project(request: ProjectCreateRequest, db: Session = Depends(get_db))
         )
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-
     return ProjectResponse(**project.__dict__)
 
 
@@ -82,14 +83,12 @@ def update_project_participants(
         db,
         MealPlanShoppingService(ShoppingListService(db)),
     )
-
     try:
         project = service.update_participants(project_id, request.participants)
     except LookupError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-
     return ProjectResponse(
         id=project.id,
         name=project.name,
@@ -107,24 +106,26 @@ def prepare_project(project_id: int, db: Session = Depends(get_db)):
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
-
     try:
         shopping_service = ShoppingListService(db)
         meal_plan_shopping_service = MealPlanShoppingService(shopping_service)
-
+        meal_plan_repository = MealPlanRepository(db)
         preparation_service = ProjectPreparationService(
             PurchaseListService(
                 PurchaseListRepository(db),
-                MealPlanRepository(db),
+                meal_plan_repository,
                 meal_plan_shopping_service,
             ),
             PurchaseChecklistService(
                 PurchaseChecklistRepository(db),
-                MealPlanRepository(db),
+                meal_plan_repository,
                 meal_plan_shopping_service,
             ),
+            EquipmentListService(
+                EquipmentListRepository(db),
+                meal_plan_repository,
+            ),
         )
-
         return preparation_service.prepare_project(project)
     except ValueError as error:
         if str(error) == "Meal plan not found":
@@ -141,7 +142,6 @@ def generate_purchase_document(
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
-
     service = ProjectDocumentService(
         purchase_list_repository=PurchaseListRepository(db),
     )
@@ -153,7 +153,6 @@ def generate_purchase_document(
     generator = generators.get(format)
     if generator is None:
         raise HTTPException(status_code=400, detail="Unsupported document format")
-
     try:
         document = generator(project)
     except ValueError as error:
@@ -163,7 +162,6 @@ def generate_purchase_document(
                 detail="Project purchasing is not prepared",
             ) from error
         raise
-
     return Response(
         content=document.content,
         media_type=document.content_type,
@@ -176,7 +174,6 @@ def generate_project_document_package(project_id: int, db: Session = Depends(get
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
-
     document_service = ProjectDocumentService(
         purchase_list_repository=PurchaseListRepository(db),
     )
@@ -189,7 +186,6 @@ def generate_project_document_package(project_id: int, db: Session = Depends(get
                 detail="Project purchasing is not prepared",
             ) from error
         raise
-
     return Response(
         content=document.content,
         media_type=document.content_type,

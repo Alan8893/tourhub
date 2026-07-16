@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from app.modules.projects.models.project import ProjectORM
+from app.services.equipment_list_service import EquipmentListService
 from app.services.purchase_checklist_service import PurchaseChecklistService
 from app.services.purchase_list_service import PurchaseListService
 
@@ -11,6 +12,7 @@ class ProjectPreparationResult:
     meal_plan_id: str
     purchase_list_id: str
     purchase_checklist_id: str
+    equipment_list_id: str
 
 
 class ProjectPreparationService:
@@ -20,28 +22,34 @@ class ProjectPreparationService:
         self,
         purchase_list_service: PurchaseListService,
         purchase_checklist_service: PurchaseChecklistService,
+        equipment_list_service: EquipmentListService,
     ) -> None:
         self.purchase_list_service = purchase_list_service
         self.purchase_checklist_service = purchase_checklist_service
+        self.equipment_list_service = equipment_list_service
 
     def prepare_project(self, project: ProjectORM) -> ProjectPreparationResult:
         if not project.meal_plans:
             raise ValueError("Meal plan not found")
 
         meal_plan = project.meal_plans[0]
-
+        meal_plan_id = str(meal_plan.id)
         purchase_list = self.purchase_list_service.create_from_meal_plan_id(
-            str(meal_plan.id),
+            meal_plan_id,
             project_id=project.id,
         )
-
         checklist = self.purchase_checklist_service.create_from_purchase_list(
             purchase_list,
+        )
+        equipment_list = self.equipment_list_service.create_from_meal_plan_id(
+            meal_plan_id,
+            project_id=project.id,
         )
 
         return ProjectPreparationResult(
             project_id=project.id,
-            meal_plan_id=str(meal_plan.id),
+            meal_plan_id=meal_plan_id,
             purchase_list_id=str(purchase_list.id),
             purchase_checklist_id=str(checklist.id),
+            equipment_list_id=str(equipment_list.id),
         )
