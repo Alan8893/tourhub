@@ -17,38 +17,49 @@ Create a complete guided Russian scenario for preparing a hiking project from cr
 - purchase list and checklist persistence;
 - editable required, purchased, and remaining quantities through PR #70;
 - package size, count, total quantity, and surplus review through PR #71;
+- optional purchasing contact through merged PR #72;
 - transactional purchasing recalculation foundations.
 
 ## Current implementation slice
 
-### Draft PR #72 — optional purchasing contact
+### Draft PR #73 — equipment requirements and aggregation
 
-- add nullable PurchaseList persistence through Alembic `h10004`;
-- expose the value in GET and update it through PATCH;
-- trim saved text, clear blank values, and enforce a 255-character limit;
-- preserve the value when purchase-list items are recalculated;
-- provide Russian save/clear controls and feedback;
-- verify persistence, refetch, clearing, and 360 px layout through API, unit, service, and browser tests.
+- persist recipe equipment requirements through Alembic `h10005`;
+- provide validated add, update, delete, and read-only archived-recipe API behavior;
+- generate and persist one EquipmentList for the project;
+- sum identical equipment required by recipes in one meal occurrence;
+- use the maximum simultaneous quantity across all meal occurrences;
+- preserve stable equipment identity and safely replace generated rows;
+- expose `equipment_list_id` from project preparation;
+- provide Russian recipe controls and a project equipment review;
+- verify backend behavior, frontend state, production build, exact GET, screenshot, and 360 px no-overflow.
 
-This remains free text. User accounts, invitations, role assignment, and notifications are out of scope.
+The functional PR head passed exact-head Quality #331 before documentation synchronization.
+
+This slice does not add project-level manual overrides or participant distribution.
 
 ## Next slices
 
-1. Persist and aggregate recipe equipment requirements.
-2. Support manual equipment overrides and recalculation.
-3. Complete final Russian PDF/Excel and release acceptance.
+1. Add manual equipment rows, removals, and quantity overrides.
+2. Preserve manual overrides while recalculating generated quantities.
+3. Refresh equipment after participant, menu, and recipe changes.
+4. Complete final Russian PDF/Excel and release acceptance.
 
 ## Related decisions
 
 - Project is the preparation aggregate root.
-- PurchaseList owns package review metadata.
-- Purchase progress remains user-controlled during recalculation.
-- The purchasing contact remains attached to PurchaseList while item rows are rebuilt.
+- Recipe owns equipment requirements used during one simultaneous preparation.
+- EquipmentList is a persisted project preparation document.
+- Identical equipment is summed within one meal occurrence.
+- The project requirement is the maximum across meal occurrences, not a trip-wide sum.
+- Manual project overrides remain a separate authoritative layer.
 - Multi-user access remains deferred until single-user acceptance.
 
 ## Acceptance criteria
 
-- shopping quantities and packaging are reviewable in Russian;
-- the optional purchasing contact persists, can be cleared, and survives recalculation;
+- recipe equipment requirements persist and can be maintained in Russian;
+- preparation creates a persisted project equipment list;
+- aggregation follows the maximum simultaneous rule;
+- repeated preparation refreshes one list without duplicate rows;
 - the workflow is usable on desktop and mobile layouts;
 - all backend, frontend, browser, migration, and PostgreSQL quality gates pass.

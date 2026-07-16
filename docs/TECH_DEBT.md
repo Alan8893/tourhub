@@ -16,13 +16,13 @@ The audited snapshot contained 195 Ruff violations. Critical and selected workfl
 
 ### TD-006 — Strict mypy backlog
 
-The audited snapshot contained 74 strict mypy errors. Selected project, menu, and shopping modules are clean and enforced.
+The audited snapshot contained 74 strict mypy errors. Selected project, menu, shopping, and equipment workflow modules are clean and enforced.
 
 ### TD-007 — Frontend and browser automated tests
 
-Coverage includes menu editing, Dish classification, catalogue readiness, navigation, editable purchase progress, package review, responsive no-overflow checks, and screenshots.
+Coverage includes menu editing, Dish classification, catalogue readiness, navigation, editable purchase progress, package review, purchasing-contact persistence, equipment formatting, responsive no-overflow checks, and screenshots.
 
-PR #72 adds pure and browser coverage for saving, refetching, clearing, and mobile presentation of the optional purchasing contact.
+Draft PR #73 adds real-browser coverage for persisted project equipment loading, summary quantities, exact API access, and 360 px layout.
 
 Remaining critical coverage:
 
@@ -33,7 +33,7 @@ Remaining critical coverage:
 
 ### TD-008 — Continuous Integration
 
-Implemented gates include backend tests, Ruff/mypy, Alembic single-head, frontend tests/build/audit, browser acceptance, and PostgreSQL backup/restore.
+Implemented gates include backend tests, Ruff/mypy, Alembic single-head, frontend tests/build/audit, browser acceptance, build diagnostics, and PostgreSQL backup/restore.
 
 Remaining:
 
@@ -43,9 +43,9 @@ Remaining:
 
 ### TD-010 — Documentation and ADR consistency
 
-Canonical status, roadmap, technical debt, and TH-0061 are synchronized through merged PR #71 and draft PR #72. ADR-013 remains authoritative for Dish role and meal-type ownership.
+Canonical status, roadmap, technical debt, and TH-0061 are synchronized through merged PR #72 and draft PR #73. ADR-013 remains authoritative for Dish role and meal-type ownership.
 
-### TD-024 — Legacy MealPlanItem compatibility
+### TD-024 — Legacy MealPlanSlot compatibility
 
 MealSlot is primary. MealPlanItem remains persisted for compatibility. Consumer audit and approved removal planning remain required.
 
@@ -65,11 +65,27 @@ Approved implementation is merged through PR #69. Remaining work is operational 
 
 ### TD-013 — Equipment domain completion
 
-Persist recipe equipment requirements, aggregate maximum simultaneous need, support manual overrides, and join equipment to recalculation.
+Draft PR #73 delivers:
+
+- persisted recipe equipment requirements;
+- validated add, update, and delete API;
+- persisted project EquipmentList;
+- sum within one meal occurrence and maximum simultaneous aggregation across occurrences;
+- safe repeated regeneration;
+- Russian recipe and project review UI;
+- backend, unit, build, browser, and mobile coverage.
+
+Remaining after PR #73:
+
+- project-level manual additions and removals;
+- manual quantity overrides;
+- preservation of overrides during recalculation;
+- automatic refresh after participant, menu, and recipe mutations;
+- equipment export in final Russian documents.
 
 ### TD-014 — Export templates and branding
 
-Complete Russian PDF/Excel templates and club branding.
+Complete Russian PDF/Excel templates, equipment contents, and club branding.
 
 ### TD-015 — Audit log
 
@@ -77,7 +93,7 @@ Record actor/action/time metadata when multi-user access is introduced.
 
 ### TD-019 — Dish recipe change impact preview
 
-Show affected plans and purchasing projections before recipe replacement.
+Show affected plans and purchasing/equipment projections before recipe replacement.
 
 ### TD-020 — Centralized product-policy validation
 
@@ -89,16 +105,9 @@ Product update and guarded delete remain unimplemented.
 
 ### TD-026 — Shopping and packaging review
 
-Merged PR #70 delivers editable required/purchased/remaining review. Merged PR #71 delivers package size, count, total quantity, and surplus review.
+Merged PRs #70–#72 deliver editable purchase progress, package review, surplus, and the optional purchasing contact with recalculation preservation.
 
-Draft PR #72 delivers:
-
-- optional purchasing contact persisted on PurchaseList;
-- trim, clear, and length validation;
-- preservation during item recalculation;
-- Russian save/clear UI and browser coverage.
-
-Remaining after PR #72:
+Remaining:
 
 - complete guided-preparation acceptance;
 - verify recalculation visibility without losing user progress.
