@@ -32,38 +32,41 @@ Project
 - persisted shopping, package review, surplus, and purchasing contact;
 - transactional purchasing recalculation.
 
-### Equipment through merged PR #74
+### Equipment through merged PR #75
 
 - recipe equipment requirements through Alembic `h10005`;
 - persisted maximum-simultaneous EquipmentList projection;
 - calculated baseline and user-controlled final quantity through `h10006`;
 - manual additions, quantity overrides, and removals;
 - preservation during repeated preparation and recalculation;
-- refresh after meal, Dish recipe, participant, and full-menu changes;
+- refresh after meal, Dish recipe, participant, full-menu, and direct requirement changes;
+- multi-project transactional fan-out and rollback protection;
 - Russian editing UI with browser and mobile acceptance.
 
-PR #74 passed Quality #350 and merged as `4bde39c480776d46bf25894cb77602a4e1adb0cd`.
+PR #75 passed exact-head Quality #355 and merged as `d048378c2a4e1d1ac5c57aebe66ba8154fa7eac0`.
 
 ## IN PROGRESS
 
-### PR #75 — recipe-equipment mutation refresh
+### PR #76 — Russian purchase and equipment documents
 
-- refresh prepared project equipment lists after requirement POST, PUT, or DELETE;
-- keep the requirement mutation and derived refresh in one transaction;
-- preserve overrides, removals, and manual rows;
-- leave unprepared projects unchanged;
-- cover multiple affected projects and rollback on refresh failure;
-- enforce the service in stabilized Ruff and strict mypy gates.
+- localize purchase PDF and Excel output;
+- export final equipment quantities to Russian PDF and Excel;
+- show calculated baseline and manual/override source labels;
+- exclude removed equipment rows;
+- expose equipment PDF and Excel download endpoints;
+- add Russian purchase, equipment, and full-package download controls;
+- include purchase PDF, purchase Excel, purchase print, equipment PDF, and equipment Excel in the ZIP package;
+- verify content, API responses, exact browser requests, screenshot, and 360 px layout;
+- enforce document modules with focused Ruff, strict mypy, and tests.
 
-The functional head passed Quality #353 before documentation synchronization.
+The functional head passed Quality #389 and Document Quality #23 before documentation synchronization.
 
 ## NEXT
 
-- include equipment in final Russian PDF and Excel;
-- add club name and logo settings;
-- complete guided desktop and mobile acceptance;
-- add installation/update documentation;
-- add Docker build and migration smoke gates;
+- add club name and logo settings and apply document branding;
+- complete guided desktop and mobile release acceptance;
+- add installation and update documentation;
+- add Docker image/build and PostgreSQL migration smoke gates;
 - complete the final release workflow.
 
 ## LATER
