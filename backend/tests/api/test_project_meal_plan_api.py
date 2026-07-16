@@ -145,7 +145,7 @@ def test_generate_project_meal_plan_respects_role_and_meal_type_compatibility(
     data = response.json()
     assert data["warnings"] == []
     assert [
-        (meal["meal_type"], [dish["id"] for dish in meal["dishes"]])
+        (meal["meal_type"], [dish["dish_id"] for dish in meal["dishes"]])
         for meal in data["meals"]
     ] == [
         ("breakfast", [OATMEAL_DISH_ID]),
