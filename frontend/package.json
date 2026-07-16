@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
-    "test:browser": "node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-meal-plan-editor.mjs && node browser-tests/run-dish-meal-role-editor.mjs && node browser-tests/run-dish-catalogue-readiness.mjs && node browser-tests/run-app-layout-mobile.mjs",
+    "test:browser": "node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-meal-plan-editor.mjs && node browser-tests/run-dish-meal-role-editor.mjs && node browser-tests/run-dish-catalogue-readiness.mjs && node browser-tests/run-app-layout-mobile.mjs && node browser-tests/run-purchase-checklist.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -17,7 +17,7 @@
     "@tanstack/react-query": "latest",
     "axios": "^1.6.8",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^18.3.0",
     "react-router-dom": "latest",
     "zustand": "latest"
   },
