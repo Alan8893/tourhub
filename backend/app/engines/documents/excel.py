@@ -4,16 +4,23 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
+from app.engines.documents.branding import ClubBrandingDTO
+from app.engines.documents.branding_render import apply_excel_branding
 from app.engines.documents.dto import GeneratedDocument, PurchaseDocumentDTO
 
 
 class ExcelDocumentGenerator:
     """Generate Russian XLSX purchase documents."""
 
-    def generate(self, document: PurchaseDocumentDTO) -> GeneratedDocument:
+    def generate(
+        self,
+        document: PurchaseDocumentDTO,
+        branding: ClubBrandingDTO | None = None,
+    ) -> GeneratedDocument:
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = "Закупка"
+        apply_excel_branding(workbook, sheet, branding)
         sheet.append([document.title])
         sheet.append(["Идентификатор списка", document.purchase_list_id])
         sheet.append([])
