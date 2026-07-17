@@ -1,6 +1,26 @@
 import assert from "node:assert/strict";
+import { rm } from "node:fs/promises";
 
 import { sleep, waitForExpression } from "./club-settings-cdp.mjs";
+
+export async function removeChromeProfile(
+  profileDir,
+  { allowResidual = false } = {},
+) {
+  let lastError;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    try {
+      await rm(profileDir, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      if (error?.code !== "ENOTEMPTY") throw error;
+      lastError = error;
+      await sleep(50);
+    }
+  }
+  if (allowResidual) return;
+  throw lastError;
+}
 
 export async function waitForPageTarget(
   debuggingPort,
