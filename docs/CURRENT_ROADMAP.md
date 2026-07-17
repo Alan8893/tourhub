@@ -74,49 +74,54 @@ PR #83 passed exact-head Quality #464, Document Quality #93, Guided Release Acce
 
 - dedicated responsive `/settings` page and main-sidebar entry;
 - vertical section navigation on desktop and section selector on mobile;
-- existing club settings moved out of the project workspace;
-- typed singleton club profile with the club name as the only required value;
-- optional identity, contact, location, social-link, and image settings;
+- typed singleton club profile with one required name and optional identity/contact/location fields;
 - main/light/dark logos, square icon, favicon, login background, and document image;
 - PNG/JPEG/WebP validation with per-kind limits and no SVG;
 - optimistic versioning, PostgreSQL row locking, HTTP 409 stale-write protection;
 - safe local-administrator settings history retaining the latest 200 rows;
-- legacy `/club-settings` compatibility and unchanged existing document branding;
-- additive Alembic revision `h10008` with one head.
+- legacy `/club-settings` compatibility and additive Alembic `h10008`.
 
 PR #84 passed exact-head Quality #499, Document Quality #127, Guided Release Acceptance #78, Operator Docs #64, and Docker Release Runtime #59 and merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`.
 
-## IN PROGRESS — TH-0075 / DRAFT PR #85
+### System Settings site appearance through merged PR #85
 
-### System Settings: site appearance and preview
-
-- independently typed singleton appearance settings;
+- independently typed singleton `AppearanceSettings` and Alembic `h10009`;
 - organization-wide light and dark token sets;
-- primary/secondary/accent, surfaces, navigation, text, divider, success, warning, and error colors;
-- safe built-in fonts, comfortable/compact density, bounded radius, button/card styles, and shadow control;
+- safe fonts, density, radius, button/card styles, and shadow control;
 - TourHub, Forest, Ocean, and Sunset presets plus manual custom mode;
-- backend WCAG-style contrast validation with an explicit Russian rejection reason;
+- backend contrast validation with Russian rejection reasons;
 - global dynamic MUI theme application without restart;
-- per-browser `system`, `light`, or `dark` preference in localStorage until users exist;
-- isolated live preview for navigation, cards, forms, tables, buttons, and alerts;
-- reset, cancel, copy, versioned JSON import, and JSON export without secrets;
-- optimistic versioning, row locking, HTTP 409 conflicts, and safe appearance history;
-- additive Alembic revision `h10009` with one head.
+- per-browser `system`, `light`, or `dark` preference in localStorage;
+- isolated live preview, reset, cancel, copy, validated JSON import, and JSON export;
+- version conflicts, row locking, safe history, and desktop/mobile acceptance.
+
+PR #85 passed exact-head Quality #537, Document Quality #164, Guided Release Acceptance #115, Operator Docs #101, and Docker Release Runtime #96 and merged as `0e4e376470072e9475a31504faeb46e8b5a68364`.
+
+## IN PROGRESS — TH-0076 / DRAFT PR #86
+
+### System Settings: document appearance and immutable snapshot
+
+- independently typed singleton `DocumentAppearanceSettings`;
+- document primary/accent/heading/title/table palette;
+- selectable main/document/light/dark logo with predictable fallback or no logo;
+- optional club contacts, custom Russian footer, title image, and compact/comfortable tables;
+- backend table-header contrast validation and HTTP 409 stale-write protection;
+- one frozen club/document snapshot loaded once per generation request;
+- the same snapshot reused by purchase/equipment PDF, Excel, print, and every ZIP entry;
+- responsive editor, isolated document preview, reset, cancel, save state, and safe history;
+- additive Alembic revision `h10010` with one head;
+- existing endpoints and filenames remain compatible.
 
 Scope boundary:
 
-- an unsaved draft is never applied to the whole application;
-- arbitrary CSS, external fonts, uploaded font files, and remote font URLs remain prohibited;
-- document appearance remains independent;
-- module visibility and invitation/mail configuration boundaries remain independent;
-- encrypted full-system archives require a dedicated security design.
+- existing purchase/equipment document contents remain unchanged;
+- consolidated export completeness remains a later product slice;
+- arbitrary templates, CSS, uploaded fonts, rich-text footer markup, and per-project themes remain prohibited;
+- module visibility and invitation/mail configuration boundaries remain independent.
 
-## NEXT — REMAINING SYSTEM SETTINGS SLICES
+## NEXT — REMAINING SYSTEM SETTINGS SLICE
 
-1. **Document appearance**
-   - independent document palette, title/table styles, footer, contacts, title background, and table density;
-   - one immutable branded snapshot shared by PDF, Excel, print, and ZIP.
-2. **Modules and future access configuration**
+1. **Modules and future access configuration**
    - navigation visibility only in the first module slice;
    - required-module dependency locks enforced by the backend;
    - invitation policy fields without a functional invitation list;
