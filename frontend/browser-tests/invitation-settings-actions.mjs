@@ -65,8 +65,15 @@ export async function clickLabel(client, labelText) {
     const label = [...document.querySelectorAll("label")].find(
       (item) => item.textContent?.trim() === ${JSON.stringify(labelText)},
     );
-    if (!label) return false;
-    label.click();
+    if (label) {
+      label.click();
+      return true;
+    }
+    const control = document.querySelector(
+      '[aria-label=' + JSON.stringify(${JSON.stringify(labelText)}) + ']',
+    );
+    if (!(control instanceof HTMLElement)) return false;
+    control.click();
     return true;
   })()`);
 }
