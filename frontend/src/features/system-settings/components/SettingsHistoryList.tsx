@@ -54,6 +54,13 @@ const FIELD_LABELS: Record<string, string> = {
   shopping_visible: "видимость закупки",
   equipment_visible: "видимость оборудования",
   documents_visible: "видимость документов",
+  expires_after_days: "срок действия приглашения",
+  default_role: "роль приглашённого по умолчанию",
+  allowed_email_domains: "разрешённые email-домены",
+  allow_resend: "повторная отправка приглашения",
+  active_invitation_limit: "лимит активных приглашений",
+  administrators_only: "управление только администраторами",
+  require_email_confirmation: "подтверждение email",
 };
 
 function fieldLabel(field: string): string {

@@ -19,6 +19,7 @@ import { useState } from "react";
 import AppearanceSettingsForm from "@/features/system-settings/components/AppearanceSettingsForm";
 import ClubSettingsForm from "@/features/system-settings/components/ClubSettingsForm";
 import DocumentAppearanceSettingsForm from "@/features/system-settings/components/DocumentAppearanceSettingsForm";
+import InvitationSettingsForm from "@/features/system-settings/components/InvitationSettingsForm";
 import ModuleSettingsForm from "@/features/system-settings/components/ModuleSettingsForm";
 
 type SettingsSectionId =
@@ -57,7 +58,7 @@ const SECTIONS: Array<{
   {
     id: "invitations",
     label: "Приглашения",
-    description: "Будущие параметры приглашений до реализации пользователей.",
+    description: "Политика будущих приглашений до реализации пользователей.",
   },
   {
     id: "mail",
@@ -79,13 +80,6 @@ function PlannedSection({ sectionId }: { sectionId: SettingsSectionId }) {
           не смешивать независимые возможности.
         </Alert>
         <Typography color="text.secondary">{section.description}</Typography>
-        {sectionId === "invitations" && (
-          <Typography>
-            Здесь появятся срок действия, роль по умолчанию, разрешённые email-домены, повторная
-            отправка, лимит активных приглашений и подтверждение email. Рабочий список приглашений
-            остаётся техническим долгом до реализации пользователей.
-          </Typography>
-        )}
         {sectionId === "mail" && (
           <Typography>
             Планируется универсальный SMTP, секрет из environment, отдельный тестовый адрес и
@@ -108,6 +102,7 @@ export default function SettingsPage() {
     if (activeSection === "appearance") return <AppearanceSettingsForm />;
     if (activeSection === "documents") return <DocumentAppearanceSettingsForm />;
     if (activeSection === "modules") return <ModuleSettingsForm />;
+    if (activeSection === "invitations") return <InvitationSettingsForm />;
     return <PlannedSection sectionId={activeSection} />;
   }
 
