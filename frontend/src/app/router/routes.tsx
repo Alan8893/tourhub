@@ -7,6 +7,7 @@ import DishesWorkspacePage from "../../pages/DishesWorkspacePage";
 import ProjectsPage from "../../pages/ProjectsPage";
 import ProjectWorkspacePage from "../../pages/ProjectWorkspacePage";
 import RecipesPage from "../../pages/RecipesPage";
+import SettingsPage from "../../pages/SettingsPage";
 
 export const routes: RouteObject[] = [
   {
@@ -21,6 +22,7 @@ export const routes: RouteObject[] = [
       { path: "/dishes", element: <DishesWorkspacePage /> },
       { path: "/dishes/:id", element: <DishesWorkspacePage /> },
       { path: "/catalog-import", element: <CatalogImportPage /> },
+      { path: "/settings", element: <SettingsPage /> },
       { path: "/login", element: <div>Login</div> },
       { path: "/dashboard", element: <div>Dashboard</div> },
     ],
