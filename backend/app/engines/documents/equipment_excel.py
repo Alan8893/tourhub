@@ -2,10 +2,13 @@ from datetime import UTC, datetime
 from io import BytesIO
 
 from openpyxl import Workbook
-from openpyxl.styles import Font
 
 from app.engines.documents.branding import ClubBrandingDTO
-from app.engines.documents.branding_render import apply_excel_branding
+from app.engines.documents.branding_render import (
+    apply_excel_branding,
+    apply_excel_table_style,
+    apply_excel_title_style,
+)
 from app.engines.documents.dto import GeneratedDocument
 from app.engines.documents.equipment_dto import EquipmentDocumentDTO
 
@@ -27,8 +30,6 @@ class EquipmentExcelDocumentGenerator:
         sheet.append(["Идентификатор списка", document.equipment_list_id])
         sheet.append([])
         sheet.append(["Оборудование", "Итого, шт.", "Расчёт, шт.", "Источник"])
-        for cell in sheet[5]:
-            cell.font = Font(bold=True)
 
         for item in document.items:
             sheet.append(
@@ -40,6 +41,14 @@ class EquipmentExcelDocumentGenerator:
                 ]
             )
 
+        apply_excel_title_style(sheet, row=1, last_column=4, branding=branding)
+        apply_excel_table_style(
+            sheet,
+            header_row=5,
+            last_row=sheet.max_row,
+            last_column=4,
+            branding=branding,
+        )
         sheet.freeze_panes = "A6"
         sheet.column_dimensions["A"].width = 34
         sheet.column_dimensions["B"].width = 14
