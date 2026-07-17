@@ -4,8 +4,12 @@ import { waitForExpression } from "./club-settings-cdp.mjs";
 
 export async function setFieldByLabel(client, labelText, value) {
   return client.evaluate(`(() => {
+    const normalize = (text) => (text ?? "")
+      .replace(/\s+/g, " ")
+      .replace(/\s*\*$/, "")
+      .trim();
     const label = [...document.querySelectorAll("label")].find(
-      (item) => item.textContent?.trim() === ${JSON.stringify(labelText)},
+      (item) => normalize(item.textContent) === ${JSON.stringify(labelText)},
     );
     const control = label?.htmlFor ? document.getElementById(label.htmlFor) : null;
     if (!control) return false;
@@ -21,10 +25,10 @@ export async function setFieldByLabel(client, labelText, value) {
 
 export async function selectMuiOption(client, labelText, optionText) {
   const opened = await client.evaluate(`(() => {
-    const normalize = (value) => (value ?? "").replace(/\\s+/g, " ").trim();
+    const normalize = (value) => (value ?? "").replace(/\s+/g, " ").trim();
     const controls = [...document.querySelectorAll('[role="combobox"]')];
     const control = controls.find((candidate) => {
-      const labelledBy = (candidate.getAttribute("aria-labelledby") ?? "").split(/\\s+/);
+      const labelledBy = (candidate.getAttribute("aria-labelledby") ?? "").split(/\s+/);
       return labelledBy.some(
         (id) => normalize(document.getElementById(id)?.textContent) === ${JSON.stringify(labelText)},
       );
