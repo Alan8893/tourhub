@@ -13,6 +13,7 @@ Project
   → Shopping and packaging
   → Equipment
   → Branded Russian PDF and Excel
+  → Guided release acceptance
 ```
 
 ## DONE
@@ -33,7 +34,7 @@ Project
 - Russian purchase and equipment PDF/Excel plus five-file ZIP package;
 - focused document quality and real-browser desktop/mobile acceptance.
 
-PR #76 passed exact-head Quality #397 and Document Quality #31 and merged as `51ea7785f12e8d1d30b2768284b6fddbb0117872`.
+PR #76 merged as `51ea7785f12e8d1d30b2768284b6fddbb0117872`.
 
 ## IN PROGRESS
 
@@ -43,15 +44,24 @@ PR #76 passed exact-head Quality #397 and Document Quality #31 and merged as `51
 - validate PNG/JPEG MIME, decoded image content, size, and dimensions;
 - provide Russian settings UI with preview and removal;
 - apply one consistent branding snapshot to every generated project document;
-- embed proportional logos in PDF and Excel without shifting existing tables;
-- verify settings API, document metadata/content, exact browser PUT body, screenshot, and 360 px layout;
-- enforce branding modules in focused Ruff, strict mypy, and tests.
+- verify settings API, PDF/XLSX branding, browser PUT body, screenshot, and 360 px layout.
 
-The functional head passed Quality #412 and Document Quality #45 before documentation synchronization.
+PR #77 exact head `317d3b013e0a24c224c8b291e06f49bef349305d` passed Quality #416 and Document Quality #49 and is Ready.
+
+### Stacked PR #78 — guided release acceptance
+
+- expose persisted preparation readiness without mutation;
+- restore menu, purchase, checklist, equipment, and document readiness after reload;
+- require equipment before completion;
+- treat missing derived documents as unprepared, not server errors;
+- verify create → menu → prepare → reload → branded ZIP in the full application;
+- capture desktop flow, exact API requests, 360 px no-overflow, screenshot evidence, and focused failure diagnostics.
+
+Functional head `b247b2d7c2dd38c9874e92c524a66f25b293e3bf` passed Quality #421, Document Quality #54, and Guided Release Acceptance #5 before documentation synchronization.
 
 ## NEXT
 
-- complete guided desktop and mobile release acceptance;
+- merge PR #77 and retarget/rebase PR #78 to `main`;
 - add installation and update documentation;
 - add Docker image/build and PostgreSQL migration smoke gates;
 - complete the final release workflow.

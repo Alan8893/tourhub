@@ -1,0 +1,132 @@
+name: Guided Release Acceptance
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-status:
+    name: Preparation status backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install backend
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+
+      - name: Ruff preparation status
+        run: |
+          set -o pipefail
+          python -m ruff check \
+            app/core/router.py \
+            app/modules/api/project_preparation_status_router.py \
+            app/services/project_preparation_status_service.py \
+            tests/api/test_project_preparation_status_api.py \
+            tests/services/test_project_preparation_status_service.py \
+            --select E,F,I,UP,B --ignore B008 2>&1 | tee guided-release-ruff.txt
+
+      - name: Strict mypy preparation status
+        run: |
+          set -o pipefail
+          python -m mypy \
+            app/services/project_preparation_status_service.py \
+            app/modules/api/project_preparation_status_router.py \
+            2>&1 | tee guided-release-mypy.txt
+
+      - name: Preparation status tests
+        run: |
+          set -o pipefail
+          python -m pytest -q \
+            tests/api/test_project_preparation_status_api.py \
+            tests/services/test_project_preparation_status_service.py \
+            2>&1 | tee guided-release-pytest.txt
+
+      - name: Upload backend diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guided-release-backend-diagnostics
+          path: |
+            backend/guided-release-ruff.txt
+            backend/guided-release-mypy.txt
+            backend/guided-release-pytest.txt
+
+  browser:
+    name: Guided desktop and mobile flow
+    runs-on: ubuntu-latest
+    outputs:
+      failure_b64: ${{ steps.capture.outputs.failure_b64 }}
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run guided release scenario
+        id: guided
+        continue-on-error: true
+        run: node browser-tests/run-guided-release.mjs
+
+      - name: Capture guided release failure
+        id: capture
+        if: always()
+        run: |
+          if [ "${{ steps.guided.outcome }}" = "failure" ]; then
+            if [ -f browser-test-artifacts/guided-release-error.txt ]; then
+              echo "failure_b64=$(base64 -w0 browser-test-artifacts/guided-release-error.txt)" >> "$GITHUB_OUTPUT"
+            else
+              echo "failure_b64=$(printf 'guided release failed without an error file' | base64 -w0)" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Upload guided release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guided-release-evidence
+          path: |
+            frontend/browser-test-artifacts/guided-release-mobile.png
+            frontend/browser-test-artifacts/guided-release-error.txt
+          if-no-files-found: ignore
+
+      - name: Fail guided release scenario
+        if: steps.guided.outcome == 'failure'
+        run: exit 1
+
+  browser-failure-report:
+    name: Guided browser failure report
+    needs: browser
+    if: always() && needs.browser.result == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report failure
+        run: |
+          printf '%s' '${{ needs.browser.outputs.failure_b64 }}' | base64 -d
+          exit 1

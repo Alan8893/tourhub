@@ -1,15 +1,21 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  getProjectPreparation,
+  ProjectPreparationResponse,
+} from "@/features/project/api/projectApi";
 
 interface ProjectWorkflowState {
   projectId: number;
-  preparationResult?: {
-    project_id: number;
-    meal_plan_id: string;
-    purchase_list_id: string;
-    purchase_checklist_id: string;
-    equipment_list_id: string;
-  };
-  setPreparationResult: (result: ProjectWorkflowState["preparationResult"]) => void;
+  preparationResult?: ProjectPreparationResponse;
+  setPreparationResult: (result: ProjectPreparationResponse | undefined) => void;
 }
 
 const ProjectWorkflowContext = createContext<ProjectWorkflowState | undefined>(
@@ -24,8 +30,24 @@ export function ProjectWorkflowProvider({
   children: ReactNode;
 }) {
   const [preparationResult, setPreparationResult] = useState<
-    ProjectWorkflowState["preparationResult"]
+    ProjectPreparationResponse | undefined
   >();
+  const preparationQuery = useQuery({
+    queryKey: ["project-preparation", projectId],
+    queryFn: () => getProjectPreparation(projectId),
+    enabled: Number.isInteger(projectId) && projectId > 0,
+    retry: false,
+  });
+
+  useEffect(() => {
+    setPreparationResult(undefined);
+  }, [projectId]);
+
+  useEffect(() => {
+    if (preparationQuery.data) {
+      setPreparationResult(preparationQuery.data);
+    }
+  }, [preparationQuery.data]);
 
   return (
     <ProjectWorkflowContext.Provider

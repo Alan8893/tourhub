@@ -2,25 +2,30 @@
 
 Status date: 2026-07-17
 
-The detailed technical-debt register is synchronized with the current project status and roadmap.
-
 Implemented through merged PR #76:
 
-- equipment requirements, aggregation, project overrides, and recalculation;
+- equipment requirements, overrides, and recalculation;
 - Russian purchase and equipment PDF/Excel;
-- complete purchase/equipment ZIP package and focused document gates.
+- complete five-file project ZIP package.
 
-Draft PR #77 addresses final document-branding debt:
+PR #77 addresses branding debt:
 
-- persistent single-club name and logo settings;
-- strict PNG/JPEG validation and safe rendering;
-- consistent branding snapshot across PDF, Excel, print, and ZIP;
-- Russian settings UI and mobile browser acceptance.
+- persistent club name and logo through Alembic `h10007`;
+- validated PNG/JPEG rendering across PDF, Excel, print, and ZIP;
+- Russian settings UI and mobile acceptance.
+
+Stacked PR #78 addresses guided-release debt:
+
+- persisted preparation readiness after reload;
+- equipment-aware completion state;
+- clean unprepared states instead of false 404 errors;
+- full create, menu, prepare, reload, and ZIP browser acceptance;
+- focused desktop/mobile evidence and failure diagnostics.
 
 Remaining priorities:
 
-- final guided release acceptance;
-- PostgreSQL migration upgrade/downgrade smoke;
+- merge and retarget the PR #77 to PR #78 stack;
+- PostgreSQL migration upgrade and downgrade smoke;
 - Docker build validation;
 - installation and update documentation;
 - final release workflow.

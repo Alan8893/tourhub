@@ -59,16 +59,22 @@ export default function NextWorkflowAction() {
     );
   }
 
-  if (!preparationResult?.purchase_list_id || !preparationResult.purchase_checklist_id) {
+  if (
+    !preparationResult?.purchase_list_id ||
+    !preparationResult.purchase_checklist_id ||
+    !preparationResult.equipment_list_id
+  ) {
     return (
       <Card sx={{ mt: 3 }}>
         <CardContent>
           <Stack spacing={1}>
             <Typography variant="h6">Следующее действие</Typography>
-            <Typography>Рассчитайте закупку и создайте чек-лист.</Typography>
+            <Typography>
+              Рассчитайте закупку, создайте чек-лист и список оборудования.
+            </Typography>
             {prepareProject.isError && (
               <Alert severity="error">
-                Не удалось подготовить закупку. Проверьте состав меню и повторите попытку.
+                Не удалось подготовить проект. Проверьте состав меню и повторите попытку.
               </Alert>
             )}
             <Button
@@ -92,7 +98,9 @@ export default function NextWorkflowAction() {
     <Card sx={{ mt: 3 }}>
       <CardContent>
         <Typography variant="h6">Проект подготовлен</Typography>
-        <Typography>Закупка и чек-лист сформированы. Документы доступны для скачивания.</Typography>
+        <Typography>
+          Закупка, чек-лист и оборудование сформированы. Документы доступны для скачивания.
+        </Typography>
       </CardContent>
     </Card>
   );

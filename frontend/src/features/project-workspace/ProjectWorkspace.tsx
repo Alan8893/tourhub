@@ -1,21 +1,20 @@
 import { Typography } from "@mui/material";
 import { useParams } from "react-router-dom";
 
-import { ProjectHeader, usePrepareProject, useProject } from "@/features/project";
+import { ProjectHeader, useProject } from "@/features/project";
 import {
   ProjectWorkflowProvider,
-  useProjectWorkflow,
 } from "@/features/project-workflow";
 
+import NextWorkflowAction from "./components/NextWorkflowAction";
 import ProjectWorkflowPanel from "./components/ProjectWorkflowPanel";
 import WorkflowModules from "./components/WorkflowModules";
-import NextWorkflowAction from "./components/NextWorkflowAction";
 
 function ProjectWorkspaceContent({ projectId }: { projectId: number }) {
   const { data: project, isLoading } = useProject(projectId);
 
   if (isLoading || !project) {
-    return <Typography>Loading project...</Typography>;
+    return <Typography>Загружаем проект…</Typography>;
   }
 
   return (
@@ -23,7 +22,7 @@ function ProjectWorkspaceContent({ projectId }: { projectId: number }) {
       <ProjectHeader project={project} />
 
       <Typography variant="body1" sx={{ mt: 1 }}>
-        Central workspace for preparing a hiking project.
+        Единое рабочее пространство для подготовки похода.
       </Typography>
 
       <NextWorkflowAction />
