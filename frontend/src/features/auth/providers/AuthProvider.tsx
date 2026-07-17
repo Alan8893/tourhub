@@ -17,7 +17,7 @@ import {
   logout as logoutRequest,
 } from "../api/authApi";
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: AuthUser | null;
   bootstrapRequired: boolean;
   isLoading: boolean;
@@ -31,7 +31,7 @@ interface AuthContextValue {
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export default function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -47,6 +47,9 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       ]);
       setBootstrapRequired(required);
       setUser(currentUser);
+    } catch {
+      setBootstrapRequired(false);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
