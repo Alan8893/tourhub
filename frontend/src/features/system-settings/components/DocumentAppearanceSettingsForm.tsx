@@ -208,10 +208,22 @@ export default function DocumentAppearanceSettingsForm() {
     draft.use_document_image_as_title_background && !club.images.document_image_data_url;
 
   return (
-    <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
-        <Stack spacing={2.5}>
-          <Box>
+    <Stack
+      spacing={3}
+      sx={{ width: "100%", maxWidth: "100%", minWidth: 0, overflowX: "hidden" }}
+    >
+      <Paper
+        variant="outlined"
+        sx={{
+          p: { xs: 2, md: 3 },
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+          overflowX: "hidden",
+        }}
+      >
+        <Stack spacing={2.5} sx={{ minWidth: 0 }}>
+          <Box sx={{ minWidth: 0 }}>
             <Typography variant="h5">Документы</Typography>
             <Typography color="text.secondary">
               Отдельное оформление PDF, Excel, печатной версии и ZIP. Настройки сайта на документы
@@ -241,9 +253,9 @@ export default function DocumentAppearanceSettingsForm() {
             </Alert>
           )}
 
-          <Grid container spacing={2}>
+          <Grid container spacing={2} sx={{ width: "100%", m: 0 }}>
             {COLOR_FIELDS.map(({ key, label }) => (
-              <Grid item xs={12} sm={6} md={4} key={key}>
+              <Grid item xs={12} sm={6} md={4} key={key} sx={{ minWidth: 0 }}>
                 <TextField
                   fullWidth
                   label={label}
@@ -274,8 +286,8 @@ export default function DocumentAppearanceSettingsForm() {
             ))}
           </Grid>
 
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+          <Grid container spacing={2} sx={{ width: "100%", m: 0 }}>
+            <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
               <FormControl fullWidth>
                 <InputLabel id="document-logo-source-label">Логотип документов</InputLabel>
                 <Select
@@ -295,7 +307,7 @@ export default function DocumentAppearanceSettingsForm() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} sx={{ minWidth: 0 }}>
               <FormControl fullWidth>
                 <InputLabel id="document-table-density-label">Плотность таблиц</InputLabel>
                 <Select
@@ -317,8 +329,9 @@ export default function DocumentAppearanceSettingsForm() {
             </Grid>
           </Grid>
 
-          <Stack spacing={0.5}>
+          <Stack spacing={0.5} sx={{ minWidth: 0 }}>
             <FormControlLabel
+              sx={{ alignItems: "flex-start", minWidth: 0, mr: 0 }}
               control={
                 <Switch
                   checked={draft.show_contacts}
@@ -329,6 +342,7 @@ export default function DocumentAppearanceSettingsForm() {
               label="Показывать контакты клуба"
             />
             <FormControlLabel
+              sx={{ alignItems: "flex-start", minWidth: 0, mr: 0 }}
               control={
                 <Switch
                   checked={draft.use_document_image_as_title_background}
@@ -356,9 +370,18 @@ export default function DocumentAppearanceSettingsForm() {
         </Stack>
       </Paper>
 
-      <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
-        <Stack spacing={2}>
-          <Box>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: { xs: 2, md: 3 },
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+          overflowX: "hidden",
+        }}
+      >
+        <Stack spacing={2} sx={{ minWidth: 0 }}>
+          <Box sx={{ minWidth: 0 }}>
             <Typography variant="h6">Предпросмотр документа</Typography>
             <Typography variant="body2" color="text.secondary">
               Черновик показан только здесь. PDF, Excel и ZIP изменятся после сохранения.
@@ -368,13 +391,17 @@ export default function DocumentAppearanceSettingsForm() {
         </Stack>
       </Paper>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={2}>
+      <Paper
+        variant="outlined"
+        sx={{ p: 2, width: "100%", maxWidth: "100%", minWidth: 0, overflowX: "hidden" }}
+      >
+        <Stack spacing={2} sx={{ minWidth: 0 }}>
           <Stack
             direction={{ xs: "column", sm: "row" }}
             spacing={1}
             flexWrap="wrap"
             useFlexGap
+            sx={{ minWidth: 0 }}
           >
             <Button variant="outlined" disabled={isSaving} onClick={resetDefaults}>
               Восстановить TourHub
@@ -400,7 +427,9 @@ export default function DocumentAppearanceSettingsForm() {
         </Stack>
       </Paper>
 
-      <SettingsHistoryList items={history} />
+      <Box sx={{ minWidth: 0, overflowX: "hidden" }}>
+        <SettingsHistoryList items={history} />
+      </Box>
     </Stack>
   );
 }
