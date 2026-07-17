@@ -128,7 +128,11 @@ async function run() {
           (item) => item.getAttribute("aria-labelledby")?.includes("display-mode-label"),
         );
         if (!combo) return false;
-        combo.click();
+        combo.dispatchEvent(new MouseEvent("mousedown", {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+        }));
         return true;
       })()`),
       true,
