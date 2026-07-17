@@ -2,8 +2,8 @@ from io import BytesIO
 from typing import Any
 
 from openpyxl.drawing.image import Image as ExcelImage
-from reportlab.lib.utils import ImageReader
 from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Image as PDFImage
 from reportlab.platypus import Paragraph, Spacer
 
