@@ -2,7 +2,7 @@
 
 Status date: 2026-07-17
 
-## Implemented through merged PR #84
+## Implemented through merged PR #85
 
 - complete guided project preparation from creation through branded documents;
 - persisted shopping, equipment, overrides, recalculation, and reload-safe readiness;
@@ -14,41 +14,38 @@ Status date: 2026-07-17
 - dedicated `/settings` surface and responsive section navigation;
 - typed singleton club identity through Alembic `h10008`;
 - seven validated club image roles using PNG/JPEG/WebP and no SVG;
+- independent site appearance through Alembic `h10009`;
+- dynamic light/dark MUI themes, presets, isolated preview, and local display mode;
+- validated versioned theme JSON import/export without secrets;
 - optimistic conflict detection, PostgreSQL row locking, and safe local-admin settings history;
 - ADR-014 independent typed settings ownership.
 
-## Active TH-0075 / draft PR #85
+## Active TH-0076 / draft PR #86
 
-The site-appearance slice addresses:
+The document-appearance slice addresses:
 
-- no organization-wide light and dark theme persistence;
-- static one-time MUI theme creation;
-- no safe font, density, radius, button/card, or shadow controls;
-- no personal system/light/dark preference before user accounts;
-- no preview, reset, copy, or safe theme import/export;
-- no backend accessibility gate for unreadable color combinations.
+- document branding limited to club name and main logo;
+- fixed PDF/Excel heading, table, footer, and density styling;
+- no independent document palette or logo selection;
+- no contact, custom footer, or title-background controls;
+- no document-specific settings API or history;
+- no explicit combined club/document snapshot contract.
 
 Implemented in the draft slice:
 
-- independent typed singleton `appearance_settings` model and Alembic `h10009`;
-- complete light and dark token sets plus four built-in presets;
-- global dynamic MUI theme application without restart;
-- localStorage-only personal display mode until `UserPreferences` exists;
-- isolated preview that never applies an unsaved draft globally;
-- backend #RRGGBB and WCAG-style text/surface contrast validation with a Russian reason;
-- typed safe font stacks, density, radius, button/card styles, and shadows;
-- reset, cancel, copy, versioned JSON import, and JSON export without secrets;
-- optimistic versioning, row locking, HTTP 409 conflicts, and safe appearance history;
-- independent desktop/mobile appearance browser acceptance.
+- independent typed singleton `document_appearance_settings` model and Alembic `h10010`;
+- validated primary/accent/heading/title/table palette;
+- approved image-source selection with predictable fallback and explicit no-logo mode;
+- optional club contacts, custom footer, title image, and comfortable/compact tables;
+- backend minimum table-header contrast validation with a Russian reason;
+- optimistic versioning, row locking, HTTP 409 conflicts, and safe document history;
+- one frozen snapshot loaded once per generation request;
+- the same snapshot reused by purchase/equipment PDF, Excel, print, and every ZIP entry;
+- centralized ReportLab/openpyxl styling helpers;
+- responsive document settings editor with isolated preview, reset, cancel, and save;
+- compatibility for existing endpoints, filenames, content types, and legacy `ClubBrandingDTO` construction.
 
 ## Remaining System Settings debt
-
-### Document appearance
-
-- independent document palette and image selection;
-- title, heading, table, footer, contact, title-background, and density settings;
-- immutable snapshot shared consistently by PDF, Excel, print, and ZIP;
-- explicit migration from the existing main-logo-only document branding.
 
 ### Modules and future access configuration
 
@@ -90,7 +87,7 @@ Implemented in the draft slice:
 5. **Actor-aware audit log**
    - safe history for project, menu, recipe, settings, mail, user, and role changes.
 6. **Consolidated export completeness**
-   - approved complete Russian PDF and workbook sheets using one brand snapshot.
+   - approved complete Russian PDF and workbook sheets using the implemented immutable brand snapshot.
 7. **Product acceptance**
    - active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
 
