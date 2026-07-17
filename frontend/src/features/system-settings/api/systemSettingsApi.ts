@@ -1,3 +1,5 @@
+import axios from "axios";
+
 import { apiClient } from "@/shared/api/client";
 
 export type ClubImageKey =
@@ -82,8 +84,16 @@ export async function getSystemClubSettings(): Promise<ClubSettingsDetail> {
 export async function updateSystemClubSettings(
   payload: ClubSettingsUpdate,
 ): Promise<ClubSettingsDetail> {
-  const response = await apiClient.put<ClubSettingsDetail>("/settings/club", payload);
-  return response.data;
+  try {
+    const response = await apiClient.put<ClubSettingsDetail>("/settings/club", payload);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const data = error.response.data as { error?: string; detail?: string };
+      if (!data.detail && data.error) data.detail = data.error;
+    }
+    throw error;
+  }
 }
 
 export async function getSystemSettingsHistory(
