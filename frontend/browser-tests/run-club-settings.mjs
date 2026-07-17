@@ -49,6 +49,28 @@ function createSettings() {
   };
 }
 
+function createMailSettings() {
+  return {
+    version: 1,
+    smtp_host: "localhost",
+    smtp_port: 587,
+    security_mode: "starttls",
+    smtp_username: null,
+    sender_email: "tourhub@localhost",
+    sender_name: "TourHub",
+    reply_to_email: null,
+    test_recipient_email: null,
+    timeout_seconds: 30,
+    retry_count: 3,
+    updated_at: "2026-07-17T12:00:00",
+    secret_configured: false,
+    secret_source: "environment",
+    secret_environment_variable: "TOURHUB_SMTP_SECRET",
+    delivery_available: false,
+    test_delivery_available: false,
+  };
+}
+
 async function readBody(request) {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
@@ -58,6 +80,7 @@ async function readBody(request) {
 function startApi() {
   let settings = createSettings();
   let history = [];
+  const mailSettings = createMailSettings();
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
     const body = request.method === "PUT" ? await readBody(request) : undefined;
@@ -99,6 +122,18 @@ function startApi() {
     if (url.pathname === "/api/v1/settings/history") {
       response.statusCode = 200;
       response.end(JSON.stringify(history));
+      return;
+    }
+
+    if (url.pathname === "/api/v1/settings/mail") {
+      response.statusCode = 200;
+      response.end(JSON.stringify(mailSettings));
+      return;
+    }
+
+    if (url.pathname === "/api/v1/settings/mail/history") {
+      response.statusCode = 200;
+      response.end(JSON.stringify([]));
       return;
     }
 
@@ -227,9 +262,14 @@ async function run() {
     );
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("универсальный SMTP")`,
-      "planned mail section",
+      `document.body?.innerText?.includes("TOURHUB_SMTP_SECRET") &&
+       document.body?.innerText?.includes("TourHub пока не") &&
+       [...document.querySelectorAll("button")].some(
+         (item) => item.textContent?.trim() === "Отправить тестовое письмо" && item.disabled,
+       )`,
+      "working mail boundary section",
     );
+    assert.equal(await client.evaluate(`document.querySelector('input[type="password"]')`), null);
 
     await client.send("Emulation.setDeviceMetricsOverride", {
       width: 360,
