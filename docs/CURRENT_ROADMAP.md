@@ -4,18 +4,19 @@ Status date: 2026-07-17
 
 ## Product goal
 
-Deliver a stable local MVP for one tourist club without changing the approved architecture.
+Deliver the approved local MVP for one tourist club without changing the approved architecture.
 
 ```text
-Project
-  → Menu
-  → Recipes and dishes
-  → Shopping and packaging
-  → Equipment
-  → Branded Russian PDF and Excel
-  → Guided release acceptance
-  → Operator installation and update path
+Project preparation baseline
   → Production-like Docker runtime
+  → Product completeness audit
+  → Access and roles
+  → Recipe ownership and lifecycle
+  → Central domain safety
+  → Actor-aware audit
+  → Consolidated Russian exports
+  → Product acceptance and feature freeze
+  → Final migration and release gates
 ```
 
 ## DONE
@@ -54,27 +55,68 @@ PR #79 passed exact-head Quality #436, Document Quality #67, Guided Release Acce
 
 ## IN PROGRESS
 
-### Draft PR #80 — Docker release runtime validation
+### Ready PR #80 — Docker release runtime validation
 
-- add a standalone release Compose stack without source bind mounts;
-- build the frontend into a production Nginx image;
-- keep PostgreSQL and Redis internal while preserving the named database volume;
-- add explicit frontend/backend health checks and same-origin API proxying;
-- build and start a disposable stack from a clean environment;
-- verify the app shell, API health, project creation, migration head, and persistence after restart;
-- capture focused Docker diagnostics and remove the disposable stack unconditionally.
+- standalone release Compose stack without application source bind mounts;
+- production frontend Nginx image;
+- internal PostgreSQL and Redis networking with the named database volume preserved;
+- frontend/backend health checks and same-origin API proxying;
+- disposable clean-environment image build and startup;
+- app shell, API health, project creation, migration head, and restart-persistence checks;
+- focused diagnostics and unconditional cleanup.
 
-## NEXT
+Exact head `73b233f7529d5d310a750071d592e9b108b9a1df` passed Quality #454, Document Quality #84, Guided Release Acceptance #35, Operator Docs #21, and Docker Release Runtime #17.
 
-- add PostgreSQL migration upgrade/downgrade smoke;
-- complete the final release workflow and checklist.
+### Stacked draft PR #81 — product completeness audit
+
+- compare every approved `PRODUCT_SPEC.md` area with implemented behavior;
+- identify release-blocking user and domain gaps;
+- keep PR #80 independent and mergeable;
+- move final migration downgrade/re-upgrade smoke after first-release feature freeze;
+- preserve basic Alembic, PostgreSQL, backup/restore, Docker, and full Quality gates throughout feature development;
+- define the implementation order in `PRODUCT_COMPLETENESS_AUDIT.md`.
+
+## NEXT — RELEASE-BLOCKING PRODUCT WORK
+
+1. **Access foundation**
+   - administrator bootstrap;
+   - invitation-only users;
+   - Administrator, Instructor, and Verified Instructor roles;
+   - authentication, logout, guarded routes, and backend authorization.
+2. **Recipe ownership and lifecycle**
+   - CLUB and PERSONAL ownership;
+   - multiple Recipe variants per Dish;
+   - submission, review, approval, rejection comments, publication, and archive;
+   - approved generation modes.
+3. **Central alcohol prohibition**
+   - one backend policy across Product, Recipe, and CSV import paths;
+   - reviewed handling of existing prohibited records.
+4. **Actor-aware audit log**
+   - project, participant, menu, recipe, publication, user, and role changes;
+   - safe metadata without passwords, tokens, or sensitive binary values.
+5. **Consolidated export completeness**
+   - approved complete Russian PDF;
+   - workbook sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование`;
+   - one consistent brand snapshot across PDF, Excel, print, and ZIP.
+6. **Product acceptance and feature freeze**
+   - active deployment catalogue acceptance;
+   - catalogue-import interaction coverage;
+   - explicit Product Owner decisions for preference priority and optional recipe metadata;
+   - role-based end-to-end browser acceptance.
+
+## FINAL RELEASE READINESS
+
+Only after first-release feature freeze:
+
+- PostgreSQL previous → head → previous → head migration smoke;
+- production-like deployment checklist;
+- final release workflow;
+- release tag after green exact-head gates.
 
 ## LATER
 
-- invitation-only registration and roles;
-- recipe ownership, variants, publication, and moderation;
-- audit log;
 - participant profiles, routes, logistics, and load distribution;
-- warehouse balances and price aggregation.
+- warehouse balances, shops, prices, and price aggregation;
+- broader preference modes beyond explicitly approved first-release behavior.
 
 Multi-tenant support and microservices remain prohibited.
