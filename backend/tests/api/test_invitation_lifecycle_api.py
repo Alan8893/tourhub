@@ -40,6 +40,7 @@ def test_admin_create_list_and_storage_boundary(auth_client, db_session) -> None
     raw_link = created[LINK_FIELD]
     assert created["email"] == "person@example.org"
     assert created["status"] == "active"
+    assert created["acceptance_path"].startswith("/accept-invitation#token=")
     assert raw_link in created["acceptance_path"]
 
     listed = auth_client.get("/api/v1/invitations")
