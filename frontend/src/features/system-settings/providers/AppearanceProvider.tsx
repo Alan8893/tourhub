@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 
+import { useOptionalAuth } from "@/features/auth/providers/AuthProvider";
 import {
   AppearanceSettings,
   DisplayModePreference,
@@ -38,6 +39,7 @@ function readDisplayMode(): DisplayModePreference {
 }
 
 export default function AppearanceProvider({ children }: PropsWithChildren) {
+  const auth = useOptionalAuth();
   const [settings, setSettings] = useState<AppearanceSettings>(DEFAULT_APPEARANCE);
   const [displayMode, setDisplayModeState] = useState<DisplayModePreference>(readDisplayMode);
   const [systemDark, setSystemDark] = useState(
@@ -56,8 +58,18 @@ export default function AppearanceProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    void reloadAppearance();
-  }, [reloadAppearance]);
+    if (!auth) {
+      void reloadAppearance();
+      return;
+    }
+    if (auth.isLoading) return;
+    if (auth.user?.role === "administrator") {
+      void reloadAppearance();
+      return;
+    }
+    setSettings(DEFAULT_APPEARANCE);
+    setIsLoaded(true);
+  }, [auth, reloadAppearance]);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
