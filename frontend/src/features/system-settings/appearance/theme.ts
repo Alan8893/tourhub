@@ -1,6 +1,7 @@
-import { Theme, createTheme, getContrastRatio } from "@mui/material/styles";
+import { createTheme, getContrastRatio } from "@mui/material/styles";
+import type { Theme } from "@mui/material/styles";
 
-import {
+import type {
   AppearanceSettings,
   AppearanceThemeDraft,
   ResolvedDisplayMode,
