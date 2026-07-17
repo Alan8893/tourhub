@@ -99,7 +99,7 @@ def test_system_settings_reject_stale_version_without_overwrite(client) -> None:
     stale_payload = _update_payload(version=1, club_name="Устаревшее название")
     response = client.put("/api/v1/settings/club", json=stale_payload)
     assert response.status_code == 409
-    assert "stale" in response.json()["detail"]
+    assert "stale" in response.json()["error"]
 
     response = client.get("/api/v1/settings/club")
     assert response.status_code == 200
@@ -149,13 +149,13 @@ def test_system_settings_validate_urls_timezone_and_duplicates(client) -> None:
     payload["website"] = "ftp://club.example.org"
     response = client.put("/api/v1/settings/club", json=payload)
     assert response.status_code == 400
-    assert "http or https" in response.json()["detail"]
+    assert "http or https" in response.json()["error"]
 
     payload = _update_payload(version=1)
     payload["timezone"] = "Not/A-Timezone"
     response = client.put("/api/v1/settings/club", json=payload)
     assert response.status_code == 400
-    assert "IANA timezone" in response.json()["detail"]
+    assert "IANA timezone" in response.json()["error"]
 
     payload = _update_payload(version=1)
     payload["social_links"] = [
@@ -164,7 +164,7 @@ def test_system_settings_validate_urls_timezone_and_duplicates(client) -> None:
     ]
     response = client.put("/api/v1/settings/club", json=payload)
     assert response.status_code == 400
-    assert "unique" in response.json()["detail"]
+    assert "unique" in response.json()["error"]
 
 
 def test_system_settings_history_keeps_latest_two_hundred(db_session) -> None:
