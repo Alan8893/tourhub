@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -86,6 +87,14 @@ def update_club_settings(
 ) -> ClubSettingsDetailResponse:
     service = ClubSettingsService(db)
     try:
+        # Serialize version checks and writes on PostgreSQL. The selected ORM row is
+        # reused by the service through the session identity map, so a concurrent
+        # request observes the committed version before it may update the singleton.
+        db.scalar(
+            select(ClubSettingsORM)
+            .where(ClubSettingsORM.id == 1)
+            .with_for_update()
+        )
         settings = service.update_details(request)
     except SettingsVersionConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
