@@ -27,11 +27,11 @@ This document is the concise canonical architecture baseline for the implemented
 
 React, TypeScript, Vite, Material UI, TanStack Query, and React Router.
 
-Frontend contains presentation, form state, responsive navigation, isolated previews, file selection, local display-mode preference, and API integration. It does not own quantity calculations, menu generation, shopping aggregation, import validation, settings policy, contrast acceptance, secret handling, document snapshot construction, or authorization decisions.
+Frontend contains presentation, form state, responsive navigation, isolated previews, file selection, local display-mode preference, module-visibility rendering, and API integration. It does not own quantity calculations, menu generation, shopping aggregation, import validation, settings dependency policy, contrast acceptance, secret handling, document snapshot construction, or authorization decisions.
 
 The application layout uses a temporary drawer on mobile and a permanent sidebar on larger screens. System Settings uses vertical section navigation on desktop and a section selector on mobile.
 
-Saved appearance is applied through one global dynamic Material UI ThemeProvider. Unsaved site and document appearance drafts are rendered only inside isolated preview surfaces and must not modify the application or generated files before successful backend validation and save.
+Saved appearance and module visibility are applied through global providers. Unsaved site, document, and module drafts remain isolated in their owning editors and must not modify the running application or generated files before successful backend validation and save.
 
 ### Backend
 
@@ -50,7 +50,7 @@ Backend owns:
 - equipment requirements, aggregation, overrides, and transactional refresh;
 - Russian PDF and Excel generation foundations;
 - club branding validation and immutable document snapshots;
-- typed system-settings validation, optimistic concurrency, row locking, contrast policy, and safe focused history.
+- typed system-settings validation, optimistic concurrency, row locking, contrast policy, module dependency locks, and safe focused history.
 
 Backend will own authorization, recipe ownership and moderation, working mail delivery, centralized alcohol policy, and the full actor-aware audit log when those deferred phases are implemented.
 
@@ -120,11 +120,20 @@ Theme-only JSON import/export is versioned, validated before preview, and contai
 
 Document appearance writes are validated and serialized by the backend. Table-header text/background combinations below the approved contrast threshold are rejected with a Russian reason. Missing selected images fall back to the main logo, except explicit `none`. Rich text, arbitrary templates, CSS, uploaded fonts, remote resources, and per-project themes are prohibited.
 
+`ModuleSettings` is a separate singleton with explicit boolean columns rather than arbitrary registration data:
+
+- `projects_visible` and `catalogue_visible` are required and always true;
+- `catalog_import_visible`, `shopping_visible`, `equipment_visible`, and `documents_visible` are optional presentation settings;
+- visible documents require visible shopping and equipment;
+- every update carries an optimistic version.
+
+The first module slice changes only navigation and project-workspace card visibility. Direct URLs, routers, API endpoints, database models, recalculation, and document generation remain available. Visibility is not authorization and does not unload backend modules. Required and dependency constraints are validated before mutation and protected by database checks. The settings page itself is always visible.
+
 Unrelated settings must not be stored as arbitrary unchecked JSON or generic key/value pairs. Bounded homogeneous value collections may use JSON only inside their owning typed model.
 
-The existing `/api/v1/club-settings` contract remains compatible. The versioned settings page uses `/api/v1/settings/club`, `/api/v1/settings/appearance`, and `/api/v1/settings/documents`.
+The existing `/api/v1/club-settings` contract remains compatible. The versioned settings page uses `/api/v1/settings/club`, `/api/v1/settings/appearance`, `/api/v1/settings/documents`, and `/api/v1/settings/modules`.
 
-Focused settings history stores section, local actor label, action, changed field names, resulting version, and timestamp. Club, appearance, and document history exclude binary data, data URLs, imported payloads, footer contents, passwords, tokens, and future secrets. This history does not replace the later actor-aware application audit log.
+Focused settings history stores section, local actor label, action, changed field names, resulting version, and timestamp. Club, appearance, document, and module history exclude binary data, data URLs, imported payloads, footer contents, passwords, tokens, and future secrets. This history does not replace the later actor-aware application audit log.
 
 ### Projects
 
@@ -177,7 +186,7 @@ Owns recipe equipment requirements, maximum simultaneous aggregation, persisted 
 
 ### Documents
 
-Owns Russian PDF, Excel, print, and ZIP generation. Existing purchase/equipment outputs are implemented. Independent document appearance is active in draft PR #86; approved consolidated document contents remain incomplete.
+Owns Russian PDF, Excel, print, and ZIP generation. Existing purchase/equipment outputs and independent document appearance are implemented. Approved consolidated document contents remain incomplete.
 
 For each generation request, `ProjectDocumentService` reads `ClubSettings` and `DocumentAppearanceSettings` once and constructs one frozen `ClubBrandingDTO`. Purchase/equipment PDF, Excel, printable text, and every file inside the ZIP reuse that same object. Engines must not query settings while rendering, so files from one package cannot observe different club or appearance versions.
 
@@ -215,7 +224,7 @@ Recalculation must be transactional or leave the previous valid state unchanged.
 
 - Existing working models evolve incrementally.
 - Alembic must have exactly one head.
-- `main` currently ends at `h10009`; draft PR #86 adds additive `h10010` document appearance persistence.
+- `main` currently ends at `h10010`; draft PR #87 adds additive `h10011` module visibility persistence.
 - Applied migrations are not rewritten when real data may exist.
 - Public API placeholders are prohibited.
 - Legacy compatibility requires a verified consumer or migration plan.
@@ -226,6 +235,7 @@ Recalculation must be transactional or leave the previous valid state unchanged.
 ## 7. Security rules
 
 - Club data is not transmitted to external paid services.
+- Module visibility must not be described or used as authorization.
 - Multi-user permissions must be enforced in Backend when introduced.
 - The settings page becomes Administrator-only after access foundation.
 - SVG, arbitrary custom CSS, uploaded fonts, and remote font URLs are not accepted in the current settings model.
