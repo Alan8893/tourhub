@@ -1,9 +1,13 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Integer, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+if TYPE_CHECKING:
+    from app.models.auth_session import AuthSessionORM
 
 
 class UserORM(Base):
@@ -36,6 +40,3 @@ class UserORM(Base):
     sessions: Mapped[list["AuthSessionORM"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
-
-
-from app.models.auth_session import AuthSessionORM  # noqa: E402
