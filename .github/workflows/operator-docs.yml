@@ -30,7 +30,10 @@ jobs:
       - name: Validate runbooks and links
         run: |
           python -m py_compile scripts/release/verify_operator_docs.py
+          python -m py_compile scripts/release/verify_docker_runtime.py
           python scripts/release/verify_operator_docs.py
 
       - name: Validate Docker Compose syntax
-        run: docker compose config >/tmp/tourhub-compose-config.yml
+        run: |
+          docker compose config >/tmp/tourhub-compose-config.yml
+          docker compose -f docker-compose.release.yml config >/tmp/tourhub-release-compose-config.yml
