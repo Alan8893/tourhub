@@ -2,7 +2,7 @@ import { Container, CssBaseline, Paper, Stack, Typography } from "@mui/material"
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import Header from "@/app/layout/Header";
 import RequireAdministrator from "@/features/auth/components/RequireAdministrator";
@@ -32,7 +32,7 @@ createRoot(root).render(
   <StrictMode>
     <ThemeProvider theme={createTheme()}>
       <CssBaseline />
-      <BrowserRouter>
+      <MemoryRouter initialEntries={["/settings"]}>
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -47,7 +47,7 @@ createRoot(root).render(
             <Route path="*" element={<Navigate to="/settings" replace />} />
           </Routes>
         </AuthProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     </ThemeProvider>
   </StrictMode>,
 );
