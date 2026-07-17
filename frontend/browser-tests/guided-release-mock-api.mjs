@@ -9,7 +9,8 @@ function json(response, statusCode, body) {
 async function readBody(request) {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  const payload = Buffer.concat(chunks).toString("utf8");
+  return payload ? JSON.parse(payload) : undefined;
 }
 
 export function createGuidedReleaseMockApi(port) {
