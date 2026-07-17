@@ -4,18 +4,19 @@ Status date: 2026-07-17
 
 ## Current phase
 
-The guided single-club preparation baseline, operator runbooks, production-like Docker runtime, product completeness audit, and first System Settings slice are complete. Draft PR #85 implements the second settings slice: safe organization-wide site appearance with personal display-mode selection and isolated preview.
+The guided single-club preparation baseline, operator runbooks, production-like Docker runtime, product completeness audit, club settings, and site appearance are complete. Draft PR #86 implements the third System Settings slice: independent document appearance applied through one immutable generation snapshot.
 
 ## Verified baseline
 
-- `main`: `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a` — merged PR #84.
-- `main` Alembic head: `h10008`.
+- `main`: `0e4e376470072e9475a31504faeb46e8b5a68364` — merged PR #85.
+- `main` Alembic head: `h10009`.
 - PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`.
 - PR #78 merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
 - PR #79 merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
 - PR #80 merged as `939828e8c335966dde2d04c5083ee7d2da07c6eb`.
 - PR #83 merged as `950a43914230f6fe4be3bf217a4e5f1b79e7265f`.
-- PR #84 passed Quality #499, Document Quality #127, Guided Release Acceptance #78, Operator Docs #64, and Docker Release Runtime #59 before merge.
+- PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`.
+- PR #85 passed Quality #537, Document Quality #164, Guided Release Acceptance #115, Operator Docs #101, and Docker Release Runtime #96 before merge.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Implemented on main
@@ -56,37 +57,49 @@ The guided single-club preparation baseline, operator runbooks, production-like 
 - existing document branding and legacy `/api/v1/club-settings` compatibility;
 - additive Alembic `h10008` with one head.
 
-## Draft PR #85 — System Settings appearance
+### System Settings site appearance
+
+- independent singleton `AppearanceSettings` through Alembic `h10009`;
+- complete organization-wide light and dark token sets;
+- safe presets, fonts, density, radius, component styles, and shadow controls;
+- backend #RRGGBB and contrast validation with Russian explanations;
+- dynamic global MUI theme application without restart;
+- per-browser system/light/dark mode in localStorage;
+- isolated preview, reset, cancel, copy, validated JSON import, and JSON export;
+- optimistic conflicts, row locking, safe history, and desktop/mobile acceptance.
+
+## Draft PR #86 — System Settings document appearance
 
 Backend:
 
-- additive Alembic `h10009` creates independent singleton `appearance_settings` persistence;
-- typed light/dark token sets and safe enums own appearance configuration;
-- TourHub, Forest, Ocean, and Sunset presets provide validated starting points;
-- backend validates #RRGGBB values and minimum text/surface contrast with a clear Russian reason;
+- additive Alembic `h10010` creates independent singleton `document_appearance_settings` persistence;
+- typed palette, logo source, contacts visibility, footer, title image, and table-density settings;
+- backend validates #RRGGBB values and minimum table-header contrast with a clear Russian reason;
 - versioned updates use a PostgreSQL row lock and reject stale editors with HTTP 409;
-- appearance history records changed field names only and shares the global latest-200 retention boundary.
+- document history records changed field names only and shares the latest-200 retention boundary;
+- selected missing images fall back to the main logo, while `none` suppresses the logo explicitly.
+
+Document pipeline:
+
+- one frozen snapshot combines `ClubSettings` with `DocumentAppearanceSettings`;
+- `ProjectDocumentService` loads that snapshot once per generation request;
+- purchase/equipment PDF, Excel, printable text, and all ZIP entries reuse the same object;
+- PDF and Excel share centralized palette/density/rendering helpers;
+- existing routes, content types, and filenames remain compatible;
+- consolidated document contents remain outside this slice.
 
 Frontend:
 
-- saved appearance is applied globally through one dynamic MUI ThemeProvider without restart;
-- each browser stores only `system`, `light`, or `dark` preference in localStorage;
-- the organization controls colors, safe font stack, density, radius, button/card styles, and shadows;
-- the settings page provides presets, full token editing, isolated light/dark preview, reset, cancel, copy, import, and export;
-- imported theme JSON is versioned and validated before it can enter preview state;
-- an unsaved draft never changes the rest of the running application;
-- desktop and mobile browser acceptance is independent from the existing club-settings scenario.
-
-Architecture:
-
-- `AppearanceSettings` remains independent from `ClubSettings` and future document/module/mail models;
-- arbitrary CSS, external fonts, uploaded font files, and unrestricted key/value settings remain prohibited;
-- the future user preference model will replace localStorage without changing global organization tokens.
+- the planned `Документы` section becomes a working responsive editor;
+- the form edits palette, logo source, contacts, footer, title background, and table density;
+- an isolated document preview shows the draft before save;
+- reset, cancel, save, validation, conflict, version, and history states are shown in Russian;
+- desktop/mobile browser acceptance is independent from club and site appearance scenarios.
 
 ## Remaining System Settings sequence
 
-1. Separate document appearance.
-2. Module navigation visibility, dependency locks, and future invitation/mail configuration boundaries.
+1. Module navigation visibility and required dependency locks.
+2. Future invitation and mail configuration boundaries.
 3. Access foundation and functional invitations.
 4. Working SMTP delivery after identity exists.
 
@@ -101,7 +114,7 @@ Architecture:
 
 ## Quality debt
 
-- finish exact-head validation and review for PR #85;
+- finish exact-head validation and review for PR #86;
 - active deployment catalogue data acceptance;
 - catalogue-import interaction coverage;
 - final PostgreSQL migration cycle after feature freeze;

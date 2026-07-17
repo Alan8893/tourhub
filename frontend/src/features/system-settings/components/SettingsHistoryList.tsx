@@ -36,6 +36,18 @@ const FIELD_LABELS: Record<string, string> = {
   button_style: "стиль кнопок",
   card_style: "стиль карточек",
   shadows_enabled: "тени",
+  primary_color: "основной цвет документов",
+  accent_color: "акцентный цвет документов",
+  heading_color: "цвет заголовков документов",
+  table_header_background: "фон заголовка таблицы",
+  table_header_text: "текст заголовка таблицы",
+  table_border_color: "границы таблицы",
+  title_background_color: "фон титульного блока",
+  logo_source: "источник логотипа документов",
+  show_contacts: "отображение контактов",
+  footer_text: "footer документов",
+  use_document_image_as_title_background: "фоновое изображение титульного блока",
+  table_density: "плотность таблиц документов",
 };
 
 function fieldLabel(field: string): string {

@@ -2,6 +2,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
+from textwrap import wrap
 from typing import Any
 
 from reportlab.lib import colors
@@ -13,7 +14,11 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.engines.documents.branding import ClubBrandingDTO
-from app.engines.documents.branding_render import pdf_branding_flowables
+from app.engines.documents.branding_render import (
+    apply_pdf_heading_styles,
+    pdf_branding_flowables,
+    pdf_table_style_commands,
+)
 from app.engines.documents.dto import GeneratedDocument, PurchaseDocumentDTO
 
 
@@ -53,12 +58,20 @@ class PDFDocumentGenerator:
             del document
             canvas.saveState()
             canvas.setFont("TourHubUnicode", 8)
+            if branding is not None:
+                canvas.setFillColor(colors.HexColor(branding.palette.primary_color))
             label = (
-                f"Сформировано для {branding.club_name} в TourHub"
-                if branding is not None
-                else "Сформировано в TourHub"
+                branding.footer_text
+                if branding is not None and branding.footer_text
+                else (
+                    f"Сформировано для {branding.club_name} в TourHub"
+                    if branding is not None
+                    else "Сформировано в TourHub"
+                )
             )
-            canvas.drawString(20 * mm, 10 * mm, label)
+            footer_lines = wrap(label, width=95)[:2]
+            for index, line in enumerate(reversed(footer_lines)):
+                canvas.drawString(20 * mm, (8 + index * 3) * mm, line)
             canvas.drawRightString(
                 190 * mm,
                 10 * mm,
@@ -88,6 +101,7 @@ class PDFDocumentGenerator:
         styles = getSampleStyleSheet()
         for style in styles.byName.values():
             style.fontName = font_name
+        apply_pdf_heading_styles(styles, branding)
 
         content = [
             *pdf_branding_flowables(styles, branding),
@@ -124,12 +138,10 @@ class PDFDocumentGenerator:
         table = Table(table_data, repeatRows=1)
         table.setStyle(
             TableStyle(
-                [
-                    ("FONT", (0, 0), (-1, -1), font_name, 9),
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ]
+                pdf_table_style_commands(
+                    branding,
+                    font_name=font_name,
+                )
             )
         )
 

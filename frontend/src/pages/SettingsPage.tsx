@@ -18,6 +18,7 @@ import { useState } from "react";
 
 import AppearanceSettingsForm from "@/features/system-settings/components/AppearanceSettingsForm";
 import ClubSettingsForm from "@/features/system-settings/components/ClubSettingsForm";
+import DocumentAppearanceSettingsForm from "@/features/system-settings/components/DocumentAppearanceSettingsForm";
 
 type SettingsSectionId =
   | "club"
@@ -104,6 +105,7 @@ export default function SettingsPage() {
   function sectionContent() {
     if (activeSection === "club") return <ClubSettingsForm />;
     if (activeSection === "appearance") return <AppearanceSettingsForm />;
+    if (activeSection === "documents") return <DocumentAppearanceSettingsForm />;
     return <PlannedSection sectionId={activeSection} />;
   }
 

@@ -5,6 +5,9 @@ from app.modules.api.appearance_settings_router import router as appearance_sett
 from app.modules.api.catalog_import_router import router as catalog_import_router
 from app.modules.api.club_settings_router import router as club_settings_router
 from app.modules.api.dish_router import router as dish_router
+from app.modules.api.document_appearance_settings_router import (
+    router as document_appearance_settings_router,
+)
 from app.modules.api.meal_plan_router import router as meal_plan_router
 from app.modules.api.meal_slot_router import router as meal_slot_router
 from app.modules.api.meta_router import router as meta_router
@@ -24,6 +27,7 @@ router.include_router(appearance_settings_router)
 router.include_router(catalog_import_router)
 router.include_router(club_settings_router)
 router.include_router(dish_router)
+router.include_router(document_appearance_settings_router)
 router.include_router(equipment_list_router.router)
 router.include_router(meal_plan_router)
 router.include_router(meal_slot_router)
