@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -15,6 +15,7 @@ import {
 } from "./club-settings-cdp.mjs";
 import {
   clickButton,
+  removeChromeProfile,
   setInput,
   setNumberInput,
   waitForPageTarget,
@@ -31,7 +32,7 @@ const pageUrl = `http://127.0.0.1:${frontendPort}/projects/new`;
 const profileDir = "/tmp/tourhub-guided-release-profile";
 
 async function run() {
-  await rm(profileDir, { recursive: true, force: true });
+  await removeChromeProfile(profileDir);
   await mkdir(artifactDir, { recursive: true });
   const mockApi = createGuidedReleaseMockApi(apiPort);
   await mockApi.listen();
@@ -208,7 +209,7 @@ async function run() {
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await mockApi.close();
-    await rm(profileDir, { recursive: true, force: true });
+    await removeChromeProfile(profileDir, { allowResidual: true });
   }
 }
 
