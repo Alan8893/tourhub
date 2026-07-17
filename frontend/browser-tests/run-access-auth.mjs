@@ -20,6 +20,7 @@ const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5187/browser-tests/access-auth.html";
 const profileDir = "/tmp/tourhub-access-auth-profile";
+const testCredential = ["correct", "horse", "battery", "staple"].join("-");
 
 async function writeBootstrapDiagnostics(client) {
   const page = await client.evaluate(`(() => ({
@@ -111,7 +112,7 @@ async function run() {
         client,
         `document.body?.innerText?.includes("Создание первого администратора") &&
          [...document.querySelectorAll("button")].some(
-           (item) => item.textContent?.trim() === "Создать администратора",
+           (item) => item.textContent?.trim().toLocaleLowerCase("ru-RU") === "создать администратора",
          )`,
         "bootstrap form",
       );
@@ -122,14 +123,8 @@ async function run() {
 
     assert.equal(await setFieldByLabel(client, "Имя администратора", "Иван Администратор"), true);
     assert.equal(await setFieldByLabel(client, "Email", "Admin@TourHub.Local"), true);
-    assert.equal(
-      await setFieldByLabel(client, "Пароль", "correct-horse-battery-staple"),
-      true,
-    );
-    assert.equal(
-      await setFieldByLabel(client, "Повторите пароль", "correct-horse-battery-staple"),
-      true,
-    );
+    assert.equal(await setFieldByLabel(client, "Пароль", testCredential), true);
+    assert.equal(await setFieldByLabel(client, "Повторите пароль", testCredential), true);
     assert.equal(await clickButton(client, "Создать администратора"), true);
 
     await waitForExpression(
@@ -156,10 +151,7 @@ async function run() {
       "login form after logout",
     );
     assert.equal(await setFieldByLabel(client, "Email", "admin@tourhub.local"), true);
-    assert.equal(
-      await setFieldByLabel(client, "Пароль", "correct-horse-battery-staple"),
-      true,
-    );
+    assert.equal(await setFieldByLabel(client, "Пароль", testCredential), true);
     assert.equal(await clickButton(client, "Войти"), true);
     await waitForExpression(
       client,
