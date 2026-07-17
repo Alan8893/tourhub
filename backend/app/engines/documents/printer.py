@@ -1,8 +1,7 @@
-from app.engines.documents.dto import (
-    GeneratedDocument,
-    PurchaseDocumentDTO,
-)
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
+from app.engines.documents.branding import ClubBrandingDTO
+from app.engines.documents.dto import GeneratedDocument, PurchaseDocumentDTO
 
 
 class PrintDocumentGenerator:
@@ -11,8 +10,11 @@ class PrintDocumentGenerator:
     def generate(
         self,
         document: PurchaseDocumentDTO,
+        branding: ClubBrandingDTO | None = None,
     ) -> GeneratedDocument:
         lines = [document.title, ""]
+        if branding is not None:
+            lines = [branding.club_name, document.title, ""]
 
         for item in document.items:
             package_text = ""
@@ -29,6 +31,6 @@ class PrintDocumentGenerator:
         return GeneratedDocument(
             filename="purchase_list.txt",
             content_type="text/plain",
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
             content="\n".join(lines),
         )
