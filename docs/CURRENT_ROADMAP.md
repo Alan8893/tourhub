@@ -14,7 +14,8 @@ Project preparation baseline
       → Club profile and settings shell
       → Site appearance
       → Document appearance
-      → Module and future invitation/mail boundaries
+      → Module visibility and dependency locks
+      → Future invitation/mail configuration boundaries
   → Access and roles
   → Working mail delivery
   → Recipe ownership and lifecycle
@@ -58,7 +59,7 @@ PR #79 merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
 - API project creation, Alembic head, and restart-persistence checks;
 - focused diagnostics and unconditional cleanup.
 
-PR #80 passed exact-head Quality #454, Document Quality #84, Guided Release Acceptance #35, Operator Docs #21, and Docker Release Runtime #17 and merged as `939828e8c335966dde2d04c5083ee7d2da07c6eb`.
+PR #80 merged as `939828e8c335966dde2d04c5083ee7d2da07c6eb`.
 
 ### Product completeness audit through merged PR #83
 
@@ -68,65 +69,69 @@ PR #80 passed exact-head Quality #454, Document Quality #84, Guided Release Acce
 - moved the final migration downgrade/re-upgrade cycle after feature freeze;
 - recorded System Settings as the next capability before access foundation.
 
-PR #83 passed exact-head Quality #464, Document Quality #93, Guided Release Acceptance #44, Operator Docs #30, and Docker Release Runtime #25 and merged as `950a43914230f6fe4be3bf217a4e5f1b79e7265f`.
+PR #83 merged as `950a43914230f6fe4be3bf217a4e5f1b79e7265f`.
 
 ### System Settings club foundation through merged PR #84
 
 - dedicated responsive `/settings` page and main-sidebar entry;
-- vertical section navigation on desktop and section selector on mobile;
-- typed singleton club profile with one required name and optional identity/contact/location fields;
-- main/light/dark logos, square icon, favicon, login background, and document image;
-- PNG/JPEG/WebP validation with per-kind limits and no SVG;
-- optimistic versioning, PostgreSQL row locking, HTTP 409 stale-write protection;
-- safe local-administrator settings history retaining the latest 200 rows;
+- typed singleton club profile with optional identity/contact/location fields and approved images;
+- PNG/JPEG/WebP validation with no SVG;
+- optimistic versioning, PostgreSQL row locking, HTTP 409 conflicts, and safe history;
 - legacy `/club-settings` compatibility and additive Alembic `h10008`.
 
-PR #84 passed exact-head Quality #499, Document Quality #127, Guided Release Acceptance #78, Operator Docs #64, and Docker Release Runtime #59 and merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`.
+PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`.
 
 ### System Settings site appearance through merged PR #85
 
 - independently typed singleton `AppearanceSettings` and Alembic `h10009`;
-- organization-wide light and dark token sets;
-- safe fonts, density, radius, button/card styles, and shadow control;
-- TourHub, Forest, Ocean, and Sunset presets plus manual custom mode;
-- backend contrast validation with Russian rejection reasons;
-- global dynamic MUI theme application without restart;
-- per-browser `system`, `light`, or `dark` preference in localStorage;
-- isolated live preview, reset, cancel, copy, validated JSON import, and JSON export;
-- version conflicts, row locking, safe history, and desktop/mobile acceptance.
+- organization-wide light/dark tokens, safe presets, fonts, density, shape, and component styles;
+- backend contrast validation with Russian reasons;
+- global dynamic MUI theme and per-browser display mode;
+- isolated preview, reset, cancel, copy, validated JSON import, and JSON export.
 
-PR #85 passed exact-head Quality #537, Document Quality #164, Guided Release Acceptance #115, Operator Docs #101, and Docker Release Runtime #96 and merged as `0e4e376470072e9475a31504faeb46e8b5a68364`.
+PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`.
 
-## IN PROGRESS — TH-0076 / DRAFT PR #86
+### System Settings document appearance through merged PR #86
 
-### System Settings: document appearance and immutable snapshot
-
-- independently typed singleton `DocumentAppearanceSettings`;
-- document primary/accent/heading/title/table palette;
-- selectable main/document/light/dark logo with predictable fallback or no logo;
-- optional club contacts, custom Russian footer, title image, and compact/comfortable tables;
-- backend table-header contrast validation and HTTP 409 stale-write protection;
-- one frozen club/document snapshot loaded once per generation request;
+- independently typed singleton `DocumentAppearanceSettings` and Alembic `h10010`;
+- document palette, logo selection, contacts, footer, title image, and table density;
+- backend contrast validation and versioned safe history;
+- one frozen club/document snapshot per generation request;
 - the same snapshot reused by purchase/equipment PDF, Excel, print, and every ZIP entry;
-- responsive editor, isolated document preview, reset, cancel, save state, and safe history;
-- additive Alembic revision `h10010` with one head;
-- existing endpoints and filenames remain compatible.
+- responsive editor and isolated document preview;
+- existing routes, filenames, content types, and legacy branding compatibility preserved.
+
+PR #86 passed exact-head Quality #575, Document Quality #201, Guided Release Acceptance #152, Operator Docs #138, and Docker Release Runtime #133 and merged as `18d5c9637e2e692b630009167dd622ee40ee2747`.
+
+## IN PROGRESS — TH-0077 / DRAFT PR #87
+
+### System Settings: module visibility and dependency locks
+
+- independent singleton `ModuleSettings` with explicit typed boolean columns;
+- required visible `Проекты` and `Каталог` modules;
+- optional `Импорт`, `Закупка`, `Оборудование`, and `Документы` visibility;
+- visible documents require visible shopping and equipment;
+- backend dependency validation, PostgreSQL row locking, HTTP 409 conflicts, and safe history;
+- desktop/mobile sidebar visibility updates without restart;
+- shopping, equipment, and document project cards follow the saved visibility snapshot;
+- direct URLs and APIs remain available;
+- additive Alembic `h10011` with one head.
 
 Scope boundary:
 
-- existing purchase/equipment document contents remain unchanged;
-- consolidated export completeness remains a later product slice;
-- arbitrary templates, CSS, uploaded fonts, rich-text footer markup, and per-project themes remain prohibited;
-- module visibility and invitation/mail configuration boundaries remain independent.
+- visibility is not authorization;
+- routes, APIs, and backend domain modules are not disabled;
+- settings and required modules remain visible;
+- invitation policy, functional invitations, users, roles, authentication, and SMTP remain separate.
 
-## NEXT — REMAINING SYSTEM SETTINGS SLICE
+## NEXT — REMAINING SYSTEM SETTINGS BOUNDARIES
 
-1. **Modules and future access configuration**
-   - navigation visibility only in the first module slice;
-   - required-module dependency locks enforced by the backend;
-   - invitation policy fields without a functional invitation list;
-   - informative mail section until access foundation exists;
-   - direct URLs and APIs remain available while a module is hidden.
+1. **Future invitation configuration**
+   - typed policy fields before users exist;
+   - no functional invitation list until access foundation.
+2. **Informative mail boundary**
+   - explain the future universal SMTP contract and write-only secret boundary;
+   - no working delivery until identity exists.
 
 ## FOLLOW-UP PRODUCT WORK
 
