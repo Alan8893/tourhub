@@ -17,6 +17,7 @@ import {
   clickButton,
   setInput,
   setNumberInput,
+  waitForPageTarget,
   waitForRequest,
 } from "./guided-release-browser-helpers.mjs";
 import { createGuidedReleaseMockApi } from "./guided-release-mock-api.mjs";
@@ -69,11 +70,7 @@ async function run() {
 
   try {
     await waitForHttp(`http://127.0.0.1:${debuggingPort}/json/version`);
-    const targets = await fetch(`http://127.0.0.1:${debuggingPort}/json/list`).then(
-      (response) => response.json(),
-    );
-    const target = targets.find((item) => item.type === "page");
-    assert.ok(target?.webSocketDebuggerUrl);
+    const target = await waitForPageTarget(debuggingPort, "/projects/new");
     const client = await CdpClient.connect(target.webSocketDebuggerUrl);
     await client.send("Runtime.enable");
     await client.send("Page.enable");
