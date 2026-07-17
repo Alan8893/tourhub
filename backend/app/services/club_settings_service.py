@@ -1,6 +1,9 @@
 import base64
 import binascii
+from io import BytesIO
 
+from PIL import Image, UnidentifiedImageError
+from PIL.Image import DecompressionBombError
 from sqlalchemy.orm import Session
 
 from app.engines.documents.branding import ClubBrandingDTO
@@ -9,7 +12,9 @@ from app.models.club_settings import ClubSettingsORM
 
 DEFAULT_CLUB_NAME = "TourHub"
 MAX_LOGO_BYTES = 1_000_000
+MAX_LOGO_PIXELS = 16_000_000
 ALLOWED_LOGO_MIME_TYPES = {"image/png", "image/jpeg"}
+EXPECTED_IMAGE_FORMATS = {"image/png": "PNG", "image/jpeg": "JPEG"}
 
 
 class ClubSettingsService:
@@ -90,10 +95,19 @@ class ClubSettingsService:
         if len(logo_bytes) > MAX_LOGO_BYTES:
             raise ValueError("Logo must not exceed 1 MB")
 
-        signature = logo_bytes[:8].hex()
-        if mime_type == "image/png" and signature != "89504e470d0a1a0a":
-            raise ValueError("Logo content does not match PNG format")
-        if mime_type == "image/jpeg" and not signature.startswith("ffd8ff"):
-            raise ValueError("Logo content does not match JPEG format")
+        try:
+            with Image.open(BytesIO(logo_bytes)) as image:
+                width, height = image.size
+                image_format = image.format
+                if width * height > MAX_LOGO_PIXELS:
+                    raise ValueError("Logo dimensions are too large")
+                image.verify()
+        except ValueError:
+            raise
+        except (UnidentifiedImageError, DecompressionBombError, OSError, SyntaxError) as error:
+            raise ValueError("Logo is not a valid image") from error
+
+        if image_format != EXPECTED_IMAGE_FORMATS[mime_type]:
+            raise ValueError("Logo content does not match its MIME type")
 
         return mime_type, logo_bytes
