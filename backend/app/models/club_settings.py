@@ -1,6 +1,16 @@
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Integer, JSON, LargeBinary, String, Text, func, text
+from sqlalchemy import (
+    JSON,
+    CheckConstraint,
+    DateTime,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
