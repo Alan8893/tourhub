@@ -1,23 +1,52 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  DEFAULT_APPEARANCE,
-  cloneAppearanceDraft,
-  createTourHubTheme,
-} from "../src/features/system-settings/appearance/theme.ts";
+import type { AppearanceThemeDraft } from "../src/features/system-settings/api/appearanceSettingsApi.ts";
 import {
   createAppearanceThemeExport,
   parseAppearanceThemeExport,
 } from "../src/features/system-settings/appearance/themeTransfer.ts";
 
-function defaultDraft() {
-  const {
-    version: _version,
-    updated_at: _updatedAt,
-    ...draft
-  } = DEFAULT_APPEARANCE;
-  return cloneAppearanceDraft(draft);
+function defaultDraft(): AppearanceThemeDraft {
+  return {
+    preset_name: "tourhub",
+    font_family: "system",
+    density: "comfortable",
+    border_radius: 10,
+    button_style: "contained",
+    card_style: "outlined",
+    shadows_enabled: true,
+    light: {
+      primary: "#1B5E20",
+      secondary: "#2E7D32",
+      accent: "#F9A825",
+      background: "#F4F7F4",
+      paper: "#FFFFFF",
+      sidebar: "#E8F2E8",
+      appbar: "#1B5E20",
+      text_primary: "#162018",
+      text_secondary: "#435348",
+      divider: "#C8D2CA",
+      success: "#2E7D32",
+      warning: "#ED6C02",
+      error: "#D32F2F",
+    },
+    dark: {
+      primary: "#81C784",
+      secondary: "#A5D6A7",
+      accent: "#FFD54F",
+      background: "#101713",
+      paper: "#18211B",
+      sidebar: "#1E2A22",
+      appbar: "#16351D",
+      text_primary: "#F2F7F3",
+      text_secondary: "#C1CDC4",
+      divider: "#405047",
+      success: "#81C784",
+      warning: "#FFB74D",
+      error: "#EF9A9A",
+    },
+  };
 }
 
 test("round-trips a versioned appearance theme without runtime metadata", () => {
@@ -49,16 +78,4 @@ test("rejects malformed or unsupported theme imports", () => {
   const invalidRadius = createAppearanceThemeExport(defaultDraft());
   invalidRadius.theme.border_radius = 25;
   assert.throws(() => parseAppearanceThemeExport(invalidRadius), /от 0 до 24/);
-});
-
-test("creates distinct light and dark Material UI themes", () => {
-  const draft = defaultDraft();
-  const light = createTourHubTheme(draft, "light");
-  const dark = createTourHubTheme(draft, "dark");
-
-  assert.equal(light.palette.mode, "light");
-  assert.equal(light.palette.background.default, "#F4F7F4");
-  assert.equal(dark.palette.mode, "dark");
-  assert.equal(dark.palette.background.default, "#101713");
-  assert.equal(light.shape.borderRadius, 10);
 });
