@@ -1,0 +1,98 @@
+import {
+  PropsWithChildren,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  AuthUser,
+  bootstrapAdministrator,
+  getBootstrapStatus,
+  getCurrentUser,
+  login as loginRequest,
+  logout as logoutRequest,
+} from "../api/authApi";
+
+interface AuthContextValue {
+  user: AuthUser | null;
+  bootstrapRequired: boolean;
+  isLoading: boolean;
+  refresh: () => Promise<void>;
+  bootstrap: (payload: {
+    email: string;
+    display_name: string;
+    password: string;
+  }) => Promise<void>;
+  login: (payload: { email: string; password: string }) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export default function AuthProvider({ children }: PropsWithChildren) {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [bootstrapRequired, setBootstrapRequired] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [required, currentUser] = await Promise.all([
+        getBootstrapStatus(),
+        getCurrentUser(),
+      ]);
+      setBootstrapRequired(required);
+      setUser(currentUser);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const bootstrap = useCallback(
+    async (payload: { email: string; display_name: string; password: string }) => {
+      const created = await bootstrapAdministrator(payload);
+      setUser(created);
+      setBootstrapRequired(false);
+    },
+    [],
+  );
+
+  const login = useCallback(async (payload: { email: string; password: string }) => {
+    setUser(await loginRequest(payload));
+    setBootstrapRequired(false);
+  }, []);
+
+  const logout = useCallback(async () => {
+    await logoutRequest();
+    setUser(null);
+  }, []);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user,
+      bootstrapRequired,
+      isLoading,
+      refresh,
+      bootstrap,
+      login,
+      logout,
+    }),
+    [bootstrap, bootstrapRequired, isLoading, login, logout, refresh, user],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): AuthContextValue {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used inside AuthProvider");
+  return context;
+}
