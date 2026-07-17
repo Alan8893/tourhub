@@ -20,7 +20,7 @@ export default function InvitationSettingsWorkspace() {
 
   return (
     <Stack spacing={3}>
-      <InvitationSettingsForm />
+      <InvitationSettingsForm onSaved={setSettings} />
       {failed && (
         <Alert severity="warning">
           Рабочие приглашения доступны, но начальные значения роли не удалось загрузить.
