@@ -9,6 +9,12 @@ class RedisSettings(BaseSettings):
     url: str = "redis://localhost:6379/0"
 
 
+class AuthSettings(BaseSettings):
+    session_cookie_name: str = "tourhub_session"
+    session_ttl_days: int = 14
+    cookie_secure: bool = False
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -26,6 +32,7 @@ class Settings(BaseSettings):
 
     database: DatabaseSettings = DatabaseSettings()
     redis: RedisSettings = RedisSettings()
+    auth: AuthSettings = AuthSettings()
 
 
 settings = Settings()
