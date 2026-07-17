@@ -216,17 +216,44 @@ async function run() {
       mobile: true,
     });
     await sleep(450);
-    const layout = await client.evaluate(`(() => ({
-      clientWidth: document.documentElement.clientWidth,
-      scrollWidth: document.documentElement.scrollWidth,
-      bodyScrollWidth: document.body.scrollWidth,
-      hasPreview: document.body?.innerText?.includes("Предпросмотр документа"),
-      hasSave: document.body?.innerText?.includes("Сохранить раздел"),
-    }))()`);
-    assert.ok(
-      layout.scrollWidth <= layout.clientWidth + 1 &&
-        layout.bodyScrollWidth <= layout.clientWidth + 1,
+    const layout = await client.evaluate(`(() => {
+      const clientWidth = document.documentElement.clientWidth;
+      const describe = (element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          tag: element.tagName,
+          className: String(element.className || "").slice(0, 180),
+          text: (element.textContent || "").replace(/\\s+/g, " ").trim().slice(0, 120),
+          left: Math.round(rect.left * 100) / 100,
+          right: Math.round(rect.right * 100) / 100,
+          width: Math.round(rect.width * 100) / 100,
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+          overflowX: getComputedStyle(element).overflowX,
+        };
+      };
+      const wideElements = [...document.querySelectorAll("body *")]
+        .map(describe)
+        .filter((item) => item.right > clientWidth + 1 || item.left < -1)
+        .sort((first, second) => second.right - first.right)
+        .slice(0, 12);
+      return {
+        clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        bodyScrollWidth: document.body.scrollWidth,
+        hasPreview: document.body?.innerText?.includes("Предпросмотр документа"),
+        hasSave: document.body?.innerText?.includes("Сохранить раздел"),
+        wideElements,
+      };
+    })()`);
+    await writeFile(
+      path.join(artifactDir, "document-appearance-settings-layout.json"),
+      JSON.stringify(layout, null, 2),
     );
+    const noOverflow =
+      layout.scrollWidth <= layout.clientWidth + 1 &&
+      layout.bodyScrollWidth <= layout.clientWidth + 1;
+    assert.ok(noOverflow, `Mobile overflow diagnostics: ${JSON.stringify(layout)}`);
     assert.equal(layout.hasPreview, true);
     assert.equal(layout.hasSave, true);
 
