@@ -7,7 +7,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
-| TH-0073 | Product Completeness Audit | IN PROGRESS | ./active/TH-0073-product-completeness-audit.md |
+| TH-0074 | System Settings Club Foundation | IN PROGRESS | ./active/TH-0074-system-settings-club-foundation.md |
 
 ## Planned release sequence
 
@@ -45,6 +45,7 @@ Exact task IDs for implementation slices are assigned when each slice starts fro
 | TH-0070 | Critical Meal Plan Stabilization | DONE |
 | TH-0071 | Operator Installation and Update Runbook | DONE |
 | TH-0072 | Docker Release Runtime Validation | DONE |
+| TH-0073 | Product Completeness Audit | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
