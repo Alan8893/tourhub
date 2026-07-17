@@ -1,6 +1,13 @@
 import { Divider, List, ListItem, ListItemText, Paper, Stack, Typography } from "@mui/material";
 
-import { SystemSettingsHistoryItem } from "../api/systemSettingsApi";
+export interface SettingsHistoryEntry {
+  id: number;
+  actor_label: string;
+  action: string;
+  changed_fields: string[];
+  settings_version: number;
+  created_at: string;
+}
 
 const FIELD_LABELS: Record<string, string> = {
   club_name: "название клуба",
@@ -22,10 +29,24 @@ const FIELD_LABELS: Record<string, string> = {
   "images.favicon": "favicon",
   "images.login_background": "фон страницы входа",
   "images.document_image": "изображение для документов",
+  preset_name: "предустановленная тема",
+  font_family: "шрифт",
+  density: "плотность интерфейса",
+  border_radius: "скругление",
+  button_style: "стиль кнопок",
+  card_style: "стиль карточек",
+  shadows_enabled: "тени",
 };
 
+function fieldLabel(field: string): string {
+  if (FIELD_LABELS[field]) return FIELD_LABELS[field];
+  if (field.startsWith("light.")) return `светлая тема: ${field.slice(6)}`;
+  if (field.startsWith("dark.")) return `тёмная тема: ${field.slice(5)}`;
+  return field;
+}
+
 interface SettingsHistoryListProps {
-  items: SystemSettingsHistoryItem[];
+  items: SettingsHistoryEntry[];
 }
 
 export default function SettingsHistoryList({ items }: SettingsHistoryListProps) {
@@ -50,9 +71,7 @@ export default function SettingsHistoryList({ items }: SettingsHistoryListProps)
               {index > 0 && <Divider />}
               <ListItem disableGutters alignItems="flex-start">
                 <ListItemText
-                  primary={item.changed_fields
-                    .map((field) => FIELD_LABELS[field] ?? field)
-                    .join(", ")}
+                  primary={item.changed_fields.map(fieldLabel).join(", ")}
                   secondary={`${item.actor_label} · версия ${item.settings_version} · ${new Date(
                     item.created_at,
                   ).toLocaleString("ru-RU")}`}
