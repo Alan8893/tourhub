@@ -1,3 +1,5 @@
+import { isAxiosError } from "axios";
+
 import { apiClient } from "@/shared/api/client";
 
 export interface PurchaseListItem {
@@ -26,11 +28,18 @@ export interface PurchaseListUpdate {
   responsible_person: string | null;
 }
 
-export async function getProjectPurchaseList(projectId: number): Promise<PurchaseList> {
-  const response = await apiClient.get<PurchaseList>(
-    `/purchase-lists/project/${projectId}`,
-  );
-  return response.data;
+export async function getProjectPurchaseList(
+  projectId: number,
+): Promise<PurchaseList | null> {
+  try {
+    const response = await apiClient.get<PurchaseList>(
+      `/purchase-lists/project/${projectId}`,
+    );
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) return null;
+    throw error;
+  }
 }
 
 export async function updatePurchaseList(
