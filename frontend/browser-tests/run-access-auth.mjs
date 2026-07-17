@@ -21,6 +21,38 @@ const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5187/browser-tests/access-auth.html";
 const profileDir = "/tmp/tourhub-access-auth-profile";
 
+async function writeBootstrapDiagnostics(client) {
+  const page = await client.evaluate(`(() => ({
+    href: location.href,
+    title: document.title,
+    bodyText: document.body?.innerText ?? "",
+    bodyHtml: document.body?.innerHTML?.slice(0, 20000) ?? "",
+    inputs: [...document.querySelectorAll("input")].map((item) => ({
+      type: item.type,
+      name: item.name,
+      value: item.value,
+      ariaLabel: item.getAttribute("aria-label"),
+      id: item.id,
+    })),
+    buttons: [...document.querySelectorAll("button")].map((item) => ({
+      text: item.textContent?.trim() ?? "",
+      disabled: item.disabled,
+    })),
+  }))()`);
+  await writeFile(
+    path.join(artifactDir, "access-auth-diagnostic.json"),
+    JSON.stringify({ page, requests }, null, 2),
+  );
+  const screenshot = await client.send("Page.captureScreenshot", {
+    format: "png",
+    captureBeyondViewport: false,
+  });
+  await writeFile(
+    path.join(artifactDir, "access-auth-diagnostic.png"),
+    Buffer.from(screenshot.data, "base64"),
+  );
+}
+
 async function run() {
   await rm(profileDir, { recursive: true, force: true });
   await mkdir(artifactDir, { recursive: true });
@@ -74,12 +106,18 @@ async function run() {
       mobile: false,
     });
 
-    await waitForExpression(
-      client,
-      `document.body?.innerText?.includes("Создание первого администратора") &&
-       document.body?.innerText?.includes("Создать администратора")`,
-      "bootstrap form",
-    );
+    try {
+      await waitForExpression(
+        client,
+        `document.body?.innerText?.includes("Создание первого администратора") &&
+         document.body?.innerText?.includes("Создать администратора")`,
+        "bootstrap form",
+      );
+    } catch (error) {
+      await writeBootstrapDiagnostics(client);
+      throw error;
+    }
+
     assert.equal(await setFieldByLabel(client, "Имя администратора", "Иван Администратор"), true);
     assert.equal(await setFieldByLabel(client, "Email", "Admin@TourHub.Local"), true);
     assert.equal(
