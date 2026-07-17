@@ -48,6 +48,12 @@ const FIELD_LABELS: Record<string, string> = {
   footer_text: "footer документов",
   use_document_image_as_title_background: "фоновое изображение титульного блока",
   table_density: "плотность таблиц документов",
+  projects_visible: "видимость проектов",
+  catalogue_visible: "видимость каталога",
+  catalog_import_visible: "видимость импорта",
+  shopping_visible: "видимость закупки",
+  equipment_visible: "видимость оборудования",
+  documents_visible: "видимость документов",
 };
 
 function fieldLabel(field: string): string {
