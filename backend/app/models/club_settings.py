@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from sqlalchemy import (
-    JSON,
     CheckConstraint,
     DateTime,
     Integer,
+    JSON,
     LargeBinary,
     String,
     Text,
