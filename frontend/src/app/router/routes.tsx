@@ -1,6 +1,7 @@
 import { Navigate, RouteObject } from "react-router-dom";
 
 import RequireAdministrator from "@/features/auth/components/RequireAdministrator";
+import AcceptInvitationPage from "../../pages/AcceptInvitationPage";
 import CatalogImportPage from "../../pages/CatalogImportPage";
 import CreateProjectPage from "../../pages/CreateProjectPage";
 import DishesWorkspacePage from "../../pages/DishesWorkspacePage";
@@ -13,6 +14,7 @@ import AppLayout from "../layout/AppLayout";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
+  { path: "/accept-invitation", element: <AcceptInvitationPage /> },
   {
     element: <AppLayout />,
     children: [
