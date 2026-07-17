@@ -1,12 +1,14 @@
 from app.models.base import Base
 
 from app.models.appearance_settings import AppearanceSettingsORM
+from app.models.auth_session import AuthSessionORM
 from app.models.club_settings import ClubSettingsORM
 from app.models.dish import DishORM
 from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
 from app.models.document_appearance_settings import DocumentAppearanceSettingsORM
 from app.models.equipment_list import EquipmentListORM
 from app.models.equipment_list_item import EquipmentListItemORM
+from app.models.identity_state import IdentityStateORM
 from app.models.ingredient import IngredientORM
 from app.models.invitation_settings import InvitationSettingsORM
 from app.models.mail_settings import MailSettingsORM
@@ -26,18 +28,22 @@ from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_component_type import RecipeComponentType
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
 from app.models.system_settings_history import SystemSettingsHistoryORM
+from app.models.user import UserORM
 from app.modules.projects.models.project import ProjectORM
 
 
 __all__ = [
     "Base",
     "AppearanceSettingsORM",
+    "AuthSessionORM",
     "ClubSettingsORM",
     "DocumentAppearanceSettingsORM",
+    "IdentityStateORM",
     "InvitationSettingsORM",
     "MailSettingsORM",
     "ModuleSettingsORM",
     "SystemSettingsHistoryORM",
+    "UserORM",
     "ProductORM",
     "IngredientORM",
     "RecipeORM",
