@@ -8,6 +8,7 @@ from app.models.document_appearance_settings import DocumentAppearanceSettingsOR
 from app.models.equipment_list import EquipmentListORM
 from app.models.equipment_list_item import EquipmentListItemORM
 from app.models.ingredient import IngredientORM
+from app.models.invitation_settings import InvitationSettingsORM
 from app.models.meal_plan import MealPlanORM
 from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_plan_item import MealPlanItemORM
@@ -32,6 +33,7 @@ __all__ = [
     "AppearanceSettingsORM",
     "ClubSettingsORM",
     "DocumentAppearanceSettingsORM",
+    "InvitationSettingsORM",
     "ModuleSettingsORM",
     "SystemSettingsHistoryORM",
     "ProductORM",
