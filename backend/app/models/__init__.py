@@ -4,6 +4,7 @@ from app.models.appearance_settings import AppearanceSettingsORM
 from app.models.club_settings import ClubSettingsORM
 from app.models.dish import DishORM
 from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
+from app.models.document_appearance_settings import DocumentAppearanceSettingsORM
 from app.models.equipment_list import EquipmentListORM
 from app.models.equipment_list_item import EquipmentListItemORM
 from app.models.ingredient import IngredientORM
@@ -29,6 +30,7 @@ __all__ = [
     "Base",
     "AppearanceSettingsORM",
     "ClubSettingsORM",
+    "DocumentAppearanceSettingsORM",
     "SystemSettingsHistoryORM",
     "ProductORM",
     "IngredientORM",
