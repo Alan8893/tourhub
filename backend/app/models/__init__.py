@@ -1,5 +1,6 @@
 from app.models.base import Base
 
+from app.models.appearance_settings import AppearanceSettingsORM
 from app.models.club_settings import ClubSettingsORM
 from app.models.dish import DishORM
 from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
@@ -26,6 +27,7 @@ from app.modules.projects.models.project import ProjectORM
 
 __all__ = [
     "Base",
+    "AppearanceSettingsORM",
     "ClubSettingsORM",
     "SystemSettingsHistoryORM",
     "ProductORM",
