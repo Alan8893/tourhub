@@ -14,6 +14,7 @@ from app.modules.api.purchase_dashboard_router import router as purchase_dashboa
 from app.modules.api.purchase_list_router import router as purchase_list_router
 from app.modules.api.recipe_note_router import router as recipe_note_router
 from app.modules.api.recipe_router import router as recipe_router
+from app.modules.api.system_settings_router import router as system_settings_router
 from app.modules.projects.router import router as project_router
 
 router = APIRouter(prefix="/api/v1")
@@ -34,6 +35,7 @@ router.include_router(purchase_dashboard_router)
 router.include_router(recipe_router)
 router.include_router(recipe_equipment_router.router)
 router.include_router(recipe_note_router)
+router.include_router(system_settings_router)
 
 
 @router.get("/")
