@@ -66,6 +66,8 @@ jobs:
   browser:
     name: Guided desktop and mobile flow
     runs-on: ubuntu-latest
+    outputs:
+      failure_b64: ${{ steps.capture.outputs.failure_b64 }}
     defaults:
       run:
         working-directory: frontend
@@ -88,7 +90,21 @@ jobs:
         run: npm run build
 
       - name: Run guided release scenario
+        id: guided
+        continue-on-error: true
         run: node browser-tests/run-guided-release.mjs
+
+      - name: Capture guided release failure
+        id: capture
+        if: always()
+        run: |
+          if [ "${{ steps.guided.outcome }}" = "failure" ]; then
+            if [ -f browser-test-artifacts/guided-release-error.txt ]; then
+              echo "failure_b64=$(base64 -w0 browser-test-artifacts/guided-release-error.txt)" >> "$GITHUB_OUTPUT"
+            else
+              echo "failure_b64=$(printf 'guided release failed without an error file' | base64 -w0)" >> "$GITHUB_OUTPUT"
+            fi
+          fi
 
       - name: Upload guided release evidence
         if: always()
@@ -99,3 +115,18 @@ jobs:
             frontend/browser-test-artifacts/guided-release-mobile.png
             frontend/browser-test-artifacts/guided-release-error.txt
           if-no-files-found: ignore
+
+      - name: Fail guided release scenario
+        if: steps.guided.outcome == 'failure'
+        run: exit 1
+
+  browser-failure-report:
+    name: Guided browser failure report
+    needs: browser
+    if: always() && needs.browser.result == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report failure
+        run: |
+          printf '%s' '${{ needs.browser.outputs.failure_b64 }}' | base64 -d
+          exit 1
