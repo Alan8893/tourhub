@@ -26,7 +26,6 @@ import {
   AppearancePresetDefinition,
   AppearanceSettings,
   AppearanceThemeDraft,
-  AppearanceThemeExport,
   DisplayModePreference,
   ResolvedDisplayMode,
   getAppearanceHistory,
@@ -35,6 +34,10 @@ import {
   updateAppearanceSettings,
 } from "../api/appearanceSettingsApi";
 import { DEFAULT_APPEARANCE, cloneAppearanceDraft } from "../appearance/theme";
+import {
+  createAppearanceThemeExport,
+  parseAppearanceThemeExport,
+} from "../appearance/themeTransfer";
 import { useAppearance } from "../providers/AppearanceProvider";
 import AppearanceColorEditor from "./AppearanceColorEditor";
 import AppearancePreview from "./AppearancePreview";
@@ -67,30 +70,6 @@ function presetDraft(preset: AppearancePresetDefinition): AppearanceThemeDraft {
     shadows_enabled: preset.shadows_enabled,
     light: preset.light,
     dark: preset.dark,
-  });
-}
-
-function themeExport(draft: AppearanceThemeDraft): AppearanceThemeExport {
-  return {
-    schema: "tourhub-appearance-theme",
-    schema_version: 1,
-    exported_at: new Date().toISOString(),
-    theme: cloneAppearanceDraft(draft),
-  };
-}
-
-function parseThemeImport(value: unknown): AppearanceThemeDraft {
-  if (!value || typeof value !== "object") throw new Error("Файл не содержит объект темы.");
-  const candidate = value as Partial<AppearanceThemeExport>;
-  if (candidate.schema !== "tourhub-appearance-theme" || candidate.schema_version !== 1) {
-    throw new Error("Неподдерживаемый формат или версия файла темы.");
-  }
-  if (!candidate.theme || typeof candidate.theme !== "object") {
-    throw new Error("В файле отсутствует раздел theme.");
-  }
-  return cloneAppearanceDraft({
-    ...(candidate.theme as AppearanceThemeDraft),
-    preset_name: "custom",
   });
 }
 
@@ -151,7 +130,10 @@ export default function AppearanceSettingsForm() {
       current
         ? {
             ...current,
-            preset_name: key === "preset_name" ? (value as AppearanceThemeDraft["preset_name"]) : "custom",
+            preset_name:
+              key === "preset_name"
+                ? (value as AppearanceThemeDraft["preset_name"])
+                : "custom",
             [key]: value,
           }
         : current,
@@ -201,8 +183,10 @@ export default function AppearanceSettingsForm() {
   async function copyTheme() {
     if (!draft) return;
     try {
-      await navigator.clipboard.writeText(JSON.stringify(themeExport(draft), null, 2));
-      setSuccess("JSON темы скопирован в буфер обмена.");
+      await navigator.clipboard.writeText(
+        JSON.stringify(createAppearanceThemeExport(draft), null, 2),
+      );
+      setSuccess("Тема скопирована в буфер обмена как JSON.");
       setError(null);
     } catch {
       setError("Не удалось скопировать тему. Используйте экспорт файла.");
@@ -211,7 +195,7 @@ export default function AppearanceSettingsForm() {
 
   function exportTheme() {
     if (!draft) return;
-    const blob = new Blob([JSON.stringify(themeExport(draft), null, 2)], {
+    const blob = new Blob([JSON.stringify(createAppearanceThemeExport(draft), null, 2)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
@@ -230,7 +214,7 @@ export default function AppearanceSettingsForm() {
     if (!file) return;
     try {
       const parsed = JSON.parse(await file.text()) as unknown;
-      setDraft(parseThemeImport(parsed));
+      setDraft(parseAppearanceThemeExport(parsed));
       setSuccess("Тема импортирована в черновик. Проверьте preview и сохраните раздел.");
       setError(null);
     } catch (importError) {
@@ -357,7 +341,10 @@ export default function AppearanceSettingsForm() {
                   value={draft.font_family}
                   disabled={isSaving}
                   onChange={(event) =>
-                    updateScalar("font_family", event.target.value as AppearanceThemeDraft["font_family"])
+                    updateScalar(
+                      "font_family",
+                      event.target.value as AppearanceThemeDraft["font_family"],
+                    )
                   }
                 >
                   <MenuItem value="system">Системный</MenuItem>
@@ -376,7 +363,10 @@ export default function AppearanceSettingsForm() {
                   value={draft.density}
                   disabled={isSaving}
                   onChange={(event) =>
-                    updateScalar("density", event.target.value as AppearanceThemeDraft["density"])
+                    updateScalar(
+                      "density",
+                      event.target.value as AppearanceThemeDraft["density"],
+                    )
                   }
                 >
                   <MenuItem value="comfortable">Обычная</MenuItem>
@@ -393,7 +383,10 @@ export default function AppearanceSettingsForm() {
                 disabled={isSaving}
                 inputProps={{ min: 0, max: 24 }}
                 onChange={(event) =>
-                  updateScalar("border_radius", Math.max(0, Math.min(24, Number(event.target.value))))
+                  updateScalar(
+                    "border_radius",
+                    Math.max(0, Math.min(24, Number(event.target.value))),
+                  )
                 }
               />
             </Grid>
@@ -406,7 +399,10 @@ export default function AppearanceSettingsForm() {
                   value={draft.button_style}
                   disabled={isSaving}
                   onChange={(event) =>
-                    updateScalar("button_style", event.target.value as AppearanceThemeDraft["button_style"])
+                    updateScalar(
+                      "button_style",
+                      event.target.value as AppearanceThemeDraft["button_style"],
+                    )
                   }
                 >
                   <MenuItem value="contained">Заливка</MenuItem>
@@ -424,7 +420,10 @@ export default function AppearanceSettingsForm() {
                   value={draft.card_style}
                   disabled={isSaving}
                   onChange={(event) =>
-                    updateScalar("card_style", event.target.value as AppearanceThemeDraft["card_style"])
+                    updateScalar(
+                      "card_style",
+                      event.target.value as AppearanceThemeDraft["card_style"],
+                    )
                   }
                 >
                   <MenuItem value="outlined">Контур</MenuItem>
@@ -467,7 +466,9 @@ export default function AppearanceSettingsForm() {
               exclusive
               size="small"
               value={previewMode}
-              onChange={(_, value: ResolvedDisplayMode | null) => value && setPreviewMode(value)}
+              onChange={(_, value: ResolvedDisplayMode | null) =>
+                value && setPreviewMode(value)
+              }
               aria-label="Режим предпросмотра"
             >
               <ToggleButton value="light">Светлая</ToggleButton>
@@ -505,7 +506,7 @@ export default function AppearanceSettingsForm() {
               Отменить изменения
             </Button>
             <Button variant="outlined" disabled={isSaving} onClick={() => void copyTheme()}>
-              Скопировать JSON
+              Скопировать тему
             </Button>
             <Button variant="outlined" disabled={isSaving} onClick={exportTheme}>
               Экспортировать тему
@@ -523,7 +524,8 @@ export default function AppearanceSettingsForm() {
           {isSaving ? "Сохранение…" : "Сохранить раздел"}
         </Button>
         <Typography variant="body2" color="text.secondary" sx={{ alignSelf: "center" }}>
-          Сохранённая версия: {saved.version}. Текущий режим: {resolvedMode === "dark" ? "тёмный" : "светлый"}.
+          Сохранённая версия: {saved.version}. Текущий режим:{" "}
+          {resolvedMode === "dark" ? "тёмный" : "светлый"}.
         </Typography>
       </Stack>
 
