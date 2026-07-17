@@ -20,12 +20,14 @@ from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_component_type import RecipeComponentType
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
+from app.models.system_settings_history import SystemSettingsHistoryORM
 from app.modules.projects.models.project import ProjectORM
 
 
 __all__ = [
     "Base",
     "ClubSettingsORM",
+    "SystemSettingsHistoryORM",
     "ProductORM",
     "IngredientORM",
     "RecipeORM",
