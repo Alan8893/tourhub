@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 
+import { useOptionalAuth } from "@/features/auth/providers/AuthProvider";
 import {
   DEFAULT_MODULE_SETTINGS,
   ModuleSettings,
@@ -24,6 +25,7 @@ interface ModuleVisibilityContextValue {
 const ModuleVisibilityContext = createContext<ModuleVisibilityContextValue | null>(null);
 
 export default function ModuleVisibilityProvider({ children }: PropsWithChildren) {
+  const auth = useOptionalAuth();
   const [settings, setSettings] = useState<ModuleSettings>(DEFAULT_MODULE_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -38,8 +40,18 @@ export default function ModuleVisibilityProvider({ children }: PropsWithChildren
   }, []);
 
   useEffect(() => {
-    void reloadModuleSettings();
-  }, [reloadModuleSettings]);
+    if (!auth) {
+      void reloadModuleSettings();
+      return;
+    }
+    if (auth.isLoading) return;
+    if (auth.user?.role === "administrator") {
+      void reloadModuleSettings();
+      return;
+    }
+    setSettings(DEFAULT_MODULE_SETTINGS);
+    setIsLoaded(true);
+  }, [auth, reloadModuleSettings]);
 
   const applySavedSettings = useCallback((updated: ModuleSettings) => {
     setSettings(updated);
