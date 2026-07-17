@@ -24,12 +24,13 @@ Status date: 2026-07-17
 - persisted API data verification after application restart;
 - Alembic current-head verification and focused Docker diagnostics.
 
-## Draft PR #81 — completeness and sequencing debt
+## Ready PR #81 — completeness and sequencing debt
 
 - records the gap between the approved product specification and the current narrow single-user release path;
 - moves final downgrade/re-upgrade migration smoke after first-release feature freeze;
 - keeps basic Alembic, PostgreSQL, backup/restore, Docker, and full Quality gates mandatory during feature development;
-- defines release-blocking and Product Owner decision items without changing runtime behavior.
+- defines release-blocking and Product Owner decision items without changing runtime behavior;
+- exact head `93d11241729634a37ddfade2de6f88a1ab6e9387` passed Quality #458, Document Quality #88, Guided Release Acceptance #39, Operator Docs #25, and Docker Release Runtime #21.
 
 ## Release-blocking product debt
 
