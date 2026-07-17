@@ -110,7 +110,9 @@ async function run() {
       await waitForExpression(
         client,
         `document.body?.innerText?.includes("Создание первого администратора") &&
-         document.body?.innerText?.includes("Создать администратора")`,
+         [...document.querySelectorAll("button")].some(
+           (item) => item.textContent?.trim() === "Создать администратора",
+         )`,
         "bootstrap form",
       );
     } catch (error) {
