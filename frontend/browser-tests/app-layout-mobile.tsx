@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import AppLayout from "@/app/layout/AppLayout";
+import ModuleVisibilityProvider from "@/features/system-settings/providers/ModuleVisibilityProvider";
 
 function TestPage({ title }: { title: string }) {
   return (
@@ -28,14 +29,16 @@ createRoot(root).render(
   <StrictMode>
     <CssBaseline />
     <MemoryRouter initialEntries={["/dishes"]}>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/projects" element={<TestPage title="Проекты мобильный тест" />} />
-          <Route path="/dishes" element={<TestPage title="Блюда мобильный тест" />} />
-          <Route path="/recipes" element={<TestPage title="Рецепты мобильный тест" />} />
-          <Route path="/catalog-import" element={<TestPage title="Импорт мобильный тест" />} />
-        </Route>
-      </Routes>
+      <ModuleVisibilityProvider>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/projects" element={<TestPage title="Проекты мобильный тест" />} />
+            <Route path="/dishes" element={<TestPage title="Блюда мобильный тест" />} />
+            <Route path="/recipes" element={<TestPage title="Рецепты мобильный тест" />} />
+            <Route path="/catalog-import" element={<TestPage title="Импорт мобильный тест" />} />
+          </Route>
+        </Routes>
+      </ModuleVisibilityProvider>
     </MemoryRouter>
   </StrictMode>,
 );
