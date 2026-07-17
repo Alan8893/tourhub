@@ -10,6 +10,7 @@ from app.modules.api.dish_router import router as dish_router
 from app.modules.api.document_appearance_settings_router import (
     router as document_appearance_settings_router,
 )
+from app.modules.api.invitation_router import router as invitation_router
 from app.modules.api.invitation_settings_router import router as invitation_settings_router
 from app.modules.api.mail_settings_router import router as mail_settings_router
 from app.modules.api.meal_plan_router import router as meal_plan_router
@@ -36,6 +37,7 @@ router.include_router(club_settings_router, dependencies=_admin)
 router.include_router(dish_router)
 router.include_router(document_appearance_settings_router, dependencies=_admin)
 router.include_router(equipment_list_router.router)
+router.include_router(invitation_router)
 router.include_router(invitation_settings_router, dependencies=_admin)
 router.include_router(mail_settings_router, dependencies=_admin)
 router.include_router(meal_plan_router)
