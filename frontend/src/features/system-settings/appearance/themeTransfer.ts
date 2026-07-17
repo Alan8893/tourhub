@@ -3,7 +3,6 @@ import type {
   AppearanceThemeDraft,
   AppearanceThemeExport,
 } from "../api/appearanceSettingsApi";
-import { cloneAppearanceDraft } from "./theme";
 
 const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 const COLOR_KEYS: Array<keyof AppearanceColorTokens> = [
@@ -21,6 +20,14 @@ const COLOR_KEYS: Array<keyof AppearanceColorTokens> = [
   "warning",
   "error",
 ];
+
+function cloneTheme(draft: AppearanceThemeDraft): AppearanceThemeDraft {
+  return {
+    ...draft,
+    light: { ...draft.light },
+    dark: { ...draft.dark },
+  };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -50,7 +57,7 @@ export function createAppearanceThemeExport(
     schema: "tourhub-appearance-theme",
     schema_version: 1,
     exported_at: new Date().toISOString(),
-    theme: cloneAppearanceDraft(draft),
+    theme: cloneTheme(draft),
   };
 }
 
