@@ -28,6 +28,10 @@ import {
 } from "../api/invitationSettingsApi";
 import SettingsHistoryList from "./SettingsHistoryList";
 
+interface InvitationSettingsFormProps {
+  onSaved?: (settings: InvitationSettings) => void;
+}
+
 interface InvitationEditorDraft {
   expiresAfterDays: string;
   defaultRole: InvitationDefaultRole;
@@ -69,7 +73,7 @@ function apiErrorMessage(body: ApiErrorBody | undefined): string {
   return details || body?.detail || body?.error || "Не удалось сохранить политику приглашений.";
 }
 
-export default function InvitationSettingsForm() {
+export default function InvitationSettingsForm({ onSaved }: InvitationSettingsFormProps) {
   const [saved, setSaved] = useState<InvitationSettings | null>(null);
   const [draft, setDraft] = useState<InvitationEditorDraft | null>(null);
   const [history, setHistory] = useState<InvitationSettingsHistoryItem[]>([]);
@@ -157,6 +161,7 @@ export default function InvitationSettingsForm() {
       });
       setSaved(updated);
       setDraft(toDraft(updated));
+      onSaved?.(updated);
       setHistory(await getInvitationSettingsHistory());
       setSuccess("Политика приглашений сохранена и применяется к новым ссылкам.");
     } catch (saveError) {
