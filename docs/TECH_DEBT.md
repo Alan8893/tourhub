@@ -2,51 +2,46 @@
 
 Status date: 2026-07-17
 
-## Implemented through merged PR #83
+## Implemented through merged PR #84
 
 - complete guided project preparation from creation through branded documents;
 - persisted shopping, equipment, overrides, recalculation, and reload-safe readiness;
-- singleton club branding through Alembic `h10007`;
 - installation, update, backup, restore, and recovery runbooks;
 - production-like Docker images and release Compose;
 - internal PostgreSQL/Redis networking, health checks, API proxy, clean startup, and restart persistence;
-- general, document, guided-release, operator, backup/restore, and Docker runtime gates;
 - evidence-based product completeness and release sequencing;
-- final downgrade/re-upgrade migration smoke deferred until first-release feature freeze.
+- final downgrade/re-upgrade migration smoke deferred until first-release feature freeze;
+- dedicated `/settings` surface and responsive section navigation;
+- typed singleton club identity through Alembic `h10008`;
+- seven validated club image roles using PNG/JPEG/WebP and no SVG;
+- optimistic conflict detection, PostgreSQL row locking, and safe local-admin settings history;
+- ADR-014 independent typed settings ownership.
 
-## Active TH-0074 / draft PR #84
+## Active TH-0075 / draft PR #85
 
-The first System Settings debt slice addresses:
+The site-appearance slice addresses:
 
-- no dedicated `/settings` surface;
-- club settings embedded inside project preparation;
-- club identity limited to one required name and one logo;
-- no optimistic conflict detection;
-- no focused settings-change history;
-- no prepared image slots for light/dark themes, favicon, login, or document appearance;
-- no explicit typed ownership model for future settings domains.
+- no organization-wide light and dark theme persistence;
+- static one-time MUI theme creation;
+- no safe font, density, radius, button/card, or shadow controls;
+- no personal system/light/dark preference before user accounts;
+- no preview, reset, copy, or safe theme import/export;
+- no backend accessibility gate for unreadable color combinations.
 
 Implemented in the draft slice:
 
-- typed singleton club identity with one required and multiple optional fields;
-- seven validated image roles using PNG/JPEG/WebP and no SVG;
-- additive Alembic `h10008`;
-- versioned updates with HTTP 409 stale-write protection;
-- safe local-admin history retaining the latest 200 records;
-- separate responsive settings page and future-section boundaries;
-- legacy club-branding and document snapshot compatibility;
-- ADR-014 typed settings ownership.
+- independent typed singleton `appearance_settings` model and Alembic `h10009`;
+- complete light and dark token sets plus four built-in presets;
+- global dynamic MUI theme application without restart;
+- localStorage-only personal display mode until `UserPreferences` exists;
+- isolated preview that never applies an unsaved draft globally;
+- backend #RRGGBB and WCAG-style text/surface contrast validation with a Russian reason;
+- typed safe font stacks, density, radius, button/card styles, and shadows;
+- reset, cancel, copy, versioned JSON import, and JSON export without secrets;
+- optimistic versioning, row locking, HTTP 409 conflicts, and safe appearance history;
+- independent desktop/mobile appearance browser acceptance.
 
 ## Remaining System Settings debt
-
-### Site appearance
-
-- global light and dark design tokens;
-- organization colors, text, surfaces, navigation, typography, density, shape, buttons, cards, and shadows;
-- automatic derived states and contrast validation with an explanation of rejected combinations;
-- personal light/dark/system choice in local storage before users and `UserPreferences` later;
-- isolated preview, defaults, reset, and safe theme import/export;
-- no arbitrary custom CSS.
 
 ### Document appearance
 
@@ -79,7 +74,8 @@ Implemented in the draft slice:
 - unencrypted archive excludes every secret;
 - password-encrypted archive may include explicitly approved secrets;
 - encryption, key derivation, authenticated integrity, password handling, import preview, and rollback require a separate security design;
-- secrets must remain excluded from logs, history, diagnostics, normal API responses, and unencrypted exports.
+- secrets must remain excluded from logs, history, diagnostics, normal API responses, and unencrypted exports;
+- appearance-only JSON export in TH-0075 is intentionally not the full-system archive.
 
 ## Remaining release-blocking product debt
 
