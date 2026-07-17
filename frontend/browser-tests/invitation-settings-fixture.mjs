@@ -32,14 +32,11 @@ async function readBody(request) {
 export function startInvitationSettingsApi() {
   let settings = createSettings();
   let history = [];
-  let invitations = [];
   requests.length = 0;
 
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
-    const body = request.method === "PUT" || request.method === "POST"
-      ? await readBody(request).catch(() => undefined)
-      : undefined;
+    const body = request.method === "PUT" ? await readBody(request) : undefined;
     requests.push({ method: request.method, path: url.pathname, body });
     response.setHeader("content-type", "application/json");
 
@@ -89,34 +86,6 @@ export function startInvitationSettingsApi() {
     if (url.pathname === "/api/v1/settings/invitations/history") {
       response.statusCode = 200;
       response.end(JSON.stringify(history));
-      return;
-    }
-
-    if (url.pathname === "/api/v1/invitations" && request.method === "GET") {
-      response.statusCode = 200;
-      response.end(JSON.stringify(invitations));
-      return;
-    }
-
-    if (url.pathname === "/api/v1/invitations" && request.method === "POST") {
-      const record = {
-        id: 1,
-        email: String(body.email).trim().toLowerCase(),
-        role: body.role,
-        status: "active",
-        created_at: "2026-07-17T18:55:00",
-        expires_at: "2026-07-31T18:55:00",
-        consumed_at: null,
-        revoked_at: null,
-        superseded_at: null,
-      };
-      invitations = [record];
-      response.statusCode = 201;
-      response.end(JSON.stringify({
-        ...record,
-        token: "browser-link-code",
-        acceptance_path: "/accept-invitation#token=browser-link-code",
-      }));
       return;
     }
 
