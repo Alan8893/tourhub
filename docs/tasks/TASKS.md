@@ -7,7 +7,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | IN PROGRESS | ./active/TH-0061.5-menu-rules.md |
-| TH-0071 | Operator Installation and Update Runbook | IN PROGRESS | ./active/TH-0071-operator-install-update.md |
+| TH-0072 | Docker Release Runtime Validation | IN PROGRESS | ./active/TH-0072-docker-release-runtime.md |
 
 ## Completed
 
@@ -28,6 +28,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | TH-0068 | Catalogue CSV Import | DONE |
 | TH-0069 | Dish Recipe Purchasing Recalculation | DONE |
 | TH-0070 | Critical Meal Plan Stabilization | DONE |
+| TH-0071 | Operator Installation and Update Runbook | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 

@@ -1,13 +1,13 @@
 # TourHub Installation Runbook
 
-TourHub is a local single-club application. Deploy it on a trusted computer or server inside the club network. The current Docker Compose file publishes PostgreSQL and Redis ports and is not intended for direct internet exposure.
+TourHub is a local single-club application. Deploy it on a trusted computer or server inside the club network. Use `docker-compose.release.yml` for the operator installation path. PostgreSQL and Redis remain internal to the release Compose network and must not be exposed directly to the public internet.
 
 ## Prerequisites
 
 - Git;
 - Docker Engine with Docker Compose v2, or Docker Desktop;
 - at least 4 GB of available memory;
-- free host ports `5173`, `8000`, `5432`, and `6379`;
+- free host ports `5173` and `8000`;
 - Bash for the provided backup and restore scripts. On Windows, use WSL or Git Bash.
 
 Verify the tools:
@@ -28,20 +28,35 @@ cd tourhub
 git checkout <release-tag-or-commit>
 ```
 
-Build and start all services:
+Set a deployment-specific database password before the first start. Characters with special URL meaning must be percent-encoded because the same value is used in the backend PostgreSQL URL:
 
 ```bash
-docker compose up -d --build
+export TOURHUB_DB_PASSWORD='<url-encoded-password>'
 ```
 
-The backend entrypoint waits for PostgreSQL through Compose dependencies, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10007`.
+Keep this value in the server's protected environment configuration. Use the same password on future starts of the existing PostgreSQL volume.
+
+Render the effective release configuration:
+
+```bash
+docker compose -f docker-compose.release.yml config
+```
+
+Build and start all services, then wait for health checks:
+
+```bash
+docker compose -f docker-compose.release.yml \
+  up -d --build --wait --wait-timeout 180
+```
+
+The backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10007`. The frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
 
 ## Verify the installation
 
 Check container state:
 
 ```bash
-docker compose ps
+docker compose -f docker-compose.release.yml ps
 ```
 
 Check the backend health endpoint:
@@ -50,7 +65,14 @@ Check the backend health endpoint:
 curl -fsS http://localhost:8000/api/v1/health
 ```
 
-Expected response:
+Check the frontend container and its same-origin backend proxy:
+
+```bash
+curl -fsS http://localhost:5173/healthz
+curl -fsS http://localhost:5173/api/v1/health
+```
+
+Expected API response:
 
 ```json
 {"status":"healthy"}
@@ -59,8 +81,8 @@ Expected response:
 Confirm the applied database revision and inspect startup logs:
 
 ```bash
-docker compose exec -T backend alembic current
-docker compose logs --tail=100 backend
+docker compose -f docker-compose.release.yml exec -T backend alembic current
+docker compose -f docker-compose.release.yml logs --tail=100 backend frontend
 ```
 
 Open:
@@ -74,14 +96,14 @@ From another computer on the same trusted network, use the server address:
 http://<server-ip>:5173
 ```
 
-Allow inbound TCP `5173` in the server firewall only for the trusted network. Do not expose `5432`, `6379`, or `8000` to the public internet.
+Allow inbound TCP `5173` in the server firewall only for the trusted network. Backend port `8000` is published for operator diagnostics and OpenAPI access; do not expose it to the public internet. PostgreSQL and Redis publish no host ports in the release stack.
 
 ## Create the first backup
 
-After completing the initial club setup, create a host-side PostgreSQL custom-format dump:
+After completing the initial club setup, create a host-side PostgreSQL custom-format dump against the release stack:
 
 ```bash
-bash scripts/db/backup-tourhub.sh
+COMPOSE_FILE=docker-compose.release.yml bash scripts/db/backup-tourhub.sh
 ```
 
 Backups are written to `backups/` by default. Copy important dumps to storage outside the TourHub server.
@@ -91,38 +113,48 @@ Backups are written to `backups/` by default. Copy important dumps to storage ou
 View logs:
 
 ```bash
-docker compose logs -f backend frontend
+docker compose -f docker-compose.release.yml logs -f backend frontend
 ```
 
-Restart the application without deleting data:
+Restart the application without restarting PostgreSQL or deleting data:
 
 ```bash
-docker compose restart backend frontend
+docker compose -f docker-compose.release.yml restart backend frontend
+docker compose -f docker-compose.release.yml up -d --wait --wait-timeout 120
 ```
 
 Stop all containers while preserving PostgreSQL data:
 
 ```bash
-docker compose down
+docker compose -f docker-compose.release.yml down
 ```
 
 Start them again:
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.release.yml up -d --wait --wait-timeout 180
 ```
 
-PostgreSQL data is stored in the named volume `postgres18_cluster_data`. Never run `docker compose down --volumes` unless you intentionally want to delete the database and already have a verified backup.
+PostgreSQL data is stored in the named volume `postgres18_cluster_data`. Never run `docker compose -f docker-compose.release.yml down --volumes` for an operational installation unless you intentionally want to delete the database and already have a verified backup.
+
+The default `docker-compose.yml` is the development stack. It uses source bind mounts and publishes PostgreSQL and Redis ports; do not substitute it for the release path without understanding those differences.
 
 ## Troubleshooting
 
 If the backend does not become healthy:
 
 ```bash
-docker compose ps
-docker compose logs --tail=200 postgres backend
+docker compose -f docker-compose.release.yml ps
+docker compose -f docker-compose.release.yml logs --tail=200 postgres redis backend
 ```
 
-If a published port is already in use, stop the conflicting service or change the host-side port mapping in `docker-compose.yml` before starting TourHub.
+If a published application port is already in use, set a host-side override before startup:
+
+```bash
+export TOURHUB_FRONTEND_PORT=15173
+export TOURHUB_BACKEND_PORT=18000
+```
 
 If migration startup fails, do not repeatedly recreate containers or delete the database volume. Preserve the logs and follow the backup-first recovery procedure in [UPDATING.md](UPDATING.md).
+
+See [DOCKER_RELEASE.md](DOCKER_RELEASE.md) for the full release image, network, health, and CI runtime contract.

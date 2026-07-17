@@ -1,0 +1,120 @@
+name: Docker Release Runtime
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Validate release Compose contract
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Compile runtime verifier
+        run: python -m py_compile scripts/release/verify_docker_runtime.py
+
+      - name: Render release Compose
+        run: |
+          docker compose -f docker-compose.release.yml config >/tmp/tourhub-release-compose.yml
+          docker compose -f docker-compose.release.yml config --format json >/tmp/tourhub-release-compose.json
+
+      - name: Verify immutable runtime contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          config = json.loads(Path("/tmp/tourhub-release-compose.json").read_text())
+          services = config["services"]
+
+          required = {"postgres", "redis", "backend", "frontend"}
+          if set(services) != required:
+              raise SystemExit(f"Unexpected release services: {sorted(services)}")
+
+          for name in ("backend", "frontend"):
+              if services[name].get("volumes"):
+                  raise SystemExit(f"{name} must run from its image without bind mounts")
+              if "healthcheck" not in services[name]:
+                  raise SystemExit(f"{name} is missing a healthcheck")
+
+          for name in ("postgres", "redis"):
+              if services[name].get("ports"):
+                  raise SystemExit(f"{name} must not publish infrastructure ports")
+
+          frontend_build = services["frontend"].get("build", {})
+          if not str(frontend_build.get("dockerfile", "")).endswith("Dockerfile.release"):
+              raise SystemExit("Frontend release image must use Dockerfile.release")
+
+          if "postgres18_cluster_data" not in config.get("volumes", {}):
+              raise SystemExit("Release Compose must preserve the PostgreSQL volume boundary")
+
+          print("Release Compose contract is valid.")
+          PY
+
+  runtime:
+    name: Build and run clean release stack
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      COMPOSE_PROJECT_NAME: tourhub-release-${{ github.run_id }}-${{ github.run_attempt }}
+      TOURHUB_BACKEND_PORT: "18000"
+      TOURHUB_FRONTEND_PORT: "15173"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build release images
+        run: docker compose --progress plain -f docker-compose.release.yml build --pull
+
+      - name: Start from a clean environment
+        run: |
+          docker compose -f docker-compose.release.yml down --volumes --remove-orphans
+          docker compose -f docker-compose.release.yml up -d --wait --wait-timeout 180
+
+      - name: Verify first startup and API proxy
+        run: |
+          python scripts/release/verify_docker_runtime.py \
+            --backend-url http://127.0.0.1:18000 \
+            --frontend-url http://127.0.0.1:15173 \
+            --project-id-file /tmp/tourhub-runtime-project-id
+
+      - name: Verify migrated database head
+        run: |
+          current="$(docker compose -f docker-compose.release.yml exec -T backend alembic current)"
+          printf '%s\n' "$current"
+          printf '%s\n' "$current" | grep -q ' (head)'
+
+      - name: Restart application containers
+        run: |
+          docker compose -f docker-compose.release.yml restart backend frontend
+          docker compose -f docker-compose.release.yml up -d --wait --wait-timeout 120
+
+      - name: Verify persistence after restart
+        run: |
+          python scripts/release/verify_docker_runtime.py \
+            --backend-url http://127.0.0.1:18000 \
+            --frontend-url http://127.0.0.1:15173 \
+            --project-id-file /tmp/tourhub-runtime-project-id \
+            --reuse-project
+
+      - name: Capture Docker diagnostics
+        if: failure()
+        run: |
+          docker compose -f docker-compose.release.yml ps --all || true
+          docker compose -f docker-compose.release.yml logs --no-color --timestamps || true
+
+      - name: Remove release stack
+        if: always()
+        run: docker compose -f docker-compose.release.yml down --volumes --remove-orphans
