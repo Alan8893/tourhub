@@ -21,6 +21,11 @@ interface ImageSettingFieldProps {
   onRemove: () => void;
 }
 
+function formatSizeLimit(maxBytes: number): string {
+  if (maxBytes < 1_000_000) return `${Math.round(maxBytes / 1_000)} КБ`;
+  return `${maxBytes / 1_000_000} МБ`;
+}
+
 export default function ImageSettingField({
   label,
   description,
@@ -31,6 +36,7 @@ export default function ImageSettingField({
   onRemove,
 }: ImageSettingFieldProps) {
   const [error, setError] = useState<string | null>(null);
+  const sizeLimit = formatSizeLimit(maxBytes);
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -43,7 +49,7 @@ export default function ImageSettingField({
       return;
     }
     if (file.size > maxBytes) {
-      setError(`Размер файла не должен превышать ${Math.ceil(maxBytes / 1_000_000)} МБ.`);
+      setError(`Размер файла не должен превышать ${sizeLimit}.`);
       event.target.value = "";
       return;
     }
@@ -124,7 +130,7 @@ export default function ImageSettingField({
           </Stack>
 
           <Typography variant="caption" color="text.secondary">
-            PNG, JPEG или WebP. Максимум {Math.ceil(maxBytes / 1_000_000)} МБ.
+            PNG, JPEG или WebP. Максимум {sizeLimit}.
           </Typography>
         </Stack>
       </CardContent>
