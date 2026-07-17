@@ -49,7 +49,7 @@ def _created_response(
     return InvitationCreatedResponse(
         **item.model_dump(),
         token=raw_token,
-        acceptance_path=f"/accept-invitation?token={raw_token}",
+        acceptance_path=f"/accept-invitation#token={raw_token}",
     )
 
 
