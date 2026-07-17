@@ -198,6 +198,13 @@ async function run() {
        document.body?.innerText?.includes("footer документов")`,
       "saved document appearance and history",
     );
+    await waitForExpression(
+      client,
+      `[...document.querySelectorAll("button")].some(
+        (item) => item.textContent?.trim() === "Сохранить раздел" && item.disabled,
+      )`,
+      "settled document appearance save state",
+    );
 
     const update = requests.find(
       (item) => item.method === "PUT" && item.path === "/api/v1/settings/documents",
@@ -242,7 +249,9 @@ async function run() {
         scrollWidth: document.documentElement.scrollWidth,
         bodyScrollWidth: document.body.scrollWidth,
         hasPreview: document.body?.innerText?.includes("Предпросмотр документа"),
-        hasSave: document.body?.innerText?.includes("Сохранить раздел"),
+        hasSave: [...document.querySelectorAll("button")].some(
+          (item) => item.textContent?.trim() === "Сохранить раздел",
+        ),
         wideElements,
       };
     })()`);
