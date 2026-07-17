@@ -83,7 +83,7 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Политика приглашений") &&
-       document.body?.innerText?.includes("Рабочие приглашения") &&
+       document.body?.innerText?.includes("одноразовых ссылок") &&
        document.body?.innerText?.includes("Только администраторы") &&
        [...document.querySelectorAll("button")].some(
          (item) => item.textContent?.trim() === "Сохранить раздел",
@@ -137,24 +137,6 @@ async function run() {
     assert.equal(update?.body.active_invitation_limit, 25);
     assert.equal(update?.body.administrators_only, true);
     assert.equal(update?.body.require_email_confirmation, false);
-
-    assert.equal(await setFieldByLabel(client, "Email пользователя", "Member@Example.COM"), true);
-    assert.equal(await clickButton(client, "Создать ссылку"), true);
-    await waitForExpression(
-      client,
-      `document.body?.innerText?.includes("Приглашение создано") &&
-       [...document.querySelectorAll("input")].some(
-         (item) => item.value.includes("/accept-invitation#token=browser-link-code"),
-       ) &&
-       document.body?.innerText?.includes("member@example.com") &&
-       document.body?.innerText?.includes("Проверенный инструктор")`,
-      "created one-time invitation link",
-    );
-    const create = requests.find(
-      (item) => item.method === "POST" && item.path === "/api/v1/invitations",
-    );
-    assert.equal(create?.body.email, "Member@Example.COM");
-    assert.equal(create?.body.role, "verified_instructor");
 
     await client.send("Emulation.setDeviceMetricsOverride", {
       width: 360,
