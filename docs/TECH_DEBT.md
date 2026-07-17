@@ -2,106 +2,79 @@
 
 Status date: 2026-07-17
 
-## Implemented through merged PR #86
+## Implemented through merged PR #87
 
-- complete guided project preparation from creation through branded documents;
-- persisted shopping, equipment, overrides, recalculation, and reload-safe readiness;
-- installation, update, backup, restore, and recovery runbooks;
-- production-like Docker images and release Compose;
-- internal PostgreSQL/Redis networking, health checks, API proxy, clean startup, and restart persistence;
-- evidence-based product completeness and release sequencing;
-- final downgrade/re-upgrade migration smoke deferred until first-release feature freeze;
-- dedicated `/settings` surface and responsive section navigation;
-- typed singleton club identity through Alembic `h10008`;
-- independent site appearance through `h10009`;
-- independent document appearance and immutable generation snapshot through `h10010`;
-- validated versioned theme JSON import/export without secrets;
-- optimistic conflict detection, PostgreSQL row locking, and safe local-admin settings history;
-- ADR-014 independent typed settings ownership.
+- complete guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
+- installation, update, backup, restore, recovery, immutable release images, health checks, API proxy, and restart persistence;
+- product completeness audit and release sequencing;
+- responsive `/settings` and ADR-014 typed section ownership;
+- club settings through `h10008`;
+- site appearance through `h10009`;
+- document appearance and immutable generation snapshot through `h10010`;
+- module visibility and backend/database dependency locks through `h10011`;
+- optimistic conflicts, PostgreSQL row locks, and safe local-admin settings history;
+- final downgrade/re-upgrade migration smoke deferred until feature freeze.
 
-## Active TH-0077 / draft PR #87
+## Active TH-0078 / draft PR #88
 
-The module-visibility slice addresses:
+The invitation-policy slice addresses:
 
-- static sidebar entries with no typed organization visibility policy;
-- no visibility controls for shopping, equipment, and document workspace cards;
-- no required-module metadata or lock reasons;
-- no backend dependency validation between visible documents and their required outputs;
-- no independent module settings version/history contract.
+- no typed source for invitation expiry, default role, domain restrictions, resend policy, active limit, or email confirmation;
+- no explicit security boundary preventing Administrator as an accidental default role;
+- no persisted mandatory administrator-only management rule;
+- no invitation-policy version/history contract;
+- a placeholder-only settings section.
 
 Implemented in the draft slice:
 
-- independent typed singleton `module_settings` model and Alembic `h10011`;
-- explicit project, catalogue, import, shopping, equipment, and document visibility columns;
-- required project/catalogue locks;
-- backend document → shopping/equipment dependency validation before mutation;
-- database constraints protecting required and dependency states;
-- optimistic versioning, row locking, HTTP 409 conflicts, and safe module history;
-- typed API metadata with labels, descriptions, dependencies, required state, and Russian lock reasons;
-- global frontend visibility provider;
-- immediate desktop/mobile sidebar updates after save;
-- project shopping/purchase, equipment, and document card visibility;
-- responsive module editor and focused browser acceptance;
-- direct routes and APIs intentionally remain available.
+- independent singleton `invitation_settings` model and Alembic `h10012`;
+- expiry from 1 to 90 days and active limit from 1 to 1000;
+- safe default role limited to Instructor or Verified Instructor;
+- bounded homogeneous allowed-domain JSON owned by `InvitationSettings`;
+- lowercase IDNA normalization, sorting, deduplication, and rejection of addresses, schemes, paths, ports, whitespace, and invalid labels;
+- mandatory administrator-only Pydantic and database constraints;
+- resend and email-confirmation policy flags;
+- optimistic versioning, row locking, HTTP 409 conflicts, and safe invitation history;
+- responsive Russian editor and focused desktop/mobile browser acceptance;
+- explicit statement that no users, tokens, mail, or invitation lifecycle exist yet.
 
 ## Remaining System Settings debt
 
-### Future invitation configuration
+### Informative mail boundary before access
 
-- typed expiry, default role, allowed-domain, resend, active-limit, and email-confirmation policy fields;
-- no functional invitation list until users and access foundation exist;
-- backend validation and safe history without pretending invitations are operational.
-
-### Mail boundary before access
-
-- informative description of universal SMTP ownership and secret handling;
-- no working delivery, password persistence, or test message until identity exists.
-
-### Mail after access foundation
-
-- universal SMTP configuration;
-- host, port, TLS/STARTTLS, username, sender, Reply-To, timeout, and retry policy;
-- password supplied through environment or another write-only secret boundary;
-- configured/verified/restart status without returning the secret;
-- separate test-recipient field and fixed Russian test email;
-- no visual template editor in the first mail slice.
+- define universal SMTP ownership and non-secret fields;
+- define environment/write-only password behavior;
+- show configured/available/restart status without exposing a secret;
+- do not send mail or persist visible passwords before identity exists.
 
 ### Configuration export and import
 
 - versioned JSON plus image files in a validated archive;
-- unencrypted archive excludes secrets;
-- password-encrypted archive may include explicitly approved secrets;
-- encryption, key derivation, authenticated integrity, password handling, import preview, and rollback require a separate security design;
-- secrets must remain excluded from logs, history, diagnostics, normal API responses, and unencrypted exports.
+- unencrypted archives exclude secrets;
+- password-encrypted archives may include explicitly approved secrets;
+- encryption, key derivation, integrity, password handling, import preview, and rollback require a dedicated security design.
 
 ## Remaining release-blocking product debt
 
-1. **Access foundation**
-   - users, invitations, approved roles, authentication, sessions, guarded routes, and backend authorization.
-2. **Working mail delivery**
-   - connect approved mail settings to identity and invitation flows.
-3. **Recipe ownership and lifecycle**
-   - CLUB/PERSONAL ownership, multiple variants, submission, review, approval, rejection, publication, archive, and generation modes.
-4. **Central alcohol prohibition**
-   - one backend rule across Product, Recipe, and CSV import plus reviewed existing-record handling.
-5. **Actor-aware audit log**
-   - safe history for project, menu, recipe, settings, mail, user, and role changes.
-6. **Consolidated export completeness**
-   - approved complete Russian PDF and workbook sheets using the implemented immutable brand snapshot.
-7. **Product acceptance**
-   - active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
+1. Access foundation and functional invitation lifecycle.
+2. Working mail delivery connected to identity.
+3. Recipe ownership, variants, publication, and moderation.
+4. Central backend alcohol prohibition across API and CSV import.
+5. Actor-aware audit log.
+6. Consolidated Russian PDF and workbook contents.
+7. Product acceptance and feature freeze.
 
 ## Product Owner decisions still required
 
 - whether preference-based menu priority blocks first release;
 - mandatory recipe metadata for first release;
-- exact authentication/session mechanism during access-foundation design;
-- encrypted settings archive cryptographic format during its dedicated security design.
+- exact authentication/session mechanism;
+- encrypted settings archive cryptographic format.
 
 ## Deferred final release debt
 
 Only after first-release feature freeze:
 
 - PostgreSQL previous → head → previous → head migration smoke;
-- final production-like deployment checklist;
-- final release workflow and release tag.
+- final deployment checklist;
+- final release workflow and tag.
