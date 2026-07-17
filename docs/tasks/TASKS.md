@@ -7,14 +7,14 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
-| TH-0079 | System Settings Mail Boundary | IN PROGRESS | ./active/TH-0079-system-settings-mail-boundary.md |
+| TH-0080 | Access Bootstrap and Authentication | IN PROGRESS | ./active/TH-0080-access-bootstrap-authentication.md |
 
 ## Planned release sequence
 
 | Order | Capability | Gate |
 |---|---|---|
 | 1 | System Settings foundation | Dedicated page, branding continuity, appearance, typed module settings, invitation/mail configuration boundaries |
-| 2 | Access foundation | Users, invitations, roles, authentication, guarded routes, backend authorization |
+| 2 | Access foundation | Bootstrap Administrator, sessions, functional invitations, users, roles, guarded routes, backend authorization |
 | 3 | Recipe ownership and lifecycle | CLUB/PERSONAL ownership, variants, publication, moderation, generation modes |
 | 4 | Central alcohol prohibition | Shared API/import policy and existing-record handling |
 | 5 | Actor-aware audit log | Safe history for project, menu, recipe, settings, user, and role changes |
@@ -51,6 +51,7 @@ Exact task IDs for implementation slices are assigned when each slice starts fro
 | TH-0076 | System Settings Document Appearance | DONE |
 | TH-0077 | System Settings Module Visibility | DONE |
 | TH-0078 | System Settings Invitation Policy | DONE |
+| TH-0079 | System Settings Mail Boundary | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
