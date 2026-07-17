@@ -9,6 +9,7 @@ services:
     environment:
       DATABASE__URL: postgresql+psycopg://tourhub:tourhub@postgres:5432/tourhub
       REDIS__URL: redis://redis:6379/0
+      TOURHUB_SMTP_SECRET: ${TOURHUB_SMTP_SECRET:-}
 
     depends_on:
       postgres:
