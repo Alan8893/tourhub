@@ -2,7 +2,7 @@
 
 Status date: 2026-07-17
 
-## Implemented through merged PR #85
+## Implemented through merged PR #86
 
 - complete guided project preparation from creation through branded documents;
 - persisted shopping, equipment, overrides, recalculation, and reload-safe readiness;
@@ -13,48 +13,49 @@ Status date: 2026-07-17
 - final downgrade/re-upgrade migration smoke deferred until first-release feature freeze;
 - dedicated `/settings` surface and responsive section navigation;
 - typed singleton club identity through Alembic `h10008`;
-- seven validated club image roles using PNG/JPEG/WebP and no SVG;
-- independent site appearance through Alembic `h10009`;
-- dynamic light/dark MUI themes, presets, isolated preview, and local display mode;
+- independent site appearance through `h10009`;
+- independent document appearance and immutable generation snapshot through `h10010`;
 - validated versioned theme JSON import/export without secrets;
 - optimistic conflict detection, PostgreSQL row locking, and safe local-admin settings history;
 - ADR-014 independent typed settings ownership.
 
-## Active TH-0076 / draft PR #86
+## Active TH-0077 / draft PR #87
 
-The document-appearance slice addresses:
+The module-visibility slice addresses:
 
-- document branding limited to club name and main logo;
-- fixed PDF/Excel heading, table, footer, and density styling;
-- no independent document palette or logo selection;
-- no contact, custom footer, or title-background controls;
-- no document-specific settings API or history;
-- no explicit combined club/document snapshot contract.
+- static sidebar entries with no typed organization visibility policy;
+- no visibility controls for shopping, equipment, and document workspace cards;
+- no required-module metadata or lock reasons;
+- no backend dependency validation between visible documents and their required outputs;
+- no independent module settings version/history contract.
 
 Implemented in the draft slice:
 
-- independent typed singleton `document_appearance_settings` model and Alembic `h10010`;
-- validated primary/accent/heading/title/table palette;
-- approved image-source selection with predictable fallback and explicit no-logo mode;
-- optional club contacts, custom footer, title image, and comfortable/compact tables;
-- backend minimum table-header contrast validation with a Russian reason;
-- optimistic versioning, row locking, HTTP 409 conflicts, and safe document history;
-- one frozen snapshot loaded once per generation request;
-- the same snapshot reused by purchase/equipment PDF, Excel, print, and every ZIP entry;
-- centralized ReportLab/openpyxl styling helpers;
-- responsive document settings editor with isolated preview, reset, cancel, and save;
-- compatibility for existing endpoints, filenames, content types, and legacy `ClubBrandingDTO` construction.
+- independent typed singleton `module_settings` model and Alembic `h10011`;
+- explicit project, catalogue, import, shopping, equipment, and document visibility columns;
+- required project/catalogue locks;
+- backend document → shopping/equipment dependency validation before mutation;
+- database constraints protecting required and dependency states;
+- optimistic versioning, row locking, HTTP 409 conflicts, and safe module history;
+- typed API metadata with labels, descriptions, dependencies, required state, and Russian lock reasons;
+- global frontend visibility provider;
+- immediate desktop/mobile sidebar updates after save;
+- project shopping/purchase, equipment, and document card visibility;
+- responsive module editor and focused browser acceptance;
+- direct routes and APIs intentionally remain available.
 
 ## Remaining System Settings debt
 
-### Modules and future access configuration
+### Future invitation configuration
 
-- typed module visibility configuration;
-- backend dependency locks for required modules;
-- navigation hiding only in the first slice, with direct URL and API behavior unchanged;
-- typed invitation policy settings before functional invitation delivery;
-- invitation list deferred until access foundation;
-- informative mail boundary until identity exists.
+- typed expiry, default role, allowed-domain, resend, active-limit, and email-confirmation policy fields;
+- no functional invitation list until users and access foundation exist;
+- backend validation and safe history without pretending invitations are operational.
+
+### Mail boundary before access
+
+- informative description of universal SMTP ownership and secret handling;
+- no working delivery, password persistence, or test message until identity exists.
 
 ### Mail after access foundation
 
@@ -68,11 +69,10 @@ Implemented in the draft slice:
 ### Configuration export and import
 
 - versioned JSON plus image files in a validated archive;
-- unencrypted archive excludes every secret;
+- unencrypted archive excludes secrets;
 - password-encrypted archive may include explicitly approved secrets;
 - encryption, key derivation, authenticated integrity, password handling, import preview, and rollback require a separate security design;
-- secrets must remain excluded from logs, history, diagnostics, normal API responses, and unencrypted exports;
-- appearance-only JSON export in TH-0075 is intentionally not the full-system archive.
+- secrets must remain excluded from logs, history, diagnostics, normal API responses, and unencrypted exports.
 
 ## Remaining release-blocking product debt
 
