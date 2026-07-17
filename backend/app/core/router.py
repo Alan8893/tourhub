@@ -1,7 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.core.auth import require_administrator
 from app.modules.api import equipment_list_router, recipe_equipment_router
 from app.modules.api.appearance_settings_router import router as appearance_settings_router
+from app.modules.api.auth_router import router as auth_router
 from app.modules.api.catalog_import_router import router as catalog_import_router
 from app.modules.api.club_settings_router import router as club_settings_router
 from app.modules.api.dish_router import router as dish_router
@@ -25,19 +27,21 @@ from app.modules.api.system_settings_router import router as system_settings_rou
 from app.modules.projects.router import router as project_router
 
 router = APIRouter(prefix="/api/v1")
+_admin = [Depends(require_administrator)]
 
-router.include_router(appearance_settings_router)
+router.include_router(auth_router)
+router.include_router(appearance_settings_router, dependencies=_admin)
 router.include_router(catalog_import_router)
-router.include_router(club_settings_router)
+router.include_router(club_settings_router, dependencies=_admin)
 router.include_router(dish_router)
-router.include_router(document_appearance_settings_router)
+router.include_router(document_appearance_settings_router, dependencies=_admin)
 router.include_router(equipment_list_router.router)
-router.include_router(invitation_settings_router)
-router.include_router(mail_settings_router)
+router.include_router(invitation_settings_router, dependencies=_admin)
+router.include_router(mail_settings_router, dependencies=_admin)
 router.include_router(meal_plan_router)
 router.include_router(meal_slot_router)
 router.include_router(meta_router)
-router.include_router(module_settings_router)
+router.include_router(module_settings_router, dependencies=_admin)
 router.include_router(product_router)
 router.include_router(project_router)
 router.include_router(preparation_status_router)
@@ -47,7 +51,7 @@ router.include_router(purchase_dashboard_router)
 router.include_router(recipe_router)
 router.include_router(recipe_equipment_router.router)
 router.include_router(recipe_note_router)
-router.include_router(system_settings_router)
+router.include_router(system_settings_router, dependencies=_admin)
 
 
 @router.get("/")
