@@ -27,9 +27,11 @@ This document is the concise canonical architecture baseline for the implemented
 
 React, TypeScript, Vite, Material UI, TanStack Query, and React Router.
 
-Frontend contains presentation, form state, responsive navigation, previews, file selection, and API integration. It does not own quantity calculations, menu generation, shopping aggregation, import validation, settings policy, secret handling, or authorization decisions.
+Frontend contains presentation, form state, responsive navigation, isolated previews, file selection, local display-mode preference, and API integration. It does not own quantity calculations, menu generation, shopping aggregation, import validation, settings policy, contrast acceptance, secret handling, or authorization decisions.
 
 The application layout uses a temporary drawer on mobile and a permanent sidebar on larger screens. System Settings uses vertical section navigation on desktop and a section selector on mobile.
+
+Saved appearance is applied through one global dynamic Material UI ThemeProvider. An unsaved appearance draft is rendered only inside an isolated nested ThemeProvider and must not modify the rest of the application before successful backend validation and save.
 
 ### Backend
 
@@ -48,7 +50,7 @@ Backend owns:
 - equipment requirements, aggregation, overrides, and transactional refresh;
 - Russian PDF and Excel generation foundations;
 - club branding validation and document snapshots;
-- typed system-settings validation, optimistic concurrency, and safe focused history.
+- typed system-settings validation, optimistic concurrency, row locking, contrast policy, and safe focused history.
 
 Backend will own authorization, recipe ownership and moderation, working mail delivery, centralized alcohol policy, and the full actor-aware audit log when those deferred phases are implemented.
 
@@ -91,11 +93,25 @@ future authenticated user
 - main/light/dark logos, square icon, favicon, login background, and document image;
 - optimistic version.
 
-Unrelated settings must not be stored as arbitrary unchecked JSON or generic key/value pairs. A bounded homogeneous social-link value collection may use JSON within its owning typed model.
+`AppearanceSettings` is a separate singleton and owns only organization-wide site appearance:
 
-The existing `/api/v1/club-settings` contract remains compatible. The versioned settings page uses `/api/v1/settings/club`. Existing PDF, Excel, print, and ZIP generation continues to consume the main club name/logo branding snapshot until document appearance is implemented.
+- complete light and dark color-token sets;
+- safe built-in font stack choice;
+- comfortable or compact density;
+- bounded component radius;
+- typed button and card styles;
+- shadow enablement;
+- preset identity and optimistic version.
 
-Focused settings history stores section, local actor label, action, changed field names, resulting version, and timestamp. Binary data, data URLs, passwords, tokens, and future secrets are excluded. This history does not replace the later actor-aware application audit log.
+Appearance writes are validated and serialized by the backend. Text/surface combinations below the approved contrast threshold are rejected with a human-readable Russian reason. Saved appearance applies globally without application restart. Each browser stores only `system`, `light`, or `dark` preference in localStorage until authenticated `UserPreferences` exists; it does not own organization colors.
+
+Theme-only JSON import/export is versioned, validated before preview, and contains no secrets or club data. It is not the future encrypted full-system configuration archive.
+
+Unrelated settings must not be stored as arbitrary unchecked JSON or generic key/value pairs. Bounded homogeneous value collections may use JSON only inside their owning typed model.
+
+The existing `/api/v1/club-settings` contract remains compatible. The versioned settings page uses `/api/v1/settings/club` and `/api/v1/settings/appearance`. Existing PDF, Excel, print, and ZIP generation continues to consume the main club name/logo branding snapshot until document appearance is implemented.
+
+Focused settings history stores section, local actor label, action, changed field names, resulting version, and timestamp. Club and appearance history exclude binary data, data URLs, complete imported themes, passwords, tokens, and future secrets. This history does not replace the later actor-aware application audit log.
 
 ### Projects
 
@@ -184,7 +200,7 @@ Recalculation must be transactional or leave the previous valid state unchanged.
 
 - Existing working models evolve incrementally.
 - Alembic must have exactly one head.
-- `main` currently ends at `h10007`; draft PR #84 adds the additive `h10008` settings migration.
+- `main` currently ends at `h10008`; draft PR #85 adds additive `h10009` appearance persistence.
 - Applied migrations are not rewritten when real data may exist.
 - Public API placeholders are prohibited.
 - Legacy compatibility requires a verified consumer or migration plan.
@@ -197,10 +213,11 @@ Recalculation must be transactional or leave the previous valid state unchanged.
 - Club data is not transmitted to external paid services.
 - Multi-user permissions must be enforced in Backend when introduced.
 - The settings page becomes Administrator-only after access foundation.
-- SVG and arbitrary custom CSS are not accepted in the current settings model.
+- SVG, arbitrary custom CSS, uploaded fonts, and remote font URLs are not accepted in the current settings model.
 - Settings images are validated by MIME type, decoded content, dimensions, and size.
+- Theme imports are schema-versioned and fully validated before entering preview state.
 - Mail passwords and similar credentials use external or write-only secret handling.
-- Secrets never appear in normal API responses, logs, focused history, diagnostics, or unencrypted configuration exports.
+- Secrets never appear in normal API responses, logs, focused history, diagnostics, theme-only exports, or unencrypted configuration exports.
 - Alcohol prohibition remains approved product scope but still needs centralized API and import enforcement.
 
 ## 8. Future domains
