@@ -36,13 +36,13 @@ export TOURHUB_DB_PASSWORD='<url-encoded-password>'
 
 Keep this value in the server's protected environment configuration. Use the same password on future starts of the existing PostgreSQL volume.
 
-The System Settings mail section recognizes an optional external SMTP secret:
+The System Settings mail section recognizes an optional external SMTP value:
 
 ```bash
-export TOURHUB_SMTP_SECRET='<smtp-secret>'
+export TOURHUB_SMTP_SECRET='<smtp-value>'
 ```
 
-Keep this value only in protected host environment configuration. The current mail-boundary slice reports whether it is configured, but does not connect to SMTP, verify it, or send messages. Do not put the value in PostgreSQL, normal API requests, logs, screenshots, or unencrypted configuration exports.
+Keep this value only in protected host environment configuration. The current mail-boundary implementation reports whether it is configured, but does not connect to SMTP, verify it, or send messages. Do not put the value in PostgreSQL, normal API requests, logs, screenshots, or unencrypted configuration exports.
 
 Render the effective release configuration:
 
@@ -57,7 +57,7 @@ docker compose -f docker-compose.release.yml \
   up -d --build --wait --wait-timeout 180
 ```
 
-The backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10013`. The frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
+The backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10014`. The frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
 
 ## Verify the installation
 
@@ -98,6 +98,19 @@ Open:
 - TourHub: `http://localhost:5173`;
 - API documentation: `http://localhost:8000/docs`.
 
+### Create the first Administrator
+
+On a new installation TourHub opens the one-time **«Создание первого администратора»** form. Enter the Administrator name, email, and a password of at least 12 characters.
+
+- TourHub has no default application password;
+- the first account is always an Administrator;
+- the bootstrap form disappears after the first user is created;
+- repeated bootstrap attempts are rejected by Backend;
+- keep the Administrator password in the club's approved password manager;
+- do not place the application password in Compose files, `.env` committed to Git, logs, screenshots, or support messages.
+
+After creation, verify that the header shows the Administrator name, `/settings` opens, logout returns to the login form, and the same account can sign in again.
+
 From another computer on the same trusted network, use the server address:
 
 ```text
@@ -108,7 +121,7 @@ Allow inbound TCP `5173` in the server firewall only for the trusted network. Ba
 
 ## Create the first backup
 
-After completing the initial club setup, create a host-side PostgreSQL custom-format dump against the release stack:
+After completing the initial club setup and Administrator bootstrap, create a host-side PostgreSQL custom-format dump against the release stack:
 
 ```bash
 COMPOSE_FILE=docker-compose.release.yml bash scripts/db/backup-tourhub.sh
