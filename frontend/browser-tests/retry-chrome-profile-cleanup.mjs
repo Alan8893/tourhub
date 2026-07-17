@@ -10,10 +10,12 @@ const chromeProfileSuffixes = [
   "tourhub-equipment-list-profile",
   "tourhub-documents-profile",
   "tourhub-club-settings-profile",
+  "tourhub-guided-release-profile",
 ];
 let profileRemovalCalls = 0;
 
-const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const sleep = (milliseconds) =>
+  new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 fsPromises.rm = async (target, options) => {
   const isAcceptanceChromeProfile = chromeProfileSuffixes.some((suffix) =>
