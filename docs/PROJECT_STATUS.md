@@ -4,59 +4,83 @@ Status date: 2026-07-17
 
 ## Current phase
 
-The TH-0061 guided single-club preparation workflow is complete. Merged PR #79 adds the operator installation, update, backup, restore, and recovery path. Draft PR #80 adds the immutable Docker image build and production-like runtime validation slice.
+The guided single-club preparation baseline, operator runbooks, and production-like Docker runtime are complete. The current documentation audit reconciles the approved product specification with the implemented application and records the Product Owner decision to implement a unified System Settings foundation before multi-user access.
 
 ## Verified baseline
 
-- `main`: `99d9c2d985b8a21c62fe148e07e08b3632ef961a` — merged PR #79.
+- `main`: `939828e8c335966dde2d04c5083ee7d2da07c6eb` — merged PR #80.
 - Alembic head: `h10007`.
-- PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec` after Quality #416 and Document Quality #49.
-- PR #78 passed retargeted exact-head Quality #431, Document Quality #63, and Guided Release Acceptance #14 and merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
-- PR #79 passed exact-head Quality #436, Document Quality #67, Guided Release Acceptance #18, and Operator Docs #4 and merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
+- PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`.
+- PR #78 merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
+- PR #79 merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
+- PR #80 passed Quality #454, Document Quality #84, Guided Release Acceptance #35, Operator Docs #21, and Docker Release Runtime #17 and merged as `939828e8c335966dde2d04c5083ee7d2da07c6eb`.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Implemented
 
-### Guided project preparation — completed TH-0061
+### Guided project preparation
 
 - project creation, participants, duration, meal boundaries, and role-aware menu generation;
-- persisted purchase list, checklist, packaging, surplus, and purchasing contact;
+- authoritative manual editing and persisted generation warnings;
+- persisted shopping, packaging, checklist, surplus, and responsible-person text;
 - persisted equipment requirements, aggregation, manual rows, overrides, removals, and transactional refresh;
-- Russian purchase/equipment PDF, Excel, print, and complete project ZIP;
+- Russian purchase/equipment PDF, Excel, print, and complete ZIP;
 - singleton club name and validated PNG/JPEG logo branding;
-- preparation readiness restored after reload without repeated calculation;
-- equipment-aware completion state and clean unprepared states;
-- full desktop/mobile create → menu → prepare → reload → branded ZIP release acceptance.
+- reload-safe preparation readiness and equipment-aware completion;
+- full desktop/mobile create → menu → prepare → reload → branded ZIP acceptance.
 
-### Operator installation and update — completed TH-0071
+### Operations and runtime
 
-- installation prerequisites, first start, health, migration, LAN, port, and volume verification;
-- backup-first update flow with explicit Alembic migration before application restart;
-- host-side PostgreSQL custom-format backup script;
-- confirmed restore script with an automatic pre-restore safety dump;
-- rollback boundaries prohibiting destructive volume deletion and ad hoc production downgrades;
-- focused Operator Docs validation for shell syntax/help, required commands, links, and Compose syntax.
+- installation, update, backup, restore, recovery, health, migration, LAN, port, and volume guidance;
+- production-like release Compose without application bind mounts;
+- production frontend image served by Nginx;
+- internal PostgreSQL and Redis networking;
+- same-origin API proxy and health checks;
+- clean image build/start, Alembic head, API persistence after restart, diagnostics, and cleanup.
 
-### Draft PR #80 — Docker release runtime
+## Product completeness findings
 
-- standalone `docker-compose.release.yml` without application source bind mounts;
-- production frontend image built with Node and served by Nginx;
-- same-origin `/api/` proxy plus frontend/backend health checks;
-- PostgreSQL and Redis restricted to the internal Compose network;
-- clean image build and disposable clean-environment startup;
-- API project creation and persistence verification after application restart;
-- Alembic current-head verification and focused Docker diagnostics.
+Implemented or release-ready:
+
+- local one-club project preparation;
+- participant-count recalculation;
+- menu generation and authoritative manual editing;
+- shopping, packaging, equipment, branding, and current document package;
+- installation, backup/restore, and production-like Docker runtime.
+
+Partial or missing against the approved product specification:
+
+- unified system settings beyond the existing club name/logo branding;
+- invitation-only users, roles, authentication, and backend authorization;
+- CLUB/PERSONAL recipe ownership, variants, publication, and moderation;
+- centralized backend alcohol prohibition across API and CSV import;
+- actor-aware audit log;
+- complete consolidated Russian PDF and workbook contents.
+
+Scope decisions still required:
+
+- exact System Settings sections and first implementation slice;
+- appearance customization model and allowed branding controls;
+- module settings and whether they enable/disable navigation or behavior;
+- invitation configuration versus actual invitation/user workflow;
+- mail provider, secret storage, sender identity, and test-delivery behavior;
+- instructor preference priority and optional recipe metadata.
 
 ## Next
 
-1. Complete PR #80 exact-head Quality and Docker release runtime validation.
-2. Add PostgreSQL migration upgrade/downgrade smoke.
-3. Complete the final release workflow and release checklist.
-4. Add invitation-only access only after the local single-user release is validated.
+1. Complete and merge the product completeness audit.
+2. Clarify and implement System Settings foundation as the next user-facing capability.
+3. Implement access foundation and connect invitations to approved settings.
+4. Implement recipe ownership and lifecycle.
+5. Implement central alcohol prohibition.
+6. Implement actor-aware audit logging.
+7. Complete consolidated exports and product acceptance.
+8. Freeze the schema and only then add the final migration cycle and release workflow.
 
 ## Quality debt
 
 - active deployment catalogue data acceptance;
 - catalogue-import interaction coverage;
-- PostgreSQL migration smoke;
-- final release workflow.
+- optional recipe metadata decisions;
+- final PostgreSQL migration cycle after feature freeze;
+- final release workflow and deployment checklist.

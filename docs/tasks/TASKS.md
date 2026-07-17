@@ -6,8 +6,23 @@ This file contains task status and links. Detailed task descriptions are stored 
 
 | ID | Task | Status | Details |
 |---|---|---|---|
-| TH-0061.5 | Meal Composition Rules Engine | IN PROGRESS | ./active/TH-0061.5-menu-rules.md |
-| TH-0072 | Docker Release Runtime Validation | IN PROGRESS | ./active/TH-0072-docker-release-runtime.md |
+| TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0073 | Product Completeness Audit | IN PROGRESS | ./active/TH-0073-product-completeness-audit.md |
+
+## Planned release sequence
+
+| Order | Capability | Gate |
+|---|---|---|
+| 1 | System Settings foundation | Dedicated page, branding continuity, appearance, typed module settings, invitation/mail configuration boundaries |
+| 2 | Access foundation | Users, invitations, roles, authentication, guarded routes, backend authorization |
+| 3 | Recipe ownership and lifecycle | CLUB/PERSONAL ownership, variants, publication, moderation, generation modes |
+| 4 | Central alcohol prohibition | Shared API/import policy and existing-record handling |
+| 5 | Actor-aware audit log | Safe history for project, menu, recipe, settings, user, and role changes |
+| 6 | Consolidated export completeness | Approved Russian PDF and workbook contents using one brand snapshot |
+| 7 | Product acceptance and feature freeze | End-to-end acceptance and explicit optional-scope decisions |
+| 8 | Final release readiness | Migration cycle, deployment checklist, and final release workflow |
+
+Exact task IDs for implementation slices are assigned when each slice starts from the then-current `main`.
 
 ## Completed
 
@@ -29,6 +44,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | TH-0069 | Dish Recipe Purchasing Recalculation | DONE |
 | TH-0070 | Critical Meal Plan Stabilization | DONE |
 | TH-0071 | Operator Installation and Update Runbook | DONE |
+| TH-0072 | Docker Release Runtime Validation | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
@@ -39,3 +55,4 @@ Details are stored in `./closed/` using the task ID and descriptive slug.
 - Architectural decisions are documented separately.
 - Current status documents override historical task wording when scope has been explicitly deferred.
 - A task is not DONE while its pull request is only open or draft.
+- Final migration downgrade/re-upgrade smoke starts only after first-release feature freeze.

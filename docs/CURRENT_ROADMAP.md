@@ -4,77 +4,105 @@ Status date: 2026-07-17
 
 ## Product goal
 
-Deliver a stable local MVP for one tourist club without changing the approved architecture.
+Deliver the approved local MVP for one tourist club without changing the approved architecture.
 
 ```text
-Project
-  → Menu
-  → Recipes and dishes
-  → Shopping and packaging
-  → Equipment
-  → Branded Russian PDF and Excel
-  → Guided release acceptance
-  → Operator installation and update path
+Project preparation baseline
   → Production-like Docker runtime
+  → Product completeness audit
+  → System Settings foundation
+  → Access and roles
+  → Recipe ownership and lifecycle
+  → Central domain safety
+  → Actor-aware audit
+  → Consolidated Russian exports
+  → Product acceptance and feature freeze
+  → Final migration and release gates
 ```
 
 ## DONE
 
-### Infrastructure baseline
+### Infrastructure and guided preparation
 
 - Docker Compose, PostgreSQL 18, Redis, and Alembic one-head validation;
 - backend Ruff, strict mypy, pytest, frontend tests/build/browser acceptance;
 - PostgreSQL backup/restore CI;
-- LAN-safe routing and responsive navigation.
+- project creation, role-aware menu generation and authoritative manual editing;
+- persisted shopping, packaging, equipment, recalculation, overrides, and readiness;
+- singleton club branding and Russian purchase/equipment PDF, Excel, print, and ZIP;
+- desktop/mobile create → menu → prepare → reload → branded ZIP acceptance.
 
-### Guided preparation through merged PR #78
+PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`. PR #78 merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
 
-- project creation, workspace, participants, duration, and meal boundaries;
-- catalogues, CSV import, role-aware menu generation, and manual editing;
-- persisted shopping, packaging, surplus, and purchasing contact;
-- persisted equipment requirements, project overrides, and transactional recalculation;
-- Russian purchase and equipment PDF/Excel plus complete ZIP package;
-- persistent single-club branding through Alembic `h10007`;
-- reload-safe preparation state and equipment-aware completion;
-- full create → menu → prepare → reload → branded ZIP desktop/mobile acceptance.
+### Operator path through merged PR #79
 
-PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`. PR #78 passed retargeted exact-head Quality #431, Document Quality #63, and Guided Release Acceptance #14 and merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
+- installation, health, migration, LAN, port, and volume checks;
+- backup-first update and recovery procedures;
+- host-side PostgreSQL backup and confirmed restore;
+- rollback boundaries and Operator Docs validation.
 
-### Operator installation and update through merged PR #79
+PR #79 merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
 
-- documented prerequisites, first startup, health, migration, LAN, port, and volume checks;
-- added backup-first update and recovery procedures;
-- added host-side custom-format PostgreSQL backup and confirmed restore commands;
-- created a pre-restore safety backup when replacing an existing database;
-- defined rollback boundaries and prohibited destructive volume deletion;
-- linked operator entry points from README;
-- validated scripts, commands, links, and Docker Compose syntax in Operator Docs.
+### Docker release runtime through merged PR #80
 
-PR #79 passed exact-head Quality #436, Document Quality #67, Guided Release Acceptance #18, and Operator Docs #4 and merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
+- standalone release Compose without application bind mounts;
+- production frontend Nginx image;
+- internal PostgreSQL and Redis networking;
+- frontend/backend health checks and same-origin API proxy;
+- clean-environment image build and startup;
+- API project creation, Alembic head, and restart-persistence checks;
+- focused diagnostics and unconditional cleanup.
+
+PR #80 passed exact-head Quality #454, Document Quality #84, Guided Release Acceptance #35, Operator Docs #21, and Docker Release Runtime #17 and merged as `939828e8c335966dde2d04c5083ee7d2da07c6eb`.
 
 ## IN PROGRESS
 
-### Draft PR #80 — Docker release runtime validation
+### Product completeness audit
 
-- add a standalone release Compose stack without source bind mounts;
-- build the frontend into a production Nginx image;
-- keep PostgreSQL and Redis internal while preserving the named database volume;
-- add explicit frontend/backend health checks and same-origin API proxying;
-- build and start a disposable stack from a clean environment;
-- verify the app shell, API health, project creation, migration head, and persistence after restart;
-- capture focused Docker diagnostics and remove the disposable stack unconditionally.
+- compare approved `PRODUCT_SPEC.md` areas with implemented behavior;
+- identify release-blocking user and domain gaps;
+- keep basic Alembic, PostgreSQL, backup/restore, Docker, and full Quality gates mandatory;
+- move the final migration downgrade/re-upgrade cycle after feature freeze;
+- record the Product Owner decision to implement System Settings before access foundation.
 
-## NEXT
+## NEXT — SYSTEM SETTINGS FOUNDATION
 
-- add PostgreSQL migration upgrade/downgrade smoke;
-- complete the final release workflow and checklist.
+The next capability is a dedicated system-settings area. Detailed scope will be confirmed before implementation.
+
+Expected boundaries:
+
+- club name, logo, and branding continuity;
+- site appearance customization;
+- explicit typed settings for application modules;
+- invitation-related policy and configuration;
+- outbound mail configuration with protected secret handling;
+- a Russian responsive administration page;
+- defaults, validation, reset behavior, and change-impact rules.
+
+Invitation delivery and user management must not be silently bundled into this slice unless explicitly approved after requirements clarification.
+
+## FOLLOW-UP PRODUCT WORK
+
+1. **Access foundation** — administrator bootstrap, invitation-only users, roles, authentication, guarded routes, and backend authorization.
+2. **Recipe ownership and lifecycle** — CLUB/PERSONAL ownership, variants, publication, moderation, and generation modes.
+3. **Central alcohol prohibition** — one backend policy across Product, Recipe, and CSV import paths.
+4. **Actor-aware audit log** — safe history for project, menu, recipe, user, role, and settings changes.
+5. **Consolidated export completeness** — approved Russian PDF and workbook contents using one brand snapshot.
+6. **Product acceptance and feature freeze** — catalogue/import acceptance, optional-scope decisions, and end-to-end scenarios.
+
+## FINAL RELEASE READINESS
+
+Only after first-release feature freeze:
+
+- PostgreSQL previous → head → previous → head migration smoke;
+- production-like deployment checklist;
+- final release workflow;
+- release tag after green exact-head gates.
 
 ## LATER
 
-- invitation-only registration and roles;
-- recipe ownership, variants, publication, and moderation;
-- audit log;
 - participant profiles, routes, logistics, and load distribution;
-- warehouse balances and price aggregation.
+- warehouse balances, shops, prices, and price aggregation;
+- broader preference modes beyond explicitly approved first-release behavior.
 
 Multi-tenant support and microservices remain prohibited.
