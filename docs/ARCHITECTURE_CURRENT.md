@@ -27,11 +27,11 @@ This document is the concise canonical architecture baseline for the implemented
 
 React, TypeScript, Vite, Material UI, TanStack Query, and React Router.
 
-Frontend contains presentation, form state, responsive navigation, isolated previews, file selection, local display-mode preference, and API integration. It does not own quantity calculations, menu generation, shopping aggregation, import validation, settings policy, contrast acceptance, secret handling, or authorization decisions.
+Frontend contains presentation, form state, responsive navigation, isolated previews, file selection, local display-mode preference, and API integration. It does not own quantity calculations, menu generation, shopping aggregation, import validation, settings policy, contrast acceptance, secret handling, document snapshot construction, or authorization decisions.
 
 The application layout uses a temporary drawer on mobile and a permanent sidebar on larger screens. System Settings uses vertical section navigation on desktop and a section selector on mobile.
 
-Saved appearance is applied through one global dynamic Material UI ThemeProvider. An unsaved appearance draft is rendered only inside an isolated nested ThemeProvider and must not modify the rest of the application before successful backend validation and save.
+Saved appearance is applied through one global dynamic Material UI ThemeProvider. Unsaved site and document appearance drafts are rendered only inside isolated preview surfaces and must not modify the application or generated files before successful backend validation and save.
 
 ### Backend
 
@@ -49,7 +49,7 @@ Backend owns:
 - shopping and packaging persistence;
 - equipment requirements, aggregation, overrides, and transactional refresh;
 - Russian PDF and Excel generation foundations;
-- club branding validation and document snapshots;
+- club branding validation and immutable document snapshots;
 - typed system-settings validation, optimistic concurrency, row locking, contrast policy, and safe focused history.
 
 Backend will own authorization, recipe ownership and moderation, working mail delivery, centralized alcohol policy, and the full actor-aware audit log when those deferred phases are implemented.
@@ -59,6 +59,8 @@ Backend will own authorization, recipe ownership and moderation, working mail de
 Engines receive prepared data and return deterministic results. Engines do not depend on HTTP, React, or database sessions.
 
 MealPlanService prepares active Dish data, excludes archived recipes, maps persisted role assignments into engine inputs, and invokes the generator in explicit role-aware mode.
+
+Document engines receive a frozen prepared branding/appearance DTO. They do not query settings or database sessions while rendering.
 
 ## 4. Domain boundaries
 
@@ -107,11 +109,22 @@ Appearance writes are validated and serialized by the backend. Text/surface comb
 
 Theme-only JSON import/export is versioned, validated before preview, and contains no secrets or club data. It is not the future encrypted full-system configuration archive.
 
+`DocumentAppearanceSettings` is another independent singleton and owns only rendering controls shared by PDF, Excel, printable text, and ZIP documents:
+
+- primary, accent, heading, title-background, table-header, table-text, and table-border colors;
+- approved club image source or explicit no-logo mode;
+- contact visibility and optional plain-text footer;
+- optional use of the club document image as title background;
+- comfortable or compact table density;
+- optimistic version.
+
+Document appearance writes are validated and serialized by the backend. Table-header text/background combinations below the approved contrast threshold are rejected with a Russian reason. Missing selected images fall back to the main logo, except explicit `none`. Rich text, arbitrary templates, CSS, uploaded fonts, remote resources, and per-project themes are prohibited.
+
 Unrelated settings must not be stored as arbitrary unchecked JSON or generic key/value pairs. Bounded homogeneous value collections may use JSON only inside their owning typed model.
 
-The existing `/api/v1/club-settings` contract remains compatible. The versioned settings page uses `/api/v1/settings/club` and `/api/v1/settings/appearance`. Existing PDF, Excel, print, and ZIP generation continues to consume the main club name/logo branding snapshot until document appearance is implemented.
+The existing `/api/v1/club-settings` contract remains compatible. The versioned settings page uses `/api/v1/settings/club`, `/api/v1/settings/appearance`, and `/api/v1/settings/documents`.
 
-Focused settings history stores section, local actor label, action, changed field names, resulting version, and timestamp. Club and appearance history exclude binary data, data URLs, complete imported themes, passwords, tokens, and future secrets. This history does not replace the later actor-aware application audit log.
+Focused settings history stores section, local actor label, action, changed field names, resulting version, and timestamp. Club, appearance, and document history exclude binary data, data URLs, imported payloads, footer contents, passwords, tokens, and future secrets. This history does not replace the later actor-aware application audit log.
 
 ### Projects
 
@@ -164,9 +177,11 @@ Owns recipe equipment requirements, maximum simultaneous aggregation, persisted 
 
 ### Documents
 
-Owns Russian PDF, Excel, print, and ZIP generation. Existing purchase/equipment outputs and main club branding are implemented. The approved consolidated document set and independent document-appearance settings remain incomplete.
+Owns Russian PDF, Excel, print, and ZIP generation. Existing purchase/equipment outputs are implemented. Independent document appearance is active in draft PR #86; approved consolidated document contents remain incomplete.
 
-Each generated package uses one immutable brand/data snapshot so PDF, Excel, print, and ZIP cannot observe different settings during the same generation transaction.
+For each generation request, `ProjectDocumentService` reads `ClubSettings` and `DocumentAppearanceSettings` once and constructs one frozen `ClubBrandingDTO`. Purchase/equipment PDF, Excel, printable text, and every file inside the ZIP reuse that same object. Engines must not query settings while rendering, so files from one package cannot observe different club or appearance versions.
+
+Existing document routes, filenames, content types, and the legacy minimal `ClubBrandingDTO(club_name=...)` construction remain compatible.
 
 ### Audit
 
@@ -200,7 +215,7 @@ Recalculation must be transactional or leave the previous valid state unchanged.
 
 - Existing working models evolve incrementally.
 - Alembic must have exactly one head.
-- `main` currently ends at `h10008`; draft PR #85 adds additive `h10009` appearance persistence.
+- `main` currently ends at `h10009`; draft PR #86 adds additive `h10010` document appearance persistence.
 - Applied migrations are not rewritten when real data may exist.
 - Public API placeholders are prohibited.
 - Legacy compatibility requires a verified consumer or migration plan.
@@ -216,6 +231,7 @@ Recalculation must be transactional or leave the previous valid state unchanged.
 - SVG, arbitrary custom CSS, uploaded fonts, and remote font URLs are not accepted in the current settings model.
 - Settings images are validated by MIME type, decoded content, dimensions, and size.
 - Theme imports are schema-versioned and fully validated before entering preview state.
+- Document rendering does not load remote resources or execute user markup.
 - Mail passwords and similar credentials use external or write-only secret handling.
 - Secrets never appear in normal API responses, logs, focused history, diagnostics, theme-only exports, or unencrypted configuration exports.
 - Alcohol prohibition remains approved product scope but still needs centralized API and import enforcement.
