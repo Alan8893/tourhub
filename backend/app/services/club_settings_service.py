@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from app.engines.documents.branding import ClubBrandingDTO
 from app.models.club_settings import ClubSettingsORM
 
-
 DEFAULT_CLUB_NAME = "TourHub"
 MAX_LOGO_BYTES = 1_000_000
 MAX_LOGO_PIXELS = 16_000_000
