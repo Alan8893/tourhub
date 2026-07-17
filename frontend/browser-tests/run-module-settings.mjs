@@ -98,7 +98,7 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Видимость модулей") &&
+      `document.body?.innerText?.includes("Переключатели скрывают навигацию") &&
        document.body?.innerText?.includes("Модуль «Проекты» обязателен") &&
        document.body?.innerText?.includes("Карточка документов видима")`,
       "loaded module editor",
