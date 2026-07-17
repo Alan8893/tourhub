@@ -29,24 +29,13 @@ Project preparation baseline
 
 ## DONE
 
-### Infrastructure and guided preparation
+### Infrastructure, guided preparation, and operations
 
-- Docker Compose, PostgreSQL 18, Redis, and one-head Alembic validation;
-- backend Ruff, strict mypy, pytest, frontend tests/build/browser acceptance;
-- PostgreSQL backup/restore CI;
-- project creation, role-aware menu generation, authoritative editing, shopping, equipment, recalculation, and readiness;
-- Russian purchase/equipment PDF, Excel, print, and ZIP;
-- desktop/mobile guided preparation acceptance.
+- complete guided preparation from project creation through shopping, equipment, readiness, and Russian PDF/Excel/print/ZIP outputs;
+- installation, update, backup, restore, recovery, health, LAN, and production-like release Compose;
+- PostgreSQL 18 and Redis internal networking, same-origin API proxy, migrations, restart persistence, and cleanup validation.
 
-PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`. PR #78 merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
-
-### Operations and release runtime
-
-- installation, update, health, migration, LAN, backup, restore, and recovery runbooks;
-- standalone release Compose and production Nginx frontend;
-- internal PostgreSQL/Redis networking, same-origin API proxy, clean startup, migration-head, and restart-persistence checks.
-
-PR #79 merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`. PR #80 merged as `939828e8c335966dde2d04c5083ee7d2da07c6eb`.
+PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`. PR #78 merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`. PR #79 merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`. PR #80 merged as `939828e8c335966dde2d04c5083ee7d2da07c6eb`.
 
 ### Product completeness audit
 
@@ -57,54 +46,53 @@ PR #79 merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`. PR #80 merged as `9
 
 PR #83 merged as `950a43914230f6fe4be3bf217a4e5f1b79e7265f`.
 
-### System Settings through merged PR #87
+### System Settings through merged PR #88
 
 - PR #84: responsive `/settings`, typed club profile, approved images, `h10008`;
 - PR #85: organization light/dark appearance, safe presets/import/export, `h10009`;
-- PR #86: independent document appearance and one immutable generation snapshot, `h10010`;
-- PR #87: typed module visibility, required modules, document dependency locks, immediate navigation/workspace updates, `h10011`;
-- all sections use optimistic versions, PostgreSQL row locks, HTTP 409 conflicts, and safe focused history;
-- direct routes and APIs remain available when modules are hidden; visibility is not authorization.
+- PR #86: document appearance and one immutable generation snapshot, `h10010`;
+- PR #87: typed module visibility, required modules, dependency locks, immediate navigation/workspace updates, `h10011`;
+- PR #88: typed future invitation policy, safe default roles, normalized email domains, mandatory administrator-only rule, `h10012`;
+- all persisted sections use optimistic versions, PostgreSQL row locks, HTTP 409 conflicts, and safe focused history;
+- module visibility is presentation only; invitation policy is not a functional access system.
 
-PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`. PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`. PR #86 merged as `18d5c9637e2e692b630009167dd622ee40ee2747`. PR #87 passed Quality #604, Document Quality #229, Guided Release Acceptance #180, Operator Docs #166, and Docker Release Runtime #161 and merged as `717d6f22d58e86a952edad501f05d3c67d8c0bf4`.
+PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`. PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`. PR #86 merged as `18d5c9637e2e692b630009167dd622ee40ee2747`. PR #87 merged as `717d6f22d58e86a952edad501f05d3c67d8c0bf4`. PR #88 passed Quality #631, Document Quality #255, Guided Release Acceptance #206, Operator Docs #192, and Docker Release Runtime #187 and merged as `d79172fef861c030ff2d9e5367cf86329068b460`.
 
-## IN PROGRESS — TH-0078 / DRAFT PR #88
+## IN PROGRESS — TH-0079 / DRAFT PR #89
 
-### System Settings: future invitation policy
+### System Settings: informative mail configuration boundary
 
-- independent singleton `InvitationSettings` and additive Alembic `h10012`;
-- invitation lifetime from 1 to 90 days;
-- safe default role limited to Instructor or Verified Instructor;
-- optional allowed email-domain list, normalized to lowercase IDNA and deduplicated by the backend;
-- resend permission, active-invitation limit, and email-confirmation requirement;
-- mandatory administrator-only management protected by API validation and a database check;
-- versioned row-locked updates, HTTP 409 conflicts, and safe `invitations` history;
-- responsive Russian editor with reset, cancel, save, conflict, version, and history states;
-- explicit UI notice that users, tokens, emails, and the invitation list are not operational yet.
+- independent singleton `MailSettings` with approved non-sensitive SMTP parameters;
+- additive Alembic `h10013` with one head;
+- host, port, plain/STARTTLS/TLS mode, optional username, sender identity, Reply-To, test recipient, timeout, and retry count;
+- dedicated `TOURHUB_SMTP_SECRET` environment boundary with derived configured/not-configured status only;
+- no secret field in PostgreSQL, request schemas, normal responses, logs, history, or UI;
+- delivery and test-email actions remain unavailable until identity and access exist;
+- responsive Russian editor with reset, cancel, save, conflict, version, status, and history states;
+- development and release Compose pass the optional environment value to Backend without enabling delivery.
 
 Scope boundary:
 
-- no User or Invitation persistence;
-- no token generation, acceptance, revocation, or resend execution;
-- no registration, login, sessions, role authorization, SMTP, or email delivery;
-- saved policy becomes an input to the later Access foundation.
+- no SMTP connection, credential verification, message generation, queue, retry execution, or delivery;
+- no users, roles, sessions, authorization, functional invitations, or test-message endpoint;
+- no encrypted full-system configuration archive.
 
-## NEXT — FINAL SYSTEM SETTINGS BOUNDARY
+## NEXT — ACCESS FOUNDATION
 
-1. **Informative mail configuration boundary**
-   - describe universal SMTP ownership and the external/write-only password boundary;
-   - store only approved non-secret future mail parameters if required by the slice;
-   - no working delivery or test email until identity exists.
+1. administrator bootstrap;
+2. invitation-only users and functional invitation lifecycle consuming `InvitationSettings`;
+3. Administrator, Instructor, and Verified Instructor roles;
+4. authentication, logout, guarded routes, and backend authorization;
+5. real actor identity for subsequent settings history and audit work.
 
 ## FOLLOW-UP PRODUCT WORK
 
-1. **Access foundation** — administrator bootstrap, invitation-only users, roles, authentication, guarded routes, backend authorization, and functional invitation lifecycle.
-2. **Working mail delivery** — universal SMTP, external/write-only password, sender identity, test address, retries, status, and fixed Russian test message.
-3. **Recipe ownership and lifecycle** — CLUB/PERSONAL ownership, variants, publication, moderation, and generation modes.
-4. **Central alcohol prohibition** — one backend policy across Product, Recipe, and CSV import paths.
-5. **Actor-aware audit log** — safe history for project, menu, recipe, user, role, mail, and settings changes.
-6. **Consolidated export completeness** — approved Russian PDF and workbook contents using one immutable brand snapshot.
-7. **Product acceptance and feature freeze** — catalogue/import acceptance, optional-scope decisions, and end-to-end scenarios.
+1. **Working mail delivery** — consume `MailSettings` and the external SMTP secret, verify connection, send the fixed Russian test message, and connect invitations.
+2. **Recipe ownership and lifecycle** — CLUB/PERSONAL ownership, variants, publication, moderation, and generation modes.
+3. **Central alcohol prohibition** — one backend policy across Product, Recipe, and CSV import paths.
+4. **Actor-aware audit log** — safe history for project, menu, recipe, user, role, mail, and settings changes.
+5. **Consolidated export completeness** — approved Russian PDF and workbook contents using one immutable brand snapshot.
+6. **Product acceptance and feature freeze** — catalogue/import acceptance, optional-scope decisions, and end-to-end scenarios.
 
 ## FINAL RELEASE READINESS
 
