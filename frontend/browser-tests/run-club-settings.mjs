@@ -103,12 +103,12 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Настройки клуба") &&
-       document.body.innerText.includes("Турклуб Север")`,
+       document.querySelector('input[type="text"]')?.value === "Турклуб Север"`,
       "loaded club settings",
     );
     assert.equal(
       await client.evaluate(`(() => {
-        const input = document.querySelector('input[aria-label="Название клуба"]');
+        const input = document.querySelector('input[type="text"]');
         if (!input) return false;
         const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
         setter.call(input, "Турклуб Полюс");
