@@ -11,6 +11,12 @@ def _payload(settings: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _validation_messages(response) -> str:
+    body = response.json()
+    assert body["error"] == "Validation Error"
+    return " ".join(item["msg"] for item in body["details"])
+
+
 def test_invitation_settings_defaults(client) -> None:
     response = client.get("/api/v1/settings/invitations")
     assert response.status_code == 200
@@ -85,7 +91,7 @@ def test_invitation_settings_reject_administrator_default_role(client) -> None:
 
     response = client.put("/api/v1/settings/invitations", json=payload)
     assert response.status_code == 422
-    assert "default_role" in response.json()["error"]
+    assert "instructor" in _validation_messages(response)
     assert client.get("/api/v1/settings/invitations").json()["version"] == 1
 
 
@@ -96,7 +102,7 @@ def test_invitation_settings_reject_invalid_domain_without_partial_save(client) 
 
     response = client.put("/api/v1/settings/invitations", json=payload)
     assert response.status_code == 422
-    assert "без @" in response.json()["error"]
+    assert "без @" in _validation_messages(response)
 
     current = client.get("/api/v1/settings/invitations").json()
     assert current["version"] == 1
@@ -111,7 +117,7 @@ def test_invitation_settings_reject_disabling_administrator_only(client) -> None
 
     response = client.put("/api/v1/settings/invitations", json=payload)
     assert response.status_code == 422
-    assert "только администраторы" in response.json()["error"]
+    assert "только администраторы" in _validation_messages(response)
     assert client.get("/api/v1/settings/invitations").json()["administrators_only"] is True
 
 
