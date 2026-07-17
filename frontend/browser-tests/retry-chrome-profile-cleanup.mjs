@@ -9,6 +9,7 @@ const chromeProfileSuffixes = [
   "tourhub-purchase-checklist-profile",
   "tourhub-equipment-list-profile",
   "tourhub-documents-profile",
+  "tourhub-club-settings-profile",
 ];
 let profileRemovalCalls = 0;
 

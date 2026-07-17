@@ -1,6 +1,8 @@
+from collections.abc import Callable
 from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -10,6 +12,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from app.engines.documents.branding import ClubBrandingDTO
+from app.engines.documents.branding_render import pdf_branding_flowables
 from app.engines.documents.dto import GeneratedDocument, PurchaseDocumentDTO
 
 
@@ -41,18 +45,34 @@ class PDFDocumentGenerator:
             "Unicode PDF font not found. Install a font with Cyrillic support."
         )
 
-    def _footer(self, canvas, document):
-        canvas.saveState()
-        canvas.setFont("TourHubUnicode", 8)
-        canvas.drawString(20 * mm, 10 * mm, "Сформировано в TourHub")
-        canvas.drawRightString(
-            190 * mm,
-            10 * mm,
-            f"Страница {canvas.getPageNumber()}",
-        )
-        canvas.restoreState()
+    def _footer(
+        self,
+        branding: ClubBrandingDTO | None,
+    ) -> Callable[[Any, Any], None]:
+        def draw_footer(canvas: Any, document: Any) -> None:
+            del document
+            canvas.saveState()
+            canvas.setFont("TourHubUnicode", 8)
+            label = (
+                f"Сформировано для {branding.club_name} в TourHub"
+                if branding is not None
+                else "Сформировано в TourHub"
+            )
+            canvas.drawString(20 * mm, 10 * mm, label)
+            canvas.drawRightString(
+                190 * mm,
+                10 * mm,
+                f"Страница {canvas.getPageNumber()}",
+            )
+            canvas.restoreState()
 
-    def generate(self, document: PurchaseDocumentDTO) -> GeneratedDocument:
+        return draw_footer
+
+    def generate(
+        self,
+        document: PurchaseDocumentDTO,
+        branding: ClubBrandingDTO | None = None,
+    ) -> GeneratedDocument:
         buffer = BytesIO()
         font_name = self._register_font()
 
@@ -70,6 +90,7 @@ class PDFDocumentGenerator:
             style.fontName = font_name
 
         content = [
+            *pdf_branding_flowables(styles, branding),
             Paragraph(document.title, styles["Title"]),
             Spacer(1, 10 * mm),
             Paragraph(
@@ -113,12 +134,8 @@ class PDFDocumentGenerator:
         )
 
         content.append(table)
-
-        pdf.build(
-            content,
-            onFirstPage=self._footer,
-            onLaterPages=self._footer,
-        )
+        footer = self._footer(branding)
+        pdf.build(content, onFirstPage=footer, onLaterPages=footer)
 
         return GeneratedDocument(
             filename="purchase_list.pdf",

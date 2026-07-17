@@ -30,16 +30,23 @@ jobs:
         run: |
           set -o pipefail
           python -m ruff check \
+            app/engines/documents/branding.py \
+            app/engines/documents/branding_render.py \
             app/engines/documents/equipment_dto.py \
             app/engines/documents/equipment_excel.py \
             app/engines/documents/equipment_pdf.py \
             app/engines/documents/excel.py \
             app/engines/documents/pdf.py \
+            app/engines/documents/printer.py \
+            app/models/club_settings.py \
+            app/modules/api/club_settings_router.py \
+            app/modules/projects/router.py \
+            app/schemas/club_settings.py \
+            app/services/club_settings_service.py \
             app/services/document_mapper.py \
             app/services/equipment_document_mapper.py \
             app/services/project_document_package_service.py \
             app/services/project_document_service.py \
-            app/modules/projects/router.py \
             --select E,F,I,UP,B --ignore B008 2>&1 | tee document-ruff.txt
 
       - name: Upload Ruff diagnostics
@@ -53,6 +60,10 @@ jobs:
         run: |
           set -o pipefail
           python -m mypy \
+            app/engines/documents/branding.py \
+            app/models/club_settings.py \
+            app/schemas/club_settings.py \
+            app/services/club_settings_service.py \
             app/engines/documents/equipment_dto.py \
             app/services/equipment_document_mapper.py \
             app/services/project_document_service.py 2>&1 | tee document-mypy.txt
@@ -69,6 +80,8 @@ jobs:
           set -o pipefail
           python -m pytest -q \
             tests/services/test_equipment_document_export.py \
+            tests/services/test_club_branding_documents.py \
+            tests/api/test_club_settings_api.py \
             tests/api/test_project_equipment_documents.py \
             tests/api/test_project_document_package_api.py 2>&1 | tee document-pytest.txt
 

@@ -1,5 +1,6 @@
 import { Grid } from "@mui/material";
 
+import { ClubSettingsWidget } from "@/features/club-settings";
 import { DocumentsWidget } from "@/features/documents";
 import CampInventoryWidget from "@/features/equipment/components/CampInventoryWidget";
 import { MealPlanWidget } from "@/features/meal-plan";
@@ -23,6 +24,10 @@ export default function WorkflowModules() {
 
       <Grid item xs={12}>
         <CampInventoryWidget />
+      </Grid>
+
+      <Grid item xs={12}>
+        <ClubSettingsWidget />
       </Grid>
 
       <Grid item xs={12}>

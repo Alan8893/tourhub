@@ -7,6 +7,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from app.engines.documents.branding import ClubBrandingDTO
+from app.engines.documents.branding_render import pdf_branding_flowables
 from app.engines.documents.dto import GeneratedDocument
 from app.engines.documents.equipment_dto import EquipmentDocumentDTO
 from app.engines.documents.pdf import PDFDocumentGenerator
@@ -15,7 +17,11 @@ from app.engines.documents.pdf import PDFDocumentGenerator
 class EquipmentPDFDocumentGenerator(PDFDocumentGenerator):
     """Generate a Russian PDF with final and calculated equipment quantities."""
 
-    def generate(self, document: EquipmentDocumentDTO) -> GeneratedDocument:
+    def generate(
+        self,
+        document: EquipmentDocumentDTO,
+        branding: ClubBrandingDTO | None = None,
+    ) -> GeneratedDocument:
         buffer = BytesIO()
         font_name = self._register_font()
         pdf = SimpleDocTemplate(
@@ -31,6 +37,7 @@ class EquipmentPDFDocumentGenerator(PDFDocumentGenerator):
             style.fontName = font_name
 
         content = [
+            *pdf_branding_flowables(styles, branding),
             Paragraph(document.title, styles["Title"]),
             Spacer(1, 5 * mm),
             Paragraph(f"Проект: {document.project_name}", styles["Normal"]),
@@ -51,7 +58,11 @@ class EquipmentPDFDocumentGenerator(PDFDocumentGenerator):
                 ]
             )
 
-        table = Table(table_data, repeatRows=1, colWidths=[75 * mm, 25 * mm, 27 * mm, 43 * mm])
+        table = Table(
+            table_data,
+            repeatRows=1,
+            colWidths=[75 * mm, 25 * mm, 27 * mm, 43 * mm],
+        )
         table.setStyle(
             TableStyle(
                 [
@@ -64,7 +75,8 @@ class EquipmentPDFDocumentGenerator(PDFDocumentGenerator):
             )
         )
         content.append(table)
-        pdf.build(content, onFirstPage=self._footer, onLaterPages=self._footer)
+        footer = self._footer(branding)
+        pdf.build(content, onFirstPage=footer, onLaterPages=footer)
         return GeneratedDocument(
             filename="equipment_list.pdf",
             content_type="application/pdf",

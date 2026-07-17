@@ -14,6 +14,7 @@ from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.services.club_settings_service import ClubSettingsService
 from app.services.equipment_list_service import EquipmentListService
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
 from app.services.project_document_package_service import ProjectDocumentPackageService
@@ -137,6 +138,7 @@ def _document_service(db: Session) -> ProjectDocumentService:
     return ProjectDocumentService(
         purchase_list_repository=PurchaseListRepository(db),
         equipment_list_repository=EquipmentListRepository(db),
+        club_settings_service=ClubSettingsService(db),
     )
 
 
