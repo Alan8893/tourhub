@@ -37,10 +37,12 @@ REQUIRED_FRAGMENTS = {
     ],
     "docs/UPDATING.md": [
         "git pull --ff-only",
-        "docker compose build --pull backend frontend",
-        "alembic backend upgrade head",
+        "docker compose -f docker-compose.release.yml build --pull backend frontend",
+        "run --rm --entrypoint alembic backend upgrade head",
+        "COMPOSE_FILE=docker-compose.release.yml",
         "restore-tourhub.sh",
-        "docker compose down --volumes",
+        "docker compose -f docker-compose.release.yml down --volumes",
+        "/healthz",
     ],
 }
 
