@@ -4,7 +4,7 @@ Status date: 2026-07-17
 
 ## Current phase
 
-The guided single-club preparation baseline and operator runbooks are complete. Ready PR #80 adds the validated production-like Docker runtime. Stacked draft PR #81 audits the approved product specification and moves final migration/release hardening after the remaining release-blocking user and domain capabilities.
+The guided single-club preparation baseline and operator runbooks are complete. Ready PR #80 adds the validated production-like Docker runtime. Stacked Ready PR #81 audits the approved product specification and moves final migration/release hardening after the remaining release-blocking user and domain capabilities.
 
 ## Verified baseline
 
@@ -14,6 +14,7 @@ The guided single-club preparation baseline and operator runbooks are complete. 
 - PR #78 passed retargeted exact-head Quality #431, Document Quality #63, and Guided Release Acceptance #14 and merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
 - PR #79 passed exact-head Quality #436, Document Quality #67, Guided Release Acceptance #18, and Operator Docs #4 and merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
 - PR #80 exact head `73b233f7529d5d310a750071d592e9b108b9a1df` passed Quality #454, Document Quality #84, Guided Release Acceptance #35, Operator Docs #21, and Docker Release Runtime #17 and is Ready for review.
+- PR #81 exact head `93d11241729634a37ddfade2de6f88a1ab6e9387` passed Quality #458, Document Quality #88, Guided Release Acceptance #39, Operator Docs #25, and Docker Release Runtime #21 and is Ready for review.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Implemented
@@ -48,7 +49,7 @@ The guided single-club preparation baseline and operator runbooks are complete. 
 - API project creation and persistence verification after application restart;
 - Alembic current-head verification and focused Docker diagnostics.
 
-## Product completeness findings — draft PR #81
+## Product completeness findings — Ready PR #81
 
 Implemented or release-ready:
 
