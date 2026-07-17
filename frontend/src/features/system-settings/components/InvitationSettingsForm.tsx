@@ -38,6 +38,12 @@ interface InvitationEditorDraft {
   requireEmailConfirmation: boolean;
 }
 
+interface ApiErrorBody {
+  error?: string;
+  detail?: string;
+  details?: Array<{ msg?: string }>;
+}
+
 function toDraft(settings: InvitationSettings): InvitationEditorDraft {
   return {
     expiresAfterDays: String(settings.expires_after_days),
@@ -51,14 +57,16 @@ function toDraft(settings: InvitationSettings): InvitationEditorDraft {
 }
 
 function parseDomains(value: string): string[] {
-  return value
-    .split(/[\n,;]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
+  return value.split(/[\n,;]/).map((item) => item.trim()).filter(Boolean);
 }
 
 function roleLabel(role: InvitationDefaultRole): string {
   return role === "verified_instructor" ? "Проверенный инструктор" : "Инструктор";
+}
+
+function apiErrorMessage(body: ApiErrorBody | undefined): string {
+  const details = body?.details?.map((item) => item.msg).filter(Boolean).join(" ");
+  return details || body?.detail || body?.error || "Не удалось сохранить политику приглашений.";
 }
 
 export default function InvitationSettingsForm() {
@@ -99,7 +107,7 @@ export default function InvitationSettingsForm() {
     [draft, saved],
   );
 
-  function updateDraft(patch: Partial<InvitationEditorDraft>) {
+  function patchDraft(patch: Partial<InvitationEditorDraft>) {
     if (!draft) return;
     setDraft({ ...draft, ...patch });
     setError(null);
@@ -127,11 +135,7 @@ export default function InvitationSettingsForm() {
       setError("Срок действия должен быть целым числом от 1 до 90 дней.");
       return;
     }
-    if (
-      !Number.isInteger(activeInvitationLimit) ||
-      activeInvitationLimit < 1 ||
-      activeInvitationLimit > 1000
-    ) {
+    if (!Number.isInteger(activeInvitationLimit) || activeInvitationLimit < 1 || activeInvitationLimit > 1000) {
       setError("Лимит активных приглашений должен быть целым числом от 1 до 1000.");
       return;
     }
@@ -160,8 +164,7 @@ export default function InvitationSettingsForm() {
         setHasConflict(true);
         setError("Политика приглашений изменена в другом окне. Перезагрузите актуальную версию.");
       } else if (axios.isAxiosError(saveError)) {
-        const response = saveError.response?.data as { error?: string; detail?: string } | undefined;
-        setError(response?.error ?? response?.detail ?? "Не удалось сохранить политику приглашений.");
+        setError(apiErrorMessage(saveError.response?.data as ApiErrorBody | undefined));
       } else {
         setError("Не удалось сохранить политику приглашений.");
       }
@@ -171,16 +174,9 @@ export default function InvitationSettingsForm() {
   }
 
   if (isLoading) {
-    return (
-      <Box sx={{ py: 8, display: "grid", placeItems: "center" }}>
-        <CircularProgress aria-label="Загрузка политики приглашений" />
-      </Box>
-    );
+    return <Box sx={{ py: 8, display: "grid", placeItems: "center" }}><CircularProgress aria-label="Загрузка политики приглашений" /></Box>;
   }
-
-  if (!saved || !draft) {
-    return <Alert severity="error">Политика приглашений недоступна.</Alert>;
-  }
+  if (!saved || !draft) return <Alert severity="error">Политика приглашений недоступна.</Alert>;
 
   const domainCount = parseDomains(draft.allowedDomainsText).length;
 
@@ -191,189 +187,59 @@ export default function InvitationSettingsForm() {
           <Box>
             <Typography variant="h5">Приглашения</Typography>
             <Typography color="text.secondary">
-              Эти правила подготовлены для будущего многопользовательского режима. Сейчас TourHub не
-              создаёт приглашения, пользователей, токены и письма.
+              Эти правила подготовлены для будущего многопользовательского режима. Сейчас TourHub не создаёт приглашения, пользователей, токены и письма.
             </Typography>
           </Box>
 
           <Alert severity="info">
-            Рабочий список приглашений, отправка и принятие появятся в Access foundation. Сохранённая
-            здесь политика станет backend-источником правил для той реализации.
+            Рабочий список приглашений, отправка и принятие появятся в Access foundation. Сохранённая здесь политика станет backend-источником правил.
           </Alert>
 
-          {error && (
-            <Alert
-              severity={hasConflict ? "warning" : "error"}
-              action={
-                hasConflict ? (
-                  <Button color="inherit" size="small" onClick={() => void load()}>
-                    Перезагрузить
-                  </Button>
-                ) : undefined
-              }
-            >
-              {error}
-            </Alert>
-          )}
+          {error && <Alert severity={hasConflict ? "warning" : "error"} action={hasConflict ? <Button color="inherit" size="small" onClick={() => void load()}>Перезагрузить</Button> : undefined}>{error}</Alert>}
           {success && <Alert severity="success">{success}</Alert>}
 
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
-              gap: 2,
-              minWidth: 0,
-            }}
-          >
-            <TextField
-              label="Срок действия, дней"
-              type="number"
-              value={draft.expiresAfterDays}
-              onChange={(event) => updateDraft({ expiresAfterDays: event.target.value })}
-              inputProps={{ min: 1, max: 90, step: 1 }}
-              helperText="От 1 до 90 дней."
-              disabled={isSaving}
-              fullWidth
-            />
-
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" }, gap: 2, minWidth: 0 }}>
+            <TextField label="Срок действия, дней" type="number" value={draft.expiresAfterDays} onChange={(event) => patchDraft({ expiresAfterDays: event.target.value })} inputProps={{ min: 1, max: 90, step: 1 }} helperText="От 1 до 90 дней." disabled={isSaving} fullWidth />
             <FormControl fullWidth disabled={isSaving}>
               <InputLabel id="invitation-default-role-label">Роль по умолчанию</InputLabel>
-              <Select
-                labelId="invitation-default-role-label"
-                label="Роль по умолчанию"
-                value={draft.defaultRole}
-                onChange={(event) =>
-                  updateDraft({ defaultRole: event.target.value as InvitationDefaultRole })
-                }
-              >
+              <Select labelId="invitation-default-role-label" label="Роль по умолчанию" value={draft.defaultRole} onChange={(event) => patchDraft({ defaultRole: event.target.value as InvitationDefaultRole })}>
                 <MenuItem value="instructor">Инструктор</MenuItem>
                 <MenuItem value="verified_instructor">Проверенный инструктор</MenuItem>
               </Select>
             </FormControl>
-
-            <TextField
-              label="Лимит активных приглашений"
-              type="number"
-              value={draft.activeInvitationLimit}
-              onChange={(event) => updateDraft({ activeInvitationLimit: event.target.value })}
-              inputProps={{ min: 1, max: 1000, step: 1 }}
-              helperText="Общий лимит ещё не принятых и не отозванных приглашений."
-              disabled={isSaving}
-              fullWidth
-            />
-
+            <TextField label="Лимит активных приглашений" type="number" value={draft.activeInvitationLimit} onChange={(event) => patchDraft({ activeInvitationLimit: event.target.value })} inputProps={{ min: 1, max: 1000, step: 1 }} helperText="Общий лимит ещё не принятых и не отозванных приглашений." disabled={isSaving} fullWidth />
             <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
-              <Stack spacing={0.5}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={draft.administratorsOnly}
-                      disabled
-                      inputProps={{ "aria-label": "Только администраторы" }}
-                    />
-                  }
-                  label="Только администраторы"
-                />
-                <Typography variant="caption" color="warning.main">
-                  Обязательное правило Product Specification. Другие роли не смогут создавать или
-                  управлять приглашениями.
-                </Typography>
-              </Stack>
+              <FormControlLabel control={<Switch checked={draft.administratorsOnly} disabled inputProps={{ "aria-label": "Только администраторы" }} />} label="Только администраторы" />
+              <Typography variant="caption" color="warning.main">Обязательное правило Product Specification. Другие роли не смогут управлять приглашениями.</Typography>
             </Paper>
           </Box>
 
-          <TextField
-            label="Разрешённые email-домены"
-            value={draft.allowedDomainsText}
-            onChange={(event) => updateDraft({ allowedDomainsText: event.target.value })}
-            placeholder={"club.example\nexample.org"}
-            helperText={
-              domainCount === 0
-                ? "Пустой список разрешает любой домен. Указывайте домены без @, протокола и пути."
-                : `В черновике доменов: ${domainCount}. Backend нормализует регистр, IDNA и дубликаты.`
-            }
-            minRows={4}
-            multiline
-            disabled={isSaving}
-            fullWidth
-          />
+          <TextField label="Разрешённые email-домены" value={draft.allowedDomainsText} onChange={(event) => patchDraft({ allowedDomainsText: event.target.value })} placeholder={"club.example\nexample.org"} helperText={domainCount === 0 ? "Пустой список разрешает любой домен. Указывайте домены без @, протокола и пути." : `В черновике доменов: ${domainCount}. Backend нормализует регистр, IDNA и дубликаты.`} minRows={4} multiline disabled={isSaving} fullWidth />
 
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
-              gap: 2,
-              minWidth: 0,
-            }}
-          >
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" }, gap: 2, minWidth: 0 }}>
             <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={draft.allowResend}
-                    disabled={isSaving}
-                    onChange={(event) => updateDraft({ allowResend: event.target.checked })}
-                    inputProps={{ "aria-label": "Разрешить повторную отправку" }}
-                  />
-                }
-                label="Разрешить повторную отправку"
-              />
-              <Typography variant="body2" color="text.secondary">
-                Определяет, сможет ли будущий интерфейс повторно отправлять активное приглашение.
-              </Typography>
+              <FormControlLabel control={<Switch checked={draft.allowResend} disabled={isSaving} onChange={(event) => patchDraft({ allowResend: event.target.checked })} inputProps={{ "aria-label": "Разрешить повторную отправку" }} />} label="Разрешить повторную отправку" />
+              <Typography variant="body2" color="text.secondary">Будущий интерфейс сможет повторно отправлять активное приглашение.</Typography>
             </Paper>
-
             <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={draft.requireEmailConfirmation}
-                    disabled={isSaving}
-                    onChange={(event) =>
-                      updateDraft({ requireEmailConfirmation: event.target.checked })
-                    }
-                    inputProps={{ "aria-label": "Требовать подтверждение email" }}
-                  />
-                }
-                label="Требовать подтверждение email"
-              />
-              <Typography variant="body2" color="text.secondary">
-                Будущая регистрация должна подтвердить владение адресом до активации пользователя.
-              </Typography>
+              <FormControlLabel control={<Switch checked={draft.requireEmailConfirmation} disabled={isSaving} onChange={(event) => patchDraft({ requireEmailConfirmation: event.target.checked })} inputProps={{ "aria-label": "Требовать подтверждение email" }} />} label="Требовать подтверждение email" />
+              <Typography variant="body2" color="text.secondary">Будущая регистрация подтвердит владение адресом до активации.</Typography>
             </Paper>
           </Box>
 
           <Paper variant="outlined" sx={{ p: 2, bgcolor: "action.hover", minWidth: 0 }}>
             <Typography variant="subtitle2">Сводка будущей политики</Typography>
-            <Typography variant="body2" color="text.secondary">
-              Приглашение действует {draft.expiresAfterDays || "—"} дн.; роль — {roleLabel(
-                draft.defaultRole,
-              )}; активный лимит — {draft.activeInvitationLimit || "—"}; домены — {domainCount || "без ограничения"}.
-            </Typography>
+            <Typography variant="body2" color="text.secondary">Приглашение действует {draft.expiresAfterDays || "—"} дн.; роль — {roleLabel(draft.defaultRole)}; активный лимит — {draft.activeInvitationLimit || "—"}; домены — {domainCount || "без ограничения"}.</Typography>
           </Paper>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1} flexWrap="wrap" useFlexGap>
-            <Button variant="outlined" disabled={isSaving} onClick={resetDefaults}>
-              Восстановить TourHub
-            </Button>
-            <Button variant="outlined" disabled={isSaving || !hasChanges} onClick={cancelDraft}>
-              Отменить изменения
-            </Button>
-            <Button
-              variant="contained"
-              disabled={isSaving || !hasChanges}
-              onClick={() => void save()}
-            >
-              {isSaving ? "Сохранение…" : "Сохранить раздел"}
-            </Button>
+            <Button variant="outlined" disabled={isSaving} onClick={resetDefaults}>Восстановить TourHub</Button>
+            <Button variant="outlined" disabled={isSaving || !hasChanges} onClick={cancelDraft}>Отменить изменения</Button>
+            <Button variant="contained" disabled={isSaving || !hasChanges} onClick={() => void save()}>{isSaving ? "Сохранение…" : "Сохранить раздел"}</Button>
           </Stack>
-
-          <Typography variant="caption" color="text.secondary">
-            Текущая версия: {saved.version}
-          </Typography>
+          <Typography variant="caption" color="text.secondary">Текущая версия: {saved.version}</Typography>
         </Stack>
       </Paper>
-
       <SettingsHistoryList items={history} />
     </Stack>
   );
