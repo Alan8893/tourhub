@@ -14,7 +14,7 @@ class PrintDocumentGenerator:
     ) -> GeneratedDocument:
         lines = [document.title, ""]
         if branding is not None:
-            lines = [branding.club_name, document.title, ""]
+            lines = [branding.club_name, *branding.contact_lines, "", document.title, ""]
 
         for item in document.items:
             package_text = ""
@@ -26,6 +26,15 @@ class PrintDocumentGenerator:
 
             lines.append(
                 f"{item.product_name}: {item.quantity} {item.unit}{package_text}"
+            )
+
+        if branding is not None:
+            lines.extend(
+                [
+                    "",
+                    branding.footer_text
+                    or f"Сформировано для {branding.club_name} в TourHub",
+                ]
             )
 
         return GeneratedDocument(
