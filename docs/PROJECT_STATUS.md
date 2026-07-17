@@ -4,19 +4,20 @@ Status date: 2026-07-17
 
 ## Current phase
 
-The guided single-club preparation baseline, operator runbooks, production-like Docker runtime, product completeness audit, club settings, and site appearance are complete. Draft PR #86 implements the third System Settings slice: independent document appearance applied through one immutable generation snapshot.
+The guided single-club preparation baseline, operator runbooks, production-like Docker runtime, product completeness audit, club settings, site appearance, and document appearance are complete. Draft PR #87 implements typed module navigation visibility with backend dependency locks.
 
 ## Verified baseline
 
-- `main`: `0e4e376470072e9475a31504faeb46e8b5a68364` — merged PR #85.
-- `main` Alembic head: `h10009`.
+- `main`: `18d5c9637e2e692b630009167dd622ee40ee2747` — merged PR #86.
+- `main` Alembic head: `h10010`.
 - PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`.
 - PR #78 merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
 - PR #79 merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
 - PR #80 merged as `939828e8c335966dde2d04c5083ee7d2da07c6eb`.
 - PR #83 merged as `950a43914230f6fe4be3bf217a4e5f1b79e7265f`.
 - PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`.
-- PR #85 passed Quality #537, Document Quality #164, Guided Release Acceptance #115, Operator Docs #101, and Docker Release Runtime #96 before merge.
+- PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`.
+- PR #86 passed Quality #575, Document Quality #201, Guided Release Acceptance #152, Operator Docs #138, and Docker Release Runtime #133 before merge.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Implemented on main
@@ -44,62 +45,49 @@ The guided single-club preparation baseline, operator runbooks, production-like 
 
 - approved product areas have an evidence-based completeness status;
 - final migration downgrade/re-upgrade smoke is placed after feature freeze;
-- System Settings is scheduled before multi-user access by Product Owner decision;
-- basic migration, backup/restore, Docker, and full Quality gates remain mandatory throughout feature development.
+- System Settings is scheduled before multi-user access;
+- basic migration, backup/restore, Docker, and full Quality gates remain mandatory during feature work.
 
-### System Settings club foundation
+### System Settings foundation
 
-- dedicated responsive `/settings` route and main navigation entry;
-- independent typed settings-section ownership through ADR-014;
-- singleton club profile with one required name and optional identity/contact/location fields;
-- seven validated PNG/JPEG/WebP image roles and no SVG;
+- dedicated responsive `/settings` route and independent typed section ownership through ADR-014;
+- `ClubSettings` through additive Alembic `h10008`;
+- `AppearanceSettings` through `h10009` with dynamic light/dark themes and safe theme transfer;
+- `DocumentAppearanceSettings` through `h10010` with one immutable rendering snapshot;
 - optimistic versioning, PostgreSQL row locking, HTTP 409 conflicts, and safe local-admin history;
-- existing document branding and legacy `/api/v1/club-settings` compatibility;
-- additive Alembic `h10008` with one head.
+- existing club/document compatibility contracts remain preserved.
 
-### System Settings site appearance
-
-- independent singleton `AppearanceSettings` through Alembic `h10009`;
-- complete organization-wide light and dark token sets;
-- safe presets, fonts, density, radius, component styles, and shadow controls;
-- backend #RRGGBB and contrast validation with Russian explanations;
-- dynamic global MUI theme application without restart;
-- per-browser system/light/dark mode in localStorage;
-- isolated preview, reset, cancel, copy, validated JSON import, and JSON export;
-- optimistic conflicts, row locking, safe history, and desktop/mobile acceptance.
-
-## Draft PR #86 — System Settings document appearance
+## Draft PR #87 — System Settings module visibility
 
 Backend:
 
-- additive Alembic `h10010` creates independent singleton `document_appearance_settings` persistence;
-- typed palette, logo source, contacts visibility, footer, title image, and table-density settings;
-- backend validates #RRGGBB values and minimum table-header contrast with a clear Russian reason;
+- additive Alembic `h10011` creates independent singleton `module_settings` persistence;
+- explicit boolean columns own project, catalogue, import, shopping, equipment, and document visibility;
+- projects and catalogue are required and cannot be hidden;
+- visible documents require visible shopping and equipment;
 - versioned updates use a PostgreSQL row lock and reject stale editors with HTTP 409;
-- document history records changed field names only and shares the latest-200 retention boundary;
-- selected missing images fall back to the main logo, while `none` suppresses the logo explicitly.
-
-Document pipeline:
-
-- one frozen snapshot combines `ClubSettings` with `DocumentAppearanceSettings`;
-- `ProjectDocumentService` loads that snapshot once per generation request;
-- purchase/equipment PDF, Excel, printable text, and all ZIP entries reuse the same object;
-- PDF and Excel share centralized palette/density/rendering helpers;
-- existing routes, content types, and filenames remain compatible;
-- consolidated document contents remain outside this slice.
+- module history records changed field names only and shares the latest-200 retention boundary;
+- API metadata includes Russian labels, descriptions, dependencies, required state, and lock reasons.
 
 Frontend:
 
-- the planned `Документы` section becomes a working responsive editor;
-- the form edits palette, logo source, contacts, footer, title background, and table density;
-- an isolated document preview shows the draft before save;
+- the planned `Модули` section becomes a working responsive editor;
+- required and dependency-locked switches explain why they cannot be changed;
 - reset, cancel, save, validation, conflict, version, and history states are shown in Russian;
-- desktop/mobile browser acceptance is independent from club and site appearance scenarios.
+- saved visibility updates desktop/mobile sidebar navigation immediately;
+- shopping, purchase, equipment, and document project cards follow the same global snapshot;
+- direct routes and APIs remain unchanged and accessible.
+
+Architecture:
+
+- module visibility is presentation policy, not authorization or runtime backend module unloading;
+- `Настройки`, required projects, and required catalogue navigation remain visible;
+- future roles and backend authorization will be separate enforcement layers.
 
 ## Remaining System Settings sequence
 
-1. Module navigation visibility and required dependency locks.
-2. Future invitation and mail configuration boundaries.
+1. Typed future invitation policy fields without a functional invitation list.
+2. Informative mail boundary until access foundation exists.
 3. Access foundation and functional invitations.
 4. Working SMTP delivery after identity exists.
 
@@ -114,7 +102,7 @@ Frontend:
 
 ## Quality debt
 
-- finish exact-head validation and review for PR #86;
+- finish exact-head validation and review for PR #87;
 - active deployment catalogue data acceptance;
 - catalogue-import interaction coverage;
 - final PostgreSQL migration cycle after feature freeze;
