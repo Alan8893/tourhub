@@ -8,6 +8,7 @@ const menuItems = [
   { label: "Блюда", path: "/dishes" },
   { label: "Рецепты", path: "/recipes" },
   { label: "Импорт", path: "/catalog-import" },
+  { label: "Настройки", path: "/settings" },
 ];
 
 interface SidebarProps {
