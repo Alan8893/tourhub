@@ -15,6 +15,7 @@ Project
   → Branded Russian PDF and Excel
   → Guided release acceptance
   → Operator installation and update path
+  → Production-like Docker runtime
 ```
 
 ## DONE
@@ -37,25 +38,25 @@ Project
 - reload-safe preparation state and equipment-aware completion;
 - full create → menu → prepare → reload → branded ZIP desktop/mobile acceptance.
 
-PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`. PR #78 passed retargeted exact-head Quality #431, Document Quality #63, and Guided Release Acceptance #14 and merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
-
 ## IN PROGRESS
 
-### PR #79 — operator installation and update runbooks
+### PR #80 — Docker release runtime validation
 
-- document prerequisites, first startup, health, migration, LAN, port, and volume checks;
-- provide backup-first update and recovery procedures;
-- add host-side custom-format PostgreSQL backup and confirmed restore commands;
-- create a pre-restore safety backup when replacing an existing database;
-- define rollback boundaries and prohibit destructive volume deletion;
-- link operator entry points from README;
-- validate scripts, commands, links, and Docker Compose syntax in a focused workflow.
+- production-like Docker image and runtime validation;
+- clean environment startup checks;
+- release Compose verification.
+
+### TH-0073 — MVP completeness audit
+
+- compare Product Specification against implemented functionality;
+- identify true release blockers before final release hardening;
+- separate required MVP features from intentionally deferred scope.
 
 ## NEXT
 
-- add Docker image build and runtime smoke validation;
-- add PostgreSQL migration upgrade/downgrade smoke;
-- complete the final release workflow and checklist.
+- complete MVP completeness audit;
+- implement approved missing user-facing MVP functionality if required;
+- postpone final migration downgrade smoke and release checklist until the MVP boundary is confirmed.
 
 ## LATER
 
