@@ -89,6 +89,12 @@ export function startInvitationSettingsApi() {
       return;
     }
 
+    if (url.pathname === "/api/v1/invitations" && request.method === "GET") {
+      response.statusCode = 200;
+      response.end(JSON.stringify([]));
+      return;
+    }
+
     response.statusCode = 404;
     response.end(JSON.stringify({ error: "not found" }));
   });
