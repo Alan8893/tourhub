@@ -4,106 +4,51 @@ Status date: 2026-07-17
 
 ## Current phase
 
-The guided single-club preparation baseline, operator runbooks, production-like Docker runtime, product completeness audit, club settings, site appearance, and document appearance are complete. Draft PR #87 implements typed module navigation visibility with backend dependency locks.
+The guided single-club preparation baseline, operator path, production-like Docker runtime, product completeness audit, club/site/document settings, and module visibility are complete. Draft PR #88 implements typed future invitation policy without creating operational users or invitations.
 
 ## Verified baseline
 
-- `main`: `18d5c9637e2e692b630009167dd622ee40ee2747` — merged PR #86.
-- `main` Alembic head: `h10010`.
-- PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`.
-- PR #78 merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
-- PR #79 merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
-- PR #80 merged as `939828e8c335966dde2d04c5083ee7d2da07c6eb`.
-- PR #83 merged as `950a43914230f6fe4be3bf217a4e5f1b79e7265f`.
+- `main`: `717d6f22d58e86a952edad501f05d3c67d8c0bf4` — merged PR #87.
+- `main` Alembic head: `h10011`.
 - PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`.
 - PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`.
-- PR #86 passed Quality #575, Document Quality #201, Guided Release Acceptance #152, Operator Docs #138, and Docker Release Runtime #133 before merge.
+- PR #86 merged as `18d5c9637e2e692b630009167dd622ee40ee2747`.
+- PR #87 passed Quality #604, Document Quality #229, Guided Release Acceptance #180, Operator Docs #166, and Docker Release Runtime #161 before merge.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Implemented on main
 
-### Guided project preparation
+- complete guided preparation from project creation through Russian purchase/equipment documents and ZIP;
+- persisted shopping, packaging, checklist, equipment, overrides, recalculation, and reload-safe readiness;
+- installation, update, backup, restore, recovery, immutable release images, health checks, API proxy, and restart persistence;
+- responsive `/settings` with independent typed ownership through ADR-014;
+- `ClubSettings` (`h10008`), `AppearanceSettings` (`h10009`), `DocumentAppearanceSettings` (`h10010`), and `ModuleSettings` (`h10011`);
+- dynamic organization appearance, isolated previews, and one immutable club/document snapshot per generation request;
+- module navigation/workspace visibility with backend/database dependency locks;
+- direct routes and APIs remain available because visibility is not authorization;
+- optimistic versions, PostgreSQL row locks, HTTP 409 conflicts, and safe local-admin history.
 
-- project creation, participants, duration, meal boundaries, and role-aware menu generation;
-- authoritative manual editing and persisted generation warnings;
-- persisted shopping, packaging, checklist, surplus, and responsible-person text;
-- persisted equipment requirements, aggregation, manual rows, overrides, removals, and transactional refresh;
-- Russian purchase/equipment PDF, Excel, print, and complete ZIP;
-- reload-safe preparation readiness and equipment-aware completion;
-- full desktop/mobile create → menu → prepare → reload → branded ZIP acceptance.
+## Draft PR #88 — invitation policy
 
-### Operations and runtime
+- additive Alembic `h10012` creates singleton `invitation_settings` persistence;
+- typed expiry days, safe default role, allowed domains, resend policy, active limit, mandatory administrator-only rule, and email confirmation;
+- default role is Instructor or Verified Instructor, never Administrator;
+- domains are normalized to lowercase ASCII IDNA, deduplicated, sorted, and validated without `@`, schemes, paths, or ports;
+- an empty domain list means any domain;
+- stale updates return HTTP 409 and history stores changed field names only;
+- the responsive Russian editor exposes reset, cancel, save, conflict, version, normalization, and history states;
+- the UI explicitly states that users, invitation records, tokens, email delivery, and acceptance are not implemented.
 
-- installation, update, backup, restore, recovery, health, migration, LAN, port, and volume guidance;
-- production-like release Compose without application bind mounts;
-- production frontend image served by Nginx;
-- internal PostgreSQL and Redis networking;
-- same-origin API proxy and health checks;
-- clean image build/start, Alembic head, API persistence after restart, diagnostics, and cleanup.
+## Remaining sequence
 
-### Product sequencing
-
-- approved product areas have an evidence-based completeness status;
-- final migration downgrade/re-upgrade smoke is placed after feature freeze;
-- System Settings is scheduled before multi-user access;
-- basic migration, backup/restore, Docker, and full Quality gates remain mandatory during feature work.
-
-### System Settings foundation
-
-- dedicated responsive `/settings` route and independent typed section ownership through ADR-014;
-- `ClubSettings` through additive Alembic `h10008`;
-- `AppearanceSettings` through `h10009` with dynamic light/dark themes and safe theme transfer;
-- `DocumentAppearanceSettings` through `h10010` with one immutable rendering snapshot;
-- optimistic versioning, PostgreSQL row locking, HTTP 409 conflicts, and safe local-admin history;
-- existing club/document compatibility contracts remain preserved.
-
-## Draft PR #87 — System Settings module visibility
-
-Backend:
-
-- additive Alembic `h10011` creates independent singleton `module_settings` persistence;
-- explicit boolean columns own project, catalogue, import, shopping, equipment, and document visibility;
-- projects and catalogue are required and cannot be hidden;
-- visible documents require visible shopping and equipment;
-- versioned updates use a PostgreSQL row lock and reject stale editors with HTTP 409;
-- module history records changed field names only and shares the latest-200 retention boundary;
-- API metadata includes Russian labels, descriptions, dependencies, required state, and lock reasons.
-
-Frontend:
-
-- the planned `Модули` section becomes a working responsive editor;
-- required and dependency-locked switches explain why they cannot be changed;
-- reset, cancel, save, validation, conflict, version, and history states are shown in Russian;
-- saved visibility updates desktop/mobile sidebar navigation immediately;
-- shopping, purchase, equipment, and document project cards follow the same global snapshot;
-- direct routes and APIs remain unchanged and accessible.
-
-Architecture:
-
-- module visibility is presentation policy, not authorization or runtime backend module unloading;
-- `Настройки`, required projects, and required catalogue navigation remain visible;
-- future roles and backend authorization will be separate enforcement layers.
-
-## Remaining System Settings sequence
-
-1. Typed future invitation policy fields without a functional invitation list.
-2. Informative mail boundary until access foundation exists.
-3. Access foundation and functional invitations.
-4. Working SMTP delivery after identity exists.
-
-## Other release-blocking work
-
-- CLUB/PERSONAL recipe ownership, variants, publication, and moderation;
-- centralized backend alcohol prohibition across API and CSV import;
-- actor-aware application audit log;
-- complete consolidated Russian PDF and workbook contents;
-- active deployment catalogue and import acceptance;
-- optional recipe metadata and preference-priority decisions.
+1. Informative mail configuration and external/write-only secret boundary.
+2. Access foundation and functional invitations.
+3. Working SMTP delivery after identity exists.
+4. Recipe ownership/lifecycle, central alcohol policy, actor-aware audit, consolidated exports, product acceptance, then feature freeze.
 
 ## Quality debt
 
-- finish exact-head validation and review for PR #87;
-- active deployment catalogue data acceptance;
-- catalogue-import interaction coverage;
+- finish exact-head validation and review for PR #88;
+- active catalogue/import acceptance;
 - final PostgreSQL migration cycle after feature freeze;
 - final release workflow and deployment checklist.
