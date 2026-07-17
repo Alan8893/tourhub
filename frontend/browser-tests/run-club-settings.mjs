@@ -21,6 +21,34 @@ const pageUrl = "http://127.0.0.1:5181/browser-tests/club-settings.html";
 const profileDir = "/tmp/tourhub-club-settings-profile";
 const requests = [];
 
+function createSettings() {
+  return {
+    version: 1,
+    club_name: "Турклуб Север",
+    short_name: "Север",
+    legal_name: null,
+    description: null,
+    address: null,
+    phone: null,
+    email: null,
+    website: null,
+    timezone: null,
+    city: null,
+    region: null,
+    social_links: [],
+    images: {
+      main_logo_data_url: null,
+      light_logo_data_url: null,
+      dark_logo_data_url: null,
+      square_icon_data_url: null,
+      favicon_data_url: null,
+      login_background_data_url: null,
+      document_image_data_url: null,
+    },
+    updated_at: "2026-07-17T12:00:00",
+  };
+}
+
 async function readBody(request) {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
@@ -28,22 +56,54 @@ async function readBody(request) {
 }
 
 function startApi() {
-  let settings = { club_name: "Турклуб Север", logo_data_url: null };
+  let settings = createSettings();
+  let history = [];
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
     const body = request.method === "PUT" ? await readBody(request) : undefined;
     requests.push({ method: request.method, path: url.pathname, body });
     response.setHeader("content-type", "application/json");
-    if (url.pathname !== "/api/v1/club-settings") {
-      response.statusCode = 404;
-      response.end(JSON.stringify({ detail: "not found" }));
+
+    if (url.pathname === "/api/v1/settings/club") {
+      if (request.method === "PUT") {
+        if (body.expected_version !== settings.version) {
+          response.statusCode = 409;
+          response.end(JSON.stringify({ detail: "stale settings version" }));
+          return;
+        }
+        settings = {
+          ...settings,
+          ...body,
+          version: settings.version + 1,
+          images: settings.images,
+          updated_at: "2026-07-17T12:05:00",
+        };
+        delete settings.expected_version;
+        history = [
+          {
+            id: 1,
+            section: "club",
+            actor_label: "Локальный администратор",
+            action: "updated",
+            changed_fields: ["club_name"],
+            settings_version: settings.version,
+            created_at: "2026-07-17T12:05:00",
+          },
+        ];
+      }
+      response.statusCode = 200;
+      response.end(JSON.stringify(settings));
       return;
     }
-    if (request.method === "PUT") {
-      settings = { club_name: body.club_name, logo_data_url: null };
+
+    if (url.pathname === "/api/v1/settings/history") {
+      response.statusCode = 200;
+      response.end(JSON.stringify(history));
+      return;
     }
-    response.statusCode = 200;
-    response.end(JSON.stringify(settings));
+
+    response.statusCode = 404;
+    response.end(JSON.stringify({ detail: "not found" }));
   });
   return {
     listen: () => new Promise((resolve) => server.listen(18083, "127.0.0.1", resolve)),
@@ -102,13 +162,17 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Настройки клуба") &&
-       document.querySelector('input[type="text"]')?.value === "Турклуб Север"`,
-      "loaded club settings",
+      `document.body?.innerText?.includes("Настройки") &&
+       document.body?.innerText?.includes("Клуб") &&
+       [...document.querySelectorAll('input')].some((item) => item.value === "Турклуб Север")`,
+      "loaded system settings",
     );
+
     assert.equal(
       await client.evaluate(`(() => {
-        const input = document.querySelector('input[type="text"]');
+        const input = [...document.querySelectorAll('input')].find(
+          (item) => item.value === "Турклуб Север",
+        );
         if (!input) return false;
         const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
         setter.call(input, "Турклуб Полюс");
@@ -117,10 +181,11 @@ async function run() {
       })()`),
       true,
     );
+
     assert.equal(
       await client.evaluate(`(() => {
         const button = [...document.querySelectorAll("button")].find(
-          (item) => item.textContent.trim() === "Сохранить настройки",
+          (item) => item.textContent.trim() === "Сохранить раздел",
         );
         if (!button || button.disabled) return false;
         button.click();
@@ -128,17 +193,36 @@ async function run() {
       })()`),
       true,
     );
+
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Настройки клуба сохранены")`,
-      "save confirmation",
+      `document.body?.innerText?.includes("Настройки клуба сохранены") &&
+       document.body?.innerText?.includes("Локальный администратор")`,
+      "saved club settings and history",
     );
+
     const put = requests.find((item) => item.method === "PUT");
-    assert.deepEqual(put?.body, {
-      club_name: "Турклуб Полюс",
-      logo_data_url: null,
-      remove_logo: false,
-    });
+    assert.equal(put?.path, "/api/v1/settings/club");
+    assert.equal(put?.body.expected_version, 1);
+    assert.equal(put?.body.club_name, "Турклуб Полюс");
+    assert.deepEqual(put?.body.images, {});
+
+    assert.equal(
+      await client.evaluate(`(() => {
+        const button = [...document.querySelectorAll("div[role='button'], button")].find(
+          (item) => item.textContent?.trim().startsWith("Почта"),
+        );
+        if (!button) return false;
+        button.click();
+        return true;
+      })()`),
+      true,
+    );
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("универсальный SMTP")`,
+      "planned mail section",
+    );
 
     await client.send("Emulation.setDeviceMetricsOverride", {
       width: 360,
@@ -146,16 +230,21 @@ async function run() {
       deviceScaleFactor: 1,
       mobile: true,
     });
-    await sleep(250);
+    await sleep(350);
     const layout = await client.evaluate(`(() => ({
       clientWidth: document.documentElement.clientWidth,
       scrollWidth: document.documentElement.scrollWidth,
       bodyScrollWidth: document.body.scrollWidth,
+      hasSectionSelect: [...document.querySelectorAll('[role="combobox"]')].some(
+        (item) => item.textContent?.includes("Почта"),
+      ),
     }))()`);
     assert.ok(
       layout.scrollWidth <= layout.clientWidth + 1 &&
         layout.bodyScrollWidth <= layout.clientWidth + 1,
     );
+    assert.equal(layout.hasSectionSelect, true);
+
     const screenshot = await client.send("Page.captureScreenshot", {
       format: "png",
       captureBeyondViewport: false,
@@ -165,7 +254,7 @@ async function run() {
       Buffer.from(screenshot.data, "base64"),
     );
     client.close();
-    console.log("Club settings browser acceptance passed.");
+    console.log("System settings browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
