@@ -6,9 +6,12 @@ One installation represents one tourist club. The current release is a single-us
 
 ## Quick start
 
+Use the production-like release stack for an operator installation:
+
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.release.yml up -d --build --wait
 curl -fsS http://localhost:8000/api/v1/health
+curl -fsS http://localhost:5173/healthz
 ```
 
 After startup on the server:
@@ -23,25 +26,29 @@ From another computer on the same trusted network, open:
 http://<server-ip>:5173
 ```
 
-Frontend API calls use the same origin under `/api/v1` and are proxied to the backend container. Browser-facing frontend code must not hardcode `localhost:8000`, because `localhost` would refer to the user's computer rather than the TourHub server.
+Frontend API calls use the same origin under `/api/v1` and are proxied by the frontend Nginx container to the backend. Browser-facing frontend code must not hardcode `localhost:8000`, because `localhost` would refer to the user's computer rather than the TourHub server.
 
-Database migrations run through the backend container entrypoint. PostgreSQL data is stored in the named Docker volume declared by `docker-compose.yml`.
+Database migrations run through the backend container entrypoint. PostgreSQL data is stored in the `postgres18_cluster_data` named Docker volume. The release stack does not publish PostgreSQL or Redis ports.
+
+The default `docker-compose.yml` remains the development-oriented stack with source bind mounts and infrastructure ports.
 
 ## Operator documentation
 
 - [Installation runbook](docs/INSTALLATION.md) — prerequisites, first startup, health checks, LAN access, backups, and routine operations;
+- [Docker release runtime](docs/DOCKER_RELEASE.md) — immutable images, release Compose, health contract, internal services, and automated runtime validation;
 - [Update and recovery runbook](docs/UPDATING.md) — backup-first update, explicit migrations, verification, restore, and rollback boundaries.
 
-Create a host-side custom-format database backup:
+Create a release-stack host-side custom-format database backup:
 
 ```bash
-bash scripts/db/backup-tourhub.sh
+COMPOSE_FILE=docker-compose.release.yml bash scripts/db/backup-tourhub.sh
 ```
 
 Restore requires an explicit confirmation flag and leaves application services stopped:
 
 ```bash
-bash scripts/db/restore-tourhub.sh backups/<dump-file>.dump --confirm
+COMPOSE_FILE=docker-compose.release.yml \
+  bash scripts/db/restore-tourhub.sh backups/<dump-file>.dump --confirm
 ```
 
 ## Canonical documentation
@@ -68,7 +75,9 @@ GitHub Actions currently enforce:
 - frontend tests, production build, and browser acceptance;
 - guided desktop/mobile create-to-ZIP release acceptance;
 - moderate-severity dependency audit;
-- PostgreSQL 18 backup/restore smoke testing.
+- PostgreSQL 18 backup/restore smoke testing;
+- operator runbook and script validation;
+- production-like Docker image build and clean runtime smoke testing.
 
 ## Development rules
 
