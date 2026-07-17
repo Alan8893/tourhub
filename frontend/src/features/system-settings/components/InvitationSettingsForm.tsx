@@ -158,7 +158,7 @@ export default function InvitationSettingsForm() {
       setSaved(updated);
       setDraft(toDraft(updated));
       setHistory(await getInvitationSettingsHistory());
-      setSuccess("Политика приглашений сохранена. Она будет применяться после реализации доступа.");
+      setSuccess("Политика приглашений сохранена и применяется к новым ссылкам.");
     } catch (saveError) {
       if (axios.isAxiosError(saveError) && saveError.response?.status === 409) {
         setHasConflict(true);
@@ -185,14 +185,14 @@ export default function InvitationSettingsForm() {
       <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 }, minWidth: 0 }}>
         <Stack spacing={2.5}>
           <Box>
-            <Typography variant="h5">Приглашения</Typography>
+            <Typography variant="h5">Политика приглашений</Typography>
             <Typography color="text.secondary">
-              Эти правила подготовлены для будущего многопользовательского режима. Сейчас TourHub не создаёт приглашения, пользователей, токены и письма.
+              Эти правила применяются Backend при создании, повторном выпуске и принятии одноразовых ссылок.
             </Typography>
           </Box>
 
           <Alert severity="info">
-            Рабочий список приглашений, отправка и принятие появятся в Access foundation. Сохранённая здесь политика станет backend-источником правил.
+            Рабочие ссылки управляются ниже. Пока почтовая доставка не реализована, администратор передаёт новую ссылку пользователю вручную.
           </Alert>
 
           {error && <Alert severity={hasConflict ? "warning" : "error"} action={hasConflict ? <Button color="inherit" size="small" onClick={() => void load()}>Перезагрузить</Button> : undefined}>{error}</Alert>}
@@ -210,7 +210,7 @@ export default function InvitationSettingsForm() {
             <TextField label="Лимит активных приглашений" type="number" value={draft.activeInvitationLimit} onChange={(event) => patchDraft({ activeInvitationLimit: event.target.value })} inputProps={{ min: 1, max: 1000, step: 1 }} helperText="Общий лимит ещё не принятых и не отозванных приглашений." disabled={isSaving} fullWidth />
             <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
               <FormControlLabel control={<Switch checked={draft.administratorsOnly} disabled inputProps={{ "aria-label": "Только администраторы" }} />} label="Только администраторы" />
-              <Typography variant="caption" color="warning.main">Обязательное правило Product Specification. Другие роли не смогут управлять приглашениями.</Typography>
+              <Typography variant="caption" color="warning.main">Обязательное правило: другие роли не могут создавать, перевыпускать или отзывать ссылки.</Typography>
             </Paper>
           </Box>
 
@@ -218,17 +218,17 @@ export default function InvitationSettingsForm() {
 
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" }, gap: 2, minWidth: 0 }}>
             <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
-              <FormControlLabel control={<Switch checked={draft.allowResend} disabled={isSaving} onChange={(event) => patchDraft({ allowResend: event.target.checked })} inputProps={{ "aria-label": "Разрешить повторную отправку" }} />} label="Разрешить повторную отправку" />
-              <Typography variant="body2" color="text.secondary">Будущий интерфейс сможет повторно отправлять активное приглашение.</Typography>
+              <FormControlLabel control={<Switch checked={draft.allowResend} disabled={isSaving} onChange={(event) => patchDraft({ allowResend: event.target.checked })} inputProps={{ "aria-label": "Разрешить повторную отправку" }} />} label="Разрешить повторный выпуск" />
+              <Typography variant="body2" color="text.secondary">Администратор сможет создать новую ссылку, навсегда отключив предыдущую.</Typography>
             </Paper>
             <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
               <FormControlLabel control={<Switch checked={draft.requireEmailConfirmation} disabled={isSaving} onChange={(event) => patchDraft({ requireEmailConfirmation: event.target.checked })} inputProps={{ "aria-label": "Требовать подтверждение email" }} />} label="Требовать подтверждение email" />
-              <Typography variant="body2" color="text.secondary">Будущая регистрация подтвердит владение адресом до активации.</Typography>
+              <Typography variant="body2" color="text.secondary">В текущем link-based процессе владение адресом подтверждается доступом к одноразовой ссылке.</Typography>
             </Paper>
           </Box>
 
           <Paper variant="outlined" sx={{ p: 2, bgcolor: "action.hover", minWidth: 0 }}>
-            <Typography variant="subtitle2">Сводка будущей политики</Typography>
+            <Typography variant="subtitle2">Сводка политики</Typography>
             <Typography variant="body2" color="text.secondary">Приглашение действует {draft.expiresAfterDays || "—"} дн.; роль — {roleLabel(draft.defaultRole)}; активный лимит — {draft.activeInvitationLimit || "—"}; домены — {domainCount || "без ограничения"}.</Typography>
           </Paper>
 
