@@ -4,6 +4,8 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
+from app.engines.documents.branding import ClubBrandingDTO
+from app.engines.documents.branding_render import apply_excel_branding
 from app.engines.documents.dto import GeneratedDocument
 from app.engines.documents.equipment_dto import EquipmentDocumentDTO
 
@@ -11,10 +13,15 @@ from app.engines.documents.equipment_dto import EquipmentDocumentDTO
 class EquipmentExcelDocumentGenerator:
     """Generate an XLSX workbook with final and calculated equipment quantities."""
 
-    def generate(self, document: EquipmentDocumentDTO) -> GeneratedDocument:
+    def generate(
+        self,
+        document: EquipmentDocumentDTO,
+        branding: ClubBrandingDTO | None = None,
+    ) -> GeneratedDocument:
         workbook = Workbook()
         sheet = workbook.active
         sheet.title = "Оборудование"
+        apply_excel_branding(workbook, sheet, branding)
         sheet.append([document.title])
         sheet.append(["Проект", document.project_name])
         sheet.append(["Идентификатор списка", document.equipment_list_id])
