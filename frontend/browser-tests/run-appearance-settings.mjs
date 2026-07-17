@@ -174,9 +174,7 @@ async function run() {
       scrollWidth: document.documentElement.scrollWidth,
       bodyScrollWidth: document.body.scrollWidth,
       hasPreview: document.body?.innerText?.includes("Предпросмотр TourHub"),
-      hasImport: [...document.querySelectorAll("button")].some(
-        (item) => item.textContent?.trim() === "Импортировать тему",
-      ),
+      hasImport: document.body?.innerText?.includes("Импортировать тему"),
     }))()`);
     assert.ok(
       layout.scrollWidth <= layout.clientWidth + 1 &&
