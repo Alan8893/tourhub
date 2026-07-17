@@ -13,6 +13,9 @@ from app.modules.projects.models.project import ProjectORM
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
 from app.services.club_settings_service import ClubSettingsService
+from app.services.document_appearance_settings_service import (
+    DocumentAppearanceSettingsService,
+)
 from app.services.document_mapper import PurchaseDocumentMapper
 from app.services.equipment_document_mapper import EquipmentDocumentMapper
 
@@ -32,6 +35,7 @@ class ProjectDocumentService:
         equipment_excel_generator: EquipmentExcelDocumentGenerator | None = None,
         equipment_list_repository: EquipmentListRepository | None = None,
         club_settings_service: ClubSettingsService | None = None,
+        document_appearance_service: DocumentAppearanceSettingsService | None = None,
     ) -> None:
         self.document_mapper = document_mapper or PurchaseDocumentMapper()
         self.pdf_generator = pdf_generator or PDFDocumentGenerator()
@@ -49,6 +53,7 @@ class ProjectDocumentService:
         )
         self.equipment_list_repository = equipment_list_repository
         self.club_settings_service = club_settings_service
+        self.document_appearance_service = document_appearance_service
         self._branding_loaded = False
         self._branding_cache: ClubBrandingDTO | None = None
 
@@ -85,11 +90,14 @@ class ProjectDocumentService:
 
     def _branding(self) -> ClubBrandingDTO | None:
         if not self._branding_loaded:
-            self._branding_cache = (
-                self.club_settings_service.to_branding()
-                if self.club_settings_service is not None
-                else None
-            )
+            if self.club_settings_service is None:
+                self._branding_cache = None
+            elif self.document_appearance_service is None:
+                self._branding_cache = self.club_settings_service.to_branding()
+            else:
+                self._branding_cache = self.document_appearance_service.to_branding(
+                    self.club_settings_service.get()
+                )
             self._branding_loaded = True
         return self._branding_cache
 
