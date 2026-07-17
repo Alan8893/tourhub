@@ -8,6 +8,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./app/App";
 import { queryClient } from "./app/providers/queryClient";
 import AppearanceProvider from "./features/system-settings/providers/AppearanceProvider";
+import ModuleVisibilityProvider from "./features/system-settings/providers/ModuleVisibilityProvider";
 import ErrorBoundary from "./shared/ui/ErrorBoundary";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -16,8 +17,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AppearanceProvider>
-            <CssBaseline />
-            <App />
+            <ModuleVisibilityProvider>
+              <CssBaseline />
+              <App />
+            </ModuleVisibilityProvider>
           </AppearanceProvider>
         </BrowserRouter>
       </QueryClientProvider>
