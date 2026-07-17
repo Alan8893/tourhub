@@ -8,7 +8,6 @@ from app.schemas.club_settings import (
 )
 from app.services.club_settings_service import ClubSettingsService
 
-
 router = APIRouter(prefix="/club-settings", tags=["club-settings"])
 
 
