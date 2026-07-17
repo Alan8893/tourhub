@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
+import AppearanceSettingsForm from "@/features/system-settings/components/AppearanceSettingsForm";
 import ClubSettingsForm from "@/features/system-settings/components/ClubSettingsForm";
 
 type SettingsSectionId =
@@ -100,6 +101,12 @@ export default function SettingsPage() {
   const desktop = useMediaQuery(theme.breakpoints.up("md"));
   const [activeSection, setActiveSection] = useState<SettingsSectionId>("club");
 
+  function sectionContent() {
+    if (activeSection === "club") return <ClubSettingsForm />;
+    if (activeSection === "appearance") return <AppearanceSettingsForm />;
+    return <PlannedSection sectionId={activeSection} />;
+  }
+
   return (
     <Stack spacing={3}>
       <Box>
@@ -157,13 +164,7 @@ export default function SettingsPage() {
           </Paper>
         )}
 
-        <Box sx={{ minWidth: 0 }}>
-          {activeSection === "club" ? (
-            <ClubSettingsForm />
-          ) : (
-            <PlannedSection sectionId={activeSection} />
-          )}
-        </Box>
+        <Box sx={{ minWidth: 0 }}>{sectionContent()}</Box>
       </Box>
     </Stack>
   );
