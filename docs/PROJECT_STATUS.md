@@ -4,57 +4,50 @@ Status date: 2026-07-17
 
 ## Current phase
 
-TH-0061 guided preparation is in its final stacked review sequence. PR #77 adds persistent single-club branding. Draft PR #78 is stacked on #77 and completes guided desktop/mobile release acceptance, including persistence restoration after reload.
+The TH-0061 guided single-club preparation workflow is complete. Merged PRs #77 and #78 add persistent club branding, reload-safe preparation readiness, and full desktop/mobile create-to-branded-ZIP acceptance. Draft PR #79 adds the operator installation, update, backup, restore, and recovery runbooks.
 
 ## Verified baseline
 
-- `main`: `51ea7785f12e8d1d30b2768284b6fddbb0117872` — merged PR #76.
-- Alembic head on `main`: `h10006`; PR #77 adds `h10007`; PR #78 adds no migration.
-- PR #77 exact head `317d3b013e0a24c224c8b291e06f49bef349305d` passed Quality #416 and Document Quality #49 and is Ready.
-- Functional PR #78 head `b247b2d7c2dd38c9874e92c524a66f25b293e3bf` passed Quality #421, Document Quality #54, and Guided Release Acceptance #5 before documentation synchronization.
+- `main`: `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e` — merged PR #78.
+- Alembic head: `h10007`.
+- PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec` after Quality #416 and Document Quality #49.
+- PR #78 passed retargeted exact-head Quality #431, Document Quality #63, and Guided Release Acceptance #14 and merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Implemented
 
-### Guided project preparation
+### Guided project preparation — completed TH-0061
 
 - project creation, participants, duration, meal boundaries, and role-aware menu generation;
-- persisted PurchaseList, PurchaseChecklist, package review, surplus, and purchasing contact;
-- persisted equipment requirements, maximum-simultaneous aggregation, manual rows, overrides, and removals;
-- transactional refresh after menu, participant, Dish recipe, and direct recipe-equipment changes;
-- Russian purchase/equipment PDF, Excel, print, and five-file ZIP output through merged PR #76.
+- persisted purchase list, checklist, packaging, surplus, and purchasing contact;
+- persisted equipment requirements, aggregation, manual rows, overrides, removals, and transactional refresh;
+- Russian purchase/equipment PDF, Excel, print, and complete project ZIP;
+- singleton club name and validated PNG/JPEG logo branding;
+- preparation readiness restored after reload without repeated calculation;
+- equipment-aware completion state and clean unprepared states;
+- full desktop/mobile create → menu → prepare → reload → branded ZIP release acceptance.
 
-### PR #77 — club branding
+### Draft PR #79 — operator runbooks
 
-- singleton club settings persisted through Alembic `h10007`;
-- editable club name and optional validated PNG/JPEG logo;
-- one cached brand snapshot applied to purchase/equipment PDF, Excel, print, and ZIP;
-- Russian settings UI with preview, removal, feedback, screenshot, and 360 px acceptance.
-
-### Draft PR #78 — guided release acceptance
-
-- read-only persisted preparation-status API;
-- workflow state restoration after browser reload without repeated preparation;
-- equipment required before project and documents are marked complete;
-- missing purchase lists treated as unprepared state instead of server error;
-- remaining project-workspace text localized to Russian;
-- full browser flow: create project → generate menu → prepare purchase/checklist/equipment → reload → download branded ZIP;
-- exact request assertions, desktop flow, mobile screenshot, and 360 px no-overflow;
-- focused Guided Release Acceptance workflow with Ruff, strict mypy, API tests, browser evidence, and failure diagnostics.
+- installation prerequisites, first start, health, migration, LAN, port, and volume verification;
+- backup-first update flow with explicit Alembic migration before application restart;
+- host-side PostgreSQL custom-format backup script;
+- confirmed restore script with an automatic pre-restore safety dump;
+- rollback boundaries prohibiting destructive volume deletion and ad hoc production downgrades;
+- README operator entry points;
+- focused Operator Docs gate for shell syntax/help, required commands, relative links, and Docker Compose syntax.
 
 ## Next
 
-1. Merge PR #77, then retarget or rebase PR #78 onto `main` and rerun exact-head checks.
-2. Add installation and update documentation.
-3. Add Docker image/build validation and PostgreSQL migration upgrade/downgrade smoke.
-4. Complete the final release workflow.
-5. Add invitation-only access only after single-user acceptance.
+1. Complete Docker image build/runtime validation.
+2. Add PostgreSQL migration upgrade/downgrade smoke.
+3. Complete the final release workflow and release checklist.
+4. Add invitation-only access only after the local single-user release is validated.
 
 ## Quality debt
 
 - active deployment catalogue data acceptance;
 - catalogue-import interaction coverage;
+- Docker build/runtime validation;
 - PostgreSQL migration smoke;
-- Docker build validation;
-- installation/update runbook;
 - final release workflow.
