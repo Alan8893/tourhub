@@ -3,6 +3,9 @@ from zipfile import ZipFile
 
 from app.core.database import get_db
 from app.main import app
+from app.models.equipment_list import EquipmentListORM
+from app.models.equipment_list_item import EquipmentListItemORM
+from app.models.meal_plan import MealPlanORM
 
 from tests.api.test_project_documents_success_api import (
     create_project_with_purchase_list,
@@ -10,36 +13,61 @@ from tests.api.test_project_documents_success_api import (
 )
 
 
+def _add_equipment_list(db_session, project_id: int) -> None:
+    meal_plan = MealPlanORM(
+        id="meal-plan-doc-test",
+        project_id=project_id,
+        name="Document meal plan",
+        participants=4,
+        days_count=3,
+    )
+    equipment_list = EquipmentListORM(
+        id="equipment-doc-test",
+        project_id=project_id,
+        meal_plan_id=meal_plan.id,
+        status="prepared",
+    )
+    equipment_list.items.append(
+        EquipmentListItemORM(
+            id="equipment-item-doc-test",
+            equipment_name="Котёл",
+            required_quantity=2,
+            calculated_quantity=2,
+            is_manual=False,
+            is_removed=False,
+        )
+    )
+    db_session.add_all([meal_plan, equipment_list])
+    db_session.commit()
+
 
 def test_project_document_package(client, db_session):
     app.dependency_overrides[get_db] = override_test_db(db_session)
 
     project_id = create_project_with_purchase_list(db_session)
+    _add_equipment_list(db_session, project_id)
 
-    response = client.get(
-        f"/api/v1/projects/{project_id}/documents/package"
-    )
+    response = client.get(f"/api/v1/projects/{project_id}/documents/package")
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/zip"
 
     archive = ZipFile(BytesIO(response.content))
-    filenames = archive.namelist()
-
-    assert "purchase_list.pdf" in filenames
-    assert "purchase_list.xlsx" in filenames
-    assert "purchase_list.txt" in filenames
+    assert set(archive.namelist()) == {
+        "purchase_list.pdf",
+        "purchase_list.xlsx",
+        "purchase_list.txt",
+        "equipment_list.pdf",
+        "equipment_list.xlsx",
+    }
 
     app.dependency_overrides.clear()
-
 
 
 def test_project_document_package_not_found(client, db_session):
     app.dependency_overrides[get_db] = override_test_db(db_session)
 
-    response = client.get(
-        "/api/v1/projects/999999/documents/package"
-    )
+    response = client.get("/api/v1/projects/999999/documents/package")
 
     assert response.status_code == 404
     assert response.json()["error"] == "Project not found"

@@ -1,11 +1,14 @@
+import childProcess from "node:child_process";
 import fsPromises from "node:fs/promises";
 import { syncBuiltinESMExports } from "node:module";
 
 const originalRm = fsPromises.rm.bind(fsPromises);
+const originalSpawn = childProcess.spawn.bind(childProcess);
 const chromeProfileSuffixes = [
   "tourhub-browser-acceptance-profile",
   "tourhub-purchase-checklist-profile",
   "tourhub-equipment-list-profile",
+  "tourhub-documents-profile",
 ];
 let profileRemovalCalls = 0;
 
@@ -31,10 +34,21 @@ fsPromises.rm = async (target, options) => {
     }
   }
 
-  // The first call prepares a clean browser profile and must succeed. The second
-  // call is best-effort cleanup after Chrome has already been terminated.
   if (profileRemovalCalls > 1) return undefined;
   throw lastError;
+};
+
+childProcess.spawn = (command, args, options) => {
+  const nextArgs = Array.isArray(args) ? [...args] : args;
+  if (
+    Array.isArray(nextArgs) &&
+    nextArgs.includes("--remote-debugging-port=9232") &&
+    nextArgs.at(-1) === "about:blank"
+  ) {
+    nextArgs[nextArgs.length - 1] =
+      "http://127.0.0.1:5180/browser-tests/documents.html";
+  }
+  return originalSpawn(command, nextArgs, options);
 };
 
 syncBuiltinESMExports();

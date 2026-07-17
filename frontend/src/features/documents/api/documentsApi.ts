@@ -6,21 +6,26 @@ export async function downloadPurchaseDocument(
 ): Promise<Blob> {
   const response = await apiClient.get<Blob>(
     `/projects/${projectId}/documents/purchase/${format}`,
-    {
-      responseType: "blob",
-    },
+    { responseType: "blob" },
   );
+  return response.data;
+}
 
+export async function downloadEquipmentDocument(
+  projectId: number,
+  format: "pdf" | "excel",
+): Promise<Blob> {
+  const response = await apiClient.get<Blob>(
+    `/projects/${projectId}/documents/equipment/${format}`,
+    { responseType: "blob" },
+  );
   return response.data;
 }
 
 export async function downloadDocumentPackage(projectId: number): Promise<Blob> {
   const response = await apiClient.get<Blob>(
     `/projects/${projectId}/documents/package`,
-    {
-      responseType: "blob",
-    },
+    { responseType: "blob" },
   );
-
   return response.data;
 }

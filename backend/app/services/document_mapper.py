@@ -14,7 +14,7 @@ class PurchaseDocumentMapper:
     ) -> PurchaseDocumentDTO:
         return PurchaseDocumentDTO(
             purchase_list_id=purchase_list.id,
-            title="Purchase List",
+            title="Список закупки",
             items=[
                 DocumentItemDTO(
                     product_name=item.product.name,
