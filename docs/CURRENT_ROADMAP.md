@@ -14,57 +14,48 @@ Project
   → Equipment
   → Branded Russian PDF and Excel
   → Guided release acceptance
+  → Operator installation and update path
 ```
 
 ## DONE
 
-### Infrastructure
+### Infrastructure baseline
 
-- Docker Compose, PostgreSQL, Redis, and Alembic one-head validation;
+- Docker Compose, PostgreSQL 18, Redis, and Alembic one-head validation;
 - backend Ruff, strict mypy, pytest, frontend tests/build/browser acceptance;
 - PostgreSQL backup/restore CI;
 - LAN-safe routing and responsive navigation.
 
-### Preparation workflow through merged PR #76
+### Guided preparation through merged PR #78
 
 - project creation, workspace, participants, duration, and meal boundaries;
 - catalogues, CSV import, role-aware menu generation, and manual editing;
 - persisted shopping, packaging, surplus, and purchasing contact;
 - persisted equipment requirements, project overrides, and transactional recalculation;
-- Russian purchase and equipment PDF/Excel plus five-file ZIP package;
-- focused document quality and real-browser desktop/mobile acceptance.
+- Russian purchase and equipment PDF/Excel plus complete ZIP package;
+- persistent single-club branding through Alembic `h10007`;
+- reload-safe preparation state and equipment-aware completion;
+- full create → menu → prepare → reload → branded ZIP desktop/mobile acceptance.
 
-PR #76 merged as `51ea7785f12e8d1d30b2768284b6fddbb0117872`.
+PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`. PR #78 passed retargeted exact-head Quality #431, Document Quality #63, and Guided Release Acceptance #14 and merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
 
 ## IN PROGRESS
 
-### PR #77 — persistent club branding
+### PR #79 — operator installation and update runbooks
 
-- persist singleton club name and optional logo through Alembic `h10007`;
-- validate PNG/JPEG MIME, decoded image content, size, and dimensions;
-- provide Russian settings UI with preview and removal;
-- apply one consistent branding snapshot to every generated project document;
-- verify settings API, PDF/XLSX branding, browser PUT body, screenshot, and 360 px layout.
-
-PR #77 exact head `317d3b013e0a24c224c8b291e06f49bef349305d` passed Quality #416 and Document Quality #49 and is Ready.
-
-### Stacked PR #78 — guided release acceptance
-
-- expose persisted preparation readiness without mutation;
-- restore menu, purchase, checklist, equipment, and document readiness after reload;
-- require equipment before completion;
-- treat missing derived documents as unprepared, not server errors;
-- verify create → menu → prepare → reload → branded ZIP in the full application;
-- capture desktop flow, exact API requests, 360 px no-overflow, screenshot evidence, and focused failure diagnostics.
-
-Functional head `b247b2d7c2dd38c9874e92c524a66f25b293e3bf` passed Quality #421, Document Quality #54, and Guided Release Acceptance #5 before documentation synchronization.
+- document prerequisites, first startup, health, migration, LAN, port, and volume checks;
+- provide backup-first update and recovery procedures;
+- add host-side custom-format PostgreSQL backup and confirmed restore commands;
+- create a pre-restore safety backup when replacing an existing database;
+- define rollback boundaries and prohibit destructive volume deletion;
+- link operator entry points from README;
+- validate scripts, commands, links, and Docker Compose syntax in a focused workflow.
 
 ## NEXT
 
-- merge PR #77 and retarget/rebase PR #78 to `main`;
-- add installation and update documentation;
-- add Docker image/build and PostgreSQL migration smoke gates;
-- complete the final release workflow.
+- add Docker image build and runtime smoke validation;
+- add PostgreSQL migration upgrade/downgrade smoke;
+- complete the final release workflow and checklist.
 
 ## LATER
 

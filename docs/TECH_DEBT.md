@@ -2,30 +2,26 @@
 
 Status date: 2026-07-17
 
-Implemented through merged PR #76:
+Implemented through merged PR #78:
 
-- equipment requirements, overrides, and recalculation;
-- Russian purchase and equipment PDF/Excel;
-- complete five-file project ZIP package.
+- complete guided project preparation from creation through branded documents;
+- persisted shopping, equipment, user overrides, recalculation, and reload-safe readiness;
+- singleton club branding through Alembic `h10007`;
+- general, document-specific, and guided desktop/mobile release gates.
 
-PR #77 addresses branding debt:
+Draft PR #79 addresses operator documentation debt:
 
-- persistent club name and logo through Alembic `h10007`;
-- validated PNG/JPEG rendering across PDF, Excel, print, and ZIP;
-- Russian settings UI and mobile acceptance.
-
-Stacked PR #78 addresses guided-release debt:
-
-- persisted preparation readiness after reload;
-- equipment-aware completion state;
-- clean unprepared states instead of false 404 errors;
-- full create, menu, prepare, reload, and ZIP browser acceptance;
-- focused desktop/mobile evidence and failure diagnostics.
+- installation and first-start runbook;
+- backup-first update and recovery runbook;
+- host-side PostgreSQL custom-format backup script;
+- confirmed restore with a pre-restore safety dump;
+- migration, health, LAN, volume, and rollback boundaries;
+- focused validation for scripts, links, required commands, and Docker Compose syntax.
 
 Remaining priorities:
 
-- merge and retarget the PR #77 to PR #78 stack;
-- PostgreSQL migration upgrade and downgrade smoke;
-- Docker build validation;
-- installation and update documentation;
-- final release workflow.
+- Docker image build and runtime smoke;
+- PostgreSQL migration upgrade/downgrade smoke;
+- final release workflow and checklist;
+- active deployment catalogue data acceptance;
+- catalogue-import interaction coverage.

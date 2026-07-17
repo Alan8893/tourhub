@@ -6,8 +6,8 @@ This file contains task status and links. Detailed task descriptions are stored 
 
 | ID | Task | Status | Details |
 |---|---|---|---|
-| TH-0061 | User Project Preparation Wizard | IN PROGRESS | ./active/TH-0061-project-wizard.md |
 | TH-0061.5 | Meal Composition Rules Engine | IN PROGRESS | ./active/TH-0061.5-menu-rules.md |
+| TH-0071 | Operator Installation and Update Runbook | IN PROGRESS | ./active/TH-0071-operator-install-update.md |
 
 ## Completed
 
@@ -15,6 +15,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 |---|---|---|
 | TH-0053 | PDF Generator Refactoring | DONE |
 | TH-0060 | MVP Workflow Slice | DONE |
+| TH-0061 | User Project Preparation Wizard | DONE |
 | TH-0061.3 | MealPlan Domain Expansion | DONE |
 | TH-0061.4 | Meal Composition Model | DONE |
 | TH-0061.6 | Recipe Components and Recipe Variants | DONE |

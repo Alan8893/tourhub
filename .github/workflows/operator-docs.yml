@@ -1,0 +1,36 @@
+name: Operator Docs
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify operator runbooks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Validate shell scripts
+        run: |
+          bash -n scripts/db/backup-tourhub.sh
+          bash -n scripts/db/restore-tourhub.sh
+          bash scripts/db/backup-tourhub.sh --help
+          bash scripts/db/restore-tourhub.sh --help
+
+      - name: Validate runbooks and links
+        run: |
+          python -m py_compile scripts/release/verify_operator_docs.py
+          python scripts/release/verify_operator_docs.py
+
+      - name: Validate Docker Compose syntax
+        run: docker compose config >/tmp/tourhub-compose-config.yml
