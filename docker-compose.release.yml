@@ -3,9 +3,9 @@ services:
     image: postgres:18
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${TOURHUB_DB_USER:-tourhub}
+      POSTGRES_USER: tourhub
       POSTGRES_PASSWORD: ${TOURHUB_DB_PASSWORD:-tourhub}
-      POSTGRES_DB: ${TOURHUB_DB_NAME:-tourhub}
+      POSTGRES_DB: tourhub
     healthcheck:
       test:
         - CMD-SHELL
@@ -33,7 +33,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      DATABASE__URL: ${TOURHUB_DATABASE_URL:-postgresql+psycopg://tourhub:tourhub@postgres:5432/tourhub}
+      DATABASE__URL: postgresql+psycopg://tourhub:${TOURHUB_DB_PASSWORD:-tourhub}@postgres:5432/tourhub
       REDIS__URL: redis://redis:6379/0
     depends_on:
       postgres:
