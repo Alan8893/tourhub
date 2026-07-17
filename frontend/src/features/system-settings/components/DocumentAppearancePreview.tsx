@@ -51,7 +51,9 @@ export default function DocumentAppearancePreview({
       variant="outlined"
       sx={{
         mx: "auto",
+        width: "100%",
         maxWidth: 760,
+        minWidth: 0,
         overflow: "hidden",
         bgcolor: "common.white",
         color: "common.black",
@@ -61,6 +63,7 @@ export default function DocumentAppearancePreview({
       <Box
         sx={{
           position: "relative",
+          minWidth: 0,
           minHeight: titleBackground ? 120 : 64,
           p: 2,
           bgcolor: draft.title_background_color,
@@ -82,7 +85,12 @@ export default function DocumentAppearancePreview({
             }}
           />
         )}
-        <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ position: "relative" }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          alignItems={{ xs: "stretch", sm: "flex-start" }}
+          sx={{ position: "relative", minWidth: 0 }}
+        >
           {logo ? (
             <Box
               component="img"
@@ -107,11 +115,21 @@ export default function DocumentAppearancePreview({
             </Box>
           )}
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ color: draft.heading_color, fontWeight: 800, fontSize: 20 }}>
+            <Typography
+              sx={{
+                color: draft.heading_color,
+                fontWeight: 800,
+                fontSize: 20,
+                overflowWrap: "anywhere",
+              }}
+            >
               {club.club_name}
             </Typography>
             {contacts.map((line) => (
-              <Typography key={line} sx={{ fontSize: 11, lineHeight: 1.35 }}>
+              <Typography
+                key={line}
+                sx={{ fontSize: 11, lineHeight: 1.35, overflowWrap: "anywhere" }}
+              >
                 {line}
               </Typography>
             ))}
@@ -119,9 +137,16 @@ export default function DocumentAppearancePreview({
         </Stack>
       </Box>
 
-      <Stack spacing={2} sx={{ p: { xs: 2, sm: 3 } }}>
-        <Box>
-          <Typography sx={{ color: draft.heading_color, fontWeight: 800, fontSize: 24 }}>
+      <Stack spacing={2} sx={{ p: { xs: 2, sm: 3 }, minWidth: 0 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            sx={{
+              color: draft.heading_color,
+              fontWeight: 800,
+              fontSize: 24,
+              overflowWrap: "anywhere",
+            }}
+          >
             Закупочный лист
           </Typography>
           <Typography sx={{ color: draft.primary_color, fontSize: 12 }}>
@@ -129,7 +154,7 @@ export default function DocumentAppearancePreview({
           </Typography>
         </Box>
 
-        <Box sx={{ overflowX: "auto" }}>
+        <Box sx={{ width: "100%", maxWidth: "100%", minWidth: 0, overflowX: "auto" }}>
           <Box
             component="table"
             sx={{ width: "100%", borderCollapse: "collapse", minWidth: 420 }}
@@ -183,11 +208,13 @@ export default function DocumentAppearancePreview({
 
         <Box
           sx={{
+            minWidth: 0,
             borderTop: "2px solid",
             borderColor: draft.accent_color,
             pt: 1,
             color: draft.primary_color,
             fontSize: 11,
+            overflowWrap: "anywhere",
           }}
         >
           {draft.footer_text || `Сформировано для ${club.club_name} в TourHub`}
