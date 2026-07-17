@@ -61,6 +61,16 @@ const FIELD_LABELS: Record<string, string> = {
   active_invitation_limit: "лимит активных приглашений",
   administrators_only: "управление только администраторами",
   require_email_confirmation: "подтверждение email",
+  smtp_host: "SMTP host",
+  smtp_port: "SMTP-порт",
+  security_mode: "защита SMTP-соединения",
+  smtp_username: "имя пользователя SMTP",
+  sender_email: "адрес отправителя",
+  sender_name: "имя отправителя",
+  reply_to_email: "Reply-To",
+  test_recipient_email: "тестовый адрес",
+  timeout_seconds: "тайм-аут SMTP",
+  retry_count: "повторные попытки SMTP",
 };
 
 function fieldLabel(field: string): string {
@@ -80,7 +90,7 @@ export default function SettingsHistoryList({ items }: SettingsHistoryListProps)
       <Stack spacing={0.5}>
         <Typography variant="h6">История изменений</Typography>
         <Typography variant="body2" color="text.secondary">
-          Хранятся последние 200 безопасных записей. Изображения и будущие секреты в историю
+          Хранятся последние 200 безопасных записей. Бинарные и чувствительные значения в историю
           не попадают.
         </Typography>
       </Stack>

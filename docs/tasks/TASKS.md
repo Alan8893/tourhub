@@ -7,7 +7,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
-| TH-0078 | System Settings Invitation Policy | IN PROGRESS | ./active/TH-0078-system-settings-invitation-policy.md |
+| TH-0079 | System Settings Mail Boundary | IN PROGRESS | ./active/TH-0079-system-settings-mail-boundary.md |
 
 ## Planned release sequence
 
@@ -50,6 +50,7 @@ Exact task IDs for implementation slices are assigned when each slice starts fro
 | TH-0075 | System Settings Appearance | DONE |
 | TH-0076 | System Settings Document Appearance | DONE |
 | TH-0077 | System Settings Module Visibility | DONE |
+| TH-0078 | System Settings Invitation Policy | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 

@@ -36,6 +36,14 @@ export TOURHUB_DB_PASSWORD='<url-encoded-password>'
 
 Keep this value in the server's protected environment configuration. Use the same password on future starts of the existing PostgreSQL volume.
 
+The System Settings mail section recognizes an optional external SMTP secret:
+
+```bash
+export TOURHUB_SMTP_SECRET='<smtp-secret>'
+```
+
+Keep this value only in protected host environment configuration. The current mail-boundary slice reports whether it is configured, but does not connect to SMTP, verify it, or send messages. Do not put the value in PostgreSQL, normal API requests, logs, screenshots, or unencrypted configuration exports.
+
 Render the effective release configuration:
 
 ```bash
@@ -49,7 +57,7 @@ docker compose -f docker-compose.release.yml \
   up -d --build --wait --wait-timeout 180
 ```
 
-The backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10007`. The frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
+The backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10013`. The frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
 
 ## Verify the installation
 

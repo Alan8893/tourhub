@@ -8,7 +8,7 @@ Date: 2026-07-17
 
 TourHub needs one `/settings` area for club identity, site appearance, document appearance, module visibility, invitation policy, outbound mail, and future per-user preferences.
 
-One unrestricted JSON document, a generic key/value table, or an ever-growing `club_settings` table would weaken validation, hide ownership, complicate migrations and concurrency, and make secret handling unsafe. One local installation still represents exactly one club; settings do not introduce multi-tenancy or a service boundary.
+One unrestricted JSON document, a generic key/value table, or an ever-growing `club_settings` table would weaken validation, hide ownership, complicate migrations and concurrency, and make credential handling unsafe. One local installation still represents exactly one club; settings do not introduce multi-tenancy or a service boundary.
 
 ## Decision
 
@@ -60,6 +60,22 @@ Administrator is intentionally not available as a default invitation role. Privi
 
 This policy does not create User or Invitation rows, tokens, acceptance/revocation/resend execution, mail delivery, sessions, or permissions. Access foundation must consume the policy explicitly when those domains are implemented.
 
+### Mail settings
+
+`MailSettings` stores approved non-sensitive universal SMTP metadata before delivery exists:
+
+- host and port;
+- plain, STARTTLS, or TLS mode;
+- optional username;
+- sender email and display name;
+- optional Reply-To and test-recipient addresses;
+- timeout and retry count;
+- optimistic version.
+
+The SMTP credential is deployment-owned, not settings-owned. The database model has no credential column, the update schema forbids unknown fields, and the frontend has no credential input. Backend reads `TOURHUB_SMTP_SECRET` only to derive a configured boolean. Normal responses expose the source type, environment-variable name, and boolean, never the value.
+
+Before identity exists, `delivery_available` and `test_delivery_available` remain false. Saving mail settings does not connect to SMTP, verify credentials, render or queue a message, retry delivery, or send email. Working mail delivery must be a later capability that consumes `MailSettings` and the external value explicitly.
+
 ### Compatibility
 
 The legacy `/api/v1/club-settings` contract remains compatible. Versioned settings APIs are section-specific under `/api/v1/settings/...`. Existing project and document routes remain unchanged.
@@ -68,13 +84,11 @@ The legacy `/api/v1/club-settings` contract remains compatible. Versioned settin
 
 Every typed settings update includes the version read by the editor. The backend serializes writes with a PostgreSQL row lock and rejects stale updates with HTTP 409.
 
-Focused history stores section, local actor label, action, changed field names, resulting version, and timestamp. Until identity exists, the actor is `Локальный администратор`. The latest 200 rows are retained. Binary data, data URLs, domain values, imported payloads, passwords, tokens, and secrets are excluded from history metadata and logs. This does not replace the later actor-aware audit log.
+Focused history stores section, local actor label, action, changed field names, resulting version, and timestamp. Until identity exists, the actor is `Локальный администратор`. The latest 200 rows are retained. Binary data, data URLs, domain/address values, imported payloads, credentials, tokens, and external values are excluded from history metadata and logs. This does not replace the later actor-aware audit log.
 
-### Secrets and configuration archives
+### Configuration archives
 
-Secret-bearing settings belong to their own slices. Mail passwords and similar credentials use external or write-only handling and are never returned by normal APIs.
-
-Unencrypted configuration exports exclude secrets. A password-encrypted archive may include explicitly approved secrets only after a dedicated design defines encryption, key derivation, authenticated integrity, password handling, preview, validation, and rollback.
+Unencrypted configuration exports exclude credentials. A password-encrypted archive may include explicitly approved values only after a dedicated design defines encryption, key derivation, authenticated integrity, password handling, preview, validation, and rollback.
 
 ### User preferences
 
@@ -84,8 +98,9 @@ The organization owns global appearance. Before users exist, a browser stores on
 
 - PostgreSQL and Pydantic retain strong domain validation.
 - Settings save independently and conflicts are explicit.
-- Invitation policy can be prepared without pretending access exists.
-- Every settings domain requires an intentional model, migration, API, tests, and secret boundary.
+- Invitation and mail policy can be prepared without pretending access or delivery exists.
+- Deployment credentials remain outside relational settings state.
+- Every settings domain requires an intentional model, migration, API, tests, and credential boundary.
 - Full configuration transfer composes typed sections rather than serializing one unchecked object.
 
 ## Rejected alternatives
@@ -94,5 +109,7 @@ The organization owns global appearance. Before users exist, a browser stores on
 - one unrestricted JSON settings document;
 - generic key/value storage;
 - arbitrary custom CSS;
-- visible database storage for SMTP passwords;
+- visible database storage for SMTP credentials;
+- accepting SMTP credentials through normal settings requests;
+- enabling mail delivery before identity exists;
 - allowing Administrator as the default invitation role.

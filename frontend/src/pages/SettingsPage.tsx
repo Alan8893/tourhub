@@ -20,6 +20,7 @@ import AppearanceSettingsForm from "@/features/system-settings/components/Appear
 import ClubSettingsForm from "@/features/system-settings/components/ClubSettingsForm";
 import DocumentAppearanceSettingsForm from "@/features/system-settings/components/DocumentAppearanceSettingsForm";
 import InvitationSettingsForm from "@/features/system-settings/components/InvitationSettingsForm";
+import MailSettingsForm from "@/features/system-settings/components/MailSettingsForm";
 import ModuleSettingsForm from "@/features/system-settings/components/ModuleSettingsForm";
 
 type SettingsSectionId =
@@ -63,7 +64,7 @@ const SECTIONS: Array<{
   {
     id: "mail",
     label: "Почта",
-    description: "SMTP появится после многопользовательского режима.",
+    description: "Несекретные SMTP-параметры и безопасная граница будущей доставки.",
   },
 ];
 
@@ -80,13 +81,6 @@ function PlannedSection({ sectionId }: { sectionId: SettingsSectionId }) {
           не смешивать независимые возможности.
         </Alert>
         <Typography color="text.secondary">{section.description}</Typography>
-        {sectionId === "mail" && (
-          <Typography>
-            Планируется универсальный SMTP, секрет из environment, отдельный тестовый адрес и
-            отправка фиксированного русского тестового письма. Секреты не будут возвращаться API,
-            попадать в логи или незашифрованный экспорт.
-          </Typography>
-        )}
       </Stack>
     </Paper>
   );
@@ -103,6 +97,7 @@ export default function SettingsPage() {
     if (activeSection === "documents") return <DocumentAppearanceSettingsForm />;
     if (activeSection === "modules") return <ModuleSettingsForm />;
     if (activeSection === "invitations") return <InvitationSettingsForm />;
+    if (activeSection === "mail") return <MailSettingsForm />;
     return <PlannedSection sectionId={activeSection} />;
   }
 
