@@ -42,6 +42,16 @@ export async function getProject(projectId: number): Promise<Project> {
   return (await apiClient.get<Project>("/projects/" + projectId)).data;
 }
 
+export async function getProjectPreparation(
+  projectId: number,
+): Promise<ProjectPreparationResponse> {
+  return (
+    await apiClient.get<ProjectPreparationResponse>(
+      "/projects/" + projectId + "/preparation",
+    )
+  ).data;
+}
+
 export async function prepareProject(
   projectId: number,
 ): Promise<ProjectPreparationResponse> {
