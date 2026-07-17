@@ -9,16 +9,31 @@ ROOT = Path(__file__).resolve().parents[2]
 REQUIRED_FRAGMENTS = {
     "README.md": [
         "docs/INSTALLATION.md",
+        "docs/DOCKER_RELEASE.md",
         "docs/UPDATING.md",
+        "docker-compose.release.yml",
         "scripts/db/backup-tourhub.sh",
         "scripts/db/restore-tourhub.sh",
     ],
     "docs/INSTALLATION.md": [
-        "docker compose up -d --build",
+        "docker compose -f docker-compose.release.yml",
         "/api/v1/health",
+        "/healthz",
         "alembic current",
+        "COMPOSE_FILE=docker-compose.release.yml",
         "backup-tourhub.sh",
         "postgres18_cluster_data",
+    ],
+    "docs/DOCKER_RELEASE.md": [
+        "frontend/Dockerfile.release",
+        "docker-compose.release.yml",
+        "build --pull",
+        "up -d --wait --wait-timeout 180",
+        "/api/v1/health",
+        "/healthz",
+        "COMPOSE_FILE=docker-compose.release.yml",
+        "down --volumes",
+        "Docker Release Runtime",
     ],
     "docs/UPDATING.md": [
         "git pull --ff-only",
@@ -64,13 +79,17 @@ def main() -> int:
     check_required_fragments(errors)
     check_relative_links(errors)
 
-    required_scripts = [
+    required_files = [
+        ROOT / "docker-compose.release.yml",
+        ROOT / "frontend/Dockerfile.release",
+        ROOT / "frontend/nginx.release.conf",
         ROOT / "scripts/db/backup-tourhub.sh",
         ROOT / "scripts/db/restore-tourhub.sh",
+        ROOT / "scripts/release/verify_docker_runtime.py",
     ]
-    for script in required_scripts:
-        if not script.is_file():
-            errors.append(f"Missing operator script: {script.relative_to(ROOT)}")
+    for path in required_files:
+        if not path.is_file():
+            errors.append(f"Missing operator file: {path.relative_to(ROOT)}")
 
     if errors:
         print("Operator documentation verification failed:")
