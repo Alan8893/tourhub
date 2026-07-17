@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-16
+Status date: 2026-07-17
 
 ## Product goal
 
@@ -12,7 +12,7 @@ Project
   → Recipes and dishes
   → Shopping and packaging
   → Equipment
-  → Russian PDF and Excel
+  → Branded Russian PDF and Excel
 ```
 
 ## DONE
@@ -24,46 +24,33 @@ Project
 - PostgreSQL backup/restore CI;
 - LAN-safe routing and responsive navigation.
 
-### Core preparation through PR #72
+### Preparation workflow through merged PR #76
 
 - project creation, workspace, participants, duration, and meal boundaries;
-- catalogues and CSV import;
-- role-aware menu generation and manual editing;
-- persisted shopping, package review, surplus, and purchasing contact;
-- transactional purchasing recalculation.
+- catalogues, CSV import, role-aware menu generation, and manual editing;
+- persisted shopping, packaging, surplus, and purchasing contact;
+- persisted equipment requirements, project overrides, and transactional recalculation;
+- Russian purchase and equipment PDF/Excel plus five-file ZIP package;
+- focused document quality and real-browser desktop/mobile acceptance.
 
-### Equipment through merged PR #75
-
-- recipe equipment requirements through Alembic `h10005`;
-- persisted maximum-simultaneous EquipmentList projection;
-- calculated baseline and user-controlled final quantity through `h10006`;
-- manual additions, quantity overrides, and removals;
-- preservation during repeated preparation and recalculation;
-- refresh after meal, Dish recipe, participant, full-menu, and direct requirement changes;
-- multi-project transactional fan-out and rollback protection;
-- Russian editing UI with browser and mobile acceptance.
-
-PR #75 passed exact-head Quality #355 and merged as `d048378c2a4e1d1ac5c57aebe66ba8154fa7eac0`.
+PR #76 passed exact-head Quality #397 and Document Quality #31 and merged as `51ea7785f12e8d1d30b2768284b6fddbb0117872`.
 
 ## IN PROGRESS
 
-### PR #76 — Russian purchase and equipment documents
+### PR #77 — persistent club branding
 
-- localize purchase PDF and Excel output;
-- export final equipment quantities to Russian PDF and Excel;
-- show calculated baseline and manual/override source labels;
-- exclude removed equipment rows;
-- expose equipment PDF and Excel download endpoints;
-- add Russian purchase, equipment, and full-package download controls;
-- include purchase PDF, purchase Excel, purchase print, equipment PDF, and equipment Excel in the ZIP package;
-- verify content, API responses, exact browser requests, screenshot, and 360 px layout;
-- enforce document modules with focused Ruff, strict mypy, and tests.
+- persist singleton club name and optional logo through Alembic `h10007`;
+- validate PNG/JPEG MIME, decoded image content, size, and dimensions;
+- provide Russian settings UI with preview and removal;
+- apply one consistent branding snapshot to every generated project document;
+- embed proportional logos in PDF and Excel without shifting existing tables;
+- verify settings API, document metadata/content, exact browser PUT body, screenshot, and 360 px layout;
+- enforce branding modules in focused Ruff, strict mypy, and tests.
 
-The functional head passed Quality #389 and Document Quality #23 before documentation synchronization.
+The functional head passed Quality #412 and Document Quality #45 before documentation synchronization.
 
 ## NEXT
 
-- add club name and logo settings and apply document branding;
 - complete guided desktop and mobile release acceptance;
 - add installation and update documentation;
 - add Docker image/build and PostgreSQL migration smoke gates;
