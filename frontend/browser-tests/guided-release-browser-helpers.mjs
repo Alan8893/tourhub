@@ -2,6 +2,26 @@ import assert from "node:assert/strict";
 
 import { sleep, waitForExpression } from "./club-settings-cdp.mjs";
 
+export async function waitForPageTarget(
+  debuggingPort,
+  urlFragment,
+  timeoutMs = 15_000,
+) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const targets = await fetch(`http://127.0.0.1:${debuggingPort}/json/list`).then(
+      (response) => response.json(),
+    );
+    const target = targets.find(
+      (candidate) =>
+        candidate.type === "page" && candidate.url.includes(urlFragment),
+    );
+    if (target?.webSocketDebuggerUrl) return target;
+    await sleep(100);
+  }
+  throw new Error(`Chrome page target was not found: ${urlFragment}`);
+}
+
 export async function setInput(client, selector, value) {
   const changed = await client.evaluate(`(() => {
     const input = document.querySelector(${JSON.stringify(selector)});
