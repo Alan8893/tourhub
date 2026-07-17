@@ -4,7 +4,7 @@ Status date: 2026-07-17
 
 ## Current phase
 
-The TH-0061 guided single-club preparation workflow is complete. Merged PR #79 adds the operator installation, update, backup, restore, and recovery path. Draft PR #80 adds the immutable Docker image build and production-like runtime validation slice.
+The guided single-club preparation baseline and operator runbooks are complete. Ready PR #80 adds the validated production-like Docker runtime. Stacked draft PR #81 audits the approved product specification and moves final migration/release hardening after the remaining release-blocking user and domain capabilities.
 
 ## Verified baseline
 
@@ -13,6 +13,7 @@ The TH-0061 guided single-club preparation workflow is complete. Merged PR #79 a
 - PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec` after Quality #416 and Document Quality #49.
 - PR #78 passed retargeted exact-head Quality #431, Document Quality #63, and Guided Release Acceptance #14 and merged as `6332ef5f86973c7832e92dc1ef0a681cc4e17d1e`.
 - PR #79 passed exact-head Quality #436, Document Quality #67, Guided Release Acceptance #18, and Operator Docs #4 and merged as `99d9c2d985b8a21c62fe148e07e08b3632ef961a`.
+- PR #80 exact head `73b233f7529d5d310a750071d592e9b108b9a1df` passed Quality #454, Document Quality #84, Guided Release Acceptance #35, Operator Docs #21, and Docker Release Runtime #17 and is Ready for review.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Implemented
@@ -37,7 +38,7 @@ The TH-0061 guided single-club preparation workflow is complete. Merged PR #79 a
 - rollback boundaries prohibiting destructive volume deletion and ad hoc production downgrades;
 - focused Operator Docs validation for shell syntax/help, required commands, links, and Compose syntax.
 
-### Draft PR #80 — Docker release runtime
+### Ready PR #80 — Docker release runtime
 
 - standalone `docker-compose.release.yml` without application source bind mounts;
 - production frontend image built with Node and served by Nginx;
@@ -47,16 +48,45 @@ The TH-0061 guided single-club preparation workflow is complete. Merged PR #79 a
 - API project creation and persistence verification after application restart;
 - Alembic current-head verification and focused Docker diagnostics.
 
+## Product completeness findings — draft PR #81
+
+Implemented or release-ready:
+
+- local one-club project preparation;
+- participant-count recalculation;
+- menu generation and authoritative manual editing;
+- shopping, packaging, equipment, branding, and current document package;
+- installation, backup/restore, and production-like Docker runtime.
+
+Release-blocking gaps against the approved product specification:
+
+- invitation-only users, roles, authentication, and backend authorization;
+- CLUB/PERSONAL recipe ownership, variants, publication, and moderation;
+- centralized backend alcohol prohibition across API and CSV import;
+- actor-aware audit log;
+- complete consolidated Russian PDF and workbook contents.
+
+Scope decisions still required:
+
+- instructor preference-based generation priority;
+- preparation technology, tags, season compatibility, dietary restrictions, and richer recipe categories;
+- exact boundary between first-release metadata and explicitly deferred enhancements.
+
 ## Next
 
-1. Complete PR #80 exact-head Quality and Docker release runtime validation.
-2. Add PostgreSQL migration upgrade/downgrade smoke.
-3. Complete the final release workflow and release checklist.
-4. Add invitation-only access only after the local single-user release is validated.
+1. Merge PR #80 only after a separate `Сливай` command and final merge recheck.
+2. Complete and merge the product completeness audit after PR #80 is in `main` and PR #81 is synchronized.
+3. Implement access foundation.
+4. Implement recipe ownership and lifecycle.
+5. Implement central alcohol prohibition.
+6. Implement actor-aware audit logging.
+7. Complete consolidated exports and role-based product acceptance.
+8. Freeze the first-release schema and only then add the final migration cycle and release workflow.
 
 ## Quality debt
 
 - active deployment catalogue data acceptance;
 - catalogue-import interaction coverage;
-- PostgreSQL migration smoke;
-- final release workflow.
+- optional recipe metadata decision and coverage;
+- final PostgreSQL migration cycle after feature freeze;
+- final release workflow and deployment checklist.
