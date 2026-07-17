@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-17
+Status date: 2026-07-18
 
 ## Product goal
 
@@ -11,13 +11,10 @@ Project preparation baseline
   → Production-like Docker runtime
   → Product completeness audit
   → System Settings foundation
-      → Club profile and settings shell
-      → Site appearance
-      → Document appearance
-      → Module visibility and dependency locks
-      → Future invitation policy
-      → Informative mail configuration boundary
-  → Access and roles
+  → Access foundation
+      → First Administrator bootstrap and server sessions
+      → Functional invitations and user administration
+      → Broader guarded routes and backend authorization
   → Working mail delivery
   → Recipe ownership and lifecycle
   → Central domain safety
@@ -46,48 +43,51 @@ PR #77 merged as `18d4fabde3eda6c83c0c0f998e870a6f043e8dec`. PR #78 merged as `6
 
 PR #83 merged as `950a43914230f6fe4be3bf217a4e5f1b79e7265f`.
 
-### System Settings through merged PR #88
+### System Settings foundation through PR #89
 
-- PR #84: responsive `/settings`, typed club profile, approved images, `h10008`;
-- PR #85: organization light/dark appearance, safe presets/import/export, `h10009`;
-- PR #86: document appearance and one immutable generation snapshot, `h10010`;
-- PR #87: typed module visibility, required modules, dependency locks, immediate navigation/workspace updates, `h10011`;
-- PR #88: typed future invitation policy, safe default roles, normalized email domains, mandatory administrator-only rule, `h10012`;
-- all persisted sections use optimistic versions, PostgreSQL row locks, HTTP 409 conflicts, and safe focused history;
-- module visibility is presentation only; invitation policy is not a functional access system.
+- PR #84: responsive `/settings`, typed club profile and images, `h10008`;
+- PR #85: organization light/dark appearance, presets/import/export, `h10009`;
+- PR #86: document appearance and immutable generation snapshot, `h10010`;
+- PR #87: module visibility and dependency locks, `h10011`;
+- PR #88: future invitation policy, safe default roles and normalized domains, `h10012`;
+- PR #89: non-secret mail metadata and external SMTP-secret status boundary, `h10013`;
+- all persisted settings sections use typed ownership, optimistic versions, PostgreSQL row locks, HTTP 409 conflicts, and safe focused history;
+- visibility is not authorization, invitation policy is not an invitation subsystem, and mail metadata does not send email.
 
-PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`. PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`. PR #86 merged as `18d5c9637e2e692b630009167dd622ee40ee2747`. PR #87 merged as `717d6f22d58e86a952edad501f05d3c67d8c0bf4`. PR #88 passed Quality #631, Document Quality #255, Guided Release Acceptance #206, Operator Docs #192, and Docker Release Runtime #187 and merged as `d79172fef861c030ff2d9e5367cf86329068b460`.
+PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`. PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`. PR #86 merged as `18d5c9637e2e692b630009167dd622ee40ee2747`. PR #87 merged as `717d6f22d58e86a952edad501f05d3c67d8c0bf4`. PR #88 merged as `d79172fef861c030ff2d9e5367cf86329068b460`. PR #89 passed Quality #660, Document Quality #283, Guided Release Acceptance #234, Operator Docs #220, and Docker Release Runtime #215 and merged as `bff7950e3542b719983f2a09b61b9a901fbaca64`.
 
-## IN PROGRESS — TH-0079 / DRAFT PR #89
+## IN PROGRESS — TH-0080 / DRAFT PR #90
 
-### System Settings: informative mail configuration boundary
+### Access: first Administrator and server sessions
 
-- independent singleton `MailSettings` with approved non-sensitive SMTP parameters;
-- additive Alembic `h10013` with one head;
-- host, port, plain/STARTTLS/TLS mode, optional username, sender identity, Reply-To, test recipient, timeout, and retry count;
-- dedicated `TOURHUB_SMTP_SECRET` environment boundary with derived configured/not-configured status only;
-- no secret field in PostgreSQL, request schemas, normal responses, logs, history, or UI;
-- delivery and test-email actions remain unavailable until identity and access exist;
-- responsive Russian editor with reset, cancel, save, conflict, version, status, and history states;
-- development and release Compose pass the optional environment value to Backend without enabling delivery.
+- typed `User`, `IdentityState`, and `AuthSession` persistence;
+- additive Alembic `h10014` with one head;
+- one-time transactional bootstrap of the first Administrator;
+- memory-hard password hashing with no plaintext credential persistence;
+- opaque random session cookie with HttpOnly and SameSite=Lax;
+- only a SHA-256 session-token hash is stored server-side;
+- public bootstrap status, bootstrap, login, logout, and current-user endpoints;
+- server-side expiry and revocation;
+- Administrator authorization for all System Settings APIs;
+- guarded `/settings`, responsive bootstrap/login page, user identity, and logout action;
+- preparation routes and APIs remain available in this first access slice.
 
 Scope boundary:
 
-- no SMTP connection, credential verification, message generation, queue, retry execution, or delivery;
-- no users, roles, sessions, authorization, functional invitations, or test-message endpoint;
-- no encrypted full-system configuration archive.
+- no functional invitations, user list, role editing, deactivation, or password reset;
+- no protection of every project/catalogue/preparation route or endpoint yet;
+- no external identity provider, MFA, refresh-token family, or multi-tenancy.
 
-## NEXT — ACCESS FOUNDATION
+## NEXT — ACCESS FOUNDATION CONTINUATION
 
-1. administrator bootstrap;
-2. invitation-only users and functional invitation lifecycle consuming `InvitationSettings`;
-3. Administrator, Instructor, and Verified Instructor roles;
-4. authentication, logout, guarded routes, and backend authorization;
-5. real actor identity for subsequent settings history and audit work.
+1. functional invitation lifecycle consuming `InvitationSettings`;
+2. user list, activation state, and explicit role management;
+3. broader guarded frontend routes and backend authorization for preparation mutations;
+4. actor-aware identity propagation into settings history and the later audit log.
 
 ## FOLLOW-UP PRODUCT WORK
 
-1. **Working mail delivery** — consume `MailSettings` and the external SMTP secret, verify connection, send the fixed Russian test message, and connect invitations.
+1. **Working mail delivery** — consume `MailSettings` and the external SMTP value, verify connection, send the fixed Russian test message, and connect invitations.
 2. **Recipe ownership and lifecycle** — CLUB/PERSONAL ownership, variants, publication, moderation, and generation modes.
 3. **Central alcohol prohibition** — one backend policy across Product, Recipe, and CSV import paths.
 4. **Actor-aware audit log** — safe history for project, menu, recipe, user, role, mail, and settings changes.

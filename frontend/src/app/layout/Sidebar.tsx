@@ -1,6 +1,7 @@
 import { Drawer, List, ListItemButton, ListItemText } from "@mui/material";
 import { NavLink } from "react-router-dom";
 
+import { useAuth } from "@/features/auth/providers/AuthProvider";
 import { useModuleVisibility } from "@/features/system-settings/providers/ModuleVisibilityProvider";
 
 const drawerWidth = 240;
@@ -12,12 +13,13 @@ interface SidebarProps {
 
 function NavigationList({ onNavigate }: { onNavigate?: () => void }) {
   const { settings } = useModuleVisibility();
+  const { user } = useAuth();
   const menuItems = [
     { label: "Проекты", path: "/projects", visible: settings.projects_visible },
     { label: "Блюда", path: "/dishes", visible: settings.catalogue_visible },
     { label: "Рецепты", path: "/recipes", visible: settings.catalogue_visible },
     { label: "Импорт", path: "/catalog-import", visible: settings.catalog_import_visible },
-    { label: "Настройки", path: "/settings", visible: true },
+    { label: "Настройки", path: "/settings", visible: user?.role === "administrator" },
   ].filter((item) => item.visible);
 
   return (

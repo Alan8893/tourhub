@@ -1,63 +1,61 @@
 # TourHub Technical Debt
 
-Status date: 2026-07-17
+Status date: 2026-07-18
 
-## Implemented through merged PR #88
+## Implemented through merged PR #89
 
 - complete guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
 - installation, update, backup, restore, recovery, immutable release images, health checks, API proxy, and restart persistence;
 - product completeness audit and release sequencing;
-- responsive `/settings` and ADR-014 typed section ownership;
-- club settings through `h10008`;
-- site appearance through `h10009`;
-- document appearance and immutable generation snapshot through `h10010`;
-- module visibility and backend/database dependency locks through `h10011`;
-- future invitation policy through `h10012` without users, tokens, or invitation lifecycle;
+- complete pre-access System Settings foundation through `h10013`;
+- typed club, appearance, document, module, invitation-policy, and mail-metadata ownership;
+- external SMTP value boundary without delivery;
 - optimistic conflicts, PostgreSQL row locks, and safe local-admin settings history;
 - final downgrade/re-upgrade migration smoke deferred until feature freeze.
 
-## Active TH-0079 / draft PR #89
+## Active TH-0080 / draft PR #90
 
-The informative mail-boundary slice addresses:
+The first Access slice addresses:
 
-- no typed owner for future universal SMTP parameters;
-- no explicit persistence rule separating connection metadata from the external credential;
-- no API status contract for environment configuration;
-- a placeholder-only `Почта` section;
-- no operator documentation for the future environment boundary.
+- no operational user identity;
+- no safe one-time Administrator bootstrap;
+- no password hashing contract;
+- no server-owned session lifecycle;
+- no login/logout/current-user API;
+- unrestricted System Settings API and route access;
+- no authenticated identity in the application shell.
 
 Implemented in the draft slice:
 
-- independent typed singleton `mail_settings` model and additive Alembic `h10013`;
-- host, port, plain/STARTTLS/TLS mode, optional username, sender email/name, Reply-To, test recipient, timeout, and retry count;
-- backend normalization/validation and database range/mode checks;
-- optimistic versioning, row lock, HTTP 409 conflicts, and safe mail history;
-- `TOURHUB_SMTP_SECRET` environment source with configured/not-configured status only;
-- no credential column, request field, normal response value, UI input, log value, or history value;
-- delivery and test-delivery flags remain false;
-- responsive Russian editor with disabled test action;
-- development/release Compose and installation-runbook coverage.
+- singleton bootstrap state plus typed users and sessions in additive Alembic `h10014`;
+- Administrator, Instructor, and Verified Instructor role values, with bootstrap limited to Administrator;
+- standard-library `scrypt` password hashing with random salts;
+- opaque random HttpOnly SameSite session cookie and server-side SHA-256 token hash;
+- session expiry, revocation, bootstrap status, bootstrap, login, logout, and current-user endpoints;
+- generic invalid-login response;
+- Administrator dependency on all System Settings APIs;
+- guarded `/settings`, responsive bootstrap/login UI, identity display, logout, and post-login settings reload;
+- focused API and browser acceptance.
+
+## Remaining access debt
+
+1. Functional invitation rows, token lifecycle, acceptance, resend, revocation, expiry processing, and policy consumption.
+2. User list, activation/deactivation, role changes, profile editing, and password reset.
+3. Authorization matrix for project, catalogue, import, menu, shopping, equipment, and document operations.
+4. Guarded preparation routes and backend mutation enforcement beyond System Settings.
+5. Session maintenance policy: cleanup job, global sign-out, password-change invalidation, and operational session view.
+6. Real actor propagation into focused settings history and the later consolidated audit log.
+7. Request-forgery hardening decision if deployment expands beyond same-origin trusted-LAN use.
 
 ## Remaining release-blocking product debt
 
-1. **Access foundation**
-   - administrator bootstrap, users, functional invitations, approved roles, authentication, sessions, guarded routes, and backend authorization.
-2. **Working mail delivery**
-   - consume saved mail metadata and the external SMTP credential;
-   - verify connection and credentials;
-   - send the fixed Russian test message to the configured test recipient;
-   - connect delivery to functional invitations;
-   - define retry execution, failure status, and safe operational diagnostics.
-3. **Recipe ownership and lifecycle**
-   - CLUB/PERSONAL ownership, variants, submission, review, publication, rejection, and archive.
-4. **Central alcohol prohibition**
-   - one backend policy across Product, Recipe, and CSV import plus existing-record handling.
-5. **Actor-aware audit log**
-   - safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
-6. **Consolidated export completeness**
-   - approved complete Russian PDF and workbook sheets using the immutable brand snapshot.
-7. **Product acceptance**
-   - active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
+1. **Access foundation continuation** — invitations, user management, broader authorization, and actor identity.
+2. **Working mail delivery** — consume saved mail metadata and the external SMTP value, verify connection, send the fixed Russian test message, connect invitations, and define retry/failure diagnostics.
+3. **Recipe ownership and lifecycle** — CLUB/PERSONAL ownership, variants, submission, review, publication, rejection, and archive.
+4. **Central alcohol prohibition** — one backend policy across Product, Recipe, and CSV import plus existing-record handling.
+5. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
+6. **Consolidated export completeness** — approved complete Russian PDF and workbook sheets using the immutable brand snapshot.
+7. **Product acceptance** — active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
 
 ## Configuration export and import debt
 
@@ -70,7 +68,6 @@ Implemented in the draft slice:
 
 - whether preference-based menu priority blocks first release;
 - mandatory recipe metadata for first release;
-- exact authentication/session mechanism;
 - encrypted settings archive cryptographic format.
 
 ## Deferred final release debt

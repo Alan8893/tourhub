@@ -1,32 +1,30 @@
 import pytest
-
 from fastapi.testclient import TestClient
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.auth import require_administrator
+from app.core.database import get_db
+from app.core.session import get_session
 from app.main import app
 from app.models import (
     Base,
-    ProductORM,
-    IngredientORM,
-    RecipeORM,
     DishORM,
-    MealPlanORM,
+    IngredientORM,
     MealPlanDayORM,
     MealPlanItemORM,
-    PurchaseChecklistORM,
+    MealPlanORM,
+    ProductORM,
     PurchaseChecklistItemORM,
-    PurchaseListORM,
+    PurchaseChecklistORM,
     PurchaseListItemORM,
+    PurchaseListORM,
+    RecipeORM,
 )
-from app.core.session import get_session
-from app.core.database import get_db
-
+from app.models.user import UserORM
 from app.modules.api.meal_plan_router import get_meal_plan_service
 from app.services.meal_plan_service import MealPlanService
-
 
 DISH_1_ID = "550e8400-e29b-41d4-a716-446655440001"
 DISH_2_ID = "550e8400-e29b-41d4-a716-446655440002"
@@ -35,13 +33,11 @@ RECIPE_1_ID = "660e8400-e29b-41d4-a716-446655440001"
 RECIPE_2_ID = "660e8400-e29b-41d4-a716-446655440002"
 RECIPE_3_ID = "660e8400-e29b-41d4-a716-446655440003"
 
-
 test_engine = create_engine(
     "sqlite:///:memory:",
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-
 TestingSessionLocal = sessionmaker(
     bind=test_engine,
     autocommit=False,
@@ -49,8 +45,27 @@ TestingSessionLocal = sessionmaker(
 )
 
 
-def setup_database():
+def setup_database() -> None:
     Base.metadata.create_all(bind=test_engine)
+
+
+def override_session():
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+def override_administrator() -> UserORM:
+    return UserORM(
+        id=1,
+        email="admin@test.local",
+        display_name="Test Administrator",
+        role="administrator",
+        password_hash="not-used",
+        is_active=True,
+    )
 
 
 class FakeDishRepository:
@@ -91,17 +106,20 @@ def client():
     setup_database()
     app.dependency_overrides[get_session] = override_session
     app.dependency_overrides[get_db] = override_session
+    app.dependency_overrides[require_administrator] = override_administrator
     yield TestClient(app)
     app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=test_engine)
 
 
-def override_session():
-    session = TestingSessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
+@pytest.fixture
+def auth_client():
+    setup_database()
+    app.dependency_overrides[get_session] = override_session
+    app.dependency_overrides[get_db] = override_session
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+    Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture
@@ -130,6 +148,7 @@ def override_database_session():
     setup_database()
     app.dependency_overrides[get_session] = override_session
     app.dependency_overrides[get_db] = override_session
+    app.dependency_overrides[require_administrator] = override_administrator
     yield
     app.dependency_overrides.clear()
 

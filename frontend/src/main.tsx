@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./app/App";
 import { queryClient } from "./app/providers/queryClient";
+import AuthProvider from "./features/auth/providers/AuthProvider";
 import AppearanceProvider from "./features/system-settings/providers/AppearanceProvider";
 import ModuleVisibilityProvider from "./features/system-settings/providers/ModuleVisibilityProvider";
 import ErrorBoundary from "./shared/ui/ErrorBoundary";
@@ -16,12 +17,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AppearanceProvider>
-            <ModuleVisibilityProvider>
-              <CssBaseline />
-              <App />
-            </ModuleVisibilityProvider>
-          </AppearanceProvider>
+          <AuthProvider>
+            <AppearanceProvider>
+              <ModuleVisibilityProvider>
+                <CssBaseline />
+                <App />
+              </ModuleVisibilityProvider>
+            </AppearanceProvider>
+          </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>

@@ -9,6 +9,7 @@ import ModuleSettingsForm from "@/features/system-settings/components/ModuleSett
 import ModuleVisibilityProvider, {
   useModuleVisibility,
 } from "@/features/system-settings/providers/ModuleVisibilityProvider";
+import AuthTestProvider from "./auth-test-provider";
 
 function VisibilityProbe() {
   const { settings } = useModuleVisibility();
@@ -47,15 +48,17 @@ function SettingsScenario() {
 
 function App() {
   return (
-    <ModuleVisibilityProvider>
-      <Routes>
-        <Route
-          path="/catalog-import"
-          element={<Typography sx={{ p: 3 }}>Прямой маршрут импорта доступен</Typography>}
-        />
-        <Route path="*" element={<SettingsScenario />} />
-      </Routes>
-    </ModuleVisibilityProvider>
+    <AuthTestProvider>
+      <ModuleVisibilityProvider>
+        <Routes>
+          <Route
+            path="/catalog-import"
+            element={<Typography sx={{ p: 3 }}>Прямой маршрут импорта доступен</Typography>}
+          />
+          <Route path="*" element={<SettingsScenario />} />
+        </Routes>
+      </ModuleVisibilityProvider>
+    </AuthTestProvider>
   );
 }
 

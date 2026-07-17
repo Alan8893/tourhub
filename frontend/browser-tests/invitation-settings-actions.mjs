@@ -4,8 +4,12 @@ import { waitForExpression } from "./club-settings-cdp.mjs";
 
 export async function setFieldByLabel(client, labelText, value) {
   return client.evaluate(`(() => {
+    const normalize = (text) => (text ?? "")
+      .replace(/\\s+/g, " ")
+      .replace(/\\s*\\*$/, "")
+      .trim();
     const label = [...document.querySelectorAll("label")].find(
-      (item) => item.textContent?.trim() === ${JSON.stringify(labelText)},
+      (item) => normalize(item.textContent) === ${JSON.stringify(labelText)},
     );
     const control = label?.htmlFor ? document.getElementById(label.htmlFor) : null;
     if (!control) return false;
