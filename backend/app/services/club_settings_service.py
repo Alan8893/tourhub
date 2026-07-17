@@ -3,7 +3,6 @@ import binascii
 from io import BytesIO
 
 from PIL import Image, UnidentifiedImageError
-from PIL.Image import DecompressionBombError
 from sqlalchemy.orm import Session
 
 from app.engines.documents.branding import ClubBrandingDTO
@@ -104,7 +103,12 @@ class ClubSettingsService:
                 image.verify()
         except ValueError:
             raise
-        except (UnidentifiedImageError, DecompressionBombError, OSError, SyntaxError) as error:
+        except (
+            UnidentifiedImageError,
+            Image.DecompressionBombError,
+            OSError,
+            SyntaxError,
+        ) as error:
             raise ValueError("Logo is not a valid image") from error
 
         if image_format != EXPECTED_IMAGE_FORMATS[mime_type]:
