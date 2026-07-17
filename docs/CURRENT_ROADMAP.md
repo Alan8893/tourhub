@@ -13,7 +13,8 @@ Project preparation baseline
   → System Settings foundation
   → Access foundation
       → First Administrator bootstrap and server sessions
-      → Functional invitations and user administration
+      → Functional invitation lifecycle
+      → User administration and explicit roles
       → Broader guarded routes and backend authorization
   → Working mail delivery
   → Recipe ownership and lifecycle
@@ -49,45 +50,56 @@ PR #83 merged as `950a43914230f6fe4be3bf217a4e5f1b79e7265f`.
 - PR #85: organization light/dark appearance, presets/import/export, `h10009`;
 - PR #86: document appearance and immutable generation snapshot, `h10010`;
 - PR #87: module visibility and dependency locks, `h10011`;
-- PR #88: future invitation policy, safe default roles and normalized domains, `h10012`;
-- PR #89: non-secret mail metadata and external SMTP-secret status boundary, `h10013`;
-- all persisted settings sections use typed ownership, optimistic versions, PostgreSQL row locks, HTTP 409 conflicts, and safe focused history;
-- visibility is not authorization, invitation policy is not an invitation subsystem, and mail metadata does not send email.
+- PR #88: invitation policy, safe default roles and normalized domains, `h10012`;
+- PR #89: non-secret mail metadata and external SMTP-value status boundary, `h10013`;
+- all persisted settings sections use typed ownership, optimistic versions, PostgreSQL row locks, HTTP 409 conflicts, and safe focused history.
 
-PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`. PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`. PR #86 merged as `18d5c9637e2e692b630009167dd622ee40ee2747`. PR #87 merged as `717d6f22d58e86a952edad501f05d3c67d8c0bf4`. PR #88 merged as `d79172fef861c030ff2d9e5367cf86329068b460`. PR #89 passed Quality #660, Document Quality #283, Guided Release Acceptance #234, Operator Docs #220, and Docker Release Runtime #215 and merged as `bff7950e3542b719983f2a09b61b9a901fbaca64`.
+PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`. PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`. PR #86 merged as `18d5c9637e2e692b630009167dd622ee40ee2747`. PR #87 merged as `717d6f22d58e86a952edad501f05d3c67d8c0bf4`. PR #88 merged as `d79172fef861c030ff2d9e5367cf86329068b460`. PR #89 merged as `bff7950e3542b719983f2a09b61b9a901fbaca64`.
 
-## IN PROGRESS — TH-0080 / DRAFT PR #90
-
-### Access: first Administrator and server sessions
+### Access bootstrap and sessions — PR #90
 
 - typed `User`, `IdentityState`, and `AuthSession` persistence;
 - additive Alembic `h10014` with one head;
 - one-time transactional bootstrap of the first Administrator;
 - memory-hard password hashing with no plaintext credential persistence;
-- opaque random session cookie with HttpOnly and SameSite=Lax;
-- only a SHA-256 session-token hash is stored server-side;
-- public bootstrap status, bootstrap, login, logout, and current-user endpoints;
-- server-side expiry and revocation;
-- Administrator authorization for all System Settings APIs;
-- guarded `/settings`, responsive bootstrap/login page, user identity, and logout action;
-- preparation routes and APIs remain available in this first access slice.
+- opaque HttpOnly SameSite session cookie with only a SHA-256 token hash stored server-side;
+- bootstrap status, login, logout, current-user, expiry, and revocation;
+- Administrator authorization for all System Settings APIs and guarded `/settings`;
+- responsive bootstrap/login UI, current-user identity, and logout.
+
+PR #90 passed all exact-head gates and merged as `26c4d4eb9246de44579451fe3d6e7bd631538324`.
+
+## IN PROGRESS — TH-0081 / DRAFT PR #91
+
+### Access: functional invitation lifecycle
+
+- typed `Invitation` persistence and additive Alembic `h10015`;
+- Administrator create/list/reissue/revoke actions;
+- secure one-time codes returned only on create/reissue, with only SHA-256 hashes stored in PostgreSQL;
+- Backend enforcement of allowed domains, safe roles, expiry, active limits, and repeat-issue policy from `InvitationSettings`;
+- public inspection of a validated link and atomic acceptance;
+- creation and immediate sign-in of Instructor or Verified Instructor users;
+- expired, revoked, consumed, superseded, and unknown links cannot create users;
+- responsive management UI and public `/accept-invitation` page;
+- manual link delivery until working mail exists.
 
 Scope boundary:
 
-- no functional invitations, user list, role editing, deactivation, or password reset;
-- no protection of every project/catalogue/preparation route or endpoint yet;
-- no external identity provider, MFA, refresh-token family, or multi-tenancy.
+- no automatic SMTP delivery or message queue;
+- no Administrator invitations or self-registration;
+- no full user list, activation/deactivation, role editing, profile editing, or password reset;
+- no broad preparation-route/API authorization yet.
 
 ## NEXT — ACCESS FOUNDATION CONTINUATION
 
-1. functional invitation lifecycle consuming `InvitationSettings`;
-2. user list, activation state, and explicit role management;
-3. broader guarded frontend routes and backend authorization for preparation mutations;
-4. actor-aware identity propagation into settings history and the later audit log.
+1. user list, activation state, and explicit role management;
+2. broader guarded frontend routes and backend authorization for preparation mutations;
+3. actor-aware identity propagation into settings history and the later audit log;
+4. session administration, cleanup, and password-reset policy.
 
 ## FOLLOW-UP PRODUCT WORK
 
-1. **Working mail delivery** — consume `MailSettings` and the external SMTP value, verify connection, send the fixed Russian test message, and connect invitations.
+1. **Working mail delivery** — consume `MailSettings` and the external SMTP value, verify connection, send the fixed Russian test message, and connect automatic invitation delivery.
 2. **Recipe ownership and lifecycle** — CLUB/PERSONAL ownership, variants, publication, moderation, and generation modes.
 3. **Central alcohol prohibition** — one backend policy across Product, Recipe, and CSV import paths.
 4. **Actor-aware audit log** — safe history for project, menu, recipe, user, role, mail, and settings changes.
