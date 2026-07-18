@@ -1,7 +1,7 @@
 import axios from "axios";
 
-import { notifySessionInvalidated } from "@/features/auth/model/sessionEvents";
 import { env } from "@/shared/config/env";
+import { notifySessionInvalidated } from "@/shared/api/sessionEvents";
 
 const AUTH_ENTRY_PATHS = ["/auth/login", "/auth/bootstrap"];
 
