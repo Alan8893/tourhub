@@ -7,7 +7,6 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
-| TH-0085 | Multi-User Operational Readiness | IN PROGRESS | ./active/TH-0085-multi-user-operational-readiness.md |
 
 ## Planned release sequence
 
@@ -58,6 +57,7 @@ Exact task IDs for implementation slices are assigned when each slice starts fro
 | TH-0082 | User Administration and Roles | DONE |
 | TH-0083 | Preparation Authorization Matrix | DONE |
 | TH-0084 | Working Mail Delivery | DONE |
+| TH-0085 | Multi-User Operational Readiness | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
