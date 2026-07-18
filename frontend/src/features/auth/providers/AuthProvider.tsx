@@ -16,6 +16,7 @@ import {
   login as loginRequest,
   logout as logoutRequest,
 } from "../api/authApi";
+import { SESSION_INVALIDATED_EVENT } from "../model/sessionEvents";
 
 export interface AuthContextValue {
   user: AuthUser | null;
@@ -56,6 +57,15 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
+    const handleSessionInvalidated = () => {
+      setUser(null);
+      setIsLoading(false);
+    };
+    window.addEventListener(SESSION_INVALIDATED_EVENT, handleSessionInvalidated);
+    return () => window.removeEventListener(SESSION_INVALIDATED_EVENT, handleSessionInvalidated);
+  }, []);
+
+  useEffect(() => {
     void refresh();
   }, [refresh]);
 
@@ -74,8 +84,11 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const logout = useCallback(async () => {
-    await logoutRequest();
-    setUser(null);
+    try {
+      await logoutRequest();
+    } finally {
+      setUser(null);
+    }
   }, []);
 
   const value = useMemo<AuthContextValue>(
