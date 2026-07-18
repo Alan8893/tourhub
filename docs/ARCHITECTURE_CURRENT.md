@@ -13,7 +13,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Preparation access follows ADR-018.
 - Working mail delivery follows ADR-019.
 - Recipe ownership follows ADR-020.
-- Recipe publication and moderation follow ADR-021 in draft PR #97.
+- Recipe publication and moderation follow ADR-021.
 - Active Administrator, Instructor, and Verified Instructor users may use preparation workflows.
 - Settings, invitation management, user management, connection checks, and test-message actions remain Administrator-only.
 - Module visibility is presentation only and never grants access.
@@ -48,6 +48,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - publication converts PERSONAL to CLUB while preserving submitter attribution;
 - rejection requires a comment; resubmission clears the previous decision;
 - API capability fields guide Frontend controls, while Backend services remain authoritative;
+- focused Chrome acceptance validates the moderation queue, rejection comment payload, empty-queue refresh, and mobile overflow;
 - full moderation history, notifications, Dish variants, and generation modes remain later slices.
 
 ## Mail boundary
@@ -60,7 +61,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - delivery failure never invalidates the new invitation or removes the one-time manual link;
 - queues, background workers, provider APIs, arbitrary templates, attachments, bounce processing, and delivery history remain separate future capabilities.
 
-The merged Alembic head is `h10017`; draft PR #97 advances it to `h10018`.
+The current Alembic head is `h10018`.
 
 MealSlot and MealSlotDish remain primary. MealPlanItem remains compatibility-only.
 
