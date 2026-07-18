@@ -3,6 +3,7 @@ import { apiClient } from "@/shared/api/client";
 
 export type InvitationDefaultRole = "instructor" | "verified_instructor";
 export type InvitationStatus = "active" | "expired" | "revoked" | "consumed" | "superseded";
+export type InvitationDeliveryStatus = "sent" | "unavailable" | "failed";
 
 export interface InvitationPolicyDraft {
   expires_after_days: number;
@@ -47,6 +48,9 @@ export interface InvitationRecord {
 export interface InvitationCreated extends InvitationRecord {
   token: string;
   acceptance_path: string;
+  delivery_status: InvitationDeliveryStatus;
+  delivery_message: string;
+  delivery_attempts: number;
 }
 
 export interface InvitationPublicInfo {
