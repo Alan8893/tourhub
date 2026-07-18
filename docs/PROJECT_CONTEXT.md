@@ -1,6 +1,6 @@
 # TourHub — PROJECT_CONTEXT
 
-Version: 0.0.4-alpha
+Version: 0.0.5-alpha
 
 Last update: 2026-07-18
 
@@ -15,10 +15,10 @@ TourHub is a local ERP application for one tourist club.
 - The runtime supports multiple invited users inside the same club.
 - Registration is invitation-only after one-time Administrator bootstrap.
 - Approved roles are Administrator, Instructor, and Verified Instructor.
-- Participant profiles are not part of the current MVP workflow; calculations use participant count.
+- Participant profiles are outside the current MVP workflow; calculations use participant count.
 - Paid external services are not used.
 
-The approved target product scope is defined in `PRODUCT_SPEC.md`. The implemented state is defined by repository code, tests, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
+The approved target scope is defined in `PRODUCT_SPEC.md`. The implemented state is defined by code, tests, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
 
 ## 2. Current product goal
 
@@ -28,15 +28,15 @@ Complete and stabilize the Russian local workflow:
 Administrator bootstrap and invitations
   → Project
   → Menu
-  → Club and personal recipes
+  → Club and personal Recipes
   → Recipe publication and moderation
-  → Dish recipe variants and generation modes
+  → Dish Recipe variants and project generation modes
   → Shopping and packaging
   → Equipment
   → PDF, Excel, print, and ZIP
 ```
 
-The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, multi-user operational readiness, Recipe Ownership Foundation, and Recipe Publication and Moderation are complete through TH-0087 / PR #97. The next capability is multiple Recipe variants per Dish with club/personal generation modes.
+The guided preparation baseline, production-like runtime, typed System Settings, Access/mail foundation, multi-user readiness, Recipe ownership, publication/moderation, and Dish Recipe variants with generation modes are complete through TH-0088 / PR #98. The next capability is the centralized alcohol prohibition.
 
 ## 3. Architecture
 
@@ -51,7 +51,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, form state, navigation, and API integration. It renders server-projected capabilities but does not own business validation, menu generation, shopping calculations, lifecycle transitions, or authorization decisions.
+Frontend owns presentation, form state, navigation, and API integration. It renders server-projected capabilities and persisted selection results but does not own business validation, generation rules, lifecycle transitions, calculations, or authorization decisions.
 
 ### Backend
 
@@ -64,65 +64,60 @@ Frontend owns presentation, form state, navigation, and API integration. It rend
 - Redis configuration;
 - deterministic calculation engines.
 
-Backend owns business validation, persistence, identity and authorization decisions, recipe ownership and lifecycle, menu generation, catalogue import, recalculation, mail delivery boundaries, and document generation.
+Backend owns validation, persistence, identity and authorization, Recipe ownership/lifecycle, Dish variant selection, menu generation, catalogue import, recalculation, mail boundaries, and document generation.
 
 ### Runtime
 
-The development stack starts with:
+Development starts with:
 
 ```bash
 docker compose up -d --build
 ```
 
-The operator release path uses `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally. PostgreSQL and Redis remain internal to the release Compose network. Redis is available but no current business workflow depends on it.
+The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally. PostgreSQL and Redis remain internal to the release network. Redis is available but no current business workflow depends on it.
 
 ## 4. Implemented baseline
 
 ### Access and users
 
-- one-time first-Administrator bootstrap;
+- one-time Administrator bootstrap and invitation-only registration;
 - password hashing and server-owned HttpOnly sessions;
-- Administrator-created one-time invitations and automatic SMTP delivery with manual-link fallback;
-- invited-user creation, role/activity administration, optimistic versions, and final-active-Administrator protection;
-- preparation access for active Administrator, Instructor, and Verified Instructor users;
-- Administrator-only settings, invitation management, user administration, and mail operations;
-- multiple independent sessions, current-role resolution, complete deactivation revocation, centralized 401 handling, exact route return, and visible current role.
+- automatic SMTP invitation delivery with manual fallback;
+- roles, activation controls, optimistic user versions, and final-active-Administrator protection;
+- preparation access for all approved active roles;
+- Administrator-only settings, invitations, users, and mail operations;
+- multiple sessions, current-role resolution, deactivation revocation, centralized protected-401 handling, exact route return, and visible role.
 
-### Recipe ownership and publication
+### Recipe ownership, publication, and Dish variants
 
-- Recipe scope is CLUB or PERSONAL;
-- existing catalogue recipes are CLUB and published;
-- interactive new recipes are owned PERSONAL drafts;
-- Administrator sees all recipes and may review any submission;
-- Verified Instructor edits CLUB and owned PERSONAL recipes, and reviews another user's submission;
-- Instructor edits owned drafts/rejections and reads CLUB recipes;
-- unrelated PERSONAL drafts and rejections are hidden;
-- submitted recipes are locked against ordinary root/component/note/equipment/archive changes;
-- rejection requires a comment visible to the owner;
-- resubmission clears the previous decision;
-- publication converts PERSONAL to CLUB and preserves submitter attribution;
-- row-locked lifecycle transitions and Backend capabilities remain authoritative;
-- focused Chrome acceptance covers moderation and rejection on mobile;
-- permanent deletion remains Administrator-only and preserves Dish usage guards.
+- Recipe scope CLUB or PERSONAL;
+- interactive owned PERSONAL drafts and shared published CLUB catalogue;
+- owner submission, rejection feedback, editing, resubmission, and row-locked moderation;
+- Administrator review of all submissions and Verified Instructor review of another user's submission;
+- one published CLUB default plus an ordered set of CLUB/current-actor PERSONAL variants per Dish;
+- Project modes `club_only`, `club_and_personal`, and `personal_preferred`;
+- another user's PERSONAL Recipe remains private;
+- exact selected Recipe persists on every meal assignment;
+- manual assignments survive regeneration with their stored Recipe;
+- shopping and equipment use assignment Recipe snapshots rather than mutable Dish defaults;
+- responsive ownership, moderation, variant, mode, and selected-Recipe UI.
 
 ### Projects and preparation
 
-- project catalogue and workspace;
-- participant count, duration, start date, first and last meal;
-- Backend validation of meal boundaries;
+- project catalogue/workspace, participant count, duration, dates, meal boundaries, and Recipe generation mode;
 - persisted MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
-- automatic role-aware menu generation and manual editing;
-- calendar-day diversity, authoritative manual slots, and persisted generation warnings;
-- participant, menu, recipe, shopping, and equipment recalculation boundaries;
+- role-aware menu generation, deterministic Recipe variant rotation, and manual editing;
+- calendar-day diversity, authoritative manual slots, and persisted warnings;
+- participant, menu, Recipe, shopping, and equipment recalculation boundaries;
 - reload-safe preparation readiness.
 
 ### Catalogue, shopping, equipment, documents, and operations
 
-- products, recipe components/notes/equipment requirements, dishes, and CSV preview/apply;
-- normalized Dish meal roles, compatibility, and repeatability;
-- persisted purchase list, packaging quantities, checklist, comments, responsible-person text, equipment rows, overrides, and removals;
+- products, Recipe components/notes/equipment requirements, Dishes, and CSV preview/apply;
+- normalized Dish roles, compatibility, and repeatability;
+- persisted purchase list, packaging, checklist, comments, responsible person, equipment rows, overrides, and removals;
 - typed club/site/document/module/invitation/mail settings;
-- Russian purchase/equipment PDF, Excel, print, and coordinated ZIP outputs;
+- Russian purchase/equipment PDF, Excel, print, and coordinated ZIP;
 - immutable club/document settings snapshot per generation request;
 - installation, update, backup, restore, health, LAN, recovery, and production-like Docker acceptance.
 
@@ -130,22 +125,21 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-The next task should establish Dish recipe variants and approved club/personal generation modes from the merged TH-0087 baseline.
+The next task should enforce the approved central alcohol prohibition without reopening completed Recipe or Access work.
 
 ## 6. Immediate sequence
 
-1. Implement multiple Recipe variants per Dish and club/personal generation modes.
-2. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
-3. Implement actor-aware audit history, including immutable moderation history.
-4. Complete consolidated Russian exports and product acceptance.
-5. Freeze features, run the final migration cycle, and complete release gates.
+1. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
+2. Implement actor-aware audit history, including immutable moderation history.
+3. Complete consolidated Russian exports and product acceptance.
+4. Freeze features, run the final migration cycle, and complete release gates.
 
 ## 7. Development rules
 
 - Do not invent missing business requirements.
 - Do not add microservices or multi-tenant infrastructure.
 - Do not put business rules or permission decisions only in React.
-- Do not describe a feature as implemented unless repository code and tests confirm it.
+- Do not describe a feature as implemented unless code and tests confirm it.
 - Architecture or stack changes require Product Owner approval and an ADR.
 - One logical task is squash-merged to `main`.
 - Documentation, task state, roadmap, and technical debt are updated with code.
