@@ -5,6 +5,7 @@ from app.models.auth_session import AuthSessionORM
 from app.models.club_settings import ClubSettingsORM
 from app.models.dish import DishORM
 from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
+from app.models.dish_recipe_variant import DishRecipeVariantORM
 from app.models.document_appearance_settings import DocumentAppearanceSettingsORM
 from app.models.equipment_list import EquipmentListORM
 from app.models.equipment_list_item import EquipmentListItemORM
@@ -28,6 +29,7 @@ from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_component_type import RecipeComponentType
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
+from app.models.recipe_generation_mode import RecipeGenerationMode
 from app.models.recipe_lifecycle_status import RecipeLifecycleStatus
 from app.models.recipe_scope import RecipeScope
 from app.models.system_settings_history import SystemSettingsHistoryORM
@@ -54,11 +56,13 @@ __all__ = [
     "RecipeComponentORM",
     "RecipeComponentType",
     "RecipeEquipmentRequirementORM",
+    "RecipeGenerationMode",
     "RecipeLifecycleStatus",
     "RecipeScope",
     "DishORM",
     "DishMealRoleORM",
     "DishMealRoleMealTypeORM",
+    "DishRecipeVariantORM",
     "MealPlanORM",
     "MealPlanDayORM",
     "MealPlanItemORM",
