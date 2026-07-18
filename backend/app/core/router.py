@@ -4,6 +4,7 @@ from app.core.auth import require_administrator, require_preparation_access
 from app.modules.api import equipment_list_router, recipe_equipment_router
 from app.modules.api.account_router import router as account_router
 from app.modules.api.appearance_settings_router import router as appearance_settings_router
+from app.modules.api.audit_router import router as audit_router
 from app.modules.api.auth_router import router as auth_router
 from app.modules.api.catalog_import_router import router as catalog_import_router
 from app.modules.api.club_settings_router import router as club_settings_router
@@ -35,6 +36,7 @@ _preparation = [Depends(require_preparation_access)]
 router.include_router(auth_router)
 router.include_router(account_router)
 router.include_router(appearance_settings_router, dependencies=_admin)
+router.include_router(audit_router, dependencies=_admin)
 router.include_router(catalog_import_router, dependencies=_preparation)
 router.include_router(club_settings_router, dependencies=_admin)
 router.include_router(dish_router, dependencies=_preparation)
