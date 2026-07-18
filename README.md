@@ -2,7 +2,7 @@
 
 TourHub is a local ERP application for preparing tourist-club trips: projects, meal plans, dishes, recipes, shopping projections, equipment, branded Russian exports, and operational backup/restore.
 
-One installation represents one tourist club. The current release supports one-time Administrator bootstrap, invitation-only multi-user access, explicit roles, guarded preparation workflows, working SMTP invitation delivery, multi-session operational readiness, explicit CLUB/PERSONAL recipe ownership, and a submission/review/publication workflow with rejection feedback. Dish recipe variants and club/personal generation modes remain the next recipe capability.
+One installation represents one tourist club. The current release supports Administrator bootstrap, invitation-only multi-user access, explicit roles, guarded preparation workflows, working SMTP invitation delivery, multi-session readiness, CLUB/PERSONAL Recipe ownership, publication/moderation with rejection feedback, ordered Recipe variants per Dish, and project-level club/personal generation modes with persisted assignment Recipe snapshots. The next release-blocking capability is the centralized alcohol prohibition.
 
 ## Quick start
 
@@ -26,9 +26,9 @@ From another computer on the same trusted network, open:
 http://<server-ip>:5173
 ```
 
-Frontend API calls use the same origin under `/api/v1` and are proxied by the frontend Nginx container to the backend. Browser-facing frontend code must not hardcode `localhost:8000`, because `localhost` would refer to the user's computer rather than the TourHub server.
+Frontend API calls use the same origin under `/api/v1` and are proxied by the frontend Nginx container to the Backend. Browser-facing code must not hardcode `localhost:8000`, because `localhost` would refer to the user's computer rather than the TourHub server.
 
-Database migrations run through the backend container entrypoint. PostgreSQL data is stored in the `postgres18_cluster_data` named Docker volume. The release stack does not publish PostgreSQL or Redis ports.
+Database migrations run through the Backend container entrypoint. PostgreSQL data is stored in the `postgres18_cluster_data` named Docker volume. The release stack does not publish PostgreSQL or Redis ports.
 
 The default `docker-compose.yml` remains the development-oriented stack with source bind mounts and infrastructure ports.
 
@@ -38,7 +38,7 @@ The default `docker-compose.yml` remains the development-oriented stack with sou
 - [Docker release runtime](docs/DOCKER_RELEASE.md) — immutable images, release Compose, health contract, internal services, and automated runtime validation;
 - [Update and recovery runbook](docs/UPDATING.md) — backup-first update, explicit migrations, verification, restore, and rollback boundaries.
 
-Create a release-stack host-side custom-format database backup:
+Create a release-stack host-side PostgreSQL custom-format backup:
 
 ```bash
 COMPOSE_FILE=docker-compose.release.yml bash scripts/db/backup-tourhub.sh
@@ -67,12 +67,12 @@ Use these documents for current decisions:
 
 ## Quality gates
 
-GitHub Actions currently enforce:
+GitHub Actions enforce:
 
-- backend tests;
+- Backend tests;
 - selected Ruff and strict mypy baselines;
 - Alembic single-head validation;
-- frontend tests, production build, and browser acceptance;
+- Frontend tests, production build, and browser acceptance;
 - guided desktop/mobile create-to-ZIP release acceptance;
 - moderate-severity dependency audit;
 - PostgreSQL 18 backup/restore smoke testing;
@@ -83,7 +83,7 @@ GitHub Actions currently enforce:
 
 - one logical change per task and pull request;
 - migrations must keep exactly one Alembic head;
-- backend owns calculations, import validation, transaction boundaries, identity, and authorization decisions;
-- frontend owns presentation, navigation, form state, and API integration;
-- frontend features use the shared API client and do not hardcode browser-visible service origins;
+- Backend owns calculations, import validation, transaction boundaries, identity, authorization, lifecycle, and generation decisions;
+- Frontend owns presentation, navigation, form state, and API integration;
+- Frontend features use the shared API client and do not hardcode browser-visible service origins;
 - documentation must be synchronized when product, domain, architecture, persistence, or release scope changes.
