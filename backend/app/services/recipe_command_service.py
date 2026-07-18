@@ -9,6 +9,7 @@ from app.models.product import ProductORM
 from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_component_type import RecipeComponentType
+from app.models.recipe_lifecycle_status import RecipeLifecycleStatus
 from app.models.recipe_scope import RecipeScope
 from app.models.user import UserORM
 from app.services.recipe_access_service import RecipeAccessService
@@ -22,15 +23,21 @@ class RecipeCommandService:
         self.actor = actor
 
     def create_recipe(self, name: str) -> RecipeORM:
+        is_interactive = self.actor is not None
         recipe = RecipeORM(
             id=str(uuid4()),
             name=name.strip(),
             scope=(
                 RecipeScope.PERSONAL.value
-                if self.actor is not None
+                if is_interactive
                 else RecipeScope.CLUB.value
             ),
             owner_user_id=self.actor.id if self.actor is not None else None,
+            lifecycle_status=(
+                RecipeLifecycleStatus.DRAFT.value
+                if is_interactive
+                else RecipeLifecycleStatus.PUBLISHED.value
+            ),
         )
         self.session.add(recipe)
         self._commit()
@@ -45,14 +52,16 @@ class RecipeCommandService:
         return recipe
 
     def archive_recipe(self, recipe_id: str) -> RecipeORM:
-        recipe = self._get_manageable_recipe(recipe_id)
+        recipe = self._get_visible_recipe(recipe_id)
+        RecipeAccessService.require_archivable(recipe, self.actor)
         recipe.is_archived = True
         self._commit()
         self.session.refresh(recipe)
         return recipe
 
     def restore_recipe(self, recipe_id: str) -> RecipeORM:
-        recipe = self._get_manageable_recipe(recipe_id)
+        recipe = self._get_visible_recipe(recipe_id)
+        RecipeAccessService.require_restorable(recipe, self.actor)
         recipe.is_archived = False
         self._commit()
         self.session.refresh(recipe)
@@ -137,10 +146,6 @@ class RecipeCommandService:
     def _get_visible_recipe(self, recipe_id: str) -> RecipeORM:
         recipe = self._get_recipe(recipe_id)
         return RecipeAccessService.require_visible(recipe, self.actor)
-
-    def _get_manageable_recipe(self, recipe_id: str) -> RecipeORM:
-        recipe = self._get_visible_recipe(recipe_id)
-        return RecipeAccessService.require_manageable(recipe, self.actor)
 
     def _get_editable_recipe(self, recipe_id: str) -> RecipeORM:
         recipe = self._get_visible_recipe(recipe_id)
