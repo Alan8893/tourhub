@@ -1,17 +1,22 @@
 from collections.abc import Callable
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.session import get_session
 from app.models.dish import DishORM
 from app.models.meal_slot import MealSlotORM
+from app.models.recipe import RecipeORM
+from app.models.recipe_generation_mode import RecipeGenerationMode
+from app.models.user import UserORM
+from app.repositories.dish_repository import DishRepository
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.meal_slot_repository import MealSlotRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
+from app.services.dish_recipe_variant_service import DishRecipeVariantService
 from app.services.equipment_list_service import EquipmentListService
 from app.services.meal_plan_derived_refresh_service import MealPlanDerivedRefreshService
 from app.services.meal_plan_purchasing_refresh_service import (
@@ -28,21 +33,28 @@ def get_service() -> MealSlotService:
     return MealSlotService()
 
 
-def _get_selectable_dish(session: Session, dish_id: str) -> DishORM:
-    statement = (
-        select(DishORM)
-        .options(joinedload(DishORM.recipe))
-        .where(DishORM.id == dish_id)
-    )
-    dish = session.scalar(statement)
+def _get_selectable_dish_and_recipe(
+    session: Session,
+    slot: MealSlotORM,
+    dish_id: str,
+    actor: UserORM,
+) -> tuple[DishORM, RecipeORM]:
+    dish = DishRepository(session).get(dish_id)
     if dish is None:
         raise HTTPException(status_code=404, detail="Dish not found")
-    if dish.recipe.is_archived:
+    project = slot.day.meal_plan.project
+    mode = (
+        project.recipe_generation_mode
+        if project is not None
+        else RecipeGenerationMode.CLUB_ONLY.value
+    )
+    recipes = DishRecipeVariantService.ordered_for_generation(dish, actor, mode)
+    if not recipes:
         raise HTTPException(
             status_code=422,
-            detail="Dish with archived recipe cannot be assigned to a meal slot",
+            detail="Dish has no recipe available for the project generation mode",
         )
-    return dish
+    return dish, recipes[0]
 
 
 def _refresh_derived_data(session: Session, slot: MealSlotORM) -> None:
@@ -83,18 +95,19 @@ def add_dish(
     dish_id: str,
     session: Session = Depends(get_session),
     service: MealSlotService = Depends(get_service),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> dict[str, str]:
     slot = MealSlotRepository(session).get(slot_id)
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
 
     def operation() -> dict[str, str]:
-        _get_selectable_dish(session, dish_id)
-        item = service.add_dish(slot, dish_id)
+        _, recipe = _get_selectable_dish_and_recipe(session, slot, dish_id, actor)
+        item = service.add_dish(slot, dish_id, recipe.id)
         session.add(item)
         session.flush()
         _refresh_derived_data(session, slot)
-        return {"id": item.id, "dish_id": item.dish_id}
+        return {"id": item.id, "dish_id": item.dish_id, "recipe_id": item.recipe_id}
 
     return _commit_recalculation(session, operation)
 
@@ -129,19 +142,20 @@ def replace_dish(
     dish_id: str,
     session: Session = Depends(get_session),
     service: MealSlotService = Depends(get_service),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> dict[str, str]:
     slot = MealSlotRepository(session).get(slot_id)
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
 
     def operation() -> dict[str, str]:
-        _get_selectable_dish(session, dish_id)
+        _, recipe = _get_selectable_dish_and_recipe(session, slot, dish_id, actor)
         try:
-            item = service.replace_dish(slot, slot_dish_id, dish_id)
+            item = service.replace_dish(slot, slot_dish_id, dish_id, recipe.id)
         except ValueError as error:
             raise HTTPException(status_code=404, detail=str(error)) from error
         session.flush()
         _refresh_derived_data(session, slot)
-        return {"id": item.id, "dish_id": item.dish_id}
+        return {"id": item.id, "dish_id": item.dish_id, "recipe_id": item.recipe_id}
 
     return _commit_recalculation(session, operation)
