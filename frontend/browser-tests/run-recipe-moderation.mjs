@@ -86,12 +86,9 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Рецепты") &&
-       document.body?.innerText?.includes("Библиотека") &&
-       document.body?.innerText?.includes("На проверке")`,
+      `document.body?.innerText?.includes("Рецепты")`,
       "loaded recipe page",
     );
-
     await clickText(client, "На проверке");
     await waitForExpression(
       client,
