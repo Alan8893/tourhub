@@ -19,7 +19,7 @@ function createSettings() {
     secret_configured: true,
     secret_source: "environment",
     secret_environment_variable: "TOURHUB_SMTP_SECRET",
-    delivery_available: false,
+    delivery_available: true,
     test_delivery_available: false,
   };
 }
@@ -40,6 +40,33 @@ export function startMailSettingsApi() {
     const body = request.method === "PUT" ? await readBody(request) : undefined;
     requests.push({ method: request.method, path: url.pathname, body });
     response.setHeader("content-type", "application/json");
+
+    if (url.pathname === "/api/v1/settings/mail/check" && request.method === "POST") {
+      response.statusCode = 200;
+      response.end(JSON.stringify({
+        status: "sent",
+        message: "Соединение с SMTP-сервером установлено и проверено.",
+        attempts: 1,
+        recipient: null,
+      }));
+      return;
+    }
+
+    if (url.pathname === "/api/v1/settings/mail/test" && request.method === "POST") {
+      if (!settings.test_recipient_email) {
+        response.statusCode = 409;
+        response.end(JSON.stringify({ error: "Укажите тестовый адрес." }));
+        return;
+      }
+      response.statusCode = 200;
+      response.end(JSON.stringify({
+        status: "sent",
+        message: "Тестовое письмо отправлено.",
+        attempts: 1,
+        recipient: settings.test_recipient_email,
+      }));
+      return;
+    }
 
     if (url.pathname === "/api/v1/settings/mail") {
       if (request.method === "PUT") {
@@ -67,8 +94,8 @@ export function startMailSettingsApi() {
           secret_configured: true,
           secret_source: "environment",
           secret_environment_variable: "TOURHUB_SMTP_SECRET",
-          delivery_available: false,
-          test_delivery_available: false,
+          delivery_available: true,
+          test_delivery_available: Boolean(body.test_recipient_email),
         };
         delete next.expected_version;
         settings = next;
