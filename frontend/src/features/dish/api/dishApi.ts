@@ -64,9 +64,36 @@ export interface DishMealRolesWriteInput {
   roles: DishMealRoleWriteInput[];
 }
 
+type LegacyDishRecipe = Partial<DishRecipe> & Pick<DishRecipe, "id" | "name" | "is_archived">;
+type LegacyDish = Omit<Dish, "recipe" | "recipes"> & {
+  recipe: LegacyDishRecipe;
+  recipes?: LegacyDishRecipe[];
+};
+
+function normalizeRecipe(recipe: LegacyDishRecipe, defaultRecipeId: string): DishRecipe {
+  return {
+    ...recipe,
+    scope: recipe.scope ?? "club",
+    owner_display_name: recipe.owner_display_name ?? null,
+    is_default: recipe.is_default ?? recipe.id === defaultRecipeId,
+  };
+}
+
+function normalizeDish(dish: LegacyDish): Dish {
+  const defaultRecipe = normalizeRecipe(dish.recipe, dish.recipe.id);
+  const recipes = (dish.recipes?.length ? dish.recipes : [dish.recipe]).map((recipe) =>
+    normalizeRecipe(recipe, defaultRecipe.id),
+  );
+  return {
+    ...dish,
+    recipe: defaultRecipe,
+    recipes,
+  };
+}
+
 export async function getDishes(): Promise<DishListResponse> {
-  const response = await apiClient.get<DishListResponse>("/dishes");
-  return response.data;
+  const response = await apiClient.get<{ items: LegacyDish[] }>("/dishes");
+  return { items: response.data.items.map(normalizeDish) };
 }
 
 export async function getDishCatalogueReadiness(): Promise<DishCatalogueReadiness> {
@@ -75,24 +102,24 @@ export async function getDishCatalogueReadiness(): Promise<DishCatalogueReadines
 }
 
 export async function getDish(dishId: string): Promise<Dish> {
-  const response = await apiClient.get<Dish>(`/dishes/${dishId}`);
-  return response.data;
+  const response = await apiClient.get<LegacyDish>(`/dishes/${dishId}`);
+  return normalizeDish(response.data);
 }
 
 export async function createDish(input: DishWriteInput): Promise<Dish> {
-  const response = await apiClient.post<Dish>("/dishes", input);
-  return response.data;
+  const response = await apiClient.post<LegacyDish>("/dishes", input);
+  return normalizeDish(response.data);
 }
 
 export async function updateDish(dishId: string, input: DishWriteInput): Promise<Dish> {
-  const response = await apiClient.put<Dish>(`/dishes/${dishId}`, input);
-  return response.data;
+  const response = await apiClient.put<LegacyDish>(`/dishes/${dishId}`, input);
+  return normalizeDish(response.data);
 }
 
 export async function updateDishMealRoles(
   dishId: string,
   input: DishMealRolesWriteInput,
 ): Promise<Dish> {
-  const response = await apiClient.put<Dish>(`/dishes/${dishId}/meal-roles`, input);
-  return response.data;
+  const response = await apiClient.put<LegacyDish>(`/dishes/${dishId}/meal-roles`, input);
+  return normalizeDish(response.data);
 }
