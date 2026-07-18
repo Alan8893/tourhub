@@ -9,8 +9,11 @@ import {
   deleteRecipe,
   deleteRecipeComponent,
   deleteRecipeNote,
+  publishRecipe,
+  rejectRecipe,
   renameRecipe,
   restoreRecipe,
+  submitRecipe,
   updateRecipeComponent,
   updateRecipeNote,
   type ProductWriteInput,
@@ -37,6 +40,25 @@ export function useRenameRecipe() {
   return useMutation({
     mutationFn: ({ recipeId, name }: { recipeId: string; name: string }) =>
       renameRecipe(recipeId, name),
+    onSuccess: invalidateRecipes,
+  });
+}
+
+export function useSubmitRecipe() {
+  const invalidateRecipes = useInvalidateRecipes();
+  return useMutation({ mutationFn: submitRecipe, onSuccess: invalidateRecipes });
+}
+
+export function usePublishRecipe() {
+  const invalidateRecipes = useInvalidateRecipes();
+  return useMutation({ mutationFn: publishRecipe, onSuccess: invalidateRecipes });
+}
+
+export function useRejectRecipe() {
+  const invalidateRecipes = useInvalidateRecipes();
+  return useMutation({
+    mutationFn: ({ recipeId, comment }: { recipeId: string; comment: string }) =>
+      rejectRecipe(recipeId, comment),
     onSuccess: invalidateRecipes,
   });
 }
@@ -68,8 +90,15 @@ export function useAddRecipeComponent() {
 export function useUpdateRecipeComponent() {
   const invalidateRecipes = useInvalidateRecipes();
   return useMutation({
-    mutationFn: ({ recipeId, componentId, input }: { recipeId: string; componentId: string; input: RecipeComponentWriteInput }) =>
-      updateRecipeComponent(recipeId, componentId, input),
+    mutationFn: ({
+      recipeId,
+      componentId,
+      input,
+    }: {
+      recipeId: string;
+      componentId: string;
+      input: RecipeComponentWriteInput;
+    }) => updateRecipeComponent(recipeId, componentId, input),
     onSuccess: invalidateRecipes,
   });
 }
@@ -95,8 +124,15 @@ export function useCreateRecipeNote() {
 export function useUpdateRecipeNote() {
   const invalidateRecipes = useInvalidateRecipes();
   return useMutation({
-    mutationFn: ({ recipeId, noteId, input }: { recipeId: string; noteId: string; input: RecipeNoteWriteInput }) =>
-      updateRecipeNote(recipeId, noteId, input),
+    mutationFn: ({
+      recipeId,
+      noteId,
+      input,
+    }: {
+      recipeId: string;
+      noteId: string;
+      input: RecipeNoteWriteInput;
+    }) => updateRecipeNote(recipeId, noteId, input),
     onSuccess: invalidateRecipes,
   });
 }
