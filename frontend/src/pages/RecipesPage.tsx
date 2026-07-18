@@ -27,8 +27,11 @@ import type {
   ProductWriteInput,
   RecipeComponent,
   RecipeComponentWriteInput,
+  RecipeLifecycleStatus,
   RecipeScope,
+  RecipeView,
 } from "@/features/recipe/api/recipeApi";
+import { useAuth } from "@/features/auth/providers/AuthProvider";
 import {
   useAddRecipeComponent,
   useArchiveRecipe,
@@ -36,8 +39,11 @@ import {
   useCreateRecipe,
   useDeleteRecipe,
   useDeleteRecipeComponent,
+  usePublishRecipe,
+  useRejectRecipe,
   useRenameRecipe,
   useRestoreRecipe,
+  useSubmitRecipe,
   useUpdateRecipeComponent,
 } from "@/features/recipe/hooks/useRecipeMutations";
 import { useRecipe, useRecipeProducts, useRecipes } from "@/features/recipe/hooks/useRecipes";
@@ -60,6 +66,13 @@ const calculationTypeLabels: Record<string, string> = {
   package_per_people: "упаковка на группу",
 };
 
+const lifecycleLabels: Record<RecipeLifecycleStatus, string> = {
+  draft: "Черновик",
+  submitted: "На проверке",
+  rejected: "Отклонён",
+  published: "Опубликован",
+};
+
 function recipeScopeLabel(scope: RecipeScope | undefined): string {
   return scope === "personal" ? "Личный" : "Клубный";
 }
@@ -68,19 +81,31 @@ function capability(value: boolean | undefined, legacyFallback: boolean): boolea
   return value ?? legacyFallback;
 }
 
+function formatDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("ru-RU");
+}
+
 function getApiErrorMessage(error: unknown): string {
   if (isAxiosError<{ error?: string; detail?: string }>(error)) {
     const message = error.response?.data?.error ?? error.response?.data?.detail;
-    if (message === "Recipe is used by a dish and cannot be deleted") {
-      return "Рецепт используется блюдом. Его можно архивировать, но нельзя удалить.";
-    }
-    if (message === "Recipe cannot be changed by the current user") {
-      return "У текущей учётной записи нет права изменять этот рецепт.";
-    }
-    if (message === "Only an administrator may permanently delete a recipe") {
-      return "Навсегда удалить рецепт может только администратор.";
-    }
-    return message ?? "Не удалось сохранить изменения.";
+    const messages: Record<string, string> = {
+      "Recipe is used by a dish and cannot be deleted":
+        "Рецепт используется блюдом. Его можно архивировать, но нельзя удалить.",
+      "Recipe cannot be changed by the current user":
+        "У текущей учётной записи нет права изменять этот рецепт.",
+      "Only an administrator may permanently delete a recipe":
+        "Навсегда удалить рецепт может только администратор.",
+      "Submitted recipe cannot be edited":
+        "Отправленный рецепт нельзя изменять до решения проверяющего.",
+      "Submitted recipe cannot be archived":
+        "Отправленный рецепт нельзя архивировать до решения проверяющего.",
+      "Verified instructor cannot review their own recipe":
+        "Верифицированный инструктор не может рассматривать собственный рецепт.",
+      "Recipe is not awaiting moderation": "Рецепт больше не ожидает проверки.",
+    };
+    return (message && messages[message]) ?? message ?? "Не удалось сохранить изменения.";
   }
   return "Не удалось сохранить изменения.";
 }
@@ -88,11 +113,18 @@ function getApiErrorMessage(error: unknown): string {
 export default function RecipesPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const canOpenModeration =
+    user?.role === "administrator" || user?.role === "verified_instructor";
+  const [recipeView, setRecipeView] = useState<RecipeView>("library");
   const [showArchived, setShowArchived] = useState(false);
-  const recipesQuery = useRecipes(showArchived);
+  const recipesQuery = useRecipes(showArchived && recipeView === "library", recipeView);
   const recipeQuery = useRecipe(id);
   const createRecipeMutation = useCreateRecipe();
   const renameRecipeMutation = useRenameRecipe();
+  const submitRecipeMutation = useSubmitRecipe();
+  const publishRecipeMutation = usePublishRecipe();
+  const rejectRecipeMutation = useRejectRecipe();
   const archiveRecipeMutation = useArchiveRecipe();
   const restoreRecipeMutation = useRestoreRecipe();
   const deleteRecipeMutation = useDeleteRecipe();
@@ -110,6 +142,9 @@ export default function RecipesPage() {
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [productError, setProductError] = useState<string | null>(null);
   const [lifecycleError, setLifecycleError] = useState<string | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectionComment, setRejectionComment] = useState("");
+  const [rejectionValidationError, setRejectionValidationError] = useState<string | null>(null);
 
   const productsQuery = useRecipeProducts(componentDialogOpen || productDialogOpen);
   const recipes = recipesQuery.data?.items ?? [];
@@ -133,10 +168,23 @@ export default function RecipesPage() {
   const canDeleteSelected = selectedRecipe
     ? capability(selectedRecipe.can_delete, true)
     : false;
+  const canSubmitSelected = Boolean(selectedRecipe?.can_submit);
+  const canPublishSelected = Boolean(selectedRecipe?.can_publish);
+  const canRejectSelected = Boolean(selectedRecipe?.can_reject);
   const lifecyclePending =
+    submitRecipeMutation.isPending ||
+    publishRecipeMutation.isPending ||
+    rejectRecipeMutation.isPending ||
     archiveRecipeMutation.isPending ||
     restoreRecipeMutation.isPending ||
     deleteRecipeMutation.isPending;
+
+  const changeRecipeView = (view: RecipeView) => {
+    setRecipeView(view);
+    setShowArchived(false);
+    setLifecycleError(null);
+    navigate("/recipes");
+  };
 
   const openCreateDialog = () => {
     setRecipeName("");
@@ -162,6 +210,7 @@ export default function RecipesPage() {
       const recipe = await createRecipeMutation.mutateAsync(recipeName.trim());
       setNameDialogMode(null);
       setShowArchived(false);
+      setRecipeView("library");
       navigate(`/recipes/${recipe.id}`);
     } else if (nameDialogMode === "rename" && id) {
       await renameRecipeMutation.mutateAsync({ recipeId: id, name: recipeName.trim() });
@@ -223,6 +272,67 @@ export default function RecipesPage() {
       setProductDialogOpen(false);
     } catch (error) {
       setProductError(getApiErrorMessage(error));
+    }
+  };
+
+  const submitSelectedRecipe = async () => {
+    if (
+      !id ||
+      !selectedRecipe ||
+      !canSubmitSelected ||
+      !window.confirm(`Отправить рецепт «${selectedRecipe.name}» на проверку?`)
+    ) {
+      return;
+    }
+    setLifecycleError(null);
+    try {
+      await submitRecipeMutation.mutateAsync(id);
+    } catch (error) {
+      setLifecycleError(getApiErrorMessage(error));
+    }
+  };
+
+  const publishSelectedRecipe = async () => {
+    if (
+      !id ||
+      !selectedRecipe ||
+      !canPublishSelected ||
+      !window.confirm(`Опубликовать рецепт «${selectedRecipe.name}» в клубной библиотеке?`)
+    ) {
+      return;
+    }
+    setLifecycleError(null);
+    try {
+      await publishRecipeMutation.mutateAsync(id);
+      navigate("/recipes");
+    } catch (error) {
+      setLifecycleError(getApiErrorMessage(error));
+    }
+  };
+
+  const openRejectDialog = () => {
+    if (!canRejectSelected) return;
+    setRejectionComment("");
+    setRejectionValidationError(null);
+    rejectRecipeMutation.reset();
+    setRejectDialogOpen(true);
+  };
+
+  const rejectSelectedRecipe = async () => {
+    if (!id || !canRejectSelected) return;
+    const comment = rejectionComment.trim();
+    if (!comment) {
+      setRejectionValidationError("Укажите, что нужно исправить в рецепте.");
+      return;
+    }
+    setLifecycleError(null);
+    setRejectionValidationError(null);
+    try {
+      await rejectRecipeMutation.mutateAsync({ recipeId: id, comment });
+      setRejectDialogOpen(false);
+      navigate("/recipes");
+    } catch (error) {
+      setRejectionValidationError(getApiErrorMessage(error));
     }
   };
 
@@ -288,27 +398,44 @@ export default function RecipesPage() {
             Рецепты
           </Typography>
           <Typography color="text.secondary">
-            Клубные стандарты и личные рецепты текущего пользователя.
+            Личные черновики, проверка публикаций и клубные стандарты.
           </Typography>
         </Box>
-        <Button variant="contained" onClick={openCreateDialog}>
-          Создать личный рецепт
-        </Button>
+        {recipeView === "library" && (
+          <Button variant="contained" onClick={openCreateDialog}>
+            Создать личный рецепт
+          </Button>
+        )}
       </Stack>
 
-      <ToggleButtonGroup
-        exclusive
-        size="small"
-        value={showArchived ? "archived" : "active"}
-        onChange={(_, value: "active" | "archived" | null) => {
-          if (!value) return;
-          setShowArchived(value === "archived");
-          navigate("/recipes");
-        }}
-      >
-        <ToggleButton value="active">Активные</ToggleButton>
-        <ToggleButton value="archived">Архив</ToggleButton>
-      </ToggleButtonGroup>
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems="flex-start">
+        {canOpenModeration && (
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={recipeView}
+            onChange={(_, value: RecipeView | null) => value && changeRecipeView(value)}
+          >
+            <ToggleButton value="library">Библиотека</ToggleButton>
+            <ToggleButton value="moderation">На проверке</ToggleButton>
+          </ToggleButtonGroup>
+        )}
+        {recipeView === "library" && (
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={showArchived ? "archived" : "active"}
+            onChange={(_, value: "active" | "archived" | null) => {
+              if (!value) return;
+              setShowArchived(value === "archived");
+              navigate("/recipes");
+            }}
+          >
+            <ToggleButton value="active">Активные</ToggleButton>
+            <ToggleButton value="archived">Архив</ToggleButton>
+          </ToggleButtonGroup>
+        )}
+      </Stack>
 
       {viewState === "loading" && (
         <Stack alignItems="center" py={6}>
@@ -316,13 +443,19 @@ export default function RecipesPage() {
         </Stack>
       )}
       {viewState === "error" && (
-        <Alert severity="error">Не удалось загрузить библиотеку рецептов.</Alert>
+        <Alert severity="error">
+          {recipeView === "moderation"
+            ? "Не удалось загрузить очередь проверки рецептов."
+            : "Не удалось загрузить библиотеку рецептов."}
+        </Alert>
       )}
       {viewState === "empty" && (
         <Alert severity="info">
-          {showArchived
-            ? "Архив рецептов пуст."
-            : "Доступных рецептов пока нет. Создайте личный рецепт."}
+          {recipeView === "moderation"
+            ? "Сейчас нет рецептов, ожидающих проверки."
+            : showArchived
+              ? "Архив рецептов пуст."
+              : "Доступных рецептов пока нет. Создайте личный рецепт."}
         </Alert>
       )}
 
@@ -338,9 +471,7 @@ export default function RecipesPage() {
           <Paper variant="outlined">
             <List disablePadding>
               {recipes.map((recipe, index) => {
-                const owner = recipe.owner_display_name
-                  ? ` · ${recipe.owner_display_name}`
-                  : "";
+                const attribution = recipe.owner_display_name ?? recipe.submitted_by_display_name;
                 return (
                   <Box key={recipe.id}>
                     {index > 0 && <Divider />}
@@ -350,14 +481,10 @@ export default function RecipesPage() {
                     >
                       <ListItemText
                         primary={recipe.name}
-                        secondary={`${recipeScopeLabel(recipe.scope)}${owner} · ${recipe.component_count} компонентов · ${recipe.note_count} заметок`}
+                        secondary={`${recipeScopeLabel(recipe.scope)}${attribution ? ` · ${attribution}` : ""} · ${recipe.component_count} компонентов · ${recipe.note_count} заметок`}
                       />
                       <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={recipeScopeLabel(recipe.scope)}
-                        />
+                        <Chip size="small" label={lifecycleLabels[recipe.lifecycle_status]} />
                         {recipe.is_archived && <Chip size="small" label="Архив" />}
                       </Stack>
                     </ListItemButton>
@@ -372,7 +499,7 @@ export default function RecipesPage() {
               <Stack spacing={1} alignItems="center" justifyContent="center" minHeight={190}>
                 <Typography variant="h6">Выберите рецепт</Typography>
                 <Typography color="text.secondary" textAlign="center">
-                  Компоненты и заметки выбранного рецепта появятся здесь.
+                  Состав, состояние публикации и доступные действия появятся здесь.
                 </Typography>
               </Stack>
             )}
@@ -394,11 +521,26 @@ export default function RecipesPage() {
                     восстановить.
                   </Alert>
                 )}
-                {!selectedRecipe.is_archived && !canEditSelected && (
+                {selectedRecipe.lifecycle_status === "submitted" && (
                   <Alert severity="info">
-                    Этот клубный рецепт доступен текущей учётной записи только для просмотра.
+                    Рецепт отправлен на проверку. Обычное редактирование и архивирование временно
+                    заблокированы.
                   </Alert>
                 )}
+                {selectedRecipe.lifecycle_status === "rejected" && selectedRecipe.review_comment && (
+                  <Alert severity="error">
+                    <Typography fontWeight={600}>Что нужно исправить</Typography>
+                    <Typography>{selectedRecipe.review_comment}</Typography>
+                  </Alert>
+                )}
+                {!selectedRecipe.is_archived &&
+                  !canEditSelected &&
+                  selectedRecipe.lifecycle_status !== "submitted" && (
+                    <Alert severity="info">
+                      Этот рецепт доступен текущей учётной записи только для просмотра.
+                    </Alert>
+                  )}
+
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
                   spacing={2}
@@ -415,6 +557,7 @@ export default function RecipesPage() {
                         variant="outlined"
                         label={recipeScopeLabel(selectedRecipe.scope)}
                       />
+                      <Chip size="small" label={lifecycleLabels[selectedRecipe.lifecycle_status]} />
                       {selectedRecipe.is_archived && <Chip size="small" label="Архив" />}
                     </Stack>
                     <Typography color="text.secondary">
@@ -424,8 +567,53 @@ export default function RecipesPage() {
                       {selectedRecipe.components.length} компонентов · {selectedRecipe.notes.length}{" "}
                       заметок
                     </Typography>
+                    {selectedRecipe.submitted_by_display_name && (
+                      <Typography variant="body2" color="text.secondary">
+                        Отправил: {selectedRecipe.submitted_by_display_name}
+                        {formatDate(selectedRecipe.submitted_at)
+                          ? ` · ${formatDate(selectedRecipe.submitted_at)}`
+                          : ""}
+                      </Typography>
+                    )}
+                    {selectedRecipe.reviewed_by_display_name && (
+                      <Typography variant="body2" color="text.secondary">
+                        Решение: {selectedRecipe.reviewed_by_display_name}
+                        {formatDate(selectedRecipe.reviewed_at)
+                          ? ` · ${formatDate(selectedRecipe.reviewed_at)}`
+                          : ""}
+                      </Typography>
+                    )}
                   </Box>
                   <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    {canSubmitSelected && (
+                      <Button
+                        variant="contained"
+                        onClick={() => void submitSelectedRecipe()}
+                        disabled={lifecyclePending}
+                      >
+                        Отправить на проверку
+                      </Button>
+                    )}
+                    {canPublishSelected && (
+                      <Button
+                        color="success"
+                        variant="contained"
+                        onClick={() => void publishSelectedRecipe()}
+                        disabled={lifecyclePending}
+                      >
+                        Опубликовать
+                      </Button>
+                    )}
+                    {canRejectSelected && (
+                      <Button
+                        color="error"
+                        variant="outlined"
+                        onClick={openRejectDialog}
+                        disabled={lifecyclePending}
+                      >
+                        Отклонить
+                      </Button>
+                    )}
                     {canEditSelected && (
                       <Button variant="outlined" onClick={openRenameDialog}>
                         Переименовать
@@ -575,8 +763,7 @@ export default function RecipesPage() {
           <Stack spacing={2} sx={{ mt: 1 }}>
             {nameDialogMode === "create" && (
               <Alert severity="info">
-                Рецепт будет личным и доступным для редактирования владельцу. Публикация в клубную
-                библиотеку появится в следующем этапе.
+                Новый рецепт останется личным черновиком, пока владелец не отправит его на проверку.
               </Alert>
             )}
             {(nameValidationError || nameMutation.isError) && (
@@ -606,6 +793,51 @@ export default function RecipesPage() {
             disabled={nameMutation.isPending}
           >
             {nameMutation.isPending ? "Сохранение…" : "Сохранить"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={rejectDialogOpen}
+        onClose={rejectRecipeMutation.isPending ? undefined : () => setRejectDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Отклонить публикацию</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Alert severity="info">
+              Автор увидит комментарий, сможет исправить рецепт и отправить его повторно.
+            </Alert>
+            {rejectionValidationError && (
+              <Alert severity="error">{rejectionValidationError}</Alert>
+            )}
+            <TextField
+              autoFocus
+              multiline
+              minRows={3}
+              label="Что нужно исправить"
+              value={rejectionComment}
+              onChange={(event) => setRejectionComment(event.target.value)}
+              inputProps={{ maxLength: 1000 }}
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setRejectDialogOpen(false)}
+            disabled={rejectRecipeMutation.isPending}
+          >
+            Отмена
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={() => void rejectSelectedRecipe()}
+            disabled={rejectRecipeMutation.isPending}
+          >
+            {rejectRecipeMutation.isPending ? "Сохранение…" : "Отклонить"}
           </Button>
         </DialogActions>
       </Dialog>
