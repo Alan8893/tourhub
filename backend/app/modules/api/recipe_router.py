@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
@@ -7,6 +7,7 @@ from app.core.auth import require_preparation_access
 from app.core.session import get_session
 from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
+from app.models.recipe_lifecycle_status import RecipeLifecycleStatus
 from app.models.recipe_scope import RecipeScope
 from app.models.user import UserORM
 from app.schemas.recipe import (
@@ -18,11 +19,13 @@ from app.schemas.recipe import (
     RecipeListItemResponse,
     RecipeListResponse,
     RecipeProductResponse,
+    RecipeRejectRequest,
     RecipeUpdateRequest,
     RecipeWriteResponse,
 )
 from app.services.recipe_access_service import RecipeAccessService
 from app.services.recipe_command_service import RecipeCommandService
+from app.services.recipe_lifecycle_service import RecipeLifecycleService
 from app.services.recipe_query_service import RecipeQueryService
 
 router = APIRouter(prefix="/recipes", tags=["Recipes"])
@@ -33,10 +36,21 @@ class RecipeOwnershipPayload(TypedDict):
     owner_user_id: int | None
     owner_display_name: str | None
     is_owned_by_current_user: bool
+    lifecycle_status: RecipeLifecycleStatus
+    submitted_by_user_id: int | None
+    submitted_by_display_name: str | None
+    submitted_at: str | None
+    reviewed_by_user_id: int | None
+    reviewed_by_display_name: str | None
+    reviewed_at: str | None
+    review_comment: str | None
     can_edit: bool
     can_archive: bool
     can_restore: bool
     can_delete: bool
+    can_submit: bool
+    can_publish: bool
+    can_reject: bool
 
 
 def get_recipe_query_service(
@@ -53,23 +67,59 @@ def get_recipe_command_service(
     return RecipeCommandService(session, actor=actor)
 
 
+def get_recipe_lifecycle_service(
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> RecipeLifecycleService:
+    return RecipeLifecycleService(session, actor=actor)
+
+
+def _related_display_name(
+    related_user: UserORM | None,
+    user_id: int | None,
+    actor: UserORM,
+) -> str | None:
+    if related_user is not None:
+        return related_user.display_name
+    if user_id == actor.id:
+        return actor.display_name
+    return None
+
+
 def _ownership_response(recipe: RecipeORM, actor: UserORM) -> RecipeOwnershipPayload:
-    can_manage = RecipeAccessService.can_manage(recipe, actor)
-    if recipe.owner is not None:
-        owner_display_name = recipe.owner.display_name
-    elif recipe.owner_user_id == actor.id:
-        owner_display_name = actor.display_name
-    else:
-        owner_display_name = None
+    can_review = RecipeAccessService.can_review(recipe, actor)
     return {
         "scope": RecipeScope(recipe.scope),
         "owner_user_id": recipe.owner_user_id,
-        "owner_display_name": owner_display_name,
+        "owner_display_name": _related_display_name(
+            recipe.owner,
+            recipe.owner_user_id,
+            actor,
+        ),
         "is_owned_by_current_user": recipe.owner_user_id == actor.id,
+        "lifecycle_status": RecipeLifecycleStatus(recipe.lifecycle_status),
+        "submitted_by_user_id": recipe.submitted_by_user_id,
+        "submitted_by_display_name": _related_display_name(
+            recipe.submitted_by,
+            recipe.submitted_by_user_id,
+            actor,
+        ),
+        "submitted_at": recipe.submitted_at.isoformat() if recipe.submitted_at else None,
+        "reviewed_by_user_id": recipe.reviewed_by_user_id,
+        "reviewed_by_display_name": _related_display_name(
+            recipe.reviewed_by,
+            recipe.reviewed_by_user_id,
+            actor,
+        ),
+        "reviewed_at": recipe.reviewed_at.isoformat() if recipe.reviewed_at else None,
+        "review_comment": recipe.review_comment,
         "can_edit": RecipeAccessService.can_edit(recipe, actor),
-        "can_archive": can_manage and not recipe.is_archived,
-        "can_restore": can_manage and recipe.is_archived,
+        "can_archive": RecipeAccessService.can_archive(recipe, actor),
+        "can_restore": RecipeAccessService.can_restore(recipe, actor),
         "can_delete": RecipeAccessService.can_delete(recipe, actor),
+        "can_submit": RecipeAccessService.can_submit(recipe, actor),
+        "can_publish": can_review,
+        "can_reject": can_review,
     }
 
 
@@ -103,9 +153,13 @@ def _component_response(component: RecipeComponentORM) -> RecipeComponentRespons
 @router.get("", response_model=RecipeListResponse)
 def list_recipes(
     include_archived: bool = Query(default=False),
+    view: Literal["library", "moderation"] = Query(default="library"),
     service: RecipeQueryService = Depends(get_recipe_query_service),
 ) -> RecipeListResponse:
-    recipes = service.list_recipes(include_archived=include_archived)
+    try:
+        recipes = service.list_recipes(include_archived=include_archived, view=view)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     actor = service.actor
     assert actor is not None
     return RecipeListResponse(
@@ -156,6 +210,55 @@ def rename_recipe(
     return _write_response(recipe, actor)
 
 
+@router.post("/{recipe_id}/submit", response_model=RecipeWriteResponse)
+def submit_recipe(
+    recipe_id: str,
+    service: RecipeLifecycleService = Depends(get_recipe_lifecycle_service),
+) -> RecipeWriteResponse:
+    try:
+        recipe = service.submit(recipe_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _write_response(recipe, service.actor)
+
+
+@router.post("/{recipe_id}/publish", response_model=RecipeWriteResponse)
+def publish_recipe(
+    recipe_id: str,
+    service: RecipeLifecycleService = Depends(get_recipe_lifecycle_service),
+) -> RecipeWriteResponse:
+    try:
+        recipe = service.publish(recipe_id)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _write_response(recipe, service.actor)
+
+
+@router.post("/{recipe_id}/reject", response_model=RecipeWriteResponse)
+def reject_recipe(
+    recipe_id: str,
+    request: RecipeRejectRequest,
+    service: RecipeLifecycleService = Depends(get_recipe_lifecycle_service),
+) -> RecipeWriteResponse:
+    try:
+        recipe = service.reject(recipe_id, request.comment)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return _write_response(recipe, service.actor)
+
+
 @router.post("/{recipe_id}/archive", response_model=RecipeWriteResponse)
 def archive_recipe(
     recipe_id: str,
@@ -167,6 +270,8 @@ def archive_recipe(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     actor = service.actor
     assert actor is not None
     return _write_response(recipe, actor)
