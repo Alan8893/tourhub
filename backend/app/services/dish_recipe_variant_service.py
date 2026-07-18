@@ -12,18 +12,24 @@ class DishRecipeVariantService:
     @staticmethod
     def is_club_selectable(recipe: RecipeORM) -> bool:
         return (
-            not recipe.is_archived
-            and recipe.scope == RecipeScope.CLUB.value
-            and recipe.lifecycle_status == RecipeLifecycleStatus.PUBLISHED.value
+            not getattr(recipe, "is_archived", False)
+            and getattr(recipe, "scope", RecipeScope.CLUB.value) == RecipeScope.CLUB.value
+            and getattr(
+                recipe,
+                "lifecycle_status",
+                RecipeLifecycleStatus.PUBLISHED.value,
+            )
+            == RecipeLifecycleStatus.PUBLISHED.value
         )
 
     @staticmethod
     def is_personal_selectable(recipe: RecipeORM, actor: UserORM | None) -> bool:
         return (
             actor is not None
-            and not recipe.is_archived
-            and recipe.scope == RecipeScope.PERSONAL.value
-            and recipe.owner_user_id == actor.id
+            and not getattr(recipe, "is_archived", False)
+            and getattr(recipe, "scope", RecipeScope.CLUB.value)
+            == RecipeScope.PERSONAL.value
+            and getattr(recipe, "owner_user_id", None) == actor.id
         )
 
     @classmethod
@@ -36,9 +42,11 @@ class DishRecipeVariantService:
         dish: DishORM,
         actor: UserORM | None,
     ) -> list[RecipeORM]:
-        recipes = [variant.recipe for variant in dish.recipe_variants]
-        if not recipes and dish.recipe is not None:
-            recipes = [dish.recipe]
+        variants = getattr(dish, "recipe_variants", [])
+        recipes = [variant.recipe for variant in variants]
+        default_recipe = getattr(dish, "recipe", None)
+        if not recipes and default_recipe is not None:
+            recipes = [default_recipe]
         return [recipe for recipe in recipes if cls.can_attach(recipe, actor)]
 
     @classmethod
@@ -53,7 +61,7 @@ class DishRecipeVariantService:
         personal = [
             recipe for recipe in recipes if cls.is_personal_selectable(recipe, actor)
         ]
-        club = cls._default_first(club, dish.recipe_id)
+        club = cls._default_first(club, getattr(dish, "recipe_id", ""))
         personal = sorted(personal, key=cls._sort_key)
 
         generation_mode = RecipeGenerationMode(mode)
