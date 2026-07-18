@@ -4,21 +4,22 @@ Status date: 2026-07-18
 
 ## Current phase
 
-The guided single-club preparation baseline, production-like runtime, Product Completeness Audit, complete System Settings foundation, first-release Access foundation, working SMTP delivery, and multi-user operational readiness are complete through PR #95. The next product capability is recipe ownership and lifecycle.
+The guided single-club preparation baseline, production-like runtime, Product Completeness Audit, complete System Settings foundation, first-release Access foundation, working SMTP delivery, and multi-user operational readiness are complete through PR #95. Draft PR #96 implements the first Recipe Ownership and Lifecycle slice: explicit CLUB/PERSONAL ownership and role-aware editing.
 
 ## Verified baseline
 
-- Alembic head: `h10016`.
+- `main`: `82315e0ff9520b52ae5244f69bc05d4a5d0db5b3` — merged PR #95.
+- `main` Alembic head: `h10016`.
 - PR #84 through PR #89 delivered the typed System Settings foundation (`h10008`–`h10013`).
 - PR #90 merged as `26c4d4eb9246de44579451fe3d6e7bd631538324` (`h10014`).
 - PR #91 merged as `2348870864efa1da20547c1a6564dc5f9b6488ef` (`h10015`).
 - PR #92 merged as `257d82a9f4f7e47095f8e96635bf62a9ed14e722` (`h10016`).
 - PR #93 merged as `21a66a2caae4e52f8e1a87bd242666703c4bc296` with no migration.
 - PR #94 merged as `3c51d4c1d0bb0bd96d23a1f4ace0947ae48e9101` with no migration.
-- PR #95 implementation head `4879e6dc701550935eb4d173e5098de85d264fd5` passed Quality #835, Document Quality #452, Guided Release Acceptance #403, Operator Docs #389, and Docker Release Runtime #384.
+- PR #95 merged as `82315e0ff9520b52ae5244f69bc05d4a5d0db5b3`; exact implementation head `8570670209566f6860b71c0173557bb71bf6fe00` passed Quality #843, Document Quality #460, Guided Release Acceptance #411, Operator Docs #397, and Docker Release Runtime #392.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
-## Implemented baseline
+## Implemented on main
 
 - complete guided preparation through Russian purchase/equipment documents and ZIP;
 - persisted shopping, packaging, checklist, equipment, overrides, recalculation, and reload-safe readiness;
@@ -28,21 +29,29 @@ The guided single-club preparation baseline, production-like runtime, Product Co
 - functional invitation lifecycle and invited-user sign-in through ADR-016;
 - user list, role/activity administration, optimistic versions, and final-active-Administrator protection through ADR-017;
 - authenticated preparation routes and APIs for all three approved active roles through ADR-018;
-- public onboarding and invitation acceptance; Administrator-only settings, invitation management, and user administration;
-- working plain/STARTTLS/TLS SMTP delivery, connection check, fixed Russian test message, and best-effort invitation delivery with manual fallback through ADR-019;
-- multiple independent sessions per user, current-role propagation on each request, and complete session revocation on deactivation;
-- centralized frontend handling for protected HTTP 401 responses;
-- exact route return through sign-in and explicit logout;
-- visible current user role in the common application header.
+- working SMTP delivery and invitation fallback through ADR-019;
+- multiple independent sessions, current-role propagation, complete deactivation revocation, centralized frontend 401 handling, exact route return, and visible current role through TH-0085.
 
-No migration was required for PR #93 through PR #95; Alembic remains at `h10016`.
+## Draft PR #96 — Recipe Ownership Foundation
+
+- Recipe gains `scope` (`club` or `personal`) and nullable `owner_user_id` through ADR-020;
+- migration `h10017` preserves every existing Recipe as CLUB with no owner;
+- interactive creation produces a PERSONAL Recipe owned by the current authenticated user;
+- Administrator may view all recipes; other roles see CLUB plus their own PERSONAL recipes;
+- Instructor edits owned PERSONAL recipes only;
+- Verified Instructor edits owned PERSONAL recipes and CLUB recipes;
+- Administrator edits all recipes and remains the only role allowed to permanently delete;
+- the same policy protects components, notes, and equipment requirements;
+- API responses expose safe owner identity and current-actor capabilities;
+- frontend labels club/personal ownership and follows server-projected capabilities.
 
 ## Remaining sequence
 
-1. Recipe ownership/lifecycle and role-specific publication/moderation.
-2. Central alcohol policy.
-3. Actor-aware identity and consolidated audit.
-4. Consolidated exports, product acceptance, then feature freeze.
+1. Recipe submission, review, publication, rejection, and moderation history.
+2. Dish recipe variants and generation modes.
+3. Central alcohol policy.
+4. Actor-aware identity and consolidated audit.
+5. Consolidated exports, product acceptance, then feature freeze.
 
 ## Quality debt
 
