@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
@@ -5,6 +7,7 @@ from app.core.auth import require_preparation_access
 from app.core.session import get_session
 from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
+from app.models.recipe_scope import RecipeScope
 from app.models.user import UserORM
 from app.schemas.recipe import (
     RecipeComponentResponse,
@@ -25,6 +28,17 @@ from app.services.recipe_query_service import RecipeQueryService
 router = APIRouter(prefix="/recipes", tags=["Recipes"])
 
 
+class RecipeOwnershipPayload(TypedDict):
+    scope: RecipeScope
+    owner_user_id: int | None
+    owner_display_name: str | None
+    is_owned_by_current_user: bool
+    can_edit: bool
+    can_archive: bool
+    can_restore: bool
+    can_delete: bool
+
+
 def get_recipe_query_service(
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
@@ -39,10 +53,10 @@ def get_recipe_command_service(
     return RecipeCommandService(session, actor=actor)
 
 
-def _ownership_response(recipe: RecipeORM, actor: UserORM) -> dict[str, object]:
+def _ownership_response(recipe: RecipeORM, actor: UserORM) -> RecipeOwnershipPayload:
     can_manage = RecipeAccessService.can_manage(recipe, actor)
     return {
-        "scope": recipe.scope,
+        "scope": RecipeScope(recipe.scope),
         "owner_user_id": recipe.owner_user_id,
         "owner_display_name": recipe.owner.display_name if recipe.owner is not None else None,
         "is_owned_by_current_user": recipe.owner_user_id == actor.id,
