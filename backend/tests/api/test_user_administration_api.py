@@ -41,6 +41,12 @@ def add_user(
     return user
 
 
+def current_role(client: TestClient) -> str:
+    response = client.get("/api/v1/auth/me")
+    assert response.status_code == 200, response.text
+    return response.json()["user"]["role"]
+
+
 def test_user_list_requires_administrator_and_exposes_safe_fields(
     auth_client,
     db_session,
@@ -200,10 +206,12 @@ def test_role_changes_reach_all_sessions_and_deactivation_revokes_them(
     second_client = TestClient(app)
 
     try:
-        assert first_client.post("/api/v1/auth/login", json=login_payload).status_code == 200
-        assert second_client.post("/api/v1/auth/login", json=login_payload).status_code == 200
-        assert first_client.get("/api/v1/auth/me").json()["user"]["role"] == "instructor"
-        assert second_client.get("/api/v1/auth/me").json()["user"]["role"] == "instructor"
+        first_login = first_client.post("/api/v1/auth/login", json=login_payload)
+        second_login = second_client.post("/api/v1/auth/login", json=login_payload)
+        assert first_login.status_code == 200, first_login.text
+        assert second_login.status_code == 200, second_login.text
+        assert current_role(first_client) == "instructor"
+        assert current_role(second_client) == "instructor"
 
         promoted = auth_client.patch(
             f"/api/v1/users/{member.id}",
@@ -216,8 +224,8 @@ def test_role_changes_reach_all_sessions_and_deactivation_revokes_them(
         assert promoted.status_code == 200, promoted.text
         promoted_body = promoted.json()
         assert promoted_body["version"] == 2
-        assert first_client.get("/api/v1/auth/me").json()["user"]["role"] == "verified_instructor"
-        assert second_client.get("/api/v1/auth/me").json()["user"]["role"] == "verified_instructor"
+        assert current_role(first_client) == "verified_instructor"
+        assert current_role(second_client) == "verified_instructor"
 
         deactivated = auth_client.patch(
             f"/api/v1/users/{member.id}",
