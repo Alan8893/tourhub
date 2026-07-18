@@ -55,10 +55,16 @@ def get_recipe_command_service(
 
 def _ownership_response(recipe: RecipeORM, actor: UserORM) -> RecipeOwnershipPayload:
     can_manage = RecipeAccessService.can_manage(recipe, actor)
+    if recipe.owner is not None:
+        owner_display_name = recipe.owner.display_name
+    elif recipe.owner_user_id == actor.id:
+        owner_display_name = actor.display_name
+    else:
+        owner_display_name = None
     return {
         "scope": RecipeScope(recipe.scope),
         "owner_user_id": recipe.owner_user_id,
-        "owner_display_name": recipe.owner.display_name if recipe.owner is not None else None,
+        "owner_display_name": owner_display_name,
         "is_owned_by_current_user": recipe.owner_user_id == actor.id,
         "can_edit": RecipeAccessService.can_edit(recipe, actor),
         "can_archive": can_manage and not recipe.is_archived,
