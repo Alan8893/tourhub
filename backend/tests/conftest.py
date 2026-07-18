@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.core.auth import require_administrator
+from app.core.auth import require_administrator, require_preparation_access
 from app.core.database import get_db
 from app.core.session import get_session
 from app.main import app
@@ -107,6 +107,7 @@ def client():
     app.dependency_overrides[get_session] = override_session
     app.dependency_overrides[get_db] = override_session
     app.dependency_overrides[require_administrator] = override_administrator
+    app.dependency_overrides[require_preparation_access] = override_administrator
     yield TestClient(app)
     app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=test_engine)
@@ -149,6 +150,7 @@ def override_database_session():
     app.dependency_overrides[get_session] = override_session
     app.dependency_overrides[get_db] = override_session
     app.dependency_overrides[require_administrator] = override_administrator
+    app.dependency_overrides[require_preparation_access] = override_administrator
     yield
     app.dependency_overrides.clear()
 
