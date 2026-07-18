@@ -34,7 +34,7 @@ Administrator bootstrap and invitations
   → PDF, Excel, print, and ZIP
 ```
 
-The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, and working SMTP invitation delivery are merged. Current work hardens multi-user runtime behavior before recipe ownership and role-specific moderation.
+The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, and multi-user operational readiness are complete through PR #95. The next product capability is recipe ownership and role-specific publication/moderation.
 
 ## 3. Architecture
 
@@ -86,7 +86,12 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 - user list, role changes, activation/deactivation, optimistic versions, and final-active-Administrator protection;
 - preparation access for active Administrator, Instructor, and Verified Instructor users;
 - Administrator-only settings, invitation management, user administration, and mail operations;
-- multiple independent sessions per user; deactivation revokes active sessions.
+- multiple independent sessions per user;
+- current persisted role resolved on every request;
+- deactivation revokes every active session;
+- protected frontend HTTP 401 responses clear stale identity centrally;
+- exact path, query, and hash survive re-authentication and explicit logout;
+- current user role is visible in the common header.
 
 ### Projects and preparation
 
@@ -116,17 +121,17 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 
 ## 5. Current active work
 
-- TH-0061.5 — operational maintenance of the completed menu rules engine;
-- TH-0085 — multi-user operational readiness: centralized revoked-session handling, visible current role, exact route return, and two-session integration coverage.
+- TH-0061.5 — operational maintenance of the completed menu rules engine.
+
+The next task should establish recipe ownership and lifecycle from the current `main` without reopening completed Access work.
 
 ## 6. Immediate sequence
 
-1. Complete TH-0085 exact-head verification and merge.
-2. Implement recipe ownership and lifecycle: CLUB/PERSONAL scope, variants, publication, moderation, and generation modes.
-3. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
-4. Implement actor-aware audit history.
-5. Complete consolidated Russian exports and product acceptance.
-6. Freeze features, run the final migration cycle, and complete release gates.
+1. Implement recipe ownership and lifecycle: CLUB/PERSONAL scope, variants, publication, moderation, and generation modes.
+2. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
+3. Implement actor-aware audit history.
+4. Complete consolidated Russian exports and product acceptance.
+5. Freeze features, run the final migration cycle, and complete release gates.
 
 ## 7. Development rules
 
