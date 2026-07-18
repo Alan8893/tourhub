@@ -12,7 +12,7 @@ TourHub is a local ERP application for one tourist club.
 
 - One installation represents one club.
 - Multi-tenant support is prohibited.
-- The current runtime supports multiple invited users inside the same club.
+- The runtime supports multiple invited users inside the same club.
 - Registration is invitation-only after one-time Administrator bootstrap.
 - Approved roles are Administrator, Instructor, and Verified Instructor.
 - Participant profiles are not part of the current MVP workflow; calculations use participant count.
@@ -35,7 +35,7 @@ Administrator bootstrap and invitations
   → PDF, Excel, print, and ZIP
 ```
 
-The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, and multi-user operational readiness are complete through PR #95. Draft PR #96 implements the first recipe-lifecycle slice: CLUB/PERSONAL ownership and role-aware editing.
+The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, multi-user operational readiness, and Recipe Ownership Foundation are complete through PR #96. The next product capability is recipe publication and moderation.
 
 ## 3. Architecture
 
@@ -81,18 +81,24 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 
 - one-time first-Administrator bootstrap;
 - password hashing and server-owned HttpOnly sessions;
-- Administrator-created one-time invitations;
-- automatic SMTP invitation delivery with manual-link fallback;
-- invited-user account creation and initial sign-in;
-- user list, role changes, activation/deactivation, optimistic versions, and final-active-Administrator protection;
+- Administrator-created one-time invitations and automatic SMTP delivery with manual-link fallback;
+- invited-user creation, role and activity administration, optimistic versions, and final-active-Administrator protection;
 - preparation access for active Administrator, Instructor, and Verified Instructor users;
 - Administrator-only settings, invitation management, user administration, and mail operations;
-- multiple independent sessions per user;
-- current persisted role resolved on every request;
-- deactivation revokes every active session;
-- protected frontend HTTP 401 responses clear stale identity centrally;
-- exact path, query, and hash survive re-authentication and explicit logout;
-- current user role is visible in the common header.
+- multiple independent sessions, current-role resolution, complete deactivation revocation, centralized 401 handling, exact route return, and visible current role.
+
+### Recipe ownership
+
+- Recipe scope is CLUB or PERSONAL;
+- existing catalogue recipes are CLUB and have no owner;
+- interactive new recipes are PERSONAL and owned by the current authenticated user;
+- Administrator sees and manages all recipes;
+- Verified Instructor edits CLUB and owned PERSONAL recipes;
+- Instructor edits owned PERSONAL recipes and reads CLUB recipes;
+- unrelated PERSONAL recipes are hidden;
+- components, notes, and equipment requirements share the same Backend ownership boundary;
+- permanent deletion remains Administrator-only and preserves Dish usage guards;
+- frontend labels scope and owner and follows server-projected capabilities.
 
 ### Projects and preparation
 
@@ -105,37 +111,30 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 - participant, menu, recipe, shopping, and equipment recalculation boundaries;
 - reload-safe preparation readiness.
 
-### Catalogue, shopping, and equipment
+### Catalogue, shopping, equipment, documents, and operations
 
-- products, recipes, components, notes, dishes, and CSV preview/apply;
+- products, recipe components/notes/equipment requirements, dishes, and CSV preview/apply;
 - normalized Dish meal roles, compatibility, and repeatability;
-- persisted purchase list, packaging quantities, checklist, comments, and responsible-person text;
-- persisted equipment requirements, maximum-simultaneous aggregation, manual rows, overrides, removals, and recalculation.
-
-### Settings, documents, and operations
-
-- typed club, site appearance, document appearance, module, invitation, and mail settings;
+- persisted purchase list, packaging quantities, checklist, comments, responsible-person text, equipment rows, overrides, and removals;
+- typed club/site/document/module/invitation/mail settings;
 - Russian purchase/equipment PDF, Excel, print, and coordinated ZIP outputs;
 - immutable club/document settings snapshot per generation request;
-- installation, update, backup, restore, health, LAN, and recovery documentation;
-- production-like immutable Docker images and runtime acceptance.
+- installation, update, backup, restore, health, LAN, recovery, and production-like Docker acceptance.
 
 ## 5. Current active work
 
-- TH-0061.5 — operational maintenance of the completed menu rules engine;
-- TH-0086 — Recipe Ownership Foundation.
+- TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-TH-0086 introduces Recipe scope and owner identity, migrates the existing catalogue to CLUB, creates new interactive recipes as PERSONAL, filters unrelated personal recipes, and applies one Backend edit policy to root, component, note, and equipment operations.
+The next task should implement recipe submission, review, publication, rejection, and resubmission from the ownership foundation now on `main`.
 
 ## 6. Immediate sequence
 
-1. Complete TH-0086 ownership persistence, API capabilities, responsive UI, and exact-head validation.
-2. Implement submission, publication, review, rejection, and resubmission.
-3. Implement multiple Recipe variants per Dish and club/personal generation modes.
-4. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
-5. Implement actor-aware audit history.
-6. Complete consolidated Russian exports and product acceptance.
-7. Freeze features, run the final migration cycle, and complete release gates.
+1. Implement recipe publication and moderation lifecycle.
+2. Implement multiple Recipe variants per Dish and club/personal generation modes.
+3. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
+4. Implement actor-aware audit history.
+5. Complete consolidated Russian exports and product acceptance.
+6. Freeze features, run the final migration cycle, and complete release gates.
 
 ## 7. Development rules
 
