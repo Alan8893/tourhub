@@ -1,6 +1,6 @@
 # ADR-023 — Actor-Aware Audit Foundation
 
-Status: Proposed
+Status: Accepted
 
 Date: 2026-07-19
 
