@@ -36,13 +36,25 @@ export TOURHUB_DB_PASSWORD='<url-encoded-password>'
 
 Keep this value in the server's protected environment configuration. Use the same password on future starts of the existing PostgreSQL volume.
 
-The System Settings mail section recognizes an optional external SMTP value:
+### Optional SMTP authentication value
+
+Mail Settings store only non-secret connection metadata. When the configured SMTP server requires authentication and an SMTP username is saved, set the matching deployment-managed value before starting the stack:
 
 ```bash
 export TOURHUB_SMTP_SECRET='<smtp-value>'
 ```
 
-Keep this value only in protected host environment configuration. The current mail-boundary implementation reports whether it is configured, but does not connect to SMTP, verify it, or send messages. Do not put the value in PostgreSQL, normal API requests, logs, screenshots, or unencrypted configuration exports.
+Keep this value only in protected host environment configuration. Do not put it in PostgreSQL, normal API requests, committed `.env` files, logs, screenshots, support messages, or unencrypted configuration exports.
+
+A local relay that does not require authentication may leave both the SMTP username and this environment value unset. If a username is configured without the environment value, TourHub reports that delivery is unavailable and does not attempt authentication.
+
+The backend container must be able to resolve and reach the saved SMTP host and port. Configure the mail server and firewall for the selected mode:
+
+- `plain` — unencrypted SMTP, normally only for a trusted local relay;
+- `starttls` — plain connection upgraded with STARTTLS;
+- `tls` — TLS from the beginning of the connection.
+
+TourHub does not guess or change ports automatically. Use the port required by the club's mail server.
 
 Render the effective release configuration:
 
@@ -110,6 +122,34 @@ On a new installation TourHub opens the one-time **«Создание перво
 - do not place the application password in Compose files, `.env` committed to Git, logs, screenshots, or support messages.
 
 After creation, verify that the header shows the Administrator name, `/settings` opens, logout returns to the login form, and the same account can sign in again.
+
+### Verify mail delivery
+
+Sign in as an Administrator and open **«Настройки → Почта»**.
+
+1. Save the SMTP host, port, connection mode, optional username, sender, optional Reply-To, test recipient, timeout, and retry count.
+2. Select **«Проверить соединение»**. This opens the connection, applies the selected protection mode and optional authentication, and performs an SMTP NOOP without sending a message.
+3. Select **«Отправить тестовое письмо»**. TourHub sends a fixed Russian test message to the saved test recipient.
+4. Create a test invitation under **«Настройки → Приглашения»**. The result must report whether automatic delivery succeeded; the one-time manual link remains available in every case.
+
+Connection or delivery errors are returned as bounded Russian messages. TourHub does not display the external SMTP value or raw protocol transcript. Mail operations run synchronously and use the saved timeout and retry count, so choose bounded values appropriate for a local operator workflow.
+
+If connection checking fails:
+
+- verify DNS resolution and network access from the backend container;
+- confirm host, port, and connection mode;
+- confirm that the SMTP server supports the selected mode;
+- when a username is configured, confirm that `TOURHUB_SMTP_SECRET` is present in the environment used by Docker Compose;
+- restart the backend after changing deployment environment values:
+
+```bash
+docker compose -f docker-compose.release.yml restart backend
+docker compose -f docker-compose.release.yml up -d --wait --wait-timeout 120
+```
+
+SMTP availability is not required for TourHub startup. A failed automatic invitation delivery does not delete or roll back the invitation; copy and transfer the displayed one-time link manually.
+
+### Trusted-network access
 
 From another computer on the same trusted network, use the server address:
 
