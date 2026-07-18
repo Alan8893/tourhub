@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-07-18
+Last updated: 2026-07-19
 
 TourHub is a single-club modular monolith with PostgreSQL in production.
 
@@ -15,8 +15,9 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Recipe ownership follows ADR-020.
 - Recipe publication and moderation follow ADR-021.
 - Dish Recipe variants and project generation modes follow ADR-022.
+- Actor-aware audit foundation follows ADR-023.
 - Active Administrator, Instructor, and Verified Instructor users may use preparation workflows.
-- Settings, invitation management, user management, connection checks, and test-message actions remain Administrator-only.
+- Settings, invitation management, user management, connection checks, test-message actions, and audit reads remain Administrator-only.
 - Module visibility is presentation only and never grants access.
 - Frontend route guidance and capability projection never replace Backend permission checks.
 
@@ -53,12 +54,27 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - additional variants may be active published CLUB recipes or active PERSONAL recipes visible to the current actor;
 - another user's PERSONAL recipe is neither accepted by writes nor projected in Dish responses;
 - Project owns `recipe_generation_mode`: `club_only`, `club_and_personal`, or `personal_preferred`;
-- generation groups eligible variants according to the Project mode, keeps the CLUB default first in the club group, and rotates deterministically through repeated Dish occurrences;
+- generation groups eligible variants according to the Project mode and rotates deterministically through repeated Dish occurrences;
 - MealSlotDish and compatibility MealPlanItem persist the exact selected `recipe_id`;
 - manually edited slots retain the stored Recipe through regeneration;
 - manual add/replace uses the same Project mode selector;
 - shopping and equipment read assignment Recipes, so later Dish default or variant edits do not rewrite historical project calculations;
 - Frontend exposes variant scope, owner, default status, Project mode, and the stored Recipe without owning selection rules.
+
+## Actor-aware audit boundary
+
+- `AuditEvent` is a separate append-only persistence boundary, not an extension of the trimmed focused System Settings history;
+- each event snapshots actor User ID, display name, email, and role at action time without a live User foreign-key dependency;
+- events store semantic action, entity type/ID, timestamp, and bounded safe before/after/context JSON;
+- recursive normalization removes password, hash, credential, cookie, session, token, authorization, and secret fields at every nesting level;
+- binary values are represented only by size and arbitrary request bodies are not stored;
+- a service adds its AuditEvent to the same SQLAlchemy Session before committing the business mutation;
+- business mutation and audit event therefore commit or roll back together;
+- ORM update/delete attempts on AuditEvent fail and the application exposes no mutation endpoint;
+- Administrator may query bounded filtered history through `/api/v1/audit/events`;
+- TH-0089 instruments user access administration and Recipe submit/publish/reject transitions;
+- project/menu, settings, mail, invitations, catalogue/import, shopping, equipment, and document actions still require explicit later instrumentation;
+- automatic ORM-wide auditing remains rejected because audit actions must remain semantic and transaction-owned.
 
 ## Mail boundary
 
@@ -69,10 +85,10 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - delivery failure never invalidates the invitation or removes its manual link;
 - queues, background workers, provider APIs, templates, attachments, bounce processing, and delivery history remain future capabilities.
 
-The current Alembic head is `h10019`.
+The current Alembic head is `h10020`.
 
 MealSlot and MealSlotDish remain primary. MealPlanItem remains compatibility-only.
 
 Multi-tenancy and microservices remain prohibited.
 
-See `PRODUCT_SPEC.md` and ADR-012 through ADR-022.
+See `PRODUCT_SPEC.md` and ADR-012 through ADR-023.
