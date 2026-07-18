@@ -30,19 +30,23 @@ Per-project ownership, private projects, user profiles, account recovery, sessio
 
 ## Project
 
-Project is the preparation root for one trip. It stores name, participant count, duration, optional start date, first meal, last meal, status, and preparation results.
+Project is the preparation root for one trip. It stores name, participant count, duration, optional start date, first meal, last meal, Recipe generation mode, status, and preparation results.
 
-`/projects` lists projects. `/projects/{id}` opens one project workspace.
+Supported Recipe generation modes:
 
-Project creation validates supported meal types and one-day meal ordering in Backend. Participant-count changes preserve selected dishes and recalculate persisted purchasing and equipment data transactionally where affected.
+- `club_only` — use eligible published CLUB variants only;
+- `club_and_personal` — use published CLUB variants first, then PERSONAL variants owned by the current actor;
+- `personal_preferred` — use current-actor PERSONAL variants first, then published CLUB fallback.
 
-Current projects are shared inside the one-club preparation space. Project ownership and row-level access are not implemented.
+Project creation validates meal boundaries and the generation mode in Backend. Changing the mode affects later generation and manual Dish assignment; it does not rewrite existing assignment Recipe snapshots.
+
+Current projects remain shared inside the one-club preparation space. Project ownership and row-level access are not implemented.
 
 ## Meal plan
 
-MealPlan contains MealPlanDay records. MealSlot represents one meal occurrence. MealSlotDish is the persisted membership of one Dish in a MealSlot and has its own identifier and order.
+MealPlan contains MealPlanDay records. MealSlot represents one meal occurrence. MealSlotDish is the persisted membership of one Dish in a MealSlot and has its own identifier, order, and selected `recipe_id`.
 
-The API exposes MealSlotDish identifiers so add, replace, and remove operations address the persisted membership rather than the Dish catalogue record. Source Dish identity is exposed separately as `dish_id`.
+The API exposes MealSlotDish identity, source `dish_id`, selected `recipe_id`, Dish name, and Recipe name. Compatibility MealPlanItem also stores the selected Recipe.
 
 Implemented generation behavior:
 
@@ -55,108 +59,102 @@ Implemented generation behavior:
 - same-day uniqueness for non-repeatable assignments;
 - non-repeatable main-dish diversity uses trip calendar days and permits reuse on day four;
 - repeatability is evaluated per `(dish, role)` assignment;
-- archived-recipe and unclassified dishes are excluded from automatic selection;
+- Dishes without an eligible Recipe under the current Project mode are excluded;
 - missing or exhausted required pools leave the automatic position empty and return a deterministic warning;
 - incompatible dishes are never used as a hidden fallback;
-- manually edited MealSlots remain authoritative during regeneration, including intentionally empty manual slots;
-- generation warnings are stored as the latest successful snapshot and returned on later reads;
+- repeated occurrences rotate deterministically through the Dish's eligible ordered Recipe variants;
+- manually edited MealSlots remain authoritative during regeneration, including intentionally empty slots and their selected Recipes;
+- generation warnings are persisted as the latest successful snapshot;
 - generated compositions persist through MealSlot/MealSlotDish and compatibility MealPlanItem rows.
 
-Legacy MealPlanItem remains a compatibility path. Larger diversity thresholds and future preference modes require separate approved requirements.
+Legacy MealPlanItem remains a compatibility path.
 
-## Dish and recipe
+## Dish and Recipe
 
 Dish and Recipe are separate entities.
 
-Current persistence stores exactly one selected `recipe_id` on each Dish. Users can create and rename dishes and replace the assigned active recipe. A recipe archived after assignment remains visible historically but cannot be newly assigned to a Dish or MealSlot.
-
-Dish owns normalized meal classification:
+The implemented Dish shape is:
 
 ```text
 Dish
+  ├─ recipe_id: published CLUB default
+  ├─ DishRecipeVariant[] ordered by position
+  │    └─ recipe_id
   └─ DishMealRole[]
        ├─ role: main | addition | drink | snack
        ├─ is_repeatable
        └─ allowed MealType[]
 ```
 
-Compatibility is stored per `(dish_id, role, meal_type)`. A Dish may have multiple roles with independent repeatability and meal-type compatibility. Unclassified dishes remain valid for manual selection but are excluded from automatic generation.
+Dish rules:
 
-The backend validates:
+- the default Recipe is required, active, published, CLUB, and included in the variant set;
+- the complete variant set is replaced atomically and preserves caller order;
+- additional variants may be active published CLUB Recipes or active PERSONAL Recipes owned by the current actor;
+- unrelated PERSONAL Recipes are not accepted or projected;
+- the default remains first in the CLUB generation group;
+- removing or reordering a catalogue variant does not change existing MealSlotDish or MealPlanItem Recipe snapshots;
+- archiving a Recipe keeps historical assignments readable but makes it ineligible for new assignment;
+- permanent Recipe deletion remains blocked when a Dish or persisted assignment uses it.
 
-- `main`, `addition`, and `drink` only for breakfast/lunch/dinner;
-- `snack` only for snack;
-- at least one compatible meal type for every selected role;
-- unique roles and unique meal-type assignments.
+Dish role compatibility is stored per `(dish_id, role, meal_type)`. A Dish may have multiple roles with independent repeatability and meal-type compatibility. Unclassified dishes remain valid for manual selection but are excluded from role-aware automatic generation.
 
-Dish recipe replacement recalculates affected persisted purchasing and equipment projections in the same transaction.
-
-The implemented Recipe shape through TH-0087 / ADR-021 is:
+The implemented Recipe shape is:
 
 ```text
 Recipe
   ├─ scope: club | personal
   ├─ owner_user_id: User?
   ├─ lifecycle_status: draft | submitted | rejected | published
-  ├─ submitted_by_user_id: User?
-  ├─ submitted_at
-  ├─ reviewed_by_user_id: User?
-  ├─ reviewed_at
-  ├─ review_comment
+  ├─ submission and review metadata
   ├─ is_archived
   ├─ RecipeComponent[]
   ├─ RecipeNote[]
   └─ RecipeEquipmentRequirement[]
 ```
 
-Persistence constraints enforce:
+Persistence and lifecycle constraints enforce:
 
 - CLUB has no owner and is `published`;
 - PERSONAL has one owner and is `draft`, `submitted`, or `rejected`;
-- all pre-existing CLUB recipes migrate to `published`;
-- every interactive new Recipe is a PERSONAL `draft` owned by the current actor;
-- submitted and rejected recipes retain submitter metadata;
-- rejection requires reviewer, review time, and a non-empty comment.
+- interactive creation produces an owned PERSONAL `draft`;
+- submitted/rejected recipes retain submitter metadata;
+- rejection requires reviewer, review time, and non-empty feedback;
+- submitted recipes are locked against ordinary root/component/note/equipment/archive changes;
+- publication converts PERSONAL to CLUB and preserves submitter attribution;
+- resubmission clears the previous decision;
+- Administrator may review any submission;
+- Verified Instructor may review another user's submission but cannot self-review;
+- Instructor edits owned `draft` or `rejected` recipes;
+- unrelated PERSONAL drafts/rejections are returned as not found.
 
-Visibility and lifecycle policy:
-
-- Administrator sees all recipes and may review any submitted recipe;
-- Verified Instructor sees CLUB plus owned PERSONAL recipes in the normal library and may edit CLUB plus owned editable PERSONAL recipes;
-- Verified Instructor has a separate queue for other users' submitted recipes and cannot self-review;
-- Instructor sees CLUB plus owned PERSONAL recipes and may edit owned `draft` or `rejected` recipes;
-- unrelated PERSONAL drafts and rejections are returned as not found;
-- the owner may submit `draft` or `rejected`; resubmission clears the previous decision;
-- `submitted` blocks root, component, note, equipment, and archive changes;
-- publication converts PERSONAL to CLUB, clears current owner, and preserves submitter attribution;
-- rejection returns the recipe to the owner with the latest required comment;
-- permanent deletion remains Administrator-only and recipes already used by a Dish remain non-deletable.
-
-Submit, publish, and reject transitions lock the Recipe row before validating state. Full moderation history, multiple Recipe variants per Dish, generation modes, preparation technology, dietary metadata, season metadata, and richer categories remain incomplete.
+Full immutable moderation history, preparation technology, dietary metadata, season metadata, richer categories, preference weights, and per-meal manual Recipe switching remain incomplete.
 
 ## Product and import
 
-Product is independent of recipes. Practical calculation modes include per-person, fixed-group, and package-per-people.
+Product is independent of Recipes. Practical calculation modes include per-person, fixed-group, and package-per-people.
 
-Products, recipes, components, and notes can be loaded through CSV preview and apply operations. Trusted internal import paths continue to create shared published CLUB catalogue records; invalid input does not create partial catalogue data.
+Products, Recipes, components, and notes can be loaded through CSV preview/apply. Trusted internal import paths create shared published CLUB catalogue records. Invalid input does not create partial catalogue data.
 
-Product update and deletion are not implemented. The approved alcohol prohibition rule still requires centralized Backend enforcement for API and import paths.
+Product update/deletion and the approved centralized alcohol prohibition remain incomplete.
 
 ## Shopping and packaging
 
-Products are aggregated across RecipeComponents and legacy ingredients. Package count is rounded up and persisted with required quantity, purchased quantity, and remainder.
+Products aggregate across the exact Recipes stored on MealSlotDish and compatibility MealPlanItem assignments. Package count is rounded up and persisted with required quantity, purchased quantity, and remainder.
 
-Recalculation triggers include participant-count changes, MealSlot edits, Dish recipe replacement, and relevant recipe changes. Checklist state is preserved for products that remain after refresh. MealSlot mutations and their purchasing refresh share one commit/rollback boundary.
+Participant-count changes, menu edits, manual assignment changes, and relevant Recipe component changes refresh persisted purchasing where affected. Changing the mutable Dish default alone does not reinterpret historical assignments. Checklist state is preserved for products that remain after refresh.
 
-The current workflow persists checklist state, comments, surplus presentation, and optional responsible-person text. Prices, shops, stock balances, and procurement aggregation remain future work.
+The workflow persists checklist state, comments, surplus presentation, and optional responsible-person text. Prices, shops, stock balances, and procurement aggregation remain future work.
 
 ## Equipment
 
-Equipment requirements are attached to recipes and persisted into project equipment lists.
+Equipment requirements are attached to Recipes and projected from the exact Recipe selected on each meal assignment.
 
 Implemented behavior:
 
-- identical requirements are aggregated by maximum simultaneously required quantity rather than summed across trip days;
-- participant, menu, Dish recipe, and recipe-requirement changes refresh prepared project equipment;
+- identical requirements aggregate by maximum simultaneously required quantity rather than sum across trip days;
+- participant, menu, selected-Recipe, and Recipe requirement changes refresh prepared equipment;
+- Dish default/variant edits do not rewrite historical assignment calculations;
 - manual rows, quantity overrides, and removals are persisted;
 - user-facing equipment values are included in Russian PDF, Excel, print, and ZIP outputs.
 
@@ -164,11 +162,11 @@ Warehouse balances, issue workflow, and participant/team distribution remain fut
 
 ## Documents and mail
 
-Current document output includes Russian purchasing and equipment PDF, Excel, print, and coordinated ZIP artifacts using one immutable club/document settings snapshot per generation request.
+Current output includes Russian purchasing and equipment PDF, Excel, print, and coordinated ZIP artifacts using one immutable club/document settings snapshot per generation request.
 
 The complete consolidated PDF and workbook contents described in `PRODUCT_SPEC.md` remain release-blocking future work.
 
-MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with a manual-link fallback. Queues, scheduled retries, delivery history, arbitrary templates, attachments, and bounce handling are deferred.
+MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with a manual-link fallback. Queues, scheduled retries, delivery history, templates, attachments, and bounce handling are deferred.
 
 ## Future domains
 
