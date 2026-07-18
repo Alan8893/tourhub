@@ -18,6 +18,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   InvitationDefaultRole,
+  InvitationDeliveryStatus,
   InvitationRecord,
   InvitationStatus,
   createInvitation,
@@ -35,6 +36,12 @@ interface ApiErrorBody {
   error?: string;
   detail?: string;
   details?: Array<{ msg?: string }>;
+}
+
+interface DeliveryNotice {
+  status: InvitationDeliveryStatus;
+  message: string;
+  attempts: number;
 }
 
 const STATUS_LABELS: Record<InvitationStatus, string> = {
@@ -69,12 +76,19 @@ function linkFor(path: string): string {
   return `${window.location.origin}${path}`;
 }
 
+function deliverySeverity(status: InvitationDeliveryStatus): "success" | "warning" | "error" {
+  if (status === "sent") return "success";
+  if (status === "unavailable") return "warning";
+  return "error";
+}
+
 export default function InvitationLifecyclePanel({ defaultRole, allowReissue }: Props) {
   const [records, setRecords] = useState<InvitationRecord[]>([]);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<InvitationDefaultRole>(defaultRole);
   const [lastLink, setLastLink] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [delivery, setDelivery] = useState<DeliveryNotice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,11 +121,17 @@ export default function InvitationLifecyclePanel({ defaultRole, allowReissue }: 
     setIsSubmitting(true);
     setError(null);
     setMessage(null);
+    setDelivery(null);
     try {
       const created = await createInvitation({ email, role });
       setLastLink(linkFor(created.acceptance_path));
       setEmail("");
-      setMessage("Приглашение создано. Передайте ссылку пользователю вручную.");
+      setDelivery({
+        status: created.delivery_status,
+        message: created.delivery_message,
+        attempts: created.delivery_attempts,
+      });
+      setMessage("Приглашение создано. Ручная ссылка доступна независимо от доставки.");
       await load();
     } catch (createError) {
       setError(errorMessage(createError));
@@ -124,9 +144,15 @@ export default function InvitationLifecyclePanel({ defaultRole, allowReissue }: 
     setActionId(record.id);
     setError(null);
     setMessage(null);
+    setDelivery(null);
     try {
       const replacement = await reissueInvitation(record.id);
       setLastLink(linkFor(replacement.acceptance_path));
+      setDelivery({
+        status: replacement.delivery_status,
+        message: replacement.delivery_message,
+        attempts: replacement.delivery_attempts,
+      });
       setMessage("Создана новая ссылка. Предыдущая ссылка больше не действует.");
       await load();
     } catch (actionError) {
@@ -140,6 +166,7 @@ export default function InvitationLifecyclePanel({ defaultRole, allowReissue }: 
     setActionId(record.id);
     setError(null);
     setMessage(null);
+    setDelivery(null);
     try {
       await revokeInvitation(record.id);
       setMessage("Приглашение отозвано.");
@@ -167,7 +194,7 @@ export default function InvitationLifecyclePanel({ defaultRole, allowReissue }: 
         <Box>
           <Typography variant="h5">Рабочие приглашения</Typography>
           <Typography color="text.secondary">
-            TourHub создаёт одноразовую ссылку. Пока почтовая доставка не реализована, передайте её пользователю вручную безопасным способом.
+            TourHub создаёт одноразовую ссылку и автоматически пытается отправить её по email. При любой проблеме ссылка остаётся доступной для ручной передачи.
           </Typography>
         </Box>
 
@@ -176,6 +203,11 @@ export default function InvitationLifecyclePanel({ defaultRole, allowReissue }: 
         </Alert>
         {error && <Alert severity="error">{error}</Alert>}
         {message && <Alert severity="success">{message}</Alert>}
+        {delivery && (
+          <Alert severity={deliverySeverity(delivery.status)}>
+            {delivery.message} Попыток: {delivery.attempts}.
+          </Alert>
+        )}
 
         <Box
           sx={{
