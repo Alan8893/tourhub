@@ -16,11 +16,13 @@ import RequireAdministrator from "@/features/auth/components/RequireAdministrato
 import RequireAuthenticated from "@/features/auth/components/RequireAuthenticated";
 import AuthProvider, { useAuth } from "@/features/auth/providers/AuthProvider";
 import LoginPage from "@/pages/LoginPage";
+import { apiClient } from "@/shared/api/client";
 
 function ProtectedPreparation() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const currentPath = `${location.pathname}${location.search}${location.hash}`;
   return (
     <Stack spacing={2}>
       <Header onMenuClick={() => undefined} />
@@ -28,9 +30,9 @@ function ProtectedPreparation() {
         <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
           <Stack spacing={2}>
             <Typography variant="h4">Подготовка доступна</Typography>
-            <Typography>Маршрут: {location.pathname}</Typography>
+            <Typography>Маршрут: {currentPath}</Typography>
             <Typography>{user?.display_name}</Typography>
-            <Button variant="contained" onClick={() => navigate("/settings")}>
+            <Button variant="contained" onClick={() => navigate("/settings?section=users#accounts")}>
               Открыть настройки
             </Button>
           </Stack>
@@ -47,9 +49,17 @@ function ProtectedSettings() {
       <Header onMenuClick={() => undefined} />
       <Container maxWidth="md">
         <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
-          <Typography variant="h4">Настройки доступны</Typography>
-          <Typography>{user?.display_name}</Typography>
-          <Typography>{user?.email}</Typography>
+          <Stack spacing={2}>
+            <Typography variant="h4">Настройки доступны</Typography>
+            <Typography>{user?.display_name}</Typography>
+            <Typography>{user?.email}</Typography>
+            <Button
+              variant="outlined"
+              onClick={() => void apiClient.get("/session-probe").catch(() => undefined)}
+            >
+              Проверить сессию
+            </Button>
+          </Stack>
         </Paper>
       </Container>
     </Stack>
@@ -63,7 +73,7 @@ createRoot(root).render(
   <StrictMode>
     <ThemeProvider theme={createTheme()}>
       <CssBaseline />
-      <MemoryRouter initialEntries={["/projects/42"]}>
+      <MemoryRouter initialEntries={["/projects/42?tab=menu#day-2"]}>
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />

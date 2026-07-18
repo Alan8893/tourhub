@@ -34,6 +34,16 @@ export function startAccessAuthApi() {
       return;
     }
 
+    if (url.pathname === "/api/v1/session-probe") {
+      if (!activeSession || !request.headers.cookie?.includes("tourhub_session=test-session")) {
+        response.statusCode = 401;
+        response.end(JSON.stringify({ error: "Сессия завершена администратором." }));
+        return;
+      }
+      response.end(JSON.stringify({ status: "active" }));
+      return;
+    }
+
     if (url.pathname === "/api/v1/auth/bootstrap" && request.method === "POST") {
       if (user !== null) {
         response.statusCode = 409;
@@ -94,6 +104,9 @@ export function startAccessAuthApi() {
 
   return {
     listen: () => new Promise((resolve) => server.listen(18089, "127.0.0.1", resolve)),
+    invalidateSession: () => {
+      activeSession = false;
+    },
     close: () =>
       new Promise((resolve) => {
         server.closeAllConnections();

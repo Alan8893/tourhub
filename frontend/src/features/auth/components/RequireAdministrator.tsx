@@ -17,7 +17,8 @@ export default function RequireAdministrator({ children }: PropsWithChildren) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    const destination = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to="/login" replace state={{ from: destination }} />;
   }
 
   if (user.role !== "administrator") {

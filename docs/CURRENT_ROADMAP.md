@@ -13,6 +13,7 @@ Project preparation baseline
   → System Settings foundation
   → Access foundation
   → Working mail delivery
+  → Multi-user operational readiness
   → Recipe ownership and lifecycle
   → Central alcohol prohibition
   → Actor-aware audit
@@ -47,9 +48,7 @@ Project preparation baseline
 
 PR #90 merged as `26c4d4eb9246de44579451fe3d6e7bd631538324`. PR #91 merged as `2348870864efa1da20547c1a6564dc5f9b6488ef`. PR #92 merged as `257d82a9f4f7e47095f8e96635bf62a9ed14e722`. PR #93 merged as `21a66a2caae4e52f8e1a87bd242666703c4bc296`.
 
-## IN PROGRESS — TH-0084 / DRAFT PR #94
-
-### Working mail delivery
+### Working mail delivery — PR #94
 
 - Python standard-library SMTP client with plain, STARTTLS, and implicit TLS modes;
 - optional SMTP authentication using the deployment-managed `TOURHUB_SMTP_SECRET` value only when a username is configured;
@@ -57,16 +56,24 @@ PR #90 merged as `26c4d4eb9246de44579451fe3d6e7bd631538324`. PR #91 merged as `2
 - configured timeout and bounded synchronous retries;
 - invitation create/reissue attempts automatic delivery after the invitation transaction commits;
 - delivery failure never rolls back a valid invitation and the manual one-time link always remains available;
-- safe status messages do not expose the external value, protocol transcript, or one-time invitation code;
-- responsive Mail Settings and invitation-delivery status UX;
-- deterministic fake-SMTP tests and Chrome acceptance;
+- safe status messages, responsive UI, fake-SMTP tests, and Chrome acceptance;
 - no migration; Alembic remains at `h10016`.
 
-Scope boundary:
+PR #94 merged as `3c51d4c1d0bb0bd96d23a1f4ace0947ae48e9101`.
 
-- no database or browser storage of the SMTP deployment value;
-- no arbitrary template editor, HTML templates, attachments, queue, background worker, bounce handling, or provider-specific API;
-- password reset and account recovery mail remain separate work.
+### Multi-user operational readiness — TH-0085 / PR #95
+
+- focused Backend integration for two independent sessions belonging to one user;
+- current persisted role is resolved on every request and becomes visible to both sessions immediately;
+- user deactivation revokes every active session for that user;
+- protected frontend HTTP 401 responses clear stale identity centrally;
+- exact path, query, and hash are preserved through re-authentication;
+- explicit logout preserves the current destination;
+- the current role is visible in the application header;
+- browser acceptance covers bootstrap, route return, logout/login, server-side revocation, and recovery;
+- no migration; Alembic remains at `h10016`.
+
+Implementation head `4879e6dc701550935eb4d173e5098de85d264fd5` passed Quality #835, Document Quality #452, Guided Release Acceptance #403, Operator Docs #389, and Docker Release Runtime #384.
 
 ## NEXT
 

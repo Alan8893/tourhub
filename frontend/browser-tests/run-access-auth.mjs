@@ -130,8 +130,9 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Подготовка доступна") &&
-       document.body?.innerText?.includes("Маршрут: /projects/42") &&
+       document.body?.innerText?.includes("Маршрут: /projects/42?tab=menu#day-2") &&
        document.body?.innerText?.includes("Иван Администратор") &&
+       document.querySelector('[aria-label="Текущий пользователь: Иван Администратор. Роль: Администратор."]') &&
        [...document.querySelectorAll("button")].some(
          (item) => item.textContent?.trim() === "Открыть настройки",
        )`,
@@ -166,7 +167,8 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Настройки доступны") &&
-       document.body?.innerText?.includes("Иван Администратор")`,
+       document.body?.innerText?.includes("Иван Администратор") &&
+       document.querySelector('[aria-label="Текущий пользователь: Иван Администратор. Роль: Администратор."]')`,
       "requested settings after login",
     );
 
@@ -195,8 +197,33 @@ async function run() {
       path.join(artifactDir, "access-auth-mobile.png"),
       Buffer.from(screenshot.data, "base64"),
     );
+
+    api.invalidateSession();
+    assert.equal(await clickButton(client, "Проверить сессию"), true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Вход") &&
+       [...document.querySelectorAll("button")].some((item) => item.textContent?.trim() === "Войти")`,
+      "login form after server-side session revocation",
+    );
+    assert.ok(
+      requests.some(
+        (item) => item.method === "GET" && item.path === "/api/v1/session-probe",
+      ),
+    );
+
+    assert.equal(await setFieldByLabel(client, "Email", "admin@tourhub.local"), true);
+    assert.equal(await setFieldByLabel(client, "Пароль", testCredential), true);
+    assert.equal(await clickButton(client, "Войти"), true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Настройки доступны") &&
+       document.body?.innerText?.includes("Иван Администратор")`,
+      "requested settings after revoked-session login",
+    );
+
     client.close();
-    console.log("Access route guard, bootstrap, and login browser acceptance passed.");
+    console.log("Access role, route return, and revoked-session browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();

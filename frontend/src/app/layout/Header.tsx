@@ -1,6 +1,7 @@
 import { AppBar, Box, Button, IconButton, Stack, Toolbar, Typography } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
+import { userRoleLabel } from "@/features/auth/model/roleLabels";
 import { useAuth } from "@/features/auth/providers/AuthProvider";
 
 interface HeaderProps {
@@ -9,11 +10,16 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
 
   async function signOut() {
-    await logout();
-    navigate("/login", { replace: true });
+    const destination = `${location.pathname}${location.search}${location.hash}`;
+    try {
+      await logout();
+    } finally {
+      navigate("/login", { replace: true, state: { from: destination } });
+    }
   }
 
   return (
@@ -35,13 +41,18 @@ export default function Header({ onMenuClick }: HeaderProps) {
         </Typography>
         {user ? (
           <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-            <Typography
-              variant="body2"
-              noWrap
-              sx={{ display: { xs: "none", sm: "block" }, maxWidth: 220 }}
+            <Stack
+              spacing={0}
+              sx={{ display: { xs: "none", sm: "flex" }, minWidth: 0, maxWidth: 240 }}
+              aria-label={`Текущий пользователь: ${user.display_name}. Роль: ${userRoleLabel(user.role)}.`}
             >
-              {user.display_name}
-            </Typography>
+              <Typography variant="body2" noWrap>
+                {user.display_name}
+              </Typography>
+              <Typography variant="caption" noWrap sx={{ opacity: 0.82 }}>
+                {userRoleLabel(user.role)}
+              </Typography>
+            </Stack>
             <Button color="inherit" size="small" onClick={() => void signOut()}>
               Выйти
             </Button>
