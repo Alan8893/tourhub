@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.models.recipe import RecipeORM
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
+from app.models.user import UserORM
+from app.services.recipe_access_service import RecipeAccessService
 from app.services.recipe_equipment_recalculation_service import (
     RecipeEquipmentRecalculationService,
 )
@@ -15,8 +17,10 @@ class RecipeEquipmentService:
         self,
         session: Session,
         recalculation_service: RecipeEquipmentRecalculationService | None = None,
+        actor: UserORM | None = None,
     ) -> None:
         self.session = session
+        self.actor = actor
         self.recalculation_service = recalculation_service or RecipeEquipmentRecalculationService(
             session
         )
@@ -77,13 +81,11 @@ class RecipeEquipmentService:
         recipe = self.session.get(RecipeORM, recipe_id)
         if recipe is None:
             raise LookupError("Recipe not found")
-        return recipe
+        return RecipeAccessService.require_visible(recipe, self.actor)
 
     def _get_editable_recipe(self, recipe_id: str) -> RecipeORM:
         recipe = self._get_recipe(recipe_id)
-        if recipe.is_archived:
-            raise ValueError("Archived recipe cannot be edited")
-        return recipe
+        return RecipeAccessService.require_editable(recipe, self.actor)
 
     def _get_requirement(
         self,
