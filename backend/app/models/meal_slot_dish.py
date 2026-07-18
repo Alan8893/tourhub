@@ -6,9 +6,7 @@ from app.models.base import Base
 
 class MealSlotDishORM(Base):
     """
-    Dish attached to a meal slot.
-
-    Allows one meal to contain multiple dishes.
+    Dish attached to a meal slot with its selected Recipe snapshot.
     """
 
     __tablename__ = "meal_slot_dishes"
@@ -28,6 +26,11 @@ class MealSlotDishORM(Base):
         nullable=False,
     )
 
+    recipe_id: Mapped[str] = mapped_column(
+        ForeignKey("recipes.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+
     order: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
@@ -39,6 +42,5 @@ class MealSlotDishORM(Base):
         back_populates="dishes",
     )
 
-    dish = relationship(
-        "DishORM",
-    )
+    dish = relationship("DishORM")
+    recipe = relationship("RecipeORM")
