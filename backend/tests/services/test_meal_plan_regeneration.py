@@ -18,10 +18,17 @@ def _assignment(role: str, *meal_types: str):
 
 
 def _automatic_dish(dish_id: str, name: str, role: str, meal_type: str):
+    recipe_id = f"recipe-{dish_id}"
     return SimpleNamespace(
         id=dish_id,
         name=name,
-        recipe=SimpleNamespace(is_archived=False),
+        recipe_id=recipe_id,
+        recipe=SimpleNamespace(
+            id=recipe_id,
+            name=f"{name} recipe",
+            is_archived=False,
+        ),
+        recipe_variants=[],
         meal_roles=[_assignment(role, meal_type)],
     )
 
@@ -94,6 +101,8 @@ def _existing_plan_with_manual_breakfast() -> MealPlanORM:
         slot=slot,
         dish=manual_dish,
         dish_id=manual_dish.id,
+        recipe=manual_recipe,
+        recipe_id=manual_recipe.id,
         order=0,
     )
     return meal_plan
@@ -125,6 +134,10 @@ def test_regeneration_reuses_plan_and_preserves_manual_slot():
     assert [dish.dish_id for dish in repository.slot_dishes] == [
         "manual-dish",
         "auto-lunch",
+    ]
+    assert [dish.recipe_id for dish in repository.slot_dishes] == [
+        "manual-recipe",
+        "recipe-auto-lunch",
     ]
 
 
