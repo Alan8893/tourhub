@@ -112,6 +112,10 @@ class ProjectService:
             start_date=getattr(project, "start_date", None),
             first_meal=getattr(project, "first_meal", None),
             last_meal=getattr(project, "last_meal", None),
-            recipe_generation_mode=project.recipe_generation_mode,
+            recipe_generation_mode=getattr(
+                project,
+                "recipe_generation_mode",
+                RecipeGenerationMode.CLUB_ONLY.value,
+            ),
             status=project.status,
         )
