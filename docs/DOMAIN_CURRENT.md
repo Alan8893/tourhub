@@ -2,17 +2,31 @@
 
 Status: Active
 
-Last updated: 2026-07-16
+Last updated: 2026-07-18
 
 ## Purpose
 
 This document describes the implemented domain baseline. `PRODUCT_SPEC.md` describes approved target scope. Deferred capabilities are not current implementation.
 
-## Club and access
+## Club, identity, and access
 
 One installation represents one tourist club. Multi-tenant support is prohibited.
 
-The current phase is local and single-user. Invitations, roles, permissions, recipe ownership, publication, moderation, and audit logging are deferred.
+Implemented identity model:
+
+- one-time bootstrap creates the first active Administrator;
+- later users are created only by accepting Administrator-issued one-time invitations;
+- approved roles are `administrator`, `instructor`, and `verified_instructor`;
+- one User may own multiple independent server sessions;
+- raw session and invitation values are never persisted;
+- Backend resolves the current User, role, and active state for every authorized request;
+- deactivation revokes every active session for the affected User;
+- at least one active Administrator must always remain;
+- user updates use optimistic versions and stale writes return HTTP 409.
+
+Active users with any approved role may use current preparation workflows. System Settings, invitation management, user administration, SMTP connection checks, and test-message actions are Administrator-only.
+
+Per-project ownership, private projects, user profiles, account recovery, session administration, recipe ownership, publication, moderation, and actor-aware audit remain future capabilities.
 
 ## Project
 
@@ -20,7 +34,9 @@ Project is the preparation root for one trip. It stores name, participant count,
 
 `/projects` lists projects. `/projects/{id}` opens one project workspace.
 
-Project creation validates supported meal types and one-day meal ordering in Backend. Participant-count changes preserve selected dishes and recalculate persisted purchasing data transactionally.
+Project creation validates supported meal types and one-day meal ordering in Backend. Participant-count changes preserve selected dishes and recalculate persisted purchasing and equipment data transactionally where affected.
+
+Current projects are shared inside the one-club preparation space. Project ownership and row-level access are not implemented.
 
 ## Meal plan
 
@@ -30,29 +46,23 @@ The API exposes MealSlotDish identifiers so add, replace, and remove operations 
 
 Implemented generation behavior:
 
-- first/last meal boundaries;
-- one-day trip ranges;
+- first/last meal boundaries and one-day trip ranges;
 - domain order `breakfast`, `snack`, `lunch`, `dinner`;
-- explicit role-aware mode used by MealPlanService;
 - breakfast, lunch, and dinner require a compatible `main` role;
 - snack requires a compatible `snack` role;
 - compatible `addition` and `drink` roles are optional;
 - stable composition order `main → addition → drink`;
 - same-day uniqueness for non-repeatable assignments;
+- non-repeatable main-dish diversity uses trip calendar days and permits reuse on day four;
 - repeatability is evaluated per `(dish, role)` assignment;
 - archived-recipe and unclassified dishes are excluded from automatic selection;
-- missing or exhausted required pools leave the slot without an automatic dish and return a specific warning;
+- missing or exhausted required pools leave the automatic position empty and return a deterministic warning;
 - incompatible dishes are never used as a hidden fallback;
+- manually edited MealSlots remain authoritative during regeneration, including intentionally empty manual slots;
+- generation warnings are stored as the latest successful snapshot and returned on later reads;
 - generated compositions persist through MealSlot/MealSlotDish and compatibility MealPlanItem rows.
 
-Still incomplete:
-
-- calendar-day three-day main-dish diversity;
-- regeneration that preserves manual selections as authoritative;
-- generation-warning persistence or deterministic reconstruction for later reads;
-- larger diversity thresholds and future preference modes.
-
-Legacy MealPlanItem remains a compatibility path. API mapping uses MealSlot data when it exists and falls back to legacy items only when a day has no MealSlots.
+Legacy MealPlanItem remains a compatibility path. Larger diversity thresholds and future preference modes require separate approved requirements.
 
 ## Dish and recipe
 
@@ -79,11 +89,11 @@ The backend validates:
 - at least one compatible meal type for every selected role;
 - unique roles and unique meal-type assignments.
 
-Dish recipe replacement recalculates affected persisted purchasing projections in the same transaction.
+Dish recipe replacement recalculates affected persisted purchasing and equipment projections in the same transaction.
 
-Multiple Recipe variants per Dish, CLUB/PERSONAL ownership, publication, and moderation are future work.
+Multiple Recipe variants per Dish, CLUB/PERSONAL ownership, publication, moderation, and role-specific lifecycle permissions are the next product capability.
 
-Recipe supports components, practical quantity modes, notes, and archive state. Preparation technology, equipment, dietary metadata, season metadata, and richer categories remain incomplete.
+Recipe currently supports components, practical quantity modes, notes, archive state, and equipment requirements. Preparation technology, dietary metadata, season metadata, and richer categories remain incomplete.
 
 ## Product and import
 
@@ -91,23 +101,36 @@ Product is independent of recipes. Practical calculation modes include per-perso
 
 Products, recipes, components, and notes can be loaded through CSV preview and apply operations. Invalid input does not create partial catalogue data.
 
-Product update and deletion are not implemented. The approved alcohol prohibition rule still requires centralized backend enforcement for API and import paths.
+Product update and deletion are not implemented. The approved alcohol prohibition rule still requires centralized Backend enforcement for API and import paths.
 
 ## Shopping and packaging
 
-Products are aggregated across RecipeComponents and legacy ingredients. Package-rounding foundations exist.
+Products are aggregated across RecipeComponents and legacy ingredients. Package count is rounded up and persisted with required quantity, purchased quantity, and remainder.
 
-Recalculation triggers include participant-count changes, MealSlot edits, and Dish recipe replacement. Checklist state is preserved for products that remain after refresh. MealSlot mutations and their purchasing refresh share one commit/rollback boundary.
+Recalculation triggers include participant-count changes, MealSlot edits, Dish recipe replacement, and relevant recipe changes. Checklist state is preserved for products that remain after refresh. MealSlot mutations and their purchasing refresh share one commit/rollback boundary.
 
-Complete remainder presentation and responsible-person workflow remain incomplete.
+The current workflow persists checklist state, comments, surplus presentation, and optional responsible-person text. Prices, shops, stock balances, and procurement aggregation remain future work.
 
 ## Equipment
 
-Equipment persistence is not implemented. Target behavior is recipe-originated requirements, maximum simultaneous aggregation, and manual overrides.
+Equipment requirements are attached to recipes and persisted into project equipment lists.
 
-## Documents
+Implemented behavior:
 
-PDF, Excel, and package export foundations exist. Final Russian templates, complete workbook contents, and club branding remain incomplete.
+- identical requirements are aggregated by maximum simultaneously required quantity rather than summed across trip days;
+- participant, menu, Dish recipe, and recipe-requirement changes refresh prepared project equipment;
+- manual rows, quantity overrides, and removals are persisted;
+- user-facing equipment values are included in Russian PDF, Excel, print, and ZIP outputs.
+
+Warehouse balances, issue workflow, and participant/team distribution remain future domains.
+
+## Documents and mail
+
+Current document output includes Russian purchasing and equipment PDF, Excel, print, and coordinated ZIP artifacts using one immutable club/document settings snapshot per generation request.
+
+The complete consolidated PDF and workbook contents described in `PRODUCT_SPEC.md` remain release-blocking future work.
+
+MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with a manual-link fallback. Queues, scheduled retries, delivery history, arbitrary templates, attachments, and bounce handling are deferred.
 
 ## Future domains
 
