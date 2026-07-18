@@ -150,18 +150,28 @@ export default function MealPlanWidget() {
                               ))}
                             </Stack>
                           ) : (
-                            <MealSlotEditor
-                              key={slot.id}
-                              slotId={slot.id}
-                              mealType={mealTypeLabels[slot.meal_type] ?? slot.meal_type}
-                              dishes={slot.dishes.map((dish) => ({
-                                id: dish.id,
-                                dish_id: dish.dish_id,
-                                dish_name: dish.dish_name,
-                                recipe_id: dish.recipe_id,
-                                recipe_name: dish.recipe_name,
-                              }))}
-                            />
+                            <Stack key={slot.id} spacing={0.75}>
+                              <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+                                {slot.dishes.map((dish) => (
+                                  <Chip
+                                    key={`${slot.id}:${dish.id}:recipe`}
+                                    size="small"
+                                    variant="outlined"
+                                    label={`${dish.dish_name}: ${dish.recipe_name}`}
+                                    sx={{ maxWidth: "100%" }}
+                                  />
+                                ))}
+                              </Stack>
+                              <MealSlotEditor
+                                slotId={slot.id}
+                                mealType={mealTypeLabels[slot.meal_type] ?? slot.meal_type}
+                                dishes={slot.dishes.map((dish) => ({
+                                  id: dish.id,
+                                  dish_id: dish.dish_id,
+                                  dish_name: dish.dish_name,
+                                }))}
+                              />
+                            </Stack>
                           ),
                         )}
                       </Stack>
