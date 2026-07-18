@@ -1,6 +1,6 @@
 # TourHub — PROJECT_CONTEXT
 
-Version: 0.0.3-alpha
+Version: 0.0.4-alpha
 
 Last update: 2026-07-18
 
@@ -28,13 +28,14 @@ Complete and stabilize the Russian local workflow:
 Administrator bootstrap and invitations
   → Project
   → Menu
-  → Recipes and dishes
+  → Club and personal recipes
+  → Dishes
   → Shopping and packaging
   → Equipment
   → PDF, Excel, print, and ZIP
 ```
 
-The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, and multi-user operational readiness are complete through PR #95. The next product capability is recipe ownership and role-specific publication/moderation.
+The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, and multi-user operational readiness are complete through PR #95. Draft PR #96 implements the first recipe-lifecycle slice: CLUB/PERSONAL ownership and role-aware editing.
 
 ## 3. Architecture
 
@@ -49,7 +50,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, form state, navigation, and API integration. It does not own business validation, menu generation, shopping calculations, or authorization decisions.
+Frontend owns presentation, form state, navigation, and API integration. It renders server-projected capabilities but does not own business validation, menu generation, shopping calculations, or authorization decisions.
 
 ### Backend
 
@@ -62,7 +63,7 @@ Frontend owns presentation, form state, navigation, and API integration. It does
 - Redis configuration;
 - deterministic calculation engines.
 
-Backend owns business validation, persistence, identity and authorization decisions, menu generation, catalogue import, recalculation, mail delivery boundaries, and document generation.
+Backend owns business validation, persistence, identity and authorization decisions, recipe ownership, menu generation, catalogue import, recalculation, mail delivery boundaries, and document generation.
 
 ### Runtime
 
@@ -121,17 +122,20 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 
 ## 5. Current active work
 
-- TH-0061.5 — operational maintenance of the completed menu rules engine.
+- TH-0061.5 — operational maintenance of the completed menu rules engine;
+- TH-0086 — Recipe Ownership Foundation.
 
-The next task should establish recipe ownership and lifecycle from the current `main` without reopening completed Access work.
+TH-0086 introduces Recipe scope and owner identity, migrates the existing catalogue to CLUB, creates new interactive recipes as PERSONAL, filters unrelated personal recipes, and applies one Backend edit policy to root, component, note, and equipment operations.
 
 ## 6. Immediate sequence
 
-1. Implement recipe ownership and lifecycle: CLUB/PERSONAL scope, variants, publication, moderation, and generation modes.
-2. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
-3. Implement actor-aware audit history.
-4. Complete consolidated Russian exports and product acceptance.
-5. Freeze features, run the final migration cycle, and complete release gates.
+1. Complete TH-0086 ownership persistence, API capabilities, responsive UI, and exact-head validation.
+2. Implement submission, publication, review, rejection, and resubmission.
+3. Implement multiple Recipe variants per Dish and club/personal generation modes.
+4. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
+5. Implement actor-aware audit history.
+6. Complete consolidated Russian exports and product acceptance.
+7. Freeze features, run the final migration cycle, and complete release gates.
 
 ## 7. Development rules
 
