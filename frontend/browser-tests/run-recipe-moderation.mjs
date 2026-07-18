@@ -23,7 +23,7 @@ const profileDir = "/tmp/tourhub-recipe-moderation-profile";
 async function clickText(client, text, selector = "button") {
   const clicked = await client.evaluate(`(() => {
     const nodes = [...document.querySelectorAll(${JSON.stringify(selector)})];
-    const node = nodes.find((item) => item.textContent?.trim() === ${JSON.stringify(text)});
+    const node = nodes.find((item) => item.textContent?.includes(${JSON.stringify(text)}));
     if (!node || node.disabled) return false;
     node.click();
     return true;
