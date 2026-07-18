@@ -29,13 +29,14 @@ Administrator bootstrap and invitations
   → Project
   → Menu
   → Club and personal recipes
+  → Recipe publication and moderation
   → Dishes
   → Shopping and packaging
   → Equipment
   → PDF, Excel, print, and ZIP
 ```
 
-The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, multi-user operational readiness, and Recipe Ownership Foundation are complete through PR #96. The next product capability is recipe publication and moderation.
+The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, multi-user operational readiness, and Recipe Ownership Foundation are complete through PR #96. Draft PR #97 implements recipe publication and moderation.
 
 ## 3. Architecture
 
@@ -50,7 +51,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, form state, navigation, and API integration. It renders server-projected capabilities but does not own business validation, menu generation, shopping calculations, or authorization decisions.
+Frontend owns presentation, form state, navigation, and API integration. It renders server-projected capabilities but does not own business validation, menu generation, shopping calculations, lifecycle transitions, or authorization decisions.
 
 ### Backend
 
@@ -63,7 +64,7 @@ Frontend owns presentation, form state, navigation, and API integration. It rend
 - Redis configuration;
 - deterministic calculation engines.
 
-Backend owns business validation, persistence, identity and authorization decisions, recipe ownership, menu generation, catalogue import, recalculation, mail delivery boundaries, and document generation.
+Backend owns business validation, persistence, identity and authorization decisions, recipe ownership and lifecycle, menu generation, catalogue import, recalculation, mail delivery boundaries, and document generation.
 
 ### Runtime
 
@@ -75,7 +76,7 @@ docker compose up -d --build
 
 The operator release path uses `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally. PostgreSQL and Redis remain internal to the release Compose network. Redis is available but no current business workflow depends on it.
 
-## 4. Implemented baseline
+## 4. Implemented baseline and active slice
 
 ### Access and users
 
@@ -87,18 +88,21 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 - Administrator-only settings, invitation management, user administration, and mail operations;
 - multiple independent sessions, current-role resolution, complete deactivation revocation, centralized 401 handling, exact route return, and visible current role.
 
-### Recipe ownership
+### Recipe ownership and publication
 
 - Recipe scope is CLUB or PERSONAL;
-- existing catalogue recipes are CLUB and have no owner;
-- interactive new recipes are PERSONAL and owned by the current authenticated user;
-- Administrator sees and manages all recipes;
-- Verified Instructor edits CLUB and owned PERSONAL recipes;
-- Instructor edits owned PERSONAL recipes and reads CLUB recipes;
-- unrelated PERSONAL recipes are hidden;
-- components, notes, and equipment requirements share the same Backend ownership boundary;
-- permanent deletion remains Administrator-only and preserves Dish usage guards;
-- frontend labels scope and owner and follows server-projected capabilities.
+- existing catalogue recipes are CLUB and published;
+- interactive new recipes are owned PERSONAL drafts;
+- Administrator sees all recipes and may review any submission;
+- Verified Instructor edits CLUB and owned PERSONAL recipes, and reviews another user's submission;
+- Instructor edits owned drafts/rejections and reads CLUB recipes;
+- unrelated PERSONAL drafts and rejections are hidden;
+- submitted recipes are locked against ordinary root/component/note/equipment/archive changes;
+- rejection requires a comment visible to the owner;
+- resubmission clears the previous decision;
+- publication converts PERSONAL to CLUB and preserves submitter attribution;
+- row-locked lifecycle transitions and Backend capabilities remain authoritative;
+- permanent deletion remains Administrator-only and preserves Dish usage guards.
 
 ### Projects and preparation
 
@@ -124,15 +128,14 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
-
-The next task should implement recipe submission, review, publication, rejection, and resubmission from the ownership foundation now on `main`.
+- TH-0087 — Recipe Publication and Moderation in draft PR #97.
 
 ## 6. Immediate sequence
 
-1. Implement recipe publication and moderation lifecycle.
+1. Complete and merge recipe publication and moderation.
 2. Implement multiple Recipe variants per Dish and club/personal generation modes.
 3. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
-4. Implement actor-aware audit history.
+4. Implement actor-aware audit history, including full moderation history.
 5. Complete consolidated Russian exports and product acceptance.
 6. Freeze features, run the final migration cycle, and complete release gates.
 
