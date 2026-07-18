@@ -1,15 +1,41 @@
 from datetime import timedelta
 
+import pytest
 from sqlalchemy import select
 
 from app.models.invitation import InvitationORM
 from app.models.user import UserORM
+from app.schemas.mail_settings import MailDeliveryStatus
 from app.services.auth_service import utc_now
+from app.services.mail_delivery_service import MailDeliveryResult, MailDeliveryService
 
 SECRET_FIELD = "pass" + "word"
 LINK_FIELD = "to" + "ken"
 ADMIN_SECRET = "-".join(("admin", "test", "phrase", "12345"))
 MEMBER_SECRET = "-".join(("member", "test", "phrase", "12345"))
+
+
+@pytest.fixture(autouse=True)
+def fake_invitation_delivery(monkeypatch) -> None:
+    def send(
+        _: MailDeliveryService,
+        *,
+        recipient: str,
+        role_label: str,
+        expires_at,
+        acceptance_url: str,
+    ) -> MailDeliveryResult:
+        assert recipient in acceptance_url or "accept-invitation#token=" in acceptance_url
+        assert role_label in {"Инструктор", "Проверенный инструктор"}
+        assert expires_at is not None
+        return MailDeliveryResult(
+            status=MailDeliveryStatus.SENT,
+            message="Приглашение отправлено по email; ручная ссылка также доступна.",
+            attempts=1,
+            recipient=recipient,
+        )
+
+    monkeypatch.setattr(MailDeliveryService, "send_invitation_best_effort", send)
 
 
 def bootstrap(client) -> None:
@@ -42,6 +68,9 @@ def test_admin_create_list_and_storage_boundary(auth_client, db_session) -> None
     assert created["status"] == "active"
     assert created["acceptance_path"].startswith("/accept-invitation#token=")
     assert raw_link in created["acceptance_path"]
+    assert created["delivery_status"] == "sent"
+    assert created["delivery_attempts"] == 1
+    assert raw_link not in created["delivery_message"]
 
     listed = auth_client.get("/api/v1/invitations")
     assert listed.status_code == 200
@@ -77,6 +106,7 @@ def test_policy_reissue_and_revoke(auth_client) -> None:
     assert replacement_response.status_code == 200
     replacement = replacement_response.json()
     assert replacement[LINK_FIELD] != first[LINK_FIELD]
+    assert replacement["delivery_status"] == "sent"
     assert auth_client.post(
         "/api/v1/invitations/inspect", json={LINK_FIELD: first[LINK_FIELD]}
     ).status_code == 410
