@@ -46,6 +46,11 @@ class DishRecipeVariantService:
         recipes = [variant.recipe for variant in variants]
         default_recipe = getattr(dish, "recipe", None)
         if not recipes and default_recipe is not None:
+            default_recipe_id = getattr(dish, "recipe_id", "")
+            if not getattr(default_recipe, "id", None) and default_recipe_id:
+                default_recipe.id = default_recipe_id
+            if not getattr(default_recipe, "name", None):
+                default_recipe.name = getattr(dish, "name", default_recipe_id)
             recipes = [default_recipe]
         return [recipe for recipe in recipes if cls.can_attach(recipe, actor)]
 
