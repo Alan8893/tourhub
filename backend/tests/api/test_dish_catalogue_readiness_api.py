@@ -1,10 +1,17 @@
-def _create_dish(client, name: str) -> tuple[str, str]:
+def _create_published_club_recipe(client, name: str) -> str:
     recipe_response = client.post(
         "/api/v1/recipes",
-        json={"name": f"Рецепт: {name}"},
+        json={"name": name},
     )
     assert recipe_response.status_code == 201
     recipe_id = recipe_response.json()["id"]
+    assert client.post(f"/api/v1/recipes/{recipe_id}/submit").status_code == 200
+    assert client.post(f"/api/v1/recipes/{recipe_id}/publish").status_code == 200
+    return recipe_id
+
+
+def _create_dish(client, name: str) -> tuple[str, str]:
+    recipe_id = _create_published_club_recipe(client, f"Рецепт: {name}")
 
     dish_response = client.post(
         "/api/v1/dishes",
