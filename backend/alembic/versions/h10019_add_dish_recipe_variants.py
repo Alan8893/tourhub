@@ -20,6 +20,11 @@ def upgrade() -> None:
         "dish_recipe_variants",
         sa.Column("dish_id", sa.String(), nullable=False),
         sa.Column("recipe_id", sa.String(), nullable=False),
+        sa.Column("position", sa.Integer(), nullable=False),
+        sa.CheckConstraint(
+            "position >= 0",
+            name="ck_dish_recipe_variants_position_non_negative",
+        ),
         sa.ForeignKeyConstraint(
             ["dish_id"],
             ["dishes.id"],
@@ -37,6 +42,11 @@ def upgrade() -> None:
             "recipe_id",
             name="pk_dish_recipe_variants",
         ),
+        sa.UniqueConstraint(
+            "dish_id",
+            "position",
+            name="uq_dish_recipe_variants_dish_position",
+        ),
     )
     op.create_index(
         "ix_dish_recipe_variants_recipe_id",
@@ -46,8 +56,8 @@ def upgrade() -> None:
     )
     op.execute(
         sa.text(
-            "INSERT INTO dish_recipe_variants (dish_id, recipe_id) "
-            "SELECT id, recipe_id FROM dishes"
+            "INSERT INTO dish_recipe_variants (dish_id, recipe_id, position) "
+            "SELECT id, recipe_id, 0 FROM dishes"
         )
     )
 
