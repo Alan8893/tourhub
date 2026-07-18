@@ -28,12 +28,19 @@ class MealPlanMapper:
                             if slot_dish.dish
                             else str(slot_dish.dish_id)
                         )
+                        recipe_name = (
+                            slot_dish.recipe.name
+                            if slot_dish.recipe
+                            else str(slot_dish.recipe_id)
+                        )
                         items.append(
                             MealPlanItemResponse(
                                 day_number=day.day_number,
                                 meal_type=slot.meal_type,
                                 dish_id=slot_dish.dish_id,
                                 dish_name=dish_name,
+                                recipe_id=slot_dish.recipe_id,
+                                recipe_name=recipe_name,
                             )
                         )
                         slot_dishes.append(
@@ -41,6 +48,8 @@ class MealPlanMapper:
                                 id=slot_dish.id,
                                 dish_id=slot_dish.dish_id,
                                 dish_name=dish_name,
+                                recipe_id=slot_dish.recipe_id,
+                                recipe_name=recipe_name,
                             )
                         )
 
@@ -57,12 +66,15 @@ class MealPlanMapper:
             legacy_meals: dict[str, list[MealSlotDishResponse]] = {}
             for item in day.items:
                 dish_name = item.dish.name if item.dish else str(item.dish_id)
+                recipe_name = item.recipe.name if item.recipe else str(item.recipe_id)
                 items.append(
                     MealPlanItemResponse(
                         day_number=day.day_number,
                         meal_type=item.meal_type,
                         dish_id=item.dish_id,
                         dish_name=dish_name,
+                        recipe_id=item.recipe_id,
+                        recipe_name=recipe_name,
                     )
                 )
                 legacy_meals.setdefault(item.meal_type, []).append(
@@ -70,6 +82,8 @@ class MealPlanMapper:
                         id=f"legacy:{item.id}",
                         dish_id=item.dish_id,
                         dish_name=dish_name,
+                        recipe_id=item.recipe_id,
+                        recipe_name=recipe_name,
                     )
                 )
 
