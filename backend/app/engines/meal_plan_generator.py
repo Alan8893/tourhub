@@ -278,9 +278,7 @@ class MealPlanGenerator:
         if reason == "catalogue":
             warnings.append(f"No {role} dishes available for {meal_type}")
         else:
-            warnings.append(
-                f"No eligible {role} dishes remain for {meal_type}; catalogue is insufficient"
-            )
+            warnings.append(f"No eligible {role} dishes available for {meal_type}")
 
     @staticmethod
     def _generate_legacy(
@@ -315,6 +313,6 @@ class MealPlanGenerator:
 
         counts = Counter(item.dish_id for item in items)
         warnings = []
-        if len(counts) < len(dishes) and len(items) >= len(dishes):
+        if any(count > 1 for count in counts.values()):
             warnings.append(INSUFFICIENT_DISHES_WARNING)
         return MealPlanGenerationResult(items=items, slots=slots, warnings=warnings)
