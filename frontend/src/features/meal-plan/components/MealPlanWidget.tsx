@@ -55,7 +55,7 @@ export default function MealPlanWidget() {
           <Stack spacing={0.25}>
             <Typography variant="h6">Меню похода</Typography>
             <Typography variant="body2" color="text.secondary">
-              Дни можно сворачивать, чтобы быстрее просматривать длинное меню.
+              Дни можно сворачивать, чтобы быстрее просматривать длинное меню. Для каждого блюда показан сохранённый вариант рецепта.
             </Typography>
           </Stack>
 
@@ -141,9 +141,12 @@ export default function MealPlanWidget() {
                                 {mealTypeLabels[slot.meal_type] ?? slot.meal_type}
                               </Typography>
                               {slot.dishes.map((dish) => (
-                                <Typography key={dish.id} variant="body2">
-                                  • {dish.dish_name}
-                                </Typography>
+                                <Stack key={dish.id} spacing={0}>
+                                  <Typography variant="body2">• {dish.dish_name}</Typography>
+                                  <Typography variant="caption" color="text.secondary" sx={{ pl: 2 }}>
+                                    Рецепт: {dish.recipe_name}
+                                  </Typography>
+                                </Stack>
                               ))}
                             </Stack>
                           ) : (
@@ -155,6 +158,8 @@ export default function MealPlanWidget() {
                                 id: dish.id,
                                 dish_id: dish.dish_id,
                                 dish_name: dish.dish_name,
+                                recipe_id: dish.recipe_id,
+                                recipe_name: dish.recipe_name,
                               }))}
                             />
                           ),
