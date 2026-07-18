@@ -83,14 +83,25 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Почта") &&
        document.body?.innerText?.includes("TOURHUB_SMTP_SECRET") &&
-       document.body?.innerText?.includes("Настроен в environment") &&
+       document.body?.innerText?.includes("Конфигурация готова") &&
+       [...document.querySelectorAll("button")].some(
+         (item) => item.textContent?.trim() === "Проверить соединение" && !item.disabled,
+       ) &&
        [...document.querySelectorAll("button")].some(
          (item) => item.textContent?.trim() === "Отправить тестовое письмо" && item.disabled,
        )`,
-      "loaded mail boundary editor",
+      "loaded operational mail editor",
     );
 
     assert.equal(await client.evaluate(`document.querySelector('input[type="password"]')`), null);
+    assert.equal(await clickButton(client, "Проверить соединение"), true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Соединение с SMTP-сервером установлено") &&
+       document.body?.innerText?.includes("Попыток: 1")`,
+      "successful connection check",
+    );
+
     assert.equal(await setFieldByLabel(client, "SMTP host", " SMTP.Example.COM. "), true);
     assert.equal(await setFieldByLabel(client, "SMTP-порт", "465"), true);
     await selectMuiOption(client, "Защита соединения", "TLS с момента подключения");
@@ -105,14 +116,13 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Несекретные настройки почты сохранены") &&
-       document.body?.innerText?.includes("SMTP host") &&
-       document.body?.innerText?.includes("тестовый адрес") &&
-       document.body?.innerText?.includes("Текущая версия: 2") &&
+      `document.body?.innerText?.includes("Настройки почты сохранены") &&
+       document.body?.innerText?.includes("Тестовый адрес задан") &&
+       document.body?.innerText?.includes("сохранённую версию 2") &&
        [...document.querySelectorAll('input')].some(
          (item) => item.value === "smtp.example.com",
        )`,
-      "saved mail boundary settings",
+      "saved operational mail settings",
     );
 
     const update = requests.find(
@@ -134,6 +144,31 @@ async function run() {
         (key) => key.includes("secret") || key.includes("credential"),
       ),
       false,
+    );
+
+    assert.equal(await clickButton(client, "Проверить соединение"), true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Соединение с SMTP-сервером установлено")`,
+      "connection check after save",
+    );
+    assert.equal(await clickButton(client, "Отправить тестовое письмо"), true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Тестовое письмо отправлено") &&
+       document.body?.innerText?.includes("admin@example.com")`,
+      "test message result",
+    );
+
+    assert.ok(
+      requests.some(
+        (item) => item.method === "POST" && item.path === "/api/v1/settings/mail/check",
+      ),
+    );
+    assert.ok(
+      requests.some(
+        (item) => item.method === "POST" && item.path === "/api/v1/settings/mail/test",
+      ),
     );
 
     await client.send("Emulation.setDeviceMetricsOverride", {
@@ -162,7 +197,7 @@ async function run() {
       Buffer.from(screenshot.data, "base64"),
     );
     client.close();
-    console.log("Mail settings browser acceptance passed.");
+    console.log("Mail delivery browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
