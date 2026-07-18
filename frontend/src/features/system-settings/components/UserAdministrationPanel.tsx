@@ -18,6 +18,7 @@ import axios from "axios";
 import { useCallback, useEffect, useState } from "react";
 
 import type { UserRole } from "@/features/auth/api/authApi";
+import { userRoleLabel } from "@/features/auth/model/roleLabels";
 import { useAuth } from "@/features/auth/providers/AuthProvider";
 import {
   ManagedUser,
@@ -29,12 +30,6 @@ interface ApiErrorBody {
   error?: string;
   detail?: string;
   details?: Array<{ msg?: string }>;
-}
-
-function roleLabel(role: UserRole): string {
-  if (role === "administrator") return "Администратор";
-  if (role === "verified_instructor") return "Проверенный инструктор";
-  return "Инструктор";
 }
 
 function formatDate(value: string | null): string {
@@ -164,7 +159,7 @@ function UserCard({ user, onSaved, onConflict }: UserCardProps) {
         </Box>
 
         <Typography variant="body2" color="text.secondary">
-          Роль: {roleLabel(user.role)}. Последний вход: {formatDate(user.last_login_at)}. Версия: {user.version}.
+          Роль: {userRoleLabel(user.role)}. Последний вход: {formatDate(user.last_login_at)}. Версия: {user.version}.
         </Typography>
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
