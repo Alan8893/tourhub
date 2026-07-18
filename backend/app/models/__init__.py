@@ -10,6 +10,7 @@ from app.models.equipment_list import EquipmentListORM
 from app.models.equipment_list_item import EquipmentListItemORM
 from app.models.identity_state import IdentityStateORM
 from app.models.ingredient import IngredientORM
+from app.models.invitation import InvitationORM
 from app.models.invitation_settings import InvitationSettingsORM
 from app.models.mail_settings import MailSettingsORM
 from app.models.meal_plan import MealPlanORM
@@ -39,6 +40,7 @@ __all__ = [
     "ClubSettingsORM",
     "DocumentAppearanceSettingsORM",
     "IdentityStateORM",
+    "InvitationORM",
     "InvitationSettingsORM",
     "MailSettingsORM",
     "ModuleSettingsORM",

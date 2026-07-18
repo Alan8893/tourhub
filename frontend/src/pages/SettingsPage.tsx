@@ -19,7 +19,7 @@ import { useState } from "react";
 import AppearanceSettingsForm from "@/features/system-settings/components/AppearanceSettingsForm";
 import ClubSettingsForm from "@/features/system-settings/components/ClubSettingsForm";
 import DocumentAppearanceSettingsForm from "@/features/system-settings/components/DocumentAppearanceSettingsForm";
-import InvitationSettingsForm from "@/features/system-settings/components/InvitationSettingsForm";
+import InvitationSettingsWorkspace from "@/features/system-settings/components/InvitationSettingsWorkspace";
 import MailSettingsForm from "@/features/system-settings/components/MailSettingsForm";
 import ModuleSettingsForm from "@/features/system-settings/components/ModuleSettingsForm";
 
@@ -59,7 +59,7 @@ const SECTIONS: Array<{
   {
     id: "invitations",
     label: "Приглашения",
-    description: "Политика будущих приглашений до реализации пользователей.",
+    description: "Политика, одноразовые ссылки, принятие и отзыв приглашений.",
   },
   {
     id: "mail",
@@ -96,7 +96,7 @@ export default function SettingsPage() {
     if (activeSection === "appearance") return <AppearanceSettingsForm />;
     if (activeSection === "documents") return <DocumentAppearanceSettingsForm />;
     if (activeSection === "modules") return <ModuleSettingsForm />;
-    if (activeSection === "invitations") return <InvitationSettingsForm />;
+    if (activeSection === "invitations") return <InvitationSettingsWorkspace />;
     if (activeSection === "mail") return <MailSettingsForm />;
     return <PlannedSection sectionId={activeSection} />;
   }
@@ -106,8 +106,7 @@ export default function SettingsPage() {
       <Box>
         <Typography variant="h4">Настройки</Typography>
         <Typography color="text.secondary">
-          Общие настройки одной локальной установки TourHub. После появления ролей доступ будет
-          ограничен администраторами.
+          Общие настройки одной локальной установки TourHub. Доступ к разделу разрешён только администраторам.
         </Typography>
       </Box>
 

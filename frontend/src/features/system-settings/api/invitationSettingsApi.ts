@@ -1,6 +1,8 @@
+import type { AuthUser } from "@/features/auth/api/authApi";
 import { apiClient } from "@/shared/api/client";
 
 export type InvitationDefaultRole = "instructor" | "verified_instructor";
+export type InvitationStatus = "active" | "expired" | "revoked" | "consumed" | "superseded";
 
 export interface InvitationPolicyDraft {
   expires_after_days: number;
@@ -28,6 +30,29 @@ export interface InvitationSettingsHistoryItem {
   changed_fields: string[];
   settings_version: number;
   created_at: string;
+}
+
+export interface InvitationRecord {
+  id: number;
+  email: string;
+  role: InvitationDefaultRole;
+  status: InvitationStatus;
+  created_at: string;
+  expires_at: string;
+  consumed_at: string | null;
+  revoked_at: string | null;
+  superseded_at: string | null;
+}
+
+export interface InvitationCreated extends InvitationRecord {
+  token: string;
+  acceptance_path: string;
+}
+
+export interface InvitationPublicInfo {
+  email: string;
+  role: InvitationDefaultRole;
+  expires_at: string;
 }
 
 export const DEFAULT_INVITATION_SETTINGS: InvitationSettings = {
@@ -62,4 +87,43 @@ export async function getInvitationSettingsHistory(
     { params: { limit } },
   );
   return response.data;
+}
+
+export async function listInvitations(limit = 100): Promise<InvitationRecord[]> {
+  const response = await apiClient.get<InvitationRecord[]>("/invitations", {
+    params: { limit },
+  });
+  return response.data;
+}
+
+export async function createInvitation(payload: {
+  email: string;
+  role?: InvitationDefaultRole;
+}): Promise<InvitationCreated> {
+  const response = await apiClient.post<InvitationCreated>("/invitations", payload);
+  return response.data;
+}
+
+export async function reissueInvitation(id: number): Promise<InvitationCreated> {
+  const response = await apiClient.post<InvitationCreated>(`/invitations/${id}/reissue`);
+  return response.data;
+}
+
+export async function revokeInvitation(id: number): Promise<InvitationRecord> {
+  const response = await apiClient.post<InvitationRecord>(`/invitations/${id}/revoke`);
+  return response.data;
+}
+
+export async function inspectInvitation(token: string): Promise<InvitationPublicInfo> {
+  const response = await apiClient.post<InvitationPublicInfo>("/invitations/inspect", { token });
+  return response.data;
+}
+
+export async function acceptInvitation(payload: {
+  token: string;
+  display_name: string;
+  password: string;
+}): Promise<AuthUser> {
+  const response = await apiClient.post<{ user: AuthUser }>("/invitations/accept", payload);
+  return response.data.user;
 }

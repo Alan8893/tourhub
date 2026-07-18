@@ -82,8 +82,8 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Приглашения") &&
-       document.body?.innerText?.includes("Access foundation") &&
+      `document.body?.innerText?.includes("Политика приглашений") &&
+       document.body?.innerText?.includes("одноразовых ссылок") &&
        document.body?.innerText?.includes("Только администраторы") &&
        [...document.querySelectorAll("button")].some(
          (item) => item.textContent?.trim() === "Сохранить раздел",
