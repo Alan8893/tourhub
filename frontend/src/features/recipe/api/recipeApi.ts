@@ -104,6 +104,31 @@ export interface RecipeComponentWriteInput {
   people_count: number | null;
 }
 
+function normalizeLegacyRecipeListItem(item: RecipeListItem): RecipeListItem {
+  return {
+    ...item,
+    scope: item.scope ?? "club",
+    owner_user_id: item.owner_user_id ?? null,
+    owner_display_name: item.owner_display_name ?? null,
+    is_owned_by_current_user: item.is_owned_by_current_user ?? false,
+    lifecycle_status: item.lifecycle_status ?? "published",
+    submitted_by_user_id: item.submitted_by_user_id ?? null,
+    submitted_by_display_name: item.submitted_by_display_name ?? null,
+    submitted_at: item.submitted_at ?? null,
+    reviewed_by_user_id: item.reviewed_by_user_id ?? null,
+    reviewed_by_display_name: item.reviewed_by_display_name ?? null,
+    reviewed_at: item.reviewed_at ?? null,
+    review_comment: item.review_comment ?? null,
+    can_edit: item.can_edit ?? true,
+    can_archive: item.can_archive ?? !item.is_archived,
+    can_restore: item.can_restore ?? item.is_archived,
+    can_delete: item.can_delete ?? true,
+    can_submit: item.can_submit ?? false,
+    can_publish: item.can_publish ?? false,
+    can_reject: item.can_reject ?? false,
+  };
+}
+
 export async function getRecipes(
   includeArchived = false,
   view: RecipeView = "library",
@@ -114,7 +139,7 @@ export async function getRecipes(
       ...(view === "moderation" ? { view } : {}),
     },
   });
-  return response.data;
+  return { items: response.data.items.map(normalizeLegacyRecipeListItem) };
 }
 
 export async function getRecipe(recipeId: string): Promise<RecipeDetail> {
