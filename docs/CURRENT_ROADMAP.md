@@ -56,46 +56,42 @@ PR #83 merged as `950a43914230f6fe4be3bf217a4e5f1b79e7265f`.
 
 PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`. PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`. PR #86 merged as `18d5c9637e2e692b630009167dd622ee40ee2747`. PR #87 merged as `717d6f22d58e86a952edad501f05d3c67d8c0bf4`. PR #88 merged as `d79172fef861c030ff2d9e5367cf86329068b460`. PR #89 merged as `bff7950e3542b719983f2a09b61b9a901fbaca64`.
 
-### Access bootstrap and sessions — PR #90
+### Access bootstrap, sessions, and invitations
 
-- typed `User`, `IdentityState`, and `AuthSession` persistence;
-- additive Alembic `h10014` with one head;
-- one-time transactional bootstrap of the first Administrator;
-- memory-hard password hashing with no plaintext credential persistence;
-- opaque HttpOnly SameSite session cookie with only a SHA-256 token hash stored server-side;
-- bootstrap status, login, logout, current-user, expiry, and revocation;
-- Administrator authorization for all System Settings APIs and guarded `/settings`;
-- responsive bootstrap/login UI, current-user identity, and logout.
+- PR #90: typed `User`, `IdentityState`, and `AuthSession`, one-time Administrator bootstrap, protected sessions, settings authorization, and `h10014`;
+- PR #91: typed invitation lifecycle, configured domain/role/expiry rules, public acceptance, initial sign-in, manual delivery, and `h10015`;
+- frontend guards remain secondary to backend authorization;
+- automatic mail delivery remains separate.
 
-PR #90 passed all exact-head gates and merged as `26c4d4eb9246de44579451fe3d6e7bd631538324`.
+PR #90 merged as `26c4d4eb9246de44579451fe3d6e7bd631538324`. PR #91 passed all exact-head gates and merged as `2348870864efa1da20547c1a6564dc5f9b6488ef`.
 
-## IN PROGRESS — TH-0081 / DRAFT PR #91
+## IN PROGRESS — TH-0082 / DRAFT PR #92
 
-### Access: functional invitation lifecycle
+### Access: user administration and explicit roles
 
-- typed `Invitation` persistence and additive Alembic `h10015`;
-- Administrator create/list/reissue/revoke actions;
-- secure one-time codes returned only on create/reissue, with only SHA-256 hashes stored in PostgreSQL;
-- Backend enforcement of allowed domains, safe roles, expiry, active limits, and repeat-issue policy from `InvitationSettings`;
-- public inspection of a validated link and atomic acceptance;
-- creation and immediate sign-in of Instructor or Verified Instructor users;
-- expired, revoked, consumed, superseded, and unknown links cannot create users;
-- responsive management UI and public `/accept-invitation` page;
-- manual link delivery until working mail exists.
+- additive Alembic `h10016` adds optimistic versions to users;
+- Administrator-only list and update endpoints;
+- explicit Administrator, Instructor, and Verified Instructor role changes;
+- activation and deactivation with immediate session revocation on deactivation;
+- row-locked invariant preventing removal of the last active Administrator;
+- HTTP 409 for stale updates and protected invariant conflicts;
+- responsive `Пользователи` section under System Settings;
+- explicit confirmation for deactivation and Administrator demotion;
+- API regression tests and dedicated Chrome acceptance on desktop/mobile.
 
 Scope boundary:
 
-- no automatic SMTP delivery or message queue;
-- no Administrator invitations or self-registration;
-- no full user list, activation/deactivation, role editing, profile editing, or password reset;
-- no broad preparation-route/API authorization yet.
+- no account deletion, password reset, email change, or self-service profile editing;
+- no bulk user actions or session-administration screen;
+- no broad preparation-route/API authorization yet;
+- no consolidated actor-aware audit history yet.
 
 ## NEXT — ACCESS FOUNDATION CONTINUATION
 
-1. user list, activation state, and explicit role management;
-2. broader guarded frontend routes and backend authorization for preparation mutations;
-3. actor-aware identity propagation into settings history and the later audit log;
-4. session administration, cleanup, and password-reset policy.
+1. broader guarded frontend routes and backend authorization for preparation mutations;
+2. actor-aware identity propagation into settings history and the later audit log;
+3. session administration, cleanup, global sign-out, and account-recovery policy;
+4. automatic invitation delivery after working mail exists.
 
 ## FOLLOW-UP PRODUCT WORK
 

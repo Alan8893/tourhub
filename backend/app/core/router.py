@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 
 from app.core.auth import require_administrator
 from app.modules.api import equipment_list_router, recipe_equipment_router
+from app.modules.api.account_router import router as account_router
 from app.modules.api.appearance_settings_router import router as appearance_settings_router
 from app.modules.api.auth_router import router as auth_router
 from app.modules.api.catalog_import_router import router as catalog_import_router
@@ -31,6 +32,7 @@ router = APIRouter(prefix="/api/v1")
 _admin = [Depends(require_administrator)]
 
 router.include_router(auth_router)
+router.include_router(account_router)
 router.include_router(appearance_settings_router, dependencies=_admin)
 router.include_router(catalog_import_router)
 router.include_router(club_settings_router, dependencies=_admin)

@@ -22,12 +22,14 @@ import DocumentAppearanceSettingsForm from "@/features/system-settings/component
 import InvitationSettingsWorkspace from "@/features/system-settings/components/InvitationSettingsWorkspace";
 import MailSettingsForm from "@/features/system-settings/components/MailSettingsForm";
 import ModuleSettingsForm from "@/features/system-settings/components/ModuleSettingsForm";
+import UserAdministrationPanel from "@/features/system-settings/components/UserAdministrationPanel";
 
 type SettingsSectionId =
   | "club"
   | "appearance"
   | "documents"
   | "modules"
+  | "users"
   | "invitations"
   | "mail";
 
@@ -55,6 +57,11 @@ const SECTIONS: Array<{
     id: "modules",
     label: "Модули",
     description: "Видимость модулей и контроль обязательных зависимостей.",
+  },
+  {
+    id: "users",
+    label: "Пользователи",
+    description: "Роли, активность и защита администраторского доступа.",
   },
   {
     id: "invitations",
@@ -96,6 +103,7 @@ export default function SettingsPage() {
     if (activeSection === "appearance") return <AppearanceSettingsForm />;
     if (activeSection === "documents") return <DocumentAppearanceSettingsForm />;
     if (activeSection === "modules") return <ModuleSettingsForm />;
+    if (activeSection === "users") return <UserAdministrationPanel />;
     if (activeSection === "invitations") return <InvitationSettingsWorkspace />;
     if (activeSection === "mail") return <MailSettingsForm />;
     return <PlannedSection sectionId={activeSection} />;
