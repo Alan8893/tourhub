@@ -7,6 +7,7 @@ from app.modules.projects.schemas import (
     ProjectCreateRequest,
     ProjectListResponse,
     ProjectParticipantsUpdateRequest,
+    ProjectRecipeGenerationModeUpdateRequest,
     ProjectResponse,
 )
 from app.modules.projects.service import ProjectService
@@ -33,8 +34,25 @@ from app.services.shopping_list_service import ShoppingListService
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
+def _project_response(project) -> ProjectResponse:
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        participants=project.participants,
+        days=project.days,
+        start_date=project.start_date,
+        first_meal=project.first_meal,
+        last_meal=project.last_meal,
+        recipe_generation_mode=project.recipe_generation_mode,
+        status=project.status,
+    )
+
+
 @router.post("", response_model=ProjectResponse)
-def create_project(request: ProjectCreateRequest, db: Session = Depends(get_db)) -> ProjectResponse:
+def create_project(
+    request: ProjectCreateRequest,
+    db: Session = Depends(get_db),
+) -> ProjectResponse:
     try:
         project = ProjectService(ProjectRepository(db)).create_project(
             name=request.name,
@@ -43,38 +61,26 @@ def create_project(request: ProjectCreateRequest, db: Session = Depends(get_db))
             start_date=request.start_date,
             first_meal=request.first_meal,
             last_meal=request.last_meal,
+            recipe_generation_mode=request.recipe_generation_mode.value,
         )
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-    return ProjectResponse(**project.__dict__)
+    return _project_response(project)
 
 
 @router.get("", response_model=ProjectListResponse)
 def list_projects(db: Session = Depends(get_db)) -> ProjectListResponse:
     projects = ProjectRepository(db).list()
-    return ProjectListResponse(
-        items=[
-            ProjectResponse(
-                id=project.id,
-                name=project.name,
-                participants=project.participants,
-                days=project.days,
-                start_date=project.start_date,
-                first_meal=project.first_meal,
-                last_meal=project.last_meal,
-                status=project.status,
-            )
-            for project in projects
-        ]
-    )
+    return ProjectListResponse(items=[_project_response(project) for project in projects])
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)
 def get_project(project_id: int, db: Session = Depends(get_db)) -> ProjectResponse:
     try:
-        return ProjectService(ProjectRepository(db)).get_project(project_id)
+        project = ProjectService(ProjectRepository(db)).get_project(project_id)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+    return _project_response(project)
 
 
 @router.patch("/{project_id}/participants", response_model=ProjectResponse)
@@ -93,16 +99,24 @@ def update_project_participants(
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-    return ProjectResponse(
-        id=project.id,
-        name=project.name,
-        participants=project.participants,
-        days=project.days,
-        start_date=project.start_date,
-        first_meal=project.first_meal,
-        last_meal=project.last_meal,
-        status=project.status,
-    )
+    return _project_response(project)
+
+
+@router.patch("/{project_id}/recipe-generation-mode", response_model=ProjectResponse)
+def update_project_recipe_generation_mode(
+    project_id: int,
+    request: ProjectRecipeGenerationModeUpdateRequest,
+    db: Session = Depends(get_db),
+) -> ProjectResponse:
+    try:
+        project = ProjectService(ProjectRepository(db)).update_recipe_generation_mode(
+            project_id,
+            request.recipe_generation_mode.value,
+        )
+    except ValueError as error:
+        status_code = 404 if str(error) == "Project not found" else 400
+        raise HTTPException(status_code=status_code, detail=str(error)) from error
+    return _project_response(project)
 
 
 @router.post("/{project_id}/prepare")
@@ -212,12 +226,17 @@ def generate_equipment_document(
 
 
 @router.get("/{project_id}/documents/package")
-def generate_project_document_package(project_id: int, db: Session = Depends(get_db)) -> Response:
+def generate_project_document_package(
+    project_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     try:
-        document = ProjectDocumentPackageService(_document_service(db)).generate_package(project)
+        document = ProjectDocumentPackageService(_document_service(db)).generate_package(
+            project
+        )
     except ValueError as error:
         if str(error) == "Purchase list not found":
             raise HTTPException(
