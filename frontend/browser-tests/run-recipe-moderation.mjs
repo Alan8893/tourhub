@@ -100,11 +100,14 @@ async function run() {
     await clickText(client, "Каша на проверку", ".MuiListItemButton-root");
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Рецепт отправлен на проверку") &&
-       document.body?.innerText?.includes("Отправил: Автор рецепта") &&
-       document.body?.innerText?.includes("Опубликовать") &&
-       document.body?.innerText?.includes("Отклонить")`,
-      "loaded submitted recipe",
+      `document.body?.innerText?.includes("Состав") &&
+       [...document.querySelectorAll("button")].some(
+         (item) => item.textContent?.trim() === "Опубликовать",
+       ) &&
+       [...document.querySelectorAll("button")].some(
+         (item) => item.textContent?.trim() === "Отклонить",
+       )`,
+      "loaded submitted recipe controls",
     );
 
     await clickText(client, "Отклонить");
@@ -192,7 +195,7 @@ run().catch(async (error) => {
   await mkdir(artifactDir, { recursive: true });
   await writeFile(
     path.join(artifactDir, "recipe-moderation-error.txt"),
-    `${error?.stack ?? error}\n`,
+    `${error?.stack ?? error}\n\nRequests:\n${JSON.stringify(requests, null, 2)}\n`,
   );
   process.exitCode = 1;
 });
