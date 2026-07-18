@@ -7,6 +7,12 @@ from app.models.user import UserORM
 from app.schemas.auth import UserRole
 from app.services.auth_service import AuthService
 
+_PREPARATION_ROLES = {
+    UserRole.ADMINISTRATOR.value,
+    UserRole.INSTRUCTOR.value,
+    UserRole.VERIFIED_INSTRUCTOR.value,
+}
+
 
 def get_current_user(
     session_token: str | None = Cookie(
@@ -25,6 +31,15 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Сессия недействительна или истекла.",
+        )
+    return user
+
+
+def require_preparation_access(user: UserORM = Depends(get_current_user)) -> UserORM:
+    if user.role not in _PREPARATION_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Недостаточно прав для работы с подготовкой походов.",
         )
     return user
 

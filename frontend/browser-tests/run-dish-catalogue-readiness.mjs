@@ -203,11 +203,19 @@ class CdpClient {
 
 async function waitForExpression(client, expression, description, timeoutMs = 10_000) {
   const deadline = Date.now() + timeoutMs;
+  let lastError;
   while (Date.now() < deadline) {
-    if (await client.evaluate(`Boolean(${expression})`)) return;
+    try {
+      if (await client.evaluate(`Boolean(${expression})`)) return;
+      lastError = undefined;
+    } catch (error) {
+      lastError = error;
+    }
     await sleep(100);
   }
-  throw new Error(`Timed out waiting for ${description}`);
+  throw new Error(
+    `Timed out waiting for ${description}${lastError ? `: ${lastError.message}` : ""}`,
+  );
 }
 
 async function clickButtonByText(client, text) {
@@ -309,10 +317,10 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body.innerText.includes("Каталог не готов к автогенерации")
-        && document.body.innerText.includes("Завтрак: нужно добавить основное блюдо.")
-        && document.body.innerText.includes("Перекус: нужно добавить блюдо для перекуса.")
-        && document.body.innerText.includes("Без ролей осталось блюд: 1 из 1.")`,
+      `document.body?.innerText?.includes("Каталог не готов к автогенерации")
+        && document.body?.innerText?.includes("Завтрак: нужно добавить основное блюдо.")
+        && document.body?.innerText?.includes("Перекус: нужно добавить блюдо для перекуса.")
+        && document.body?.innerText?.includes("Без ролей осталось блюд: 1 из 1.")`,
       "initial catalogue readiness warnings",
     );
 
@@ -333,9 +341,9 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body.innerText.includes("Обязательное покрытие каталога готово")
-        && document.body.innerText.includes("Все активные блюда классифицированы: 1.")
-        && document.body.innerText.includes("Рекомендуемое покрытие меню")`,
+      `document.body?.innerText?.includes("Обязательное покрытие каталога готово")
+        && document.body?.innerText?.includes("Все активные блюда классифицированы: 1.")
+        && document.body?.innerText?.includes("Рекомендуемое покрытие меню")`,
       "updated catalogue readiness",
     );
 

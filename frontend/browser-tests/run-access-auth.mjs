@@ -129,11 +129,13 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Настройки доступны") &&
+      `document.body?.innerText?.includes("Подготовка доступна") &&
+       document.body?.innerText?.includes("Маршрут: /projects/42") &&
        document.body?.innerText?.includes("Иван Администратор") &&
-       document.body?.innerText?.includes("admin@tourhub.local") &&
-       [...document.querySelectorAll("button")].some((item) => item.textContent?.trim() === "Выйти")`,
-      "authenticated settings",
+       [...document.querySelectorAll("button")].some(
+         (item) => item.textContent?.trim() === "Открыть настройки",
+       )`,
+      "requested preparation route after bootstrap",
     );
     assert.equal(await client.evaluate("document.cookie.includes('tourhub_session')"), false);
 
@@ -142,6 +144,14 @@ async function run() {
     );
     assert.equal(bootstrapRequest?.body.display_name, "Иван Администратор");
     assert.equal(bootstrapRequest?.body.email, "Admin@TourHub.Local");
+
+    assert.equal(await clickButton(client, "Открыть настройки"), true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Настройки доступны") &&
+       document.body?.innerText?.includes("admin@tourhub.local")`,
+      "administrator settings after preparation",
+    );
 
     assert.equal(await clickButton(client, "Выйти"), true);
     await waitForExpression(
@@ -157,7 +167,7 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Настройки доступны") &&
        document.body?.innerText?.includes("Иван Администратор")`,
-      "settings after login",
+      "requested settings after login",
     );
 
     await client.send("Emulation.setDeviceMetricsOverride", {
@@ -186,7 +196,7 @@ async function run() {
       Buffer.from(screenshot.data, "base64"),
     );
     client.close();
-    console.log("Access bootstrap and login browser acceptance passed.");
+    console.log("Access route guard, bootstrap, and login browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
