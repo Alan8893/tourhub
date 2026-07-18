@@ -2,7 +2,7 @@
 
 TourHub is a local ERP application for preparing tourist-club trips: projects, meal plans, dishes, recipes, shopping projections, equipment, branded Russian exports, and operational backup/restore.
 
-One installation represents one tourist club. The current release supports one-time Administrator bootstrap, invitation-only multi-user access, explicit roles, guarded preparation workflows, working SMTP invitation delivery, and multi-session operational readiness. Recipe ownership is being introduced through explicit CLUB/PERSONAL scope and role-aware editing; publication and moderation remain the next recipe-lifecycle slice.
+One installation represents one tourist club. The current release supports one-time Administrator bootstrap, invitation-only multi-user access, explicit roles, guarded preparation workflows, working SMTP invitation delivery, multi-session operational readiness, and explicit CLUB/PERSONAL recipe ownership with role-aware editing. Recipe publication and moderation remain the next product capability.
 
 ## Quick start
 
