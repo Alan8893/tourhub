@@ -37,6 +37,7 @@ class DishORM(Base):
         back_populates="dish",
         cascade="all, delete-orphan",
         passive_deletes=True,
+        order_by="DishRecipeVariantORM.position",
     )
     meal_roles: Mapped[list["DishMealRoleORM"]] = relationship(
         "DishMealRoleORM",
