@@ -9,44 +9,59 @@ from app.models.product import ProductORM
 from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_component_type import RecipeComponentType
+from app.models.recipe_scope import RecipeScope
+from app.models.user import UserORM
+from app.services.recipe_access_service import RecipeAccessService
 
 CALCULATION_TYPES = {"per_person", "fixed_group", "package_per_people"}
 
 
 class RecipeCommandService:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, actor: UserORM | None = None):
         self.session = session
+        self.actor = actor
 
     def create_recipe(self, name: str) -> RecipeORM:
-        recipe = RecipeORM(id=str(uuid4()), name=name.strip())
+        recipe = RecipeORM(
+            id=str(uuid4()),
+            name=name.strip(),
+            scope=(
+                RecipeScope.PERSONAL.value
+                if self.actor is not None
+                else RecipeScope.CLUB.value
+            ),
+            owner_user_id=self.actor.id if self.actor is not None else None,
+            owner=self.actor,
+        )
         self.session.add(recipe)
         self._commit()
         self.session.refresh(recipe)
         return recipe
 
     def rename_recipe(self, recipe_id: str, name: str) -> RecipeORM:
-        recipe = self._get_recipe(recipe_id)
+        recipe = self._get_editable_recipe(recipe_id)
         recipe.name = name.strip()
         self._commit()
         self.session.refresh(recipe)
         return recipe
 
     def archive_recipe(self, recipe_id: str) -> RecipeORM:
-        recipe = self._get_recipe(recipe_id)
+        recipe = self._get_manageable_recipe(recipe_id)
         recipe.is_archived = True
         self._commit()
         self.session.refresh(recipe)
         return recipe
 
     def restore_recipe(self, recipe_id: str) -> RecipeORM:
-        recipe = self._get_recipe(recipe_id)
+        recipe = self._get_manageable_recipe(recipe_id)
         recipe.is_archived = False
         self._commit()
         self.session.refresh(recipe)
         return recipe
 
     def delete_recipe(self, recipe_id: str) -> None:
-        recipe = self._get_recipe(recipe_id)
+        recipe = self._get_visible_recipe(recipe_id)
+        RecipeAccessService.require_deletable(recipe, self.actor)
         linked_dish = self.session.scalar(
             select(DishORM.id).where(DishORM.recipe_id == recipe_id).limit(1)
         )
@@ -65,7 +80,7 @@ class RecipeCommandService:
         calculation_type: str,
         people_count: int | None,
     ) -> RecipeComponentORM:
-        self._get_recipe(recipe_id)
+        self._get_editable_recipe(recipe_id)
         self._get_product(product_id)
         self._validate_component(component_type, calculation_type, people_count)
         component = RecipeComponentORM(
@@ -94,6 +109,7 @@ class RecipeCommandService:
         calculation_type: str,
         people_count: int | None,
     ) -> RecipeComponentORM:
+        self._get_editable_recipe(recipe_id)
         component = self._get_component(recipe_id, component_id)
         self._get_product(product_id)
         self._validate_component(component_type, calculation_type, people_count)
@@ -108,6 +124,7 @@ class RecipeCommandService:
         return component
 
     def delete_component(self, recipe_id: str, component_id: str) -> None:
+        self._get_editable_recipe(recipe_id)
         component = self._get_component(recipe_id, component_id)
         self.session.delete(component)
         self._commit()
@@ -117,6 +134,18 @@ class RecipeCommandService:
         if recipe is None:
             raise LookupError("Recipe not found")
         return recipe
+
+    def _get_visible_recipe(self, recipe_id: str) -> RecipeORM:
+        recipe = self._get_recipe(recipe_id)
+        return RecipeAccessService.require_visible(recipe, self.actor)
+
+    def _get_manageable_recipe(self, recipe_id: str) -> RecipeORM:
+        recipe = self._get_visible_recipe(recipe_id)
+        return RecipeAccessService.require_manageable(recipe, self.actor)
+
+    def _get_editable_recipe(self, recipe_id: str) -> RecipeORM:
+        recipe = self._get_visible_recipe(recipe_id)
+        return RecipeAccessService.require_editable(recipe, self.actor)
 
     def _get_product(self, product_id: str) -> ProductORM:
         product = self.session.get(ProductORM, product_id)
