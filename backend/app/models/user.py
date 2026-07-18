@@ -17,6 +17,7 @@ class UserORM(Base):
             "role IN ('administrator', 'instructor', 'verified_instructor')",
             name="ck_users_supported_role",
         ),
+        CheckConstraint("version > 0", name="ck_users_version_positive"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -28,6 +29,9 @@ class UserORM(Base):
     password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default=text("true")
+    )
+    version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default=text("1")
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
