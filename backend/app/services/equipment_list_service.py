@@ -246,11 +246,11 @@ class EquipmentListService:
         for day in meal_plan.days:
             if day.slots:
                 for slot in day.slots:
-                    groups.append([item.dish.recipe_id for item in slot.dishes])
+                    groups.append([item.recipe_id for item in slot.dishes])
                 continue
             by_type: dict[str, list[str]] = {}
             for item in day.items:
-                by_type.setdefault(item.meal_type, []).append(item.dish.recipe_id)
+                by_type.setdefault(item.meal_type, []).append(item.recipe_id)
             groups.extend(by_type.values())
         return groups
 
