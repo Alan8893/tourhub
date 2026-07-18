@@ -10,7 +10,6 @@ from app.schemas.user_administration import UserAdministrationUpdateRequest
 from app.services.audit_service import AuditService
 from app.services.recipe_lifecycle_service import RecipeLifecycleService
 from app.services.user_administration_service import UserAdministrationService
-from tests.conftest import TestingSessionLocal
 
 
 def _user(
@@ -29,8 +28,7 @@ def _user(
     )
 
 
-def test_user_access_change_is_attributed_and_filterable(client):
-    session = TestingSessionLocal()
+def test_user_access_change_is_attributed_and_filterable(client, db_session):
     administrator = _user(
         email="audit-admin@example.test",
         display_name="Audit Administrator",
@@ -41,12 +39,13 @@ def test_user_access_change_is_attributed_and_filterable(client):
         display_name="Instructor",
         role="instructor",
     )
-    session.add_all([administrator, target])
-    session.commit()
+    db_session.add_all([administrator, target])
+    db_session.commit()
     target_id = target.id
     target_version = target.version
+    administrator_id = administrator.id
 
-    updated = UserAdministrationService(session, actor=administrator).update(
+    updated = UserAdministrationService(db_session, actor=administrator).update(
         target_id,
         UserAdministrationUpdateRequest(
             expected_version=target_version,
@@ -55,12 +54,11 @@ def test_user_access_change_is_attributed_and_filterable(client):
         ),
     )
     assert updated.role == "verified_instructor"
-    session.close()
 
     response = client.get(
         "/api/v1/audit/events",
         params={
-            "actor_user_id": administrator.id,
+            "actor_user_id": administrator_id,
             "entity_type": "user",
             "entity_id": str(target_id),
             "action": "user_role_changed",
