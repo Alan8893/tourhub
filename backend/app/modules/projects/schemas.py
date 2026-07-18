@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from app.models.recipe_generation_mode import RecipeGenerationMode
+
 
 class ProjectCreateRequest(BaseModel):
     name: str
@@ -8,10 +10,15 @@ class ProjectCreateRequest(BaseModel):
     start_date: str | None = None
     first_meal: str | None = None
     last_meal: str | None = None
+    recipe_generation_mode: RecipeGenerationMode = RecipeGenerationMode.CLUB_ONLY
 
 
 class ProjectParticipantsUpdateRequest(BaseModel):
     participants: int
+
+
+class ProjectRecipeGenerationModeUpdateRequest(BaseModel):
+    recipe_generation_mode: RecipeGenerationMode
 
 
 class ProjectResponse(BaseModel):
@@ -22,6 +29,7 @@ class ProjectResponse(BaseModel):
     start_date: str | None
     first_meal: str | None
     last_meal: str | None
+    recipe_generation_mode: RecipeGenerationMode
     status: str
 
 
