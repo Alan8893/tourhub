@@ -1,8 +1,8 @@
 # TourHub Technical Debt
 
-Status date: 2026-07-18
+Status date: 2026-07-19
 
-## Implemented through TH-0088 / PR #98
+## Implemented through TH-0089 / PR #99
 
 - guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
 - production-like runtime, backup/restore, health checks, API proxy, and restart persistence;
@@ -12,26 +12,39 @@ Status date: 2026-07-18
 - Recipe CLUB/PERSONAL ownership and nested authorization through `h10017`;
 - Recipe lifecycle and moderation through `h10018`;
 - ordered Dish Recipe variants, three Project generation modes, and persisted assignment Recipe snapshots through `h10019`;
-- shopping/equipment calculations based on assignment Recipes rather than mutable Dish defaults;
-- responsive Dish variant, Project mode, and selected-Recipe UI;
-- focused Backend coverage for actor filtering, mode order, deterministic rotation, manual preservation, migration compatibility, and catalogue behavior.
+- assignment-based shopping/equipment calculations;
+- append-only actor-aware AuditEvent persistence through `h10020`;
+- semantic user role/activation and Recipe submit/publish/reject history in the same business transaction;
+- immutable Recipe moderation history beyond the latest Recipe fields;
+- bounded recursive secret-field removal, Administrator query API, responsive Audit UI, and focused Backend/Chrome acceptance.
+
+## Remaining audit debt
+
+1. Project creation/update/preparation actions.
+2. Menu generation and manual MealSlot changes.
+3. System Settings and mail operations with real actor attribution.
+4. Invitation creation, revocation, acceptance, and delivery-result actions.
+5. Catalogue, CSV import, Product, Dish, and Recipe component/note/equipment edits beyond lifecycle transitions.
+6. Shopping, equipment, and document-generation actions.
+7. Audit export, retention policy/UI, external SIEM integration, and operational diagnostics.
+8. Undo and event replay remain explicitly out of scope for the current release.
+
+Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and the owning business transaction.
 
 ## Remaining Recipe and menu debt
 
-1. Immutable moderation history beyond the latest decision.
-2. Optional moderation notifications.
-3. Ownership-aware CSV import UX beyond trusted shared-catalogue import.
-4. Preparation technology, dietary metadata, season metadata, and richer categories.
-5. Decide whether Recipe-level optimistic versions are required beyond serialized lifecycle transitions.
-6. Per-meal manual Recipe switching without replacing the Dish.
-7. Preference weights or ranking beyond `club_only`, `club_and_personal`, and `personal_preferred`.
+- optional moderation notifications;
+- ownership-aware CSV import UX beyond trusted shared-catalogue import;
+- preparation technology, dietary metadata, season metadata, and richer categories;
+- decide whether Recipe-level optimistic versions are required beyond serialized lifecycle transitions;
+- per-meal manual Recipe switching without replacing the Dish;
+- preference weights or ranking beyond `club_only`, `club_and_personal`, and `personal_preferred`.
 
 ## Remaining Access and mail debt
 
 - account recovery and verified email change;
 - session administration, individual revocation, cleanup, and global sign-out;
 - user profile editing and account-retention policy;
-- real actor propagation into focused settings history and the later audit log;
 - invitation retention and cleanup;
 - asynchronous mail delivery, scheduled retries, delivery history, and bounce diagnostics;
 - approved mail templates and attachments;
@@ -39,10 +52,9 @@ Status date: 2026-07-18
 
 ## Remaining release-blocking product debt
 
-1. **Central alcohol prohibition** across Product, Recipe, and CSV import, including existing-record handling.
-2. **Actor-aware audit log**, including immutable moderation history.
-3. **Consolidated export completeness** for the approved PDF and workbook.
-4. **Product acceptance and feature freeze**.
+1. **Consolidated export completeness** for the approved PDF and workbook.
+2. **Central alcohol prohibition** across Product, Recipe, and CSV import, including existing-record handling.
+3. **Product acceptance and feature freeze**.
 
 ## Configuration export/import debt
 
