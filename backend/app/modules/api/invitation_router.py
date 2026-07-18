@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.auth import require_administrator
@@ -23,6 +23,7 @@ from app.services.invitation_service import (
     InvitationService,
     InvitationStateError,
 )
+from app.services.mail_delivery_service import MailDeliveryResult, MailDeliveryService
 
 router = APIRouter(prefix="/invitations", tags=["invitations"])
 
@@ -44,12 +45,16 @@ def _item_response(invitation: InvitationORM) -> InvitationListItemResponse:
 def _created_response(
     invitation: InvitationORM,
     raw_token: str,
+    delivery: MailDeliveryResult,
 ) -> InvitationCreatedResponse:
     item = _item_response(invitation)
     return InvitationCreatedResponse(
         **item.model_dump(),
         token=raw_token,
         acceptance_path=f"/accept-invitation#token={raw_token}",
+        delivery_status=delivery.status,
+        delivery_message=delivery.message,
+        delivery_attempts=delivery.attempts,
     )
 
 
@@ -88,6 +93,29 @@ def _translate_error(error: RuntimeError) -> HTTPException:
     return HTTPException(status_code=500, detail="Не удалось обработать приглашение.")
 
 
+def _role_label(role: str) -> str:
+    if role == InvitationDefaultRole.VERIFIED_INSTRUCTOR.value:
+        return "Проверенный инструктор"
+    return "Инструктор"
+
+
+def _deliver(
+    invitation: InvitationORM,
+    raw_token: str,
+    *,
+    http_request: Request,
+    db: Session,
+) -> MailDeliveryResult:
+    acceptance_path = f"/accept-invitation#token={raw_token}"
+    acceptance_url = f"{str(http_request.base_url).rstrip('/')}{acceptance_path}"
+    return MailDeliveryService(db).send_invitation_best_effort(
+        recipient=invitation.email,
+        role_label=_role_label(invitation.role),
+        expires_at=invitation.expires_at,
+        acceptance_url=acceptance_url,
+    )
+
+
 @router.get("", response_model=list[InvitationListItemResponse])
 def list_invitations(
     limit: int = Query(default=100, ge=1, le=200),
@@ -107,6 +135,7 @@ def list_invitations(
 )
 def create_invitation(
     request: InvitationCreateRequest,
+    http_request: Request,
     administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> InvitationCreatedResponse:
@@ -117,12 +146,14 @@ def create_invitation(
         )
     except RuntimeError as error:
         raise _translate_error(error) from error
-    return _created_response(invitation, raw_token)
+    delivery = _deliver(invitation, raw_token, http_request=http_request, db=db)
+    return _created_response(invitation, raw_token, delivery)
 
 
 @router.post("/{invitation_id}/reissue", response_model=InvitationCreatedResponse)
 def reissue_invitation(
     invitation_id: int,
+    http_request: Request,
     administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> InvitationCreatedResponse:
@@ -133,7 +164,8 @@ def reissue_invitation(
         )
     except RuntimeError as error:
         raise _translate_error(error) from error
-    return _created_response(invitation, raw_token)
+    delivery = _deliver(invitation, raw_token, http_request=http_request, db=db)
+    return _created_response(invitation, raw_token, delivery)
 
 
 @router.post("/{invitation_id}/revoke", response_model=InvitationListItemResponse)
