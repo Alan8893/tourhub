@@ -1,3 +1,11 @@
 export { default as ProjectHeader } from "./components/ProjectHeader";
-export { useProject } from "./hooks/useProject";
+export {
+  RECIPE_GENERATION_MODE_OPTIONS,
+  getRecipeGenerationModeLabel,
+  type RecipeGenerationMode,
+} from "./model/recipeGenerationMode";
+export {
+  useProject,
+  useUpdateProjectRecipeGenerationMode,
+} from "./hooks/useProject";
 export { usePrepareProject } from "./hooks/usePrepareProject";
