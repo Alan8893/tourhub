@@ -2,7 +2,7 @@
 
 Status date: 2026-07-18
 
-## Implemented through PR #96
+## Implemented through PR #96 plus draft PR #97
 
 - complete guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
 - installation, update, backup, restore, recovery, release images, health checks, API proxy, and restart persistence;
@@ -12,22 +12,20 @@ Status date: 2026-07-18
 - multiple independent sessions per user with current-role propagation and complete deactivation revocation;
 - centralized frontend handling for protected HTTP 401 responses and exact route return;
 - Recipe CLUB/PERSONAL scope, owner identity, visibility filtering, role-aware editing, and nested ownership enforcement through `h10017`;
-- safe recipe owner/capability projection and responsive ownership UI;
+- draft `h10018` lifecycle states, row-locked submission/moderation transitions, submitter/reviewer attribution, required rejection comment, and capability-driven moderation UI;
 - conflict handling, PostgreSQL row locks, safe settings history, and deferred final downgrade/re-upgrade smoke.
 
-PR #96 implementation head `29b84be3f98a721d8d0faf2fa1908f65681820cd` passed Quality #858, Document Quality #474, Guided Release Acceptance #425, Operator Docs #411, and Docker Release Runtime #406.
+PR #96 merged as `d9ee573d44d885b48a2ce9424e9695f25d95a665`. Draft PR #97 is the active TH-0087 slice.
 
 ## Remaining recipe lifecycle debt
 
-1. Submission and resubmission states for PERSONAL recipes.
-2. Verified Instructor and Administrator review queue.
-3. Publication transition from PERSONAL to CLUB with an explicit immutable origin policy.
-4. Rejection with required comment and visible feedback to the owner.
-5. Moderation lifecycle history before the consolidated actor-aware audit exists.
-6. Multiple Recipe variants per Dish.
-7. Club-only, club-plus-personal, and personal-preferred generation modes.
-8. Optimistic recipe versions when lifecycle transitions and concurrent editing are introduced.
-9. Ownership-aware CSV import preview/apply UX beyond trusted shared-catalogue import.
+1. Full immutable moderation history beyond the latest submission and decision fields.
+2. Optional moderation notifications after a delivery policy is approved.
+3. Multiple Recipe variants per Dish.
+4. Club-only, club-plus-personal, and personal-preferred generation modes.
+5. Ownership-aware CSV import preview/apply UX beyond trusted shared-catalogue import.
+6. Decide whether recipe-level optimistic versions are still needed beyond serialized lifecycle transitions.
+7. Preparation technology, dietary metadata, season metadata, and richer categories required by the approved product target.
 
 ## Remaining Access debt
 
@@ -51,12 +49,11 @@ PR #96 implementation head `29b84be3f98a721d8d0faf2fa1908f65681820cd` passed Qua
 
 ## Remaining release-blocking product debt
 
-1. **Recipe publication and moderation** — submission, review, publication, rejection, resubmission, and Verified Instructor distinctions.
-2. **Dish recipe variants and generation modes** — multiple recipes per Dish and approved club/personal selection modes.
-3. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import plus existing-record handling.
-4. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
-5. **Consolidated export completeness** — approved complete Russian PDF and workbook sheets using the immutable brand snapshot.
-6. **Product acceptance** — active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
+1. **Dish recipe variants and generation modes** — multiple recipes per Dish and approved club/personal selection modes.
+2. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import plus existing-record handling.
+3. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, moderation, settings, mail, user, and role changes.
+4. **Consolidated export completeness** — approved complete Russian PDF and workbook sheets using the immutable brand snapshot.
+5. **Product acceptance** — active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
 
 ## Configuration export and import debt
 
