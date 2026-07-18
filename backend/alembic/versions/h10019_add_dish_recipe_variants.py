@@ -42,11 +42,6 @@ def upgrade() -> None:
             "recipe_id",
             name="pk_dish_recipe_variants",
         ),
-        sa.UniqueConstraint(
-            "dish_id",
-            "position",
-            name="uq_dish_recipe_variants_dish_position",
-        ),
     )
     op.create_index(
         "ix_dish_recipe_variants_recipe_id",
