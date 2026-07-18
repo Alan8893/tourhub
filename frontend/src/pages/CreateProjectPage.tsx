@@ -15,6 +15,10 @@ import {
 } from "@mui/material";
 
 import { useCreateProject } from "../features/project/hooks/useCreateProject";
+import {
+  RECIPE_GENERATION_MODE_OPTIONS,
+  type RecipeGenerationMode,
+} from "../features/project/model/recipeGenerationMode";
 
 const mealOptions = [
   { value: "breakfast", label: "Завтрак" },
@@ -33,6 +37,8 @@ export default function CreateProjectPage() {
   const [startDate, setStartDate] = useState("");
   const [firstMeal, setFirstMeal] = useState("dinner");
   const [lastMeal, setLastMeal] = useState("dinner");
+  const [recipeGenerationMode, setRecipeGenerationMode] =
+    useState<RecipeGenerationMode>("club_only");
   const [validationError, setValidationError] = useState<string | null>(null);
 
   async function submit(event: FormEvent) {
@@ -53,13 +59,14 @@ export default function CreateProjectPage() {
       start_date: startDate || undefined,
       first_meal: firstMeal,
       last_meal: lastMeal,
+      recipe_generation_mode: recipeGenerationMode,
     });
 
     navigate(`/projects/${project.id}`);
   }
 
   return (
-    <Paper sx={{ maxWidth: 560, mx: "auto", mt: 5, p: 4 }}>
+    <Paper sx={{ maxWidth: 640, mx: "auto", mt: 5, p: { xs: 2.5, sm: 4 } }}>
       <Typography variant="h4" sx={{ mb: 1 }}>
         Создание похода
       </Typography>
@@ -70,6 +77,9 @@ export default function CreateProjectPage() {
 
       <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {validationError && <Alert severity="error">{validationError}</Alert>}
+        {createProject.isError && (
+          <Alert severity="error">Не удалось создать поход. Проверьте параметры и повторите попытку.</Alert>
+        )}
 
         <TextField
           label="Название похода"
@@ -119,6 +129,31 @@ export default function CreateProjectPage() {
           <RadioGroup value={lastMeal} onChange={(event) => setLastMeal(event.target.value)}>
             {mealOptions.map((meal) => (
               <FormControlLabel key={meal.value} value={meal.value} control={<Radio />} label={meal.label} />
+            ))}
+          </RadioGroup>
+        </FormControl>
+
+        <FormControl>
+          <FormLabel>Какие рецепты использовать при генерации меню</FormLabel>
+          <RadioGroup
+            value={recipeGenerationMode}
+            onChange={(event) => setRecipeGenerationMode(event.target.value as RecipeGenerationMode)}
+          >
+            {RECIPE_GENERATION_MODE_OPTIONS.map((option) => (
+              <FormControlLabel
+                key={option.value}
+                value={option.value}
+                control={<Radio />}
+                sx={{ alignItems: "flex-start", my: 0.25 }}
+                label={(
+                  <Box pt={0.75}>
+                    <Typography fontWeight={600}>{option.label}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {option.description}
+                    </Typography>
+                  </Box>
+                )}
+              />
             ))}
           </RadioGroup>
         </FormControl>
