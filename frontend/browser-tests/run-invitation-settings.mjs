@@ -74,7 +74,7 @@ async function run() {
     await client.send("Page.enable");
     await client.send("Emulation.setDeviceMetricsOverride", {
       width: 1280,
-      height: 1000,
+      height: 1150,
       deviceScaleFactor: 1,
       mobile: false,
     });
@@ -83,12 +83,13 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Политика приглашений") &&
-       document.body?.innerText?.includes("одноразовых ссылок") &&
+       document.body?.innerText?.includes("Рабочие приглашения") &&
        document.body?.innerText?.includes("Только администраторы") &&
+       document.body?.innerText?.includes("Приглашений пока нет") &&
        [...document.querySelectorAll("button")].some(
          (item) => item.textContent?.trim() === "Сохранить раздел",
        )`,
-      "loaded invitation policy editor",
+      "loaded invitation workspace",
     );
 
     assert.equal(
@@ -138,9 +139,28 @@ async function run() {
     assert.equal(update?.body.administrators_only, true);
     assert.equal(update?.body.require_email_confirmation, false);
 
+    assert.equal(await setFieldByLabel(client, "Email пользователя", "Member@Example.COM"), true);
+    assert.equal(await clickButton(client, "Создать ссылку"), true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Приглашение отправлено по email") &&
+       document.body?.innerText?.includes("Ручная ссылка доступна независимо от доставки") &&
+       document.body?.innerText?.includes("Попыток: 1") &&
+       [...document.querySelectorAll('input')].some(
+         (item) => item.value.includes("/accept-invitation#token=browser-token-"),
+       )`,
+      "delivered invitation with manual fallback",
+    );
+
+    const creation = requests.find(
+      (item) => item.method === "POST" && item.path === "/api/v1/invitations",
+    );
+    assert.equal(creation?.body.email, "Member@Example.COM");
+    assert.equal(creation?.body.role, "verified_instructor");
+
     await client.send("Emulation.setDeviceMetricsOverride", {
       width: 360,
-      height: 900,
+      height: 950,
       deviceScaleFactor: 1,
       mobile: true,
     });
@@ -164,7 +184,7 @@ async function run() {
       Buffer.from(screenshot.data, "base64"),
     );
     client.close();
-    console.log("Invitation settings browser acceptance passed.");
+    console.log("Invitation delivery browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
