@@ -1,5 +1,7 @@
 import { apiClient } from "@/shared/api/client";
 
+import type { RecipeGenerationMode } from "../model/recipeGenerationMode";
+
 export interface Project {
   id: number;
   name: string;
@@ -8,6 +10,7 @@ export interface Project {
   start_date: string | null;
   first_meal: string | null;
   last_meal: string | null;
+  recipe_generation_mode: RecipeGenerationMode;
   status: string;
 }
 
@@ -20,6 +23,7 @@ export interface CreateProjectRequest {
   start_date?: string;
   first_meal?: string;
   last_meal?: string;
+  recipe_generation_mode?: RecipeGenerationMode;
 }
 
 export interface ProjectPreparationResponse {
@@ -40,6 +44,17 @@ export async function getProjects(): Promise<ProjectListResponse> {
 
 export async function getProject(projectId: number): Promise<Project> {
   return (await apiClient.get<Project>("/projects/" + projectId)).data;
+}
+
+export async function updateProjectRecipeGenerationMode(
+  projectId: number,
+  recipeGenerationMode: RecipeGenerationMode,
+): Promise<Project> {
+  return (
+    await apiClient.patch<Project>(`/projects/${projectId}/recipe-generation-mode`, {
+      recipe_generation_mode: recipeGenerationMode,
+    })
+  ).data;
 }
 
 export async function getProjectPreparation(
