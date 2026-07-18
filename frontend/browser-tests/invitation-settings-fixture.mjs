@@ -26,17 +26,27 @@ function normalizeDomains(values) {
 async function readBody(request) {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  const raw = Buffer.concat(chunks).toString("utf8");
+  return raw ? JSON.parse(raw) : undefined;
+}
+
+function publicRecord(record) {
+  const { token: _token, acceptance_path: _path, delivery_status: _status, delivery_message: _message, delivery_attempts: _attempts, ...item } = record;
+  return item;
 }
 
 export function startInvitationSettingsApi() {
   let settings = createSettings();
   let history = [];
+  let invitations = [];
+  let nextInvitationId = 1;
   requests.length = 0;
 
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
-    const body = request.method === "PUT" ? await readBody(request) : undefined;
+    const body = ["PUT", "POST"].includes(request.method ?? "")
+      ? await readBody(request)
+      : undefined;
     requests.push({ method: request.method, path: url.pathname, body });
     response.setHeader("content-type", "application/json");
 
@@ -86,6 +96,81 @@ export function startInvitationSettingsApi() {
     if (url.pathname === "/api/v1/settings/invitations/history") {
       response.statusCode = 200;
       response.end(JSON.stringify(history));
+      return;
+    }
+
+    if (url.pathname === "/api/v1/invitations" && request.method === "GET") {
+      response.statusCode = 200;
+      response.end(JSON.stringify(invitations.map(publicRecord)));
+      return;
+    }
+
+    if (url.pathname === "/api/v1/invitations" && request.method === "POST") {
+      const id = nextInvitationId++;
+      const token = `browser-token-${id}-abcdefghijklmnopqrstuvwxyz123456`;
+      const record = {
+        id,
+        email: String(body.email).trim().toLowerCase(),
+        role: body.role ?? settings.default_role,
+        status: "active",
+        created_at: "2026-07-17T19:00:00",
+        expires_at: "2026-07-31T19:00:00",
+        consumed_at: null,
+        revoked_at: null,
+        superseded_at: null,
+        token,
+        acceptance_path: `/accept-invitation#token=${token}`,
+        delivery_status: "sent",
+        delivery_message: "Приглашение отправлено по email; ручная ссылка также доступна.",
+        delivery_attempts: 1,
+      };
+      invitations = [record, ...invitations];
+      response.statusCode = 201;
+      response.end(JSON.stringify(record));
+      return;
+    }
+
+    const reissueMatch = url.pathname.match(/^\/api\/v1\/invitations\/(\d+)\/reissue$/);
+    if (reissueMatch && request.method === "POST") {
+      const source = invitations.find((item) => item.id === Number(reissueMatch[1]));
+      if (!source) {
+        response.statusCode = 404;
+        response.end(JSON.stringify({ error: "not found" }));
+        return;
+      }
+      source.status = "superseded";
+      source.superseded_at = "2026-07-17T19:05:00";
+      const id = nextInvitationId++;
+      const token = `browser-token-${id}-abcdefghijklmnopqrstuvwxyz123456`;
+      const replacement = {
+        ...source,
+        id,
+        status: "active",
+        superseded_at: null,
+        token,
+        acceptance_path: `/accept-invitation#token=${token}`,
+        delivery_status: "sent",
+        delivery_message: "Приглашение отправлено по email; ручная ссылка также доступна.",
+        delivery_attempts: 1,
+      };
+      invitations = [replacement, ...invitations];
+      response.statusCode = 200;
+      response.end(JSON.stringify(replacement));
+      return;
+    }
+
+    const revokeMatch = url.pathname.match(/^\/api\/v1\/invitations\/(\d+)\/revoke$/);
+    if (revokeMatch && request.method === "POST") {
+      const record = invitations.find((item) => item.id === Number(revokeMatch[1]));
+      if (!record) {
+        response.statusCode = 404;
+        response.end(JSON.stringify({ error: "not found" }));
+        return;
+      }
+      record.status = "revoked";
+      record.revoked_at = "2026-07-17T19:10:00";
+      response.statusCode = 200;
+      response.end(JSON.stringify(publicRecord(record)));
       return;
     }
 
