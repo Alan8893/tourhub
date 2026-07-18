@@ -6,7 +6,7 @@ Last updated: 2026-07-18
 
 ## Purpose
 
-This document describes the implemented domain baseline. `PRODUCT_SPEC.md` describes approved target scope. Deferred capabilities are not current implementation.
+This document describes the implemented domain baseline plus the active draft slice. `PRODUCT_SPEC.md` describes approved target scope. Deferred capabilities are not current implementation.
 
 ## Club, identity, and access
 
@@ -26,7 +26,7 @@ Implemented identity model:
 
 Active users with any approved role may use current preparation workflows. System Settings, invitation management, user administration, SMTP connection checks, and test-message actions are Administrator-only.
 
-Per-project ownership, private projects, user profiles, account recovery, session administration, recipe ownership, publication, moderation, and actor-aware audit remain future capabilities.
+Per-project ownership, private projects, user profiles, account recovery, session administration, recipe publication/moderation, and actor-aware audit remain future capabilities.
 
 ## Project
 
@@ -91,15 +91,41 @@ The backend validates:
 
 Dish recipe replacement recalculates affected persisted purchasing and equipment projections in the same transaction.
 
-Multiple Recipe variants per Dish, CLUB/PERSONAL ownership, publication, moderation, and role-specific lifecycle permissions are the next product capability.
+Draft PR #96 introduces the ownership foundation:
 
-Recipe currently supports components, practical quantity modes, notes, archive state, and equipment requirements. Preparation technology, dietary metadata, season metadata, and richer categories remain incomplete.
+```text
+Recipe
+  ├─ scope: club | personal
+  ├─ owner_user_id: User? 
+  ├─ is_archived
+  ├─ RecipeComponent[]
+  ├─ RecipeNote[]
+  └─ RecipeEquipmentRequirement[]
+```
+
+Ownership shapes are constrained:
+
+- CLUB has no owner and represents the existing shared catalogue;
+- PERSONAL has one User owner;
+- every existing Recipe migrates to CLUB;
+- every interactive new Recipe is PERSONAL and owned by the current actor.
+
+Visibility and edit policy:
+
+- Administrator sees and manages all recipes;
+- Verified Instructor sees CLUB plus owned PERSONAL recipes and may edit both;
+- Instructor sees CLUB plus owned PERSONAL recipes and may edit only owned PERSONAL recipes;
+- unrelated PERSONAL recipes are returned as not found;
+- permanent deletion remains Administrator-only and recipes already used by a Dish remain non-deletable;
+- the same edit boundary applies to components, notes, and equipment requirements.
+
+Recipe currently supports components, practical quantity modes, notes, archive state, and equipment requirements. Submission, publication, rejection, moderation, multiple Recipe variants per Dish, generation modes, preparation technology, dietary metadata, season metadata, and richer categories remain incomplete.
 
 ## Product and import
 
 Product is independent of recipes. Practical calculation modes include per-person, fixed-group, and package-per-people.
 
-Products, recipes, components, and notes can be loaded through CSV preview and apply operations. Invalid input does not create partial catalogue data.
+Products, recipes, components, and notes can be loaded through CSV preview and apply operations. Trusted internal import paths continue to create shared CLUB catalogue records; invalid input does not create partial catalogue data.
 
 Product update and deletion are not implemented. The approved alcohol prohibition rule still requires centralized Backend enforcement for API and import paths.
 
