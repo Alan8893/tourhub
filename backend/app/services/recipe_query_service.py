@@ -1,21 +1,33 @@
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
+from app.models.recipe_scope import RecipeScope
+from app.models.user import UserORM
+from app.services.recipe_access_service import ADMINISTRATOR, RecipeAccessService
 
 
 class RecipeQueryService:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, actor: UserORM | None = None):
         self.session = session
+        self.actor = actor
 
     def list_recipes(self, include_archived: bool = False) -> list[RecipeORM]:
         statement = select(RecipeORM).options(
+            selectinload(RecipeORM.owner),
             selectinload(RecipeORM.components),
             selectinload(RecipeORM.notes),
         )
         if not include_archived:
             statement = statement.where(RecipeORM.is_archived.is_(False))
+        if self.actor is not None and self.actor.role != ADMINISTRATOR:
+            statement = statement.where(
+                or_(
+                    RecipeORM.scope == RecipeScope.CLUB.value,
+                    RecipeORM.owner_user_id == self.actor.id,
+                )
+            )
         statement = statement.order_by(RecipeORM.name)
         return list(self.session.scalars(statement).all())
 
@@ -24,6 +36,7 @@ class RecipeQueryService:
             select(RecipeORM)
             .where(RecipeORM.id == recipe_id)
             .options(
+                selectinload(RecipeORM.owner),
                 selectinload(RecipeORM.components).selectinload(
                     RecipeComponentORM.product
                 ),
@@ -33,4 +46,7 @@ class RecipeQueryService:
         recipe = self.session.scalar(statement)
         if recipe is None:
             raise ValueError("Recipe not found")
-        return recipe
+        try:
+            return RecipeAccessService.require_visible(recipe, self.actor)
+        except LookupError as error:
+            raise ValueError(str(error)) from error
