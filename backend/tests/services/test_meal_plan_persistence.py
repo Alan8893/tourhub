@@ -16,10 +16,17 @@ def _dish(
     name: str,
     *assignments,
 ):
+    recipe_id = f"recipe-{dish_id}"
     return SimpleNamespace(
         id=dish_id,
         name=name,
-        recipe=SimpleNamespace(is_archived=False),
+        recipe_id=recipe_id,
+        recipe=SimpleNamespace(
+            id=recipe_id,
+            name=f"{name} recipe",
+            is_archived=False,
+        ),
+        recipe_variants=[],
         meal_roles=list(assignments),
     )
 
@@ -96,9 +103,21 @@ def test_generate_and_save_meal_plan():
     assert len(repository.meal_plans) == 1
     assert len(repository.days) == 2
     assert len(repository.items) == 4
+    assert [item.recipe_id for item in repository.items] == [
+        "recipe-dish-1",
+        "recipe-dish-2",
+        "recipe-dish-1",
+        "recipe-dish-2",
+    ]
     assert len(repository.slots) == 4
     assert [slot.order for slot in repository.slots] == [0, 1, 0, 1]
     assert len(repository.slot_dishes) == 4
+    assert [item.recipe_id for item in repository.slot_dishes] == [
+        "recipe-dish-1",
+        "recipe-dish-2",
+        "recipe-dish-1",
+        "recipe-dish-2",
+    ]
     assert repository.committed is True
 
 
@@ -166,10 +185,20 @@ def test_generate_and_save_preserves_composition_order():
         "addition",
         "drink",
     ]
+    assert [item.recipe_id for item in repository.items] == [
+        "recipe-main",
+        "recipe-addition",
+        "recipe-drink",
+    ]
     assert [slot_dish.dish_id for slot_dish in repository.slot_dishes] == [
         "main",
         "addition",
         "drink",
+    ]
+    assert [slot_dish.recipe_id for slot_dish in repository.slot_dishes] == [
+        "recipe-main",
+        "recipe-addition",
+        "recipe-drink",
     ]
     assert [slot_dish.order for slot_dish in repository.slot_dishes] == [0, 1, 2]
 
@@ -201,10 +230,22 @@ def test_generate_and_save_persists_calendar_day_main_diversity():
         "main-c",
         "main-a",
     ]
+    assert [item.recipe_id for item in repository.items] == [
+        "recipe-main-a",
+        "recipe-main-b",
+        "recipe-main-c",
+        "recipe-main-a",
+    ]
     assert [slot_dish.dish_id for slot_dish in repository.slot_dishes] == [
         "main-a",
         "main-b",
         "main-c",
         "main-a",
+    ]
+    assert [slot_dish.recipe_id for slot_dish in repository.slot_dishes] == [
+        "recipe-main-a",
+        "recipe-main-b",
+        "recipe-main-c",
+        "recipe-main-a",
     ]
     assert [slot.day.day_number for slot in repository.slots] == [1, 2, 3, 4]
