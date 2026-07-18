@@ -2,68 +2,52 @@
 
 Status date: 2026-07-18
 
-## Implemented through PR #96
+## Implemented through TH-0087 / PR #97
 
-- complete guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
-- installation, update, backup, restore, recovery, release images, health checks, API proxy, and restart persistence;
-- complete typed System Settings foundation through `h10013`;
-- invitation-only Access foundation and user administration through `h10016`;
-- working SMTP connection check, fixed Russian test message, and best-effort invitation delivery with manual fallback;
-- multiple independent sessions per user with current-role propagation and complete deactivation revocation;
-- centralized frontend handling for protected HTTP 401 responses and exact route return;
-- Recipe CLUB/PERSONAL scope, owner identity, visibility filtering, role-aware editing, and nested ownership enforcement through `h10017`;
-- safe recipe owner/capability projection and responsive ownership UI;
-- conflict handling, PostgreSQL row locks, safe settings history, and deferred final downgrade/re-upgrade smoke.
+- guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
+- production-like runtime, backup/restore, health checks, API proxy, and restart persistence;
+- typed System Settings through `h10013`;
+- invitation-only Access, roles, users, and multi-session readiness through `h10016`;
+- working SMTP invitation delivery with manual fallback;
+- Recipe CLUB/PERSONAL ownership and nested authorization through `h10017`;
+- Recipe lifecycle and moderation through `h10018`: draft, submission, row-locked review, publication, rejection feedback, resubmission, attribution, capability-driven UI, and focused Chrome acceptance.
 
-PR #96 implementation head `29b84be3f98a721d8d0faf2fa1908f65681820cd` passed Quality #858, Document Quality #474, Guided Release Acceptance #425, Operator Docs #411, and Docker Release Runtime #406.
+TH-0087 implementation head `7dd0ddd398b4f4b82d43f30db8c95c0489f2f31b` passed Quality #887, Document Quality #502, Guided Release Acceptance #453, Operator Docs #439, and Docker Release Runtime #434.
 
-## Remaining recipe lifecycle debt
+## Remaining recipe debt
 
-1. Submission and resubmission states for PERSONAL recipes.
-2. Verified Instructor and Administrator review queue.
-3. Publication transition from PERSONAL to CLUB with an explicit immutable origin policy.
-4. Rejection with required comment and visible feedback to the owner.
-5. Moderation lifecycle history before the consolidated actor-aware audit exists.
-6. Multiple Recipe variants per Dish.
-7. Club-only, club-plus-personal, and personal-preferred generation modes.
-8. Optimistic recipe versions when lifecycle transitions and concurrent editing are introduced.
-9. Ownership-aware CSV import preview/apply UX beyond trusted shared-catalogue import.
+1. Multiple Recipe variants per Dish.
+2. Club-only, club-plus-personal, and personal-preferred generation modes.
+3. Immutable moderation history beyond the latest decision.
+4. Optional moderation notifications.
+5. Ownership-aware CSV import UX beyond trusted shared-catalogue import.
+6. Preparation technology, dietary metadata, season metadata, and richer categories.
+7. Decide whether recipe-level optimistic versions are required beyond serialized lifecycle transitions.
 
-## Remaining Access debt
+## Remaining Access and mail debt
 
-1. Account recovery, verified email change, and an operational recovery procedure.
-2. Operational session view, individual revocation, cleanup, and global sign-out.
-3. Real actor propagation into focused settings history and the later audit log.
-4. User profile editing and safe account deletion/retention policy.
-5. Additional same-origin request hardening if deployment expands beyond trusted LAN.
-6. Retention and cleanup policy for old invitation rows.
-7. Per-project ownership only if later approved.
-8. Live collaborative editing only if later product requirements justify it.
-
-## Remaining mail debt
-
-1. Asynchronous queue and background worker if synchronous latency becomes unacceptable.
-2. Scheduled retries, operator delivery history, and failure dashboards.
-3. Bounce/complaint handling and provider-specific diagnostics.
-4. Approved HTML templates, localization beyond fixed Russian first-release messages, and attachments.
-5. Password-reset and account-recovery mail after recovery policy is designed.
-6. Explicit public-origin configuration if deployments later terminate proxies in a way that does not preserve the external host.
+- account recovery and verified email change;
+- session administration, individual revocation, cleanup, and global sign-out;
+- user profile editing and account-retention policy;
+- real actor propagation into focused settings history and the later audit log;
+- invitation retention and cleanup;
+- asynchronous mail delivery, scheduled retries, delivery history, and bounce diagnostics;
+- approved mail templates and attachments;
+- additional same-origin request hardening if deployment expands beyond trusted LAN.
 
 ## Remaining release-blocking product debt
 
-1. **Recipe publication and moderation** — submission, review, publication, rejection, resubmission, and Verified Instructor distinctions.
-2. **Dish recipe variants and generation modes** — multiple recipes per Dish and approved club/personal selection modes.
-3. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import plus existing-record handling.
-4. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
-5. **Consolidated export completeness** — approved complete Russian PDF and workbook sheets using the immutable brand snapshot.
-6. **Product acceptance** — active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
+1. **Dish recipe variants and generation modes**.
+2. **Central alcohol prohibition** across Product, Recipe, and CSV import.
+3. **Actor-aware audit log**, including immutable moderation history.
+4. **Consolidated export completeness** for the approved PDF and workbook.
+5. **Product acceptance and feature freeze**.
 
-## Configuration export and import debt
+## Configuration export/import debt
 
-- versioned JSON plus image files in a validated archive;
-- unencrypted archives exclude protected operational values;
-- an encrypted archive may include explicitly approved values only after a dedicated design;
-- encryption format, integrity, import preview, and rollback remain unimplemented.
+- versioned validated archive;
+- protected-value exclusion from unencrypted exports;
+- approved encryption, integrity, preview, and rollback design.
 
 ## Product Owner decisions still required
 

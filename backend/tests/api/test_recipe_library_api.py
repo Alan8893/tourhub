@@ -9,10 +9,21 @@ ADMIN_CAPABILITIES = {
     "owner_user_id": None,
     "owner_display_name": None,
     "is_owned_by_current_user": False,
+    "lifecycle_status": "published",
+    "submitted_by_user_id": None,
+    "submitted_by_display_name": None,
+    "submitted_at": None,
+    "reviewed_by_user_id": None,
+    "reviewed_by_display_name": None,
+    "reviewed_at": None,
+    "review_comment": None,
     "can_edit": True,
     "can_archive": True,
     "can_restore": False,
     "can_delete": True,
+    "can_submit": False,
+    "can_publish": False,
+    "can_reject": False,
 }
 
 

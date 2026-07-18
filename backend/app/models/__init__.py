@@ -28,6 +28,7 @@ from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_component_type import RecipeComponentType
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
+from app.models.recipe_lifecycle_status import RecipeLifecycleStatus
 from app.models.recipe_scope import RecipeScope
 from app.models.system_settings_history import SystemSettingsHistoryORM
 from app.models.user import UserORM
@@ -53,6 +54,7 @@ __all__ = [
     "RecipeComponentORM",
     "RecipeComponentType",
     "RecipeEquipmentRequirementORM",
+    "RecipeLifecycleStatus",
     "RecipeScope",
     "DishORM",
     "DishMealRoleORM",

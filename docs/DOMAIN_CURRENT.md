@@ -26,7 +26,7 @@ Implemented identity model:
 
 Active users with any approved role may use current preparation workflows. System Settings, invitation management, user administration, SMTP connection checks, and test-message actions are Administrator-only.
 
-Per-project ownership, private projects, user profiles, account recovery, session administration, recipe publication/moderation, and actor-aware audit remain future capabilities.
+Per-project ownership, private projects, user profiles, account recovery, session administration, and actor-aware audit remain future capabilities.
 
 ## Project
 
@@ -91,41 +91,53 @@ The backend validates:
 
 Dish recipe replacement recalculates affected persisted purchasing and equipment projections in the same transaction.
 
-The implemented ownership foundation is:
+The implemented Recipe shape through TH-0087 / ADR-021 is:
 
 ```text
 Recipe
   ├─ scope: club | personal
   ├─ owner_user_id: User?
+  ├─ lifecycle_status: draft | submitted | rejected | published
+  ├─ submitted_by_user_id: User?
+  ├─ submitted_at
+  ├─ reviewed_by_user_id: User?
+  ├─ reviewed_at
+  ├─ review_comment
   ├─ is_archived
   ├─ RecipeComponent[]
   ├─ RecipeNote[]
   └─ RecipeEquipmentRequirement[]
 ```
 
-Ownership shapes are constrained:
+Persistence constraints enforce:
 
-- CLUB has no owner and represents the existing shared catalogue;
-- PERSONAL has one User owner;
-- every existing Recipe migrates to CLUB;
-- every interactive new Recipe is PERSONAL and owned by the current actor.
+- CLUB has no owner and is `published`;
+- PERSONAL has one owner and is `draft`, `submitted`, or `rejected`;
+- all pre-existing CLUB recipes migrate to `published`;
+- every interactive new Recipe is a PERSONAL `draft` owned by the current actor;
+- submitted and rejected recipes retain submitter metadata;
+- rejection requires reviewer, review time, and a non-empty comment.
 
-Visibility and edit policy:
+Visibility and lifecycle policy:
 
-- Administrator sees and manages all recipes;
-- Verified Instructor sees CLUB plus owned PERSONAL recipes and may edit both;
-- Instructor sees CLUB plus owned PERSONAL recipes and may edit only owned PERSONAL recipes;
-- unrelated PERSONAL recipes are returned as not found;
-- permanent deletion remains Administrator-only and recipes already used by a Dish remain non-deletable;
-- the same edit boundary applies to components, notes, and equipment requirements.
+- Administrator sees all recipes and may review any submitted recipe;
+- Verified Instructor sees CLUB plus owned PERSONAL recipes in the normal library and may edit CLUB plus owned editable PERSONAL recipes;
+- Verified Instructor has a separate queue for other users' submitted recipes and cannot self-review;
+- Instructor sees CLUB plus owned PERSONAL recipes and may edit owned `draft` or `rejected` recipes;
+- unrelated PERSONAL drafts and rejections are returned as not found;
+- the owner may submit `draft` or `rejected`; resubmission clears the previous decision;
+- `submitted` blocks root, component, note, equipment, and archive changes;
+- publication converts PERSONAL to CLUB, clears current owner, and preserves submitter attribution;
+- rejection returns the recipe to the owner with the latest required comment;
+- permanent deletion remains Administrator-only and recipes already used by a Dish remain non-deletable.
 
-Recipe currently supports components, practical quantity modes, notes, archive state, and equipment requirements. Submission, publication, rejection, moderation, multiple Recipe variants per Dish, generation modes, preparation technology, dietary metadata, season metadata, and richer categories remain incomplete.
+Submit, publish, and reject transitions lock the Recipe row before validating state. Full moderation history, multiple Recipe variants per Dish, generation modes, preparation technology, dietary metadata, season metadata, and richer categories remain incomplete.
 
 ## Product and import
 
 Product is independent of recipes. Practical calculation modes include per-person, fixed-group, and package-per-people.
 
-Products, recipes, components, and notes can be loaded through CSV preview and apply operations. Trusted internal import paths continue to create shared CLUB catalogue records; invalid input does not create partial catalogue data.
+Products, recipes, components, and notes can be loaded through CSV preview and apply operations. Trusted internal import paths continue to create shared published CLUB catalogue records; invalid input does not create partial catalogue data.
 
 Product update and deletion are not implemented. The approved alcohol prohibition rule still requires centralized Backend enforcement for API and import paths.
 

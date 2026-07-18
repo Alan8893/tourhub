@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models.recipe import RecipeORM
+from app.models.recipe_lifecycle_status import RecipeLifecycleStatus
 from app.models.recipe_scope import RecipeScope
 from app.models.user import UserORM
 from app.services.auth_service import hash_password
@@ -50,6 +51,11 @@ def add_recipe(
         name=name,
         scope=scope.value,
         owner_user_id=owner_user_id,
+        lifecycle_status=(
+            RecipeLifecycleStatus.DRAFT.value
+            if scope == RecipeScope.PERSONAL
+            else RecipeLifecycleStatus.PUBLISHED.value
+        ),
     )
     db_session.add(recipe)
     db_session.commit()
@@ -78,13 +84,16 @@ def test_interactive_recipe_creation_is_personal_and_owned(auth_client, db_sessi
     assert body["owner_user_id"] == administrator["id"]
     assert body["owner_display_name"] == "Администратор"
     assert body["is_owned_by_current_user"] is True
+    assert body["lifecycle_status"] == "draft"
     assert body["can_edit"] is True
     assert body["can_delete"] is True
+    assert body["can_submit"] is True
 
     stored = db_session.get(RecipeORM, body["id"])
     assert stored is not None
     assert stored.scope == RecipeScope.PERSONAL.value
     assert stored.owner_user_id == administrator["id"]
+    assert stored.lifecycle_status == RecipeLifecycleStatus.DRAFT.value
 
 
 def test_instructor_lists_club_and_owned_personal_recipes_only(

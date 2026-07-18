@@ -13,6 +13,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Preparation access follows ADR-018.
 - Working mail delivery follows ADR-019.
 - Recipe ownership follows ADR-020.
+- Recipe publication and moderation follow ADR-021.
 - Active Administrator, Instructor, and Verified Instructor users may use preparation workflows.
 - Settings, invitation management, user management, connection checks, and test-message actions remain Administrator-only.
 - Module visibility is presentation only and never grants access.
@@ -31,18 +32,24 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - the application header exposes the current display name and role;
 - session-list administration, individual revocation, global sign-out, account recovery, project ownership, and row-level ACLs remain separate future capabilities.
 
-## Recipe ownership boundary
+## Recipe ownership and lifecycle boundary
 
-- Recipe owns `scope`, nullable owner identity, archive state, components, notes, and equipment requirements;
-- the database permits only CLUB without an owner or PERSONAL with an owner;
-- existing shared catalogue rows migrate to CLUB;
-- interactive creation produces PERSONAL recipes owned by the current actor;
+- Recipe owns scope, nullable current owner, lifecycle state, submission/decision metadata, archive state, components, notes, and equipment requirements;
+- the database permits CLUB only as ownerless `published`, or PERSONAL with an owner as `draft`, `submitted`, or `rejected`;
+- existing shared catalogue rows remain published CLUB records;
+- interactive creation produces owned PERSONAL drafts;
 - ownership-aware query services filter unrelated personal recipes before API projection;
-- one centralized Recipe access policy is used by root, component, note, and equipment services;
-- Administrator may manage all recipes, Verified Instructor may manage CLUB plus owned PERSONAL recipes, and Instructor may manage owned PERSONAL recipes only;
-- permanent deletion remains Administrator-only and keeps existing usage guards;
+- the normal library and moderation queue are separate query views;
+- one centralized Recipe access policy is used by root, component, note, equipment, archive, submission, and moderation operations;
+- submitted recipes are immutable through ordinary edit paths;
+- submit, publish, and reject acquire a PostgreSQL row lock, validate the current state, mutate, and commit in one transaction;
+- Administrator may review any submitted recipe;
+- Verified Instructor may review another user's submitted recipe but cannot self-review;
+- publication converts PERSONAL to CLUB while preserving submitter attribution;
+- rejection requires a comment; resubmission clears the previous decision;
 - API capability fields guide Frontend controls, while Backend services remain authoritative;
-- submission, publication, moderation, Dish variants, and generation modes remain later recipe lifecycle slices.
+- focused Chrome acceptance validates the moderation queue, rejection comment payload, empty-queue refresh, and mobile overflow;
+- full moderation history, notifications, Dish variants, and generation modes remain later slices.
 
 ## Mail boundary
 
@@ -54,10 +61,10 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - delivery failure never invalidates the new invitation or removes the one-time manual link;
 - queues, background workers, provider APIs, arbitrary templates, attachments, bounce processing, and delivery history remain separate future capabilities.
 
-The current Alembic head is `h10017`.
+The current Alembic head is `h10018`.
 
 MealSlot and MealSlotDish remain primary. MealPlanItem remains compatibility-only.
 
 Multi-tenancy and microservices remain prohibited.
 
-See `PRODUCT_SPEC.md` and ADR-012 through ADR-020.
+See `PRODUCT_SPEC.md` and ADR-012 through ADR-021.
