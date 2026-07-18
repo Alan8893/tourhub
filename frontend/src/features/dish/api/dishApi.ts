@@ -2,6 +2,7 @@ import { apiClient } from "@/shared/api/client";
 
 export type MealRole = "main" | "addition" | "drink" | "snack";
 export type MealType = "breakfast" | "snack" | "lunch" | "dinner";
+export type DishRecipeScope = "club" | "personal";
 
 export interface DishMealRole {
   role: MealRole;
@@ -13,12 +14,16 @@ export interface DishRecipe {
   id: string;
   name: string;
   is_archived: boolean;
+  scope: DishRecipeScope;
+  owner_display_name: string | null;
+  is_default: boolean;
 }
 
 export interface Dish {
   id: string;
   name: string;
   recipe: DishRecipe;
+  recipes: DishRecipe[];
   meal_roles: DishMealRole[];
 }
 
@@ -46,6 +51,7 @@ export interface DishCatalogueReadiness {
 export interface DishWriteInput {
   name: string;
   recipe_id: string;
+  recipe_ids?: string[];
 }
 
 export interface DishMealRoleWriteInput {
