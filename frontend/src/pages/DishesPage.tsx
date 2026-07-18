@@ -55,6 +55,10 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
+function uniqueRecipeIds(defaultRecipeId: string, recipeIds: string[]): string[] {
+  return Array.from(new Set([defaultRecipeId, ...recipeIds].filter(Boolean)));
+}
+
 export default function DishesPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -67,6 +71,7 @@ export default function DishesPage() {
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [name, setName] = useState("");
   const [recipeId, setRecipeId] = useState("");
+  const [recipeIds, setRecipeIds] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [roleDraft, setRoleDraft] = useState<MealRoleDraft>(() => createMealRoleDraft([]));
@@ -75,6 +80,9 @@ export default function DishesPage() {
 
   const dishes = dishesQuery.data?.items ?? [];
   const activeRecipes = recipesQuery.data?.items.filter((recipe) => !recipe.is_archived) ?? [];
+  const defaultRecipes = activeRecipes.filter(
+    (recipe) => recipe.scope === "club" && recipe.lifecycle_status === "published",
+  );
   const mutation = dialogMode === "create" ? createMutation : updateMutation;
 
   useEffect(() => {
@@ -83,8 +91,10 @@ export default function DishesPage() {
   }, [id]);
 
   const openCreate = () => {
+    const defaultRecipeId = defaultRecipes[0]?.id ?? "";
     setName("");
-    setRecipeId(activeRecipes[0]?.id ?? "");
+    setRecipeId(defaultRecipeId);
+    setRecipeIds(defaultRecipeId ? [defaultRecipeId] : []);
     setFormError(null);
     createMutation.reset();
     setDialogMode("create");
@@ -92,8 +102,13 @@ export default function DishesPage() {
 
   const openEdit = () => {
     if (!dishQuery.data) return;
+    const defaultRecipeId = dishQuery.data.recipe.is_archived ? "" : dishQuery.data.recipe.id;
     setName(dishQuery.data.name);
-    setRecipeId(dishQuery.data.recipe.is_archived ? "" : dishQuery.data.recipe.id);
+    setRecipeId(defaultRecipeId);
+    setRecipeIds(uniqueRecipeIds(
+      defaultRecipeId,
+      dishQuery.data.recipes.filter((recipe) => !recipe.is_archived).map((recipe) => recipe.id),
+    ));
     setFormError(null);
     updateMutation.reset();
     setDialogMode("edit");
@@ -109,7 +124,10 @@ export default function DishesPage() {
 
   const submit = async () => {
     try {
-      const input = toDishWriteInput({ name, recipeId });
+      const input = {
+        ...toDishWriteInput({ name, recipeId }),
+        recipe_ids: uniqueRecipeIds(recipeId, recipeIds),
+      };
       if (dialogMode === "create") {
         const dish = await createMutation.mutateAsync(input);
         setDialogMode(null);
@@ -142,15 +160,21 @@ export default function DishesPage() {
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between">
         <Box>
           <Typography variant="h4" component="h1">Блюда</Typography>
-          <Typography color="text.secondary">Каталог блюд, рецептов и ролей в составе меню.</Typography>
+          <Typography color="text.secondary">Каталог блюд, вариантов рецептов и ролей в составе меню.</Typography>
         </Box>
-        <Button variant="contained" onClick={openCreate} disabled={recipesQuery.isLoading || activeRecipes.length === 0}>
+        <Button
+          variant="contained"
+          onClick={openCreate}
+          disabled={recipesQuery.isLoading || defaultRecipes.length === 0}
+        >
           Создать блюдо
         </Button>
       </Stack>
 
-      {recipesQuery.isSuccess && activeRecipes.length === 0 && (
-        <Alert severity="info">Сначала создайте активный рецепт в разделе «Рецепты».</Alert>
+      {recipesQuery.isSuccess && defaultRecipes.length === 0 && (
+        <Alert severity="info">
+          Для создания блюда нужен хотя бы один опубликованный клубный рецепт.
+        </Alert>
       )}
       {dishesQuery.isLoading && <Stack alignItems="center" py={6}><CircularProgress /></Stack>}
       {dishesQuery.isError && <Alert severity="error">Не удалось загрузить каталог блюд.</Alert>}
@@ -168,7 +192,7 @@ export default function DishesPage() {
                   <ListItemButton selected={dish.id === id} onClick={() => navigate(`/dishes/${dish.id}`)}>
                     <ListItemText
                       primary={dish.name}
-                      secondary={`${dish.recipe.name} · ${formatMealRoleSummary(dish.meal_roles)}`}
+                      secondary={`${dish.recipe.name} · ${dish.recipes.length} вариантов · ${formatMealRoleSummary(dish.meal_roles)}`}
                     />
                   </ListItemButton>
                 </Box>
@@ -188,17 +212,56 @@ export default function DishesPage() {
                     <Typography variant="h5">{dishQuery.data.name}</Typography>
                     <Stack direction={{ xs: "column", sm: "row" }} spacing={1} mt={1} alignItems={{ sm: "center" }}>
                       <Typography color="text.secondary">Рецепт: {dishQuery.data.recipe.name}</Typography>
-                      {dishQuery.data.recipe.is_archived && <Chip size="small" label="Рецепт в архиве" />}
+                      <Chip size="small" label="Основной клубный" />
+                      {dishQuery.data.recipe.is_archived && <Chip size="small" color="warning" label="Рецепт в архиве" />}
                     </Stack>
                   </Box>
                   <Button variant="outlined" onClick={openEdit}>Изменить</Button>
                 </Stack>
                 {dishQuery.data.recipe.is_archived && (
-                  <Alert severity="warning">Чтобы сохранить изменения, выберите активный рецепт.</Alert>
+                  <Alert severity="warning">Чтобы сохранить изменения, выберите активный опубликованный клубный рецепт.</Alert>
                 )}
                 <Button onClick={() => navigate(`/recipes/${dishQuery.data.recipe.id}`)} sx={{ alignSelf: "flex-start" }}>
                   Открыть рецепт
                 </Button>
+
+                <Divider />
+
+                <Stack spacing={1.5}>
+                  <Box>
+                    <Typography variant="h6">Варианты рецепта</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Генератор выбирает один из этих вариантов по режиму конкретного похода и сохраняет точный выбор в меню.
+                    </Typography>
+                  </Box>
+                  <Stack spacing={1}>
+                    {dishQuery.data.recipes.map((recipe) => (
+                      <Paper key={recipe.id} variant="outlined" sx={{ p: 1.5 }}>
+                        <Stack
+                          direction={{ xs: "column", sm: "row" }}
+                          spacing={1}
+                          justifyContent="space-between"
+                          alignItems={{ sm: "center" }}
+                        >
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography fontWeight={600}>{recipe.name}</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {recipe.scope === "club"
+                                ? "Клубный рецепт"
+                                : `Личный рецепт${recipe.owner_display_name ? ` · ${recipe.owner_display_name}` : ""}`}
+                            </Typography>
+                          </Box>
+                          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                            {recipe.is_default && <Chip size="small" label="Основной" />}
+                            <Chip size="small" variant="outlined" label={recipe.scope === "club" ? "CLUB" : "PERSONAL"} />
+                            {recipe.is_archived && <Chip size="small" color="warning" label="Архив" />}
+                            <Button size="small" onClick={() => navigate(`/recipes/${recipe.id}`)}>Открыть</Button>
+                          </Stack>
+                        </Stack>
+                      </Paper>
+                    ))}
+                  </Stack>
+                </Stack>
 
                 <Divider />
 
@@ -251,14 +314,59 @@ export default function DishesPage() {
               <Alert severity="error">{formError ?? getErrorMessage(mutation.error, "Не удалось сохранить блюдо.")}</Alert>
             )}
             <TextField label="Название" value={name} onChange={(event) => setName(event.target.value)} autoFocus fullWidth />
-            <TextField select label="Рецепт" value={recipeId} onChange={(event) => setRecipeId(event.target.value)} fullWidth>
-              {activeRecipes.map((recipe) => <MenuItem key={recipe.id} value={recipe.id}>{recipe.name}</MenuItem>)}
+            <TextField
+              select
+              label="Основной клубный рецепт"
+              value={recipeId}
+              onChange={(event) => {
+                const nextRecipeId = event.target.value;
+                setRecipeId(nextRecipeId);
+                setRecipeIds((current) => uniqueRecipeIds(nextRecipeId, current));
+              }}
+              helperText="Основной вариант всегда должен быть опубликованным клубным рецептом."
+              fullWidth
+            >
+              {defaultRecipes.map((recipe) => <MenuItem key={recipe.id} value={recipe.id}>{recipe.name}</MenuItem>)}
+            </TextField>
+            <TextField
+              select
+              label="Варианты рецепта"
+              value={recipeIds}
+              onChange={(event) => {
+                const value = event.target.value;
+                const selected = typeof value === "string" ? value.split(",") : value;
+                setRecipeIds(uniqueRecipeIds(recipeId, selected));
+              }}
+              SelectProps={{
+                multiple: true,
+                renderValue: (selected) => {
+                  const selectedIds = selected as string[];
+                  return activeRecipes
+                    .filter((recipe) => selectedIds.includes(recipe.id))
+                    .map((recipe) => recipe.name)
+                    .join(", ");
+                },
+              }}
+              helperText="Можно добавить опубликованные клубные и доступные вам личные рецепты."
+              fullWidth
+            >
+              {activeRecipes.map((recipe) => (
+                <MenuItem key={recipe.id} value={recipe.id}>
+                  <Checkbox checked={recipeIds.includes(recipe.id)} />
+                  <ListItemText
+                    primary={recipe.name}
+                    secondary={recipe.scope === "club"
+                      ? "Клубный рецепт"
+                      : `Личный рецепт${recipe.owner_display_name ? ` · ${recipe.owner_display_name}` : ""}`}
+                  />
+                </MenuItem>
+              ))}
             </TextField>
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogMode(null)} disabled={mutation.isPending}>Отмена</Button>
-          <Button variant="contained" onClick={() => void submit()} disabled={mutation.isPending}>Сохранить</Button>
+          <Button variant="contained" onClick={() => void submit()} disabled={mutation.isPending || !recipeId}>Сохранить</Button>
         </DialogActions>
       </Dialog>
 
@@ -310,7 +418,7 @@ export default function DishesPage() {
                         <Typography variant="body2" fontWeight={600} mb={0.5}>
                           Допустимые приёмы пищи
                         </Typography>
-                        <FormGroup row sx={{ columnGap: 1, rowGap: 0 }}>
+                        <FormGroup row sx={{ gap: { xs: 0, sm: 0.5 } }}>
                           {mealTypeOptions.map((mealTypeOption) => (
                             <FormControlLabel
                               key={mealTypeOption.mealType}
