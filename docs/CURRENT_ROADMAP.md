@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-18
+Status date: 2026-07-19
 
 ## Product goal
 
@@ -17,9 +17,9 @@ Project preparation baseline
   → Recipe ownership foundation
   → Recipe publication and moderation
   → Dish recipe variants and generation modes
-  → Central alcohol prohibition
-  → Actor-aware audit
+  → Actor-aware audit foundation
   → Consolidated Russian exports
+  → Central alcohol prohibition
   → Product acceptance and feature freeze
   → Final migration and release gates
 ```
@@ -39,48 +39,42 @@ Project preparation baseline
 - working SMTP delivery with manual invitation-link fallback;
 - multiple sessions, immediate role propagation, deactivation revocation, protected-401 handling, exact route return, and visible current role.
 
-### Recipe ownership foundation — TH-0086 / PR #96
+### Recipe ownership, moderation, and Dish variants — TH-0086 through TH-0088
 
-- CLUB/PERSONAL scope and ownership-shape constraints (`h10017`);
-- role-aware visibility and editing;
-- one Backend policy for Recipe root, component, note, and equipment operations;
-- Administrator-only permanent deletion with preserved Dish usage guards;
-- responsive ownership UI and capability projection.
-
-### Recipe publication and moderation — TH-0087 / PR #97
-
-- lifecycle `draft`, `submitted`, `rejected`, and `published` (`h10018`);
-- owner submission, rejection feedback, editing, and resubmission;
-- submitted-recipe edit lock and row-locked transitions;
-- Administrator/Verified Instructor moderation queue and self-review prevention;
-- PERSONAL-to-CLUB publication with retained submitter attribution;
-- responsive moderation UI and focused Chrome acceptance.
-
-### Dish Recipe variants and generation modes — TH-0088 / PR #98
-
-- ordered many-to-many Dish Recipe variants with one required published CLUB default;
-- existing Dish defaults migrated to variant position zero through `h10019`;
+- CLUB/PERSONAL ownership and nested authorization (`h10017`);
+- lifecycle `draft`, `submitted`, `rejected`, and `published` with row-locked moderation (`h10018`);
+- ordered Dish Recipe variants with one published CLUB default (`h10019`);
 - project modes `club_only`, `club_and_personal`, and `personal_preferred`;
-- unrelated PERSONAL variants remain private;
-- deterministic rotation through eligible variants while the CLUB default remains the shared fallback;
-- selected Recipe persisted on MealSlotDish and compatibility MealPlanItem;
-- manual assignments and manually edited slots preserve their stored Recipe;
-- shopping and equipment use persisted assignment Recipes rather than the current Dish default;
-- responsive Dish variant editor, project mode controls, and selected-Recipe presentation.
+- private PERSONAL variants, deterministic rotation, persisted assignment Recipe snapshots, and assignment-based shopping/equipment calculations;
+- responsive ownership, moderation, variant, mode, and selected-Recipe UI.
+
+### Actor-aware audit foundation — TH-0089 / PR #99
+
+- append-only `AuditEvent` persistence and migration `h10020`;
+- actor User ID, display-name, email, and role snapshots at action time;
+- bounded recursive removal of password, hash, credential, cookie, session, token, authorization, and secret fields;
+- semantic user role/activation and Recipe submit/publish/reject events in the same business transaction;
+- immutable moderation history beyond the latest Recipe fields;
+- Administrator-only filtered API and responsive Audit section;
+- focused Backend and Chrome acceptance for attribution, filtering, sanitization, immutability, and mobile containment.
 
 ## NEXT
 
-1. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import paths, including existing-record handling.
-2. **Actor-aware audit log** — safe real-actor history for project, menu, Recipe, moderation, settings, mail, user, and role changes.
-3. **Consolidated export completeness** — approved complete Russian PDF and workbook contents using one immutable brand snapshot.
-4. **Product acceptance and feature freeze** — catalogue/import acceptance, optional-scope decisions, and end-to-end scenarios.
+1. **Consolidated export completeness** — approved complete Russian PDF and workbook contents using one immutable brand snapshot.
+2. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import paths, including existing-record handling.
+3. **Product acceptance and feature freeze** — catalogue/import acceptance, explicit optional-scope decisions, and end-to-end scenarios.
+
+## Audit coverage still required
+
+The shared foundation is implemented, but later explicit instrumentation is still required for project/menu edits, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation actions. Automatic ORM-wide auditing remains rejected because business actions must remain semantic and transaction-owned.
 
 ## Deferred operations
 
 - session administration, cleanup, global sign-out, and account recovery;
 - asynchronous mail queues, scheduled retries, and delivery diagnostics beyond the current synchronous result;
-- moderation notifications and immutable decision history before the actor-aware audit slice;
+- moderation notifications;
 - per-meal manual Recipe switching and preference weights beyond the approved three project modes;
+- audit export, retention UI, SIEM integration, undo, and event replay;
 - additional same-origin request hardening if deployment expands beyond trusted LAN;
 - external identity providers and MFA.
 
