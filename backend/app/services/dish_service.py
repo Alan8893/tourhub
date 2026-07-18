@@ -72,7 +72,8 @@ class DishService:
             recipe_id=default_recipe.id,
         )
         dish.recipe_variants = [
-            DishRecipeVariantORM(recipe_id=recipe.id) for recipe in variants
+            DishRecipeVariantORM(recipe_id=recipe.id, position=position)
+            for position, recipe in enumerate(variants)
         ]
         self.session.add(dish)
         self._commit()
@@ -92,8 +93,12 @@ class DishService:
         dish.name = normalized_name
         dish.recipe_id = default_recipe.id
         dish.recipe_variants = [
-            DishRecipeVariantORM(dish_id=dish.id, recipe_id=recipe.id)
-            for recipe in variants
+            DishRecipeVariantORM(
+                dish_id=dish.id,
+                recipe_id=recipe.id,
+                position=position,
+            )
+            for position, recipe in enumerate(variants)
         ]
         self._commit()
         return self.get_dish(dish.id)
@@ -143,7 +148,9 @@ class DishService:
         default_recipe_id: str,
         requested_recipe_ids: list[str] | None,
     ) -> tuple[RecipeORM, list[RecipeORM]]:
-        normalized_ids = list(dict.fromkeys([default_recipe_id, *(requested_recipe_ids or [])]))
+        normalized_ids = list(
+            dict.fromkeys([default_recipe_id, *(requested_recipe_ids or [])])
+        )
         recipes = list(
             self.session.scalars(
                 select(RecipeORM).where(RecipeORM.id.in_(normalized_ids))
