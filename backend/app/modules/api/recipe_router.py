@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.session import get_session
 from app.models.recipe import RecipeORM
 from app.models.recipe_component import RecipeComponentORM
+from app.models.user import UserORM
 from app.schemas.recipe import (
     RecipeComponentResponse,
     RecipeComponentWriteRequest,
@@ -16,6 +18,7 @@ from app.schemas.recipe import (
     RecipeUpdateRequest,
     RecipeWriteResponse,
 )
+from app.services.recipe_access_service import RecipeAccessService
 from app.services.recipe_command_service import RecipeCommandService
 from app.services.recipe_query_service import RecipeQueryService
 
@@ -24,21 +27,38 @@ router = APIRouter(prefix="/recipes", tags=["Recipes"])
 
 def get_recipe_query_service(
     session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> RecipeQueryService:
-    return RecipeQueryService(session)
+    return RecipeQueryService(session, actor=actor)
 
 
 def get_recipe_command_service(
     session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> RecipeCommandService:
-    return RecipeCommandService(session)
+    return RecipeCommandService(session, actor=actor)
 
 
-def _write_response(recipe: RecipeORM) -> RecipeWriteResponse:
+def _ownership_response(recipe: RecipeORM, actor: UserORM) -> dict[str, object]:
+    can_manage = RecipeAccessService.can_manage(recipe, actor)
+    return {
+        "scope": recipe.scope,
+        "owner_user_id": recipe.owner_user_id,
+        "owner_display_name": recipe.owner.display_name if recipe.owner is not None else None,
+        "is_owned_by_current_user": recipe.owner_user_id == actor.id,
+        "can_edit": RecipeAccessService.can_edit(recipe, actor),
+        "can_archive": can_manage and not recipe.is_archived,
+        "can_restore": can_manage and recipe.is_archived,
+        "can_delete": RecipeAccessService.can_delete(recipe, actor),
+    }
+
+
+def _write_response(recipe: RecipeORM, actor: UserORM) -> RecipeWriteResponse:
     return RecipeWriteResponse(
         id=recipe.id,
         name=recipe.name,
         is_archived=recipe.is_archived,
+        **_ownership_response(recipe, actor),
     )
 
 
@@ -66,6 +86,8 @@ def list_recipes(
     service: RecipeQueryService = Depends(get_recipe_query_service),
 ) -> RecipeListResponse:
     recipes = service.list_recipes(include_archived=include_archived)
+    actor = service.actor
+    assert actor is not None
     return RecipeListResponse(
         items=[
             RecipeListItemResponse(
@@ -74,6 +96,7 @@ def list_recipes(
                 is_archived=recipe.is_archived,
                 component_count=len(recipe.components),
                 note_count=len(recipe.notes),
+                **_ownership_response(recipe, actor),
             )
             for recipe in recipes
         ]
@@ -89,7 +112,9 @@ def create_recipe(
         recipe = service.create_recipe(request.name)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return _write_response(recipe)
+    actor = service.actor
+    assert actor is not None
+    return _write_response(recipe, actor)
 
 
 @router.patch("/{recipe_id}", response_model=RecipeWriteResponse)
@@ -102,9 +127,13 @@ def rename_recipe(
         recipe = service.rename_recipe(recipe_id, request.name)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    return _write_response(recipe)
+    actor = service.actor
+    assert actor is not None
+    return _write_response(recipe, actor)
 
 
 @router.post("/{recipe_id}/archive", response_model=RecipeWriteResponse)
@@ -116,7 +145,11 @@ def archive_recipe(
         recipe = service.archive_recipe(recipe_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return _write_response(recipe)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    actor = service.actor
+    assert actor is not None
+    return _write_response(recipe, actor)
 
 
 @router.post("/{recipe_id}/restore", response_model=RecipeWriteResponse)
@@ -128,7 +161,11 @@ def restore_recipe(
         recipe = service.restore_recipe(recipe_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return _write_response(recipe)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    actor = service.actor
+    assert actor is not None
+    return _write_response(recipe, actor)
 
 
 @router.delete("/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -140,6 +177,8 @@ def delete_recipe(
         service.delete_recipe(recipe_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -159,6 +198,8 @@ def add_recipe_component(
         component = service.add_component(recipe_id=recipe_id, **request.model_dump())
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return _component_response(component)
@@ -179,6 +220,8 @@ def update_recipe_component(
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return _component_response(component)
@@ -194,6 +237,10 @@ def delete_recipe_component(
         service.delete_component(recipe_id, component_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -212,6 +259,8 @@ def get_recipe(
         key=lambda component: (component.component_type, component.product.name),
     )
     notes = sorted(recipe.notes, key=lambda note: (note.priority, note.created_at))
+    actor = service.actor
+    assert actor is not None
 
     return RecipeDetailResponse(
         id=recipe.id,
@@ -228,4 +277,5 @@ def get_recipe(
             )
             for note in notes
         ],
+        **_ownership_response(recipe, actor),
     )
