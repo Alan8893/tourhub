@@ -31,7 +31,6 @@ class RecipeCommandService:
                 else RecipeScope.CLUB.value
             ),
             owner_user_id=self.actor.id if self.actor is not None else None,
-            owner=self.actor,
         )
         self.session.add(recipe)
         self._commit()
