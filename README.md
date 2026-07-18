@@ -2,7 +2,7 @@
 
 TourHub is a local ERP application for preparing tourist-club trips: projects, meal plans, dishes, recipes, shopping projections, equipment, branded Russian exports, and operational backup/restore.
 
-One installation represents one tourist club. The current release is a single-user local MVP; invitation-only access, ownership, and moderation remain deferred.
+One installation represents one tourist club. The current release supports one-time Administrator bootstrap, invitation-only multi-user access, explicit roles, guarded preparation workflows, and working SMTP invitation delivery. Recipe ownership and role-specific moderation remain the next product capability.
 
 ## Quick start
 
@@ -63,7 +63,7 @@ Use these documents for current decisions:
 - [`docs/TECH_DEBT.md`](docs/TECH_DEBT.md) — active and completed debt;
 - [`docs/tasks/TASKS.md`](docs/tasks/TASKS.md) — active and closed task index.
 
-`PRODUCT_SPEC.md` describes the approved full target, including capabilities intentionally deferred from the current single-user release. `CURRENT_ROADMAP.md` and `PROJECT_STATUS.md` define what is implemented now and what is scheduled next. Current documents and accepted ADRs override historical files under archive or legacy directories.
+`PRODUCT_SPEC.md` describes the approved full target, including capabilities intentionally deferred from the current release. `CURRENT_ROADMAP.md` and `PROJECT_STATUS.md` define what is implemented now and what is scheduled next. Current documents and accepted ADRs override historical files under archive or legacy directories.
 
 ## Quality gates
 
@@ -83,7 +83,7 @@ GitHub Actions currently enforce:
 
 - one logical change per task and pull request;
 - migrations must keep exactly one Alembic head;
-- backend owns calculations, import validation, transaction boundaries, and future authorization decisions;
+- backend owns calculations, import validation, transaction boundaries, identity, and authorization decisions;
 - frontend owns presentation, navigation, form state, and API integration;
 - frontend features use the shared API client and do not hardcode browser-visible service origins;
 - documentation must be synchronized when product, domain, architecture, persistence, or release scope changes.
