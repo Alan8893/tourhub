@@ -61,7 +61,8 @@ class DishRecipeVariantService:
         personal = [
             recipe for recipe in recipes if cls.is_personal_selectable(recipe, actor)
         ]
-        club = cls._default_first(club, getattr(dish, "recipe_id", ""))
+        default_recipe_id = getattr(dish, "recipe_id", "")
+        club = cls._default_first(club, default_recipe_id)
         personal = sorted(personal, key=cls._sort_key)
 
         generation_mode = RecipeGenerationMode(mode)
@@ -72,9 +73,14 @@ class DishRecipeVariantService:
         return [*club, *personal]
 
     @staticmethod
-    def _sort_key(recipe: RecipeORM) -> tuple[str, str]:
-        name = getattr(recipe, "name", str(recipe.id))
-        return (name.casefold(), recipe.id)
+    def recipe_id(recipe: RecipeORM, fallback: str = "") -> str:
+        return str(getattr(recipe, "id", fallback))
+
+    @classmethod
+    def _sort_key(cls, recipe: RecipeORM) -> tuple[str, str]:
+        recipe_id = cls.recipe_id(recipe)
+        name = getattr(recipe, "name", recipe_id)
+        return (str(name).casefold(), recipe_id)
 
     @classmethod
     def _default_first(
@@ -85,5 +91,8 @@ class DishRecipeVariantService:
         ordered = sorted(recipes, key=cls._sort_key)
         return sorted(
             ordered,
-            key=lambda recipe: (recipe.id != default_recipe_id, cls._sort_key(recipe)),
+            key=lambda recipe: (
+                cls.recipe_id(recipe, default_recipe_id) != default_recipe_id,
+                cls._sort_key(recipe),
+            ),
         )
