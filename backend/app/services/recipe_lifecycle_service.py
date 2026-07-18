@@ -64,4 +64,7 @@ class RecipeLifecycleService:
             self.session.rollback()
             raise
         self.session.refresh(recipe)
+        _ = recipe.owner
+        _ = recipe.submitted_by
+        _ = recipe.reviewed_by
         return recipe
