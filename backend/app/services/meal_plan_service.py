@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import cast
 from uuid import uuid4
 
@@ -7,6 +7,8 @@ from app.engines.meal_plan_generator import (
     DishRoleInput,
     MealPlanGenerationResult,
     MealPlanGenerator,
+    MealPlanItemResult,
+    MealSlotResult,
     PreservedMealSlotInput,
 )
 from app.engines.meal_schedule import MealScheduleEngine
@@ -15,8 +17,12 @@ from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_plan_item import MealPlanItemORM
 from app.models.meal_slot import MealSlotORM
 from app.models.meal_slot_dish import MealSlotDishORM
+from app.models.recipe import RecipeORM
+from app.models.recipe_generation_mode import RecipeGenerationMode
+from app.models.user import UserORM
 from app.repositories.dish_repository import DishRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
+from app.services.dish_recipe_variant_service import DishRecipeVariantService
 
 
 @dataclass(frozen=True)
@@ -34,34 +40,57 @@ class MealPlanService:
         meal_plan_repository: MealPlanRepository | None = None,
         generator: MealPlanGenerator | None = None,
         schedule_engine: MealScheduleEngine | None = None,
+        actor: UserORM | None = None,
     ) -> None:
         self.dish_repository = dish_repository
         self.meal_plan_repository = meal_plan_repository
         self.generator = generator or MealPlanGenerator()
         self.schedule_engine = schedule_engine or MealScheduleEngine()
+        self.actor = actor
 
     @staticmethod
-    def _dish_input(dish) -> DishInput:
+    def _dish_input(dish, recipe_id: str | None = None) -> DishInput:
         roles = tuple(
             DishRoleInput(
                 role=assignment.role,
                 is_repeatable=assignment.is_repeatable,
-                allowed_meal_types=tuple(item.meal_type for item in assignment.meal_types),
+                allowed_meal_types=tuple(
+                    item.meal_type for item in assignment.meal_types
+                ),
             )
             for assignment in getattr(dish, "meal_roles", [])
         )
-        return DishInput(id=dish.id, name=dish.name, meal_roles=roles)
+        return DishInput(
+            id=dish.id,
+            name=dish.name,
+            meal_roles=roles,
+            recipe_id=recipe_id,
+        )
 
-    def _generation_dishes(self) -> list[DishInput]:
-        result: list[DishInput] = []
-        for dish in self.dish_repository.list():
-            recipe = getattr(dish, "recipe", None)
-            if recipe is not None and getattr(recipe, "is_archived", False):
-                continue
-            result.append(self._dish_input(dish))
-        return result
+    def _variant_map(self, mode: str) -> dict[str, list[RecipeORM]]:
+        return {
+            dish.id: DishRecipeVariantService.ordered_for_generation(
+                dish,
+                self.actor,
+                mode,
+            )
+            for dish in self.dish_repository.list()
+        }
 
-    def _preserved_slots(self, meal_plan: MealPlanORM | None) -> list[PreservedMealSlotInput]:
+    def _generation_dishes(
+        self,
+        variant_map: dict[str, list[RecipeORM]],
+    ) -> list[DishInput]:
+        return [
+            self._dish_input(dish)
+            for dish in self.dish_repository.list()
+            if variant_map.get(dish.id)
+        ]
+
+    def _preserved_slots(
+        self,
+        meal_plan: MealPlanORM | None,
+    ) -> list[PreservedMealSlotInput]:
         if meal_plan is None:
             return []
 
@@ -75,18 +104,69 @@ class MealPlanService:
                     PreservedMealSlotInput(
                         day_number=day.day_number,
                         meal_type=slot.meal_type,
-                        dishes=[self._dish_input(item.dish) for item in slot_dishes],
+                        dishes=[
+                            self._dish_input(item.dish, recipe_id=item.recipe_id)
+                            for item in slot_dishes
+                        ],
                     )
                 )
         return result
 
-    def generate(self, days: int, meals_per_day: list[str]) -> MealPlanGenerationResult:
-        return self.generator.generate(
-            dishes=self._generation_dishes(),
+    @staticmethod
+    def _assign_recipe_variants(
+        result: MealPlanGenerationResult,
+        variant_map: dict[str, list[RecipeORM]],
+    ) -> MealPlanGenerationResult:
+        counters: dict[str, int] = {}
+        selected_by_key: dict[tuple[int, str, str], str] = {}
+        slots: list[MealSlotResult] = []
+
+        for slot in result.slots:
+            selected_dishes: list[DishInput] = []
+            for dish in slot.dishes:
+                recipe_id = dish.recipe_id
+                if recipe_id is None:
+                    variants = variant_map.get(dish.id, [])
+                    if not variants:
+                        raise ValueError(f"No eligible recipe variants for dish: {dish.id}")
+                    index = counters.get(dish.id, 0)
+                    recipe_id = variants[index % len(variants)].id
+                    counters[dish.id] = index + 1
+                selected = replace(dish, recipe_id=recipe_id)
+                selected_dishes.append(selected)
+                selected_by_key[(slot.day_number, slot.meal_type, dish.id)] = recipe_id
+            slots.append(replace(slot, dishes=selected_dishes))
+
+        items = [
+            replace(
+                item,
+                recipe_id=(
+                    item.recipe_id
+                    or selected_by_key[(item.day_number, item.meal_type, item.dish_id)]
+                ),
+            )
+            for item in result.items
+        ]
+        return MealPlanGenerationResult(
+            items=items,
+            slots=slots,
+            warnings=list(result.warnings),
+        )
+
+    def generate(
+        self,
+        days: int,
+        meals_per_day: list[str],
+        recipe_generation_mode: str = RecipeGenerationMode.CLUB_ONLY.value,
+    ) -> MealPlanGenerationResult:
+        variant_map = self._variant_map(recipe_generation_mode)
+        generated = self.generator.generate(
+            dishes=self._generation_dishes(variant_map),
             days=days,
             meals_per_day=meals_per_day,
             role_aware=True,
         )
+        return self._assign_recipe_variants(generated, variant_map)
 
     def generate_and_save(
         self,
@@ -97,6 +177,7 @@ class MealPlanService:
         project_id: int | None = None,
         start_meal: str | None = None,
         end_meal: str | None = None,
+        recipe_generation_mode: str = RecipeGenerationMode.CLUB_ONLY.value,
     ) -> MealPlanORM:
         return self.generate_and_save_result(
             name=name,
@@ -106,6 +187,7 @@ class MealPlanService:
             project_id=project_id,
             start_meal=start_meal,
             end_meal=end_meal,
+            recipe_generation_mode=recipe_generation_mode,
         ).meal_plan
 
     def generate_and_save_result(
@@ -117,9 +199,11 @@ class MealPlanService:
         project_id: int | None = None,
         start_meal: str | None = None,
         end_meal: str | None = None,
+        recipe_generation_mode: str = RecipeGenerationMode.CLUB_ONLY.value,
     ) -> SavedMealPlanResult:
         if self.meal_plan_repository is None:
             raise ValueError("MealPlanRepository is required")
+        RecipeGenerationMode(recipe_generation_mode)
 
         existing_plan = None
         if project_id is not None:
@@ -131,7 +215,8 @@ class MealPlanService:
                         f"Meal plan not found before regeneration: {current_plan.id}"
                     )
 
-        dishes = self._generation_dishes()
+        variant_map = self._variant_map(recipe_generation_mode)
+        dishes = self._generation_dishes(variant_map)
         preserved_slots = self._preserved_slots(existing_plan)
         if start_meal and end_meal:
             schedule = self.schedule_engine.build(
@@ -139,7 +224,7 @@ class MealPlanService:
                 start_meal=start_meal,
                 end_meal=end_meal,
             )
-            result = self.generator.generate(
+            generated = self.generator.generate(
                 dishes=dishes,
                 days=days,
                 schedule=schedule,
@@ -147,13 +232,14 @@ class MealPlanService:
                 preserved_slots=preserved_slots,
             )
         else:
-            result = self.generator.generate(
+            generated = self.generator.generate(
                 dishes=dishes,
                 days=days,
                 meals_per_day=meals_per_day,
                 role_aware=True,
                 preserved_slots=preserved_slots,
             )
+        result = self._assign_recipe_variants(generated, variant_map)
 
         if existing_plan is None:
             meal_plan = MealPlanORM(
@@ -175,12 +261,15 @@ class MealPlanService:
 
         days_map: dict[int, MealPlanDayORM] = {}
         for item in result.items:
+            if item.recipe_id is None:
+                raise ValueError("Generated meal-plan item has no selected recipe")
             day = self._get_or_create_day(meal_plan, days_map, item.day_number)
             self.meal_plan_repository.add_item(
                 MealPlanItemORM(
                     id=str(uuid4()),
                     day=day,
                     dish_id=item.dish_id,
+                    recipe_id=item.recipe_id,
                     meal_type=item.meal_type,
                 )
             )
@@ -200,11 +289,14 @@ class MealPlanService:
             self.meal_plan_repository.add_slot(meal_slot)
 
             for index, dish in enumerate(slot.dishes):
+                if dish.recipe_id is None:
+                    raise ValueError("Generated meal-slot dish has no selected recipe")
                 self.meal_plan_repository.add_slot_dish(
                     MealSlotDishORM(
                         id=str(uuid4()),
                         slot=meal_slot,
                         dish_id=dish.id,
+                        recipe_id=dish.recipe_id,
                         order=index,
                     )
                 )
