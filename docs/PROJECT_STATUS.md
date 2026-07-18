@@ -4,70 +4,66 @@ Status date: 2026-07-18
 
 ## Current phase
 
-The guided single-club preparation baseline, production-like runtime, product completeness audit, complete System Settings foundation, Administrator bootstrap/sessions, functional invitations, and user administration are merged. Draft PR #93 completes the first-release Access boundary by requiring an active session for all preparation routes and APIs.
+The guided single-club preparation baseline, production-like runtime, Product Completeness Audit, complete System Settings foundation, and first-release Access foundation are merged. Draft PR #94 implements working SMTP delivery, a fixed Russian test message, and automatic invitation delivery with a manual-link fallback.
 
 ## Verified baseline
 
-- `main`: `257d82a9f4f7e47095f8e96635bf62a9ed14e722` — merged PR #92.
+- `main`: `21a66a2caae4e52f8e1a87bd242666703c4bc296` — merged PR #93.
 - `main` Alembic head: `h10016`.
-- PR #84 merged as `a92cac5294ab2c7a8e1410cad7d67aaa82a2f39a`.
-- PR #85 merged as `0e4e376470072e9475a31504faeb46e8b5a68364`.
-- PR #86 merged as `18d5c9637e2e692b630009167dd622ee40ee2747`.
-- PR #87 merged as `717d6f22d58e86a952edad501f05d3c67d8c0bf4`.
-- PR #88 merged as `d79172fef861c030ff2d9e5367cf86329068b460`.
-- PR #89 merged as `bff7950e3542b719983f2a09b61b9a901fbaca64`.
-- PR #90 merged as `26c4d4eb9246de44579451fe3d6e7bd631538324`.
-- PR #91 merged as `2348870864efa1da20547c1a6564dc5f9b6488ef`.
-- PR #92 passed Quality #778, Document Quality #398, Guided Release Acceptance #349, Operator Docs #335, and Docker Release Runtime #330 before merge.
+- PR #84 through PR #89 delivered the typed System Settings foundation (`h10008`–`h10013`).
+- PR #90 merged as `26c4d4eb9246de44579451fe3d6e7bd631538324` (`h10014`).
+- PR #91 merged as `2348870864efa1da20547c1a6564dc5f9b6488ef` (`h10015`).
+- PR #92 merged as `257d82a9f4f7e47095f8e96635bf62a9ed14e722` (`h10016`).
+- PR #93 merged as `21a66a2caae4e52f8e1a87bd242666703c4bc296` with no migration.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Implemented on main
 
-- complete guided preparation from project creation through Russian purchase/equipment documents and ZIP;
+- complete guided preparation through Russian purchase/equipment documents and ZIP;
 - persisted shopping, packaging, checklist, equipment, overrides, recalculation, and reload-safe readiness;
-- installation, update, backup, restore, recovery, immutable release images, health checks, API proxy, and restart persistence;
-- responsive `/settings` with independent typed ownership through ADR-014;
-- settings migrations `h10008` through `h10013`;
-- one immutable club/document snapshot per generation request;
-- module visibility remains presentation-only;
-- one-time Administrator bootstrap, password hashing, server-owned sessions, and System Settings authorization through ADR-015 and `h10014`;
-- functional invitation lifecycle and invited-user sign-in through ADR-016 and `h10015`;
-- user list, role/activity administration, optimistic versions, and final-active-Administrator protection through ADR-017 and `h10016`;
-- mail metadata remains configuration-only and does not send messages.
+- installation, update, backup, restore, recovery, release images, health checks, API proxy, and restart persistence;
+- responsive typed System Settings through ADR-014;
+- one-time Administrator bootstrap, server sessions, login/logout/current-user, and Administrator-only settings through ADR-015;
+- functional invitation lifecycle and invited-user sign-in through ADR-016;
+- user list, role/activity administration, optimistic versions, and final-active-Administrator protection through ADR-017;
+- authenticated preparation routes and APIs for all three approved active roles through ADR-018;
+- public onboarding and invitation acceptance; Administrator-only settings, invitation management, and user administration.
 
-## Draft PR #93 — Preparation authorization matrix
+## Draft PR #94 — Working mail delivery
 
 Backend:
 
-- `require_preparation_access` accepts active Administrator, Instructor, and Verified Instructor roles;
-- project, catalogue, import, menu, shopping, equipment, document, dish, and current recipe router groups require that dependency;
-- health, auth bootstrap/login, and invitation inspect/accept stay public;
-- settings, invitation management, and user administration stay Administrator-only;
-- structural tests assert that every preparation endpoint carries the dependency;
-- integration tests cover 401, all three active roles, inactive users, public boundaries, and preserved 403 responses.
+- standard-library SMTP transport supports plain, STARTTLS, and implicit TLS;
+- optional authentication reads the deployment-managed value from `TOURHUB_SMTP_SECRET` only when a username is configured;
+- connection check performs no message delivery;
+- the fixed Russian test message uses the saved test recipient and sender metadata;
+- timeout and retry count come from typed Mail Settings;
+- invitation create/reissue commits first and then performs best-effort automatic delivery;
+- a failed or unavailable delivery never rolls back the invitation and the one-time manual link remains available;
+- operation responses contain only safe status, message, attempt count, and optional recipient;
+- no migration is required; Alembic remains at `h10016`.
 
-Frontend and runtime:
+Frontend and validation:
 
-- one `RequireAuthenticated` guard wraps the full `AppLayout` tree;
-- signed-out users are redirected to `/login` with the requested path preserved;
-- `/login` and `/accept-invitation` remain public;
-- `/settings` retains the additional Administrator guard;
-- Chrome acceptance verifies redirect, bootstrap return, settings navigation, logout/login return, and mobile containment;
-- guided-release and Docker runtime smoke now authenticate before exercising preparation flows;
-- no new migration is required; Alembic remains at `h10016`.
+- Mail Settings exposes save, connection check, and test-message actions;
+- checks use the saved server version, not unsaved form values;
+- invitation UI shows sent/unavailable/failed status and always retains copy-link fallback;
+- no secret input is rendered;
+- fake-SMTP service tests cover plain, STARTTLS, TLS, authentication, retry, and safe failure;
+- Chrome acceptance covers mail actions, invitation delivery status, manual fallback, and mobile containment.
 
 ## Remaining sequence
 
-1. Working mail delivery connected to invitations and the fixed Russian test message.
-2. Recipe ownership/lifecycle and role-specific publication/moderation.
-3. Central alcohol policy.
-4. Actor-aware identity and consolidated audit.
-5. Consolidated exports, product acceptance, then feature freeze.
+1. Recipe ownership/lifecycle and role-specific publication/moderation.
+2. Central alcohol policy.
+3. Actor-aware identity and consolidated audit.
+4. Consolidated exports, product acceptance, then feature freeze.
 
 ## Quality debt
 
-- finish exact-head validation and review for PR #93;
+- finish exact-head validation and review for PR #94;
 - active catalogue/import acceptance;
 - session administration and account recovery remain deferred Access operations;
+- asynchronous delivery queues and bounce handling remain deferred;
 - final PostgreSQL migration cycle after feature freeze;
 - final release workflow and deployment checklist.

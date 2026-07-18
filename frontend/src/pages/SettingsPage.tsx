@@ -20,7 +20,7 @@ import AppearanceSettingsForm from "@/features/system-settings/components/Appear
 import ClubSettingsForm from "@/features/system-settings/components/ClubSettingsForm";
 import DocumentAppearanceSettingsForm from "@/features/system-settings/components/DocumentAppearanceSettingsForm";
 import InvitationSettingsWorkspace from "@/features/system-settings/components/InvitationSettingsWorkspace";
-import MailSettingsForm from "@/features/system-settings/components/MailSettingsForm";
+import MailSettingsWorkspace from "@/features/system-settings/components/MailSettingsWorkspace";
 import ModuleSettingsForm from "@/features/system-settings/components/ModuleSettingsForm";
 import UserAdministrationPanel from "@/features/system-settings/components/UserAdministrationPanel";
 
@@ -71,7 +71,7 @@ const SECTIONS: Array<{
   {
     id: "mail",
     label: "Почта",
-    description: "Несекретные SMTP-параметры и безопасная граница будущей доставки.",
+    description: "TourHub пока не использует несохранённые SMTP-параметры; проверка и доставка работают по сохранённой версии.",
   },
 ];
 
@@ -105,7 +105,7 @@ export default function SettingsPage() {
     if (activeSection === "modules") return <ModuleSettingsForm />;
     if (activeSection === "users") return <UserAdministrationPanel />;
     if (activeSection === "invitations") return <InvitationSettingsWorkspace />;
-    if (activeSection === "mail") return <MailSettingsForm />;
+    if (activeSection === "mail") return <MailSettingsWorkspace />;
     return <PlannedSection sectionId={activeSection} />;
   }
 

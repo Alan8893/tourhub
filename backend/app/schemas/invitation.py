@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.auth import normalize_email
 from app.schemas.invitation_settings import InvitationDefaultRole
+from app.schemas.mail_settings import MailDeliveryStatus
 
 
 class InvitationStatus(StrEnum):
@@ -42,6 +43,9 @@ class InvitationListItemResponse(BaseModel):
 class InvitationCreatedResponse(InvitationListItemResponse):
     token: str
     acceptance_path: str
+    delivery_status: MailDeliveryStatus
+    delivery_message: str
+    delivery_attempts: int = Field(ge=0)
 
 
 class InvitationTokenRequest(BaseModel):

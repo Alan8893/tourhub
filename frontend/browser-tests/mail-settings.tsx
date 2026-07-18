@@ -3,7 +3,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import MailSettingsForm from "@/features/system-settings/components/MailSettingsForm";
+import MailSettingsWorkspace from "@/features/system-settings/components/MailSettingsWorkspace";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing root element");
@@ -13,7 +13,7 @@ createRoot(root).render(
     <ThemeProvider theme={createTheme()}>
       <CssBaseline />
       <Container maxWidth="lg" sx={{ py: 2 }}>
-        <MailSettingsForm />
+        <MailSettingsWorkspace />
       </Container>
     </ThemeProvider>
   </StrictMode>,
