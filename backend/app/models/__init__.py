@@ -1,6 +1,7 @@
 from app.models.base import Base
 
 from app.models.appearance_settings import AppearanceSettingsORM
+from app.models.audit_event import AuditEventORM
 from app.models.auth_session import AuthSessionORM
 from app.models.club_settings import ClubSettingsORM
 from app.models.dish import DishORM
@@ -40,6 +41,7 @@ from app.modules.projects.models.project import ProjectORM
 __all__ = [
     "Base",
     "AppearanceSettingsORM",
+    "AuditEventORM",
     "AuthSessionORM",
     "ClubSettingsORM",
     "DocumentAppearanceSettingsORM",
