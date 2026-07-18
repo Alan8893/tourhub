@@ -1,3 +1,7 @@
+from app.schemas.mail_settings import MailDeliveryStatus
+from app.services.mail_delivery_service import MailDeliveryResult, MailDeliveryService
+
+
 def _payload(settings: dict[str, object]) -> dict[str, object]:
     return {
         "expected_version": settings["version"],
@@ -20,7 +24,7 @@ def _validation_messages(response) -> str:
     return " ".join(item["msg"] for item in body["details"])
 
 
-def test_mail_settings_defaults_and_deferred_status(client, monkeypatch) -> None:
+def test_mail_settings_defaults_and_delivery_status(client, monkeypatch) -> None:
     monkeypatch.delenv("TOURHUB_SMTP_SECRET", raising=False)
     response = client.get("/api/v1/settings/mail")
     assert response.status_code == 200
@@ -40,7 +44,7 @@ def test_mail_settings_defaults_and_deferred_status(client, monkeypatch) -> None
     assert settings["secret_configured"] is False
     assert settings["secret_source"] == "environment"
     assert settings["secret_environment_variable"] == "TOURHUB_SMTP_SECRET"
-    assert settings["delivery_available"] is False
+    assert settings["delivery_available"] is True
     assert settings["test_delivery_available"] is False
 
 
@@ -88,6 +92,7 @@ def test_mail_settings_persist_normalized_values_and_safe_history(client) -> Non
     assert updated["timeout_seconds"] == 45
     assert updated["retry_count"] == 5
     assert updated["delivery_available"] is False
+    assert updated["test_delivery_available"] is False
 
     history = client.get("/api/v1/settings/mail/history").json()
     assert len(history) == 1
@@ -106,6 +111,45 @@ def test_mail_settings_persist_normalized_values_and_safe_history(client) -> Non
     }
     assert "smtp.example.com" not in str(history[0])
     assert "admin@example.com" not in str(history[0])
+
+
+def test_mail_actions_return_safe_results(client, monkeypatch) -> None:
+    marker = "value-that-must-stay-outside-the-api"
+    monkeypatch.setenv("TOURHUB_SMTP_SECRET", marker)
+
+    def fake_check(_: MailDeliveryService) -> MailDeliveryResult:
+        return MailDeliveryResult(
+            status=MailDeliveryStatus.SENT,
+            message="Соединение проверено.",
+            attempts=1,
+        )
+
+    def fake_test(_: MailDeliveryService) -> MailDeliveryResult:
+        return MailDeliveryResult(
+            status=MailDeliveryStatus.SENT,
+            message="Тест отправлен.",
+            attempts=2,
+            recipient="admin@example.org",
+        )
+
+    monkeypatch.setattr(MailDeliveryService, "check_connection", fake_check)
+    monkeypatch.setattr(MailDeliveryService, "send_test_message", fake_test)
+
+    checked = client.post("/api/v1/settings/mail/check")
+    assert checked.status_code == 200
+    assert checked.json() == {
+        "status": "sent",
+        "message": "Соединение проверено.",
+        "attempts": 1,
+        "recipient": None,
+    }
+
+    sent = client.post("/api/v1/settings/mail/test")
+    assert sent.status_code == 200
+    assert sent.json()["recipient"] == "admin@example.org"
+    assert sent.json()["attempts"] == 2
+    assert marker not in str(checked.json())
+    assert marker not in str(sent.json())
 
 
 def test_mail_settings_reject_unknown_credential_field(client) -> None:
