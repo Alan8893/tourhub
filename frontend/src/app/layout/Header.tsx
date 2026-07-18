@@ -1,5 +1,5 @@
 import { AppBar, Box, Button, IconButton, Stack, Toolbar, Typography } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { userRoleLabel } from "@/features/auth/model/roleLabels";
 import { useAuth } from "@/features/auth/providers/AuthProvider";
@@ -10,13 +10,15 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
 
   async function signOut() {
+    const destination = `${location.pathname}${location.search}${location.hash}`;
     try {
       await logout();
     } finally {
-      navigate("/login", { replace: true });
+      navigate("/login", { replace: true, state: { from: destination } });
     }
   }
 
