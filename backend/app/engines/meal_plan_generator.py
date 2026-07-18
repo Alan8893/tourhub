@@ -194,7 +194,7 @@ class MealPlanGenerator:
 
                 selected.append(chosen)
                 selected_ids.add(chosen.id)
-                context.register(chosen.id, role, repeatable)
+                context.register_selected(chosen, role, repeatable)
 
             slots.append(
                 MealSlotResult(
@@ -251,11 +251,11 @@ class MealPlanGenerator:
             )
             if candidate.id in selected_ids:
                 continue
-            if MealCompositionPolicy.is_allowed(
-                candidate.id,
-                role,
-                assignment.is_repeatable,
+            if MealCompositionPolicy.can_select(
+                candidate,
                 context,
+                assignment.is_repeatable,
+                role,
             ):
                 return candidate, (index + 1) % len(candidates), assignment.is_repeatable
         return None, start_index, False
