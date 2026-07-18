@@ -28,19 +28,29 @@ class MealPlanShoppingService:
             days=1,
         )
 
+    @staticmethod
+    def _assignment_recipe(assignment: Any) -> Any | None:
+        recipe = getattr(assignment, "recipe", None)
+        if recipe is not None:
+            return recipe
+        dish = getattr(assignment, "dish", None)
+        return getattr(dish, "recipe", None)
+
     def _collect_recipe_occurrences(self, meal_plan: MealPlanORM) -> list[Any]:
         """Collect the selected Recipe for every persisted dish occurrence."""
         recipes: list[Any] = []
         for day in meal_plan.days:
             if day.slots:
-                recipes.extend(
-                    slot_dish.recipe
-                    for slot in day.slots
-                    for slot_dish in slot.dishes
-                    if slot_dish.recipe is not None
-                )
+                for slot in day.slots:
+                    for slot_dish in slot.dishes:
+                        recipe = self._assignment_recipe(slot_dish)
+                        if recipe is not None:
+                            recipes.append(recipe)
                 continue
-            recipes.extend(item.recipe for item in day.items if item.recipe is not None)
+            for item in day.items:
+                recipe = self._assignment_recipe(item)
+                if recipe is not None:
+                    recipes.append(recipe)
         return recipes
 
     def _collect_recipes(self, meal_plan: MealPlanORM) -> list[Any]:
