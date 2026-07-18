@@ -101,25 +101,23 @@ class RecipeAccessService:
 
     @classmethod
     def require_editable(cls, recipe: RecipeORM, actor: UserORM | None) -> RecipeORM:
-        if actor is None:
-            if recipe.is_archived:
-                raise ValueError("Archived recipe cannot be edited")
-            return recipe
-        cls.require_visible(recipe, actor)
-        if not cls.can_edit(recipe, actor):
-            if recipe.lifecycle_status == RecipeLifecycleStatus.SUBMITTED.value:
-                raise ValueError("Submitted recipe cannot be edited")
+        if actor is not None:
+            cls.require_visible(recipe, actor)
+        if recipe.is_archived:
+            raise ValueError("Archived recipe cannot be edited")
+        if recipe.lifecycle_status == RecipeLifecycleStatus.SUBMITTED.value:
+            raise ValueError("Submitted recipe cannot be edited")
+        if actor is not None and not cls.can_edit(recipe, actor):
             raise PermissionError("Recipe cannot be changed by the current user")
         return recipe
 
     @classmethod
     def require_archivable(cls, recipe: RecipeORM, actor: UserORM | None) -> RecipeORM:
-        if actor is None:
-            return recipe
-        cls.require_visible(recipe, actor)
+        if actor is not None:
+            cls.require_visible(recipe, actor)
         if recipe.lifecycle_status == RecipeLifecycleStatus.SUBMITTED.value:
             raise ValueError("Submitted recipe cannot be archived")
-        if not cls.can_archive(recipe, actor):
+        if actor is not None and not cls.can_archive(recipe, actor):
             raise PermissionError("Recipe cannot be archived by the current user")
         return recipe
 
@@ -150,6 +148,8 @@ class RecipeAccessService:
     def require_reviewable(cls, recipe: RecipeORM, actor: UserORM) -> RecipeORM:
         if not cls.can_open_moderation(actor):
             raise PermissionError("Current user cannot moderate recipes")
+        if recipe.is_archived:
+            raise ValueError("Archived recipe cannot be moderated")
         if recipe.scope != RecipeScope.PERSONAL.value or (
             recipe.lifecycle_status != RecipeLifecycleStatus.SUBMITTED.value
         ):
