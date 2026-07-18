@@ -68,7 +68,6 @@ class DishRecipeVariantService:
         ]
         default_recipe_id = getattr(dish, "recipe_id", "")
         club = cls._default_first(club, default_recipe_id)
-        personal = sorted(personal, key=cls._sort_key)
 
         generation_mode = RecipeGenerationMode(mode)
         if generation_mode == RecipeGenerationMode.CLUB_ONLY:
@@ -82,22 +81,20 @@ class DishRecipeVariantService:
         return str(getattr(recipe, "id", fallback))
 
     @classmethod
-    def _sort_key(cls, recipe: RecipeORM) -> tuple[str, str]:
-        recipe_id = cls.recipe_id(recipe)
-        name = getattr(recipe, "name", recipe_id)
-        return (str(name).casefold(), recipe_id)
-
-    @classmethod
     def _default_first(
         cls,
         recipes: Iterable[RecipeORM],
         default_recipe_id: str,
     ) -> list[RecipeORM]:
-        ordered = sorted(recipes, key=cls._sort_key)
-        return sorted(
-            ordered,
-            key=lambda recipe: (
-                cls.recipe_id(recipe, default_recipe_id) != default_recipe_id,
-                cls._sort_key(recipe),
+        ordered = list(recipes)
+        default = next(
+            (
+                recipe
+                for recipe in ordered
+                if cls.recipe_id(recipe, default_recipe_id) == default_recipe_id
             ),
+            None,
         )
+        if default is None:
+            return ordered
+        return [default, *(recipe for recipe in ordered if recipe is not default)]
