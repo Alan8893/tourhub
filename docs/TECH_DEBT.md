@@ -20,7 +20,41 @@ Status date: 2026-07-18
 - visible current user role in the common application header;
 - conflict handling, PostgreSQL row locks, safe settings history, and deferred final downgrade/re-upgrade smoke.
 
-TH-0085 implementation head `4879e6dc701550935eb4d173e5098de85d264fd5` passed Quality #835, Document Quality #452, Guided Release Acceptance #403, Operator Docs #389, and Docker Release Runtime #384.
+PR #95 merged as `82315e0ff9520b52ae5244f69bc05d4a5d0db5b3`. Exact implementation head `8570670209566f6860b71c0173557bb71bf6fe00` passed Quality #843, Document Quality #460, Guided Release Acceptance #411, Operator Docs #397, and Docker Release Runtime #392.
+
+## Active TH-0086 / draft PR #96
+
+The ownership foundation addresses:
+
+- no persisted CLUB/PERSONAL distinction;
+- no recipe owner identity;
+- global visibility of every personal work item;
+- identical recipe mutation access for all preparation roles;
+- ownership bypass through nested component, note, or equipment endpoints;
+- frontend controls that cannot explain scope, owner, or read-only access.
+
+The draft slice implements:
+
+- Recipe `scope` and `owner_user_id` with database ownership-shape constraints;
+- deterministic migration of existing recipes to CLUB through `h10017`;
+- PERSONAL ownership for interactive creation;
+- visibility filtering for unrelated personal recipes;
+- role-aware editing for Instructor, Verified Instructor, and Administrator;
+- Administrator-only permanent deletion;
+- shared ownership enforcement for recipe root and child services;
+- safe owner/capability projection and responsive ownership UI.
+
+## Remaining recipe lifecycle debt
+
+1. Submission and resubmission states for PERSONAL recipes.
+2. Verified Instructor and Administrator review queue.
+3. Publication transition from PERSONAL to CLUB with an explicit immutable origin policy.
+4. Rejection with required comment and visible feedback to the owner.
+5. Moderation lifecycle history before the consolidated actor-aware audit exists.
+6. Multiple Recipe variants per Dish.
+7. Club-only, club-plus-personal, and personal-preferred generation modes.
+8. Optimistic recipe versions when lifecycle transitions and concurrent editing are introduced.
+9. Ownership-aware CSV import preview/apply UX beyond trusted shared-catalogue import.
 
 ## Remaining Access debt
 
@@ -44,11 +78,12 @@ TH-0085 implementation head `4879e6dc701550935eb4d173e5098de85d264fd5` passed Qu
 
 ## Remaining release-blocking product debt
 
-1. **Recipe ownership and lifecycle** — CLUB/PERSONAL ownership, variants, submission, review, publication, rejection, archive, and Verified Instructor distinctions.
-2. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import plus existing-record handling.
-3. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
-4. **Consolidated export completeness** — approved complete Russian PDF and workbook sheets using the immutable brand snapshot.
-5. **Product acceptance** — active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
+1. **Recipe publication and moderation** — submission, review, publication, rejection, archive, and Verified Instructor distinctions.
+2. **Dish recipe variants and generation modes** — multiple recipes per Dish and approved club/personal selection modes.
+3. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import plus existing-record handling.
+4. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
+5. **Consolidated export completeness** — approved complete Russian PDF and workbook sheets using the immutable brand snapshot.
+6. **Product acceptance** — active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
 
 ## Configuration export and import debt
 
