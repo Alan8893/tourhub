@@ -13,6 +13,12 @@ class MailSecurityMode(StrEnum):
     TLS = "tls"
 
 
+class MailDeliveryStatus(StrEnum):
+    SENT = "sent"
+    UNAVAILABLE = "unavailable"
+    FAILED = "failed"
+
+
 _HOST_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 _EMAIL_LOCAL = re.compile(r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+$")
 
@@ -149,6 +155,13 @@ class MailSettingsResponse(MailSettingsDraft):
 
 class MailSettingsUpdateRequest(MailSettingsDraft):
     expected_version: int = Field(ge=1)
+
+
+class MailOperationResponse(BaseModel):
+    status: MailDeliveryStatus
+    message: str
+    attempts: int = Field(ge=1)
+    recipient: str | None = None
 
 
 class MailSettingsHistoryResponse(BaseModel):
