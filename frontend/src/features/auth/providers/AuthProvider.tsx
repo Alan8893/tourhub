@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 
+import { SESSION_INVALIDATED_EVENT } from "@/shared/api/sessionEvents";
 import {
   AuthUser,
   bootstrapAdministrator,
@@ -16,7 +17,6 @@ import {
   login as loginRequest,
   logout as logoutRequest,
 } from "../api/authApi";
-import { SESSION_INVALIDATED_EVENT } from "../model/sessionEvents";
 
 export interface AuthContextValue {
   user: AuthUser | null;
