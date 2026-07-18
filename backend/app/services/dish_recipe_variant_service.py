@@ -73,7 +73,8 @@ class DishRecipeVariantService:
 
     @staticmethod
     def _sort_key(recipe: RecipeORM) -> tuple[str, str]:
-        return (recipe.name.casefold(), recipe.id)
+        name = getattr(recipe, "name", str(recipe.id))
+        return (name.casefold(), recipe.id)
 
     @classmethod
     def _default_first(
