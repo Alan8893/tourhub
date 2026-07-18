@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.session import get_session
 from app.models.recipe_note import RecipeNoteORM
+from app.models.user import UserORM
 from app.schemas.recipe_note import (
     RecipeNoteCreateRequest,
     RecipeNoteListResponse,
@@ -14,8 +16,11 @@ from app.services.recipe_note_service import RecipeNoteService
 router = APIRouter(prefix="/recipes/{recipe_id}/notes", tags=["Recipe Notes"])
 
 
-def get_recipe_note_service(session: Session = Depends(get_session)) -> RecipeNoteService:
-    return RecipeNoteService(session)
+def get_recipe_note_service(
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> RecipeNoteService:
+    return RecipeNoteService(session, actor=actor)
 
 
 def _response(note: RecipeNoteORM) -> RecipeNoteResponse:
@@ -56,6 +61,10 @@ def create_recipe_note(
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _response(note)
 
 
@@ -76,6 +85,10 @@ def update_recipe_note(
         )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _response(note)
 
 
@@ -89,4 +102,8 @@ def delete_recipe_note(
         service.delete(recipe_id, note_id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
