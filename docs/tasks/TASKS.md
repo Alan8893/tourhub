@@ -7,6 +7,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0089 | Actor-Aware Audit Foundation | IN PROGRESS | ./active/TH-0089-actor-aware-audit-foundation.md |
 
 ## Planned release sequence
 
@@ -16,9 +17,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | 2 | Access and mail foundation | Bootstrap Administrator, sessions, functional invitations, users, roles, guarded routes, Backend authorization, working SMTP delivery |
 | 3 | Multi-user operational readiness | Multiple sessions, immediate role propagation, revoked-session handling, exact route return, visible current role |
 | 4 | Recipe ownership and lifecycle | CLUB/PERSONAL ownership, variants, publication, moderation, generation modes |
-| 5 | Central alcohol prohibition | Shared API/import policy and existing-record handling |
-| 6 | Actor-aware audit log | Safe history for project, menu, Recipe, settings, user, and role changes |
-| 7 | Consolidated export completeness | Approved Russian PDF and workbook contents using one brand snapshot |
+| 5 | Actor-aware audit | Safe actor-attributed history foundation and explicit domain coverage |
+| 6 | Consolidated export completeness | Approved Russian PDF and workbook contents using one brand snapshot |
+| 7 | Central alcohol prohibition | Shared API/import policy and existing-record handling immediately before acceptance |
 | 8 | Product acceptance and feature freeze | End-to-end acceptance and explicit optional-scope decisions |
 | 9 | Final release readiness | Migration cycle, deployment checklist, and final release workflow |
 
