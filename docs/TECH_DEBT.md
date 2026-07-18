@@ -2,7 +2,7 @@
 
 Status date: 2026-07-18
 
-## Implemented through merged PR #94
+## Implemented through PR #95
 
 - complete guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
 - installation, update, backup, restore, recovery, release images, health checks, API proxy, and restart persistence;
@@ -13,28 +13,14 @@ Status date: 2026-07-18
 - authenticated preparation routes and APIs for all three approved active roles;
 - Administrator-only settings, invitation management, and user administration;
 - working SMTP connection check, fixed Russian test message, and best-effort invitation delivery with manual fallback;
+- multiple independent sessions per user with current-role propagation on every request;
+- complete active-session revocation when a user is deactivated;
+- centralized frontend handling for protected HTTP 401 responses;
+- exact route return through sign-in and explicit logout;
+- visible current user role in the common application header;
 - conflict handling, PostgreSQL row locks, safe settings history, and deferred final downgrade/re-upgrade smoke.
 
-## Active TH-0085
-
-The multi-user operational-readiness slice addresses:
-
-- no centralized frontend reaction to a protected HTTP 401 after server-side session revocation or expiry;
-- no visible current-role label in the common application header;
-- route return preserving only the pathname rather than query and hash;
-- no focused integration proving that two simultaneous sessions observe role changes and are both revoked on deactivation;
-- post-merge documentation still describing working mail as draft work.
-
-Implemented in the active slice:
-
-- shared session-invalidated event emitted by the common API client for protected HTTP 401 responses;
-- AuthProvider clears stale identity immediately and route guards redirect through sign-in;
-- authentication entry failures remain local to the login form;
-- exact path, query, and hash survive sign-in and explicit logout;
-- current user role is shown beside the current user name;
-- Backend integration covers two independent sessions, immediate role propagation, and complete session revocation;
-- Chrome acceptance covers server-side revocation and recovery;
-- no migration; Alembic remains at `h10016`.
+TH-0085 implementation head `4879e6dc701550935eb4d173e5098de85d264fd5` passed Quality #835, Document Quality #452, Guided Release Acceptance #403, Operator Docs #389, and Docker Release Runtime #384.
 
 ## Remaining Access debt
 
