@@ -2,47 +2,20 @@
 
 Status date: 2026-07-18
 
-## Implemented through PR #95
+## Implemented through PR #96
 
 - complete guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
 - installation, update, backup, restore, recovery, release images, health checks, API proxy, and restart persistence;
 - complete typed System Settings foundation through `h10013`;
-- initial Administrator, sign-in, and settings permissions through `h10014`;
-- operational invitations and invited-user creation through `h10015`;
-- user list, explicit roles, activity controls, and optimistic user versions through `h10016`;
-- authenticated preparation routes and APIs for all three approved active roles;
-- Administrator-only settings, invitation management, and user administration;
+- invitation-only Access foundation and user administration through `h10016`;
 - working SMTP connection check, fixed Russian test message, and best-effort invitation delivery with manual fallback;
-- multiple independent sessions per user with current-role propagation on every request;
-- complete active-session revocation when a user is deactivated;
-- centralized frontend handling for protected HTTP 401 responses;
-- exact route return through sign-in and explicit logout;
-- visible current user role in the common application header;
+- multiple independent sessions per user with current-role propagation and complete deactivation revocation;
+- centralized frontend handling for protected HTTP 401 responses and exact route return;
+- Recipe CLUB/PERSONAL scope, owner identity, visibility filtering, role-aware editing, and nested ownership enforcement through `h10017`;
+- safe recipe owner/capability projection and responsive ownership UI;
 - conflict handling, PostgreSQL row locks, safe settings history, and deferred final downgrade/re-upgrade smoke.
 
-PR #95 merged as `82315e0ff9520b52ae5244f69bc05d4a5d0db5b3`. Exact implementation head `8570670209566f6860b71c0173557bb71bf6fe00` passed Quality #843, Document Quality #460, Guided Release Acceptance #411, Operator Docs #397, and Docker Release Runtime #392.
-
-## Active TH-0086 / draft PR #96
-
-The ownership foundation addresses:
-
-- no persisted CLUB/PERSONAL distinction;
-- no recipe owner identity;
-- global visibility of every personal work item;
-- identical recipe mutation access for all preparation roles;
-- ownership bypass through nested component, note, or equipment endpoints;
-- frontend controls that cannot explain scope, owner, or read-only access.
-
-The draft slice implements:
-
-- Recipe `scope` and `owner_user_id` with database ownership-shape constraints;
-- deterministic migration of existing recipes to CLUB through `h10017`;
-- PERSONAL ownership for interactive creation;
-- visibility filtering for unrelated personal recipes;
-- role-aware editing for Instructor, Verified Instructor, and Administrator;
-- Administrator-only permanent deletion;
-- shared ownership enforcement for recipe root and child services;
-- safe owner/capability projection and responsive ownership UI.
+PR #96 implementation head `29b84be3f98a721d8d0faf2fa1908f65681820cd` passed Quality #858, Document Quality #474, Guided Release Acceptance #425, Operator Docs #411, and Docker Release Runtime #406.
 
 ## Remaining recipe lifecycle debt
 
@@ -78,7 +51,7 @@ The draft slice implements:
 
 ## Remaining release-blocking product debt
 
-1. **Recipe publication and moderation** — submission, review, publication, rejection, archive, and Verified Instructor distinctions.
+1. **Recipe publication and moderation** — submission, review, publication, rejection, resubmission, and Verified Instructor distinctions.
 2. **Dish recipe variants and generation modes** — multiple recipes per Dish and approved club/personal selection modes.
 3. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import plus existing-record handling.
 4. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
