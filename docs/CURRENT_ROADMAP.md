@@ -60,22 +60,20 @@ Project preparation baseline
 
 PR #96 merged as `d9ee573d44d885b48a2ce9424e9695f25d95a665`.
 
-## IN PROGRESS
-
-### Recipe publication and moderation — TH-0087 / draft PR #97
+### Recipe publication and moderation — TH-0087 / PR #97
 
 - lifecycle states `draft`, `submitted`, `rejected`, and `published`;
 - migration `h10018` preserves existing CLUB recipes as published;
-- owner submission and resubmission;
-- submitted-recipe editing and archive lock;
+- owner submission, rejection feedback, editing, and resubmission;
+- submitted-recipe root/component/note/equipment/archive lock;
 - Administrator/Verified Instructor moderation queue;
 - Verified Instructor self-review prevention;
-- PERSONAL-to-CLUB publication with submitter attribution;
+- PERSONAL-to-CLUB publication with retained submitter attribution;
 - rejection with a required comment and latest-decision metadata;
 - row-locked lifecycle transitions;
-- responsive lifecycle and moderation UI driven by Backend capabilities.
+- responsive lifecycle/moderation UI and focused Chrome acceptance driven by Backend capabilities.
 
-Full moderation history, notifications, Dish variants, and generation modes remain outside this slice.
+Implementation head `7dd0ddd398b4f4b82d43f30db8c95c0489f2f31b` passed Quality #887, Document Quality #502, Guided Release Acceptance #453, Operator Docs #439, and Docker Release Runtime #434.
 
 ## NEXT
 
@@ -89,7 +87,7 @@ Full moderation history, notifications, Dish variants, and generation modes rema
 
 - session administration, cleanup, global sign-out, and account recovery;
 - asynchronous mail queues, scheduled retries, and delivery diagnostics beyond the current synchronous result;
-- moderation notifications and decision history before the actor-aware audit slice;
+- moderation notifications and immutable decision history before the actor-aware audit slice;
 - additional same-origin request hardening if deployment expands beyond trusted LAN;
 - external identity providers and MFA.
 
