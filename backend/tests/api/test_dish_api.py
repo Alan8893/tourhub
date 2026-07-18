@@ -1,39 +1,63 @@
+def _create_published_club_recipe(client, name: str) -> str:
+    create_response = client.post("/api/v1/recipes", json={"name": name})
+    assert create_response.status_code == 201
+    recipe_id = create_response.json()["id"]
+    assert client.post(f"/api/v1/recipes/{recipe_id}/submit").status_code == 200
+    publish_response = client.post(f"/api/v1/recipes/{recipe_id}/publish")
+    assert publish_response.status_code == 200
+    assert publish_response.json()["scope"] == "club"
+    assert publish_response.json()["lifecycle_status"] == "published"
+    return recipe_id
+
+
 def _create_dish(client, name: str = "Тестовое блюдо") -> str:
-    recipe_id = client.post(
-        "/api/v1/recipes",
-        json={"name": f"Рецепт: {name}"},
-    ).json()["id"]
+    recipe_id = _create_published_club_recipe(client, f"Рецепт: {name}")
     response = client.post(
         "/api/v1/dishes",
         json={"name": name, "recipe_id": recipe_id},
     )
     assert response.status_code == 201
     assert response.json()["meal_roles"] == []
+    assert response.json()["recipe"]["is_default"] is True
+    assert [recipe["id"] for recipe in response.json()["recipes"]] == [recipe_id]
     return response.json()["id"]
 
 
 def test_dish_catalog_create_update_and_list(client):
-    first_recipe = client.post("/api/v1/recipes", json={"name": "Каша базовая"})
-    second_recipe = client.post("/api/v1/recipes", json={"name": "Каша улучшенная"})
-    first_recipe_id = first_recipe.json()["id"]
-    second_recipe_id = second_recipe.json()["id"]
+    first_recipe_id = _create_published_club_recipe(client, "Каша базовая")
+    second_recipe_id = _create_published_club_recipe(client, "Каша улучшенная")
 
     create_response = client.post(
         "/api/v1/dishes",
-        json={"name": "Гречневая каша", "recipe_id": first_recipe_id},
+        json={
+            "name": "Гречневая каша",
+            "recipe_id": first_recipe_id,
+            "recipe_ids": [first_recipe_id, second_recipe_id],
+        },
     )
     assert create_response.status_code == 201
     dish_id = create_response.json()["id"]
     assert create_response.json()["recipe"]["name"] == "Каша базовая"
+    assert create_response.json()["recipe"]["scope"] == "club"
+    assert create_response.json()["recipe"]["is_default"] is True
+    assert [recipe["name"] for recipe in create_response.json()["recipes"]] == [
+        "Каша базовая",
+        "Каша улучшенная",
+    ]
     assert create_response.json()["meal_roles"] == []
 
     update_response = client.put(
         f"/api/v1/dishes/{dish_id}",
-        json={"name": "Каша с грибами", "recipe_id": second_recipe_id},
+        json={
+            "name": "Каша с грибами",
+            "recipe_id": second_recipe_id,
+            "recipe_ids": [second_recipe_id, first_recipe_id],
+        },
     )
     assert update_response.status_code == 200
     assert update_response.json()["name"] == "Каша с грибами"
     assert update_response.json()["recipe"]["name"] == "Каша улучшенная"
+    assert update_response.json()["recipe"]["is_default"] is True
 
     list_response = client.get("/api/v1/dishes")
     assert list_response.status_code == 200
@@ -254,7 +278,7 @@ def test_invalid_or_unknown_dish_meal_roles_are_rejected(client):
 
 
 def test_dish_name_must_be_unique(client):
-    recipe_id = client.post("/api/v1/recipes", json={"name": "Суп рецепт"}).json()["id"]
+    recipe_id = _create_published_club_recipe(client, "Суп рецепт")
     payload = {"name": "Суп", "recipe_id": recipe_id}
 
     assert client.post("/api/v1/dishes", json=payload).status_code == 201
@@ -265,7 +289,7 @@ def test_dish_name_must_be_unique(client):
 
 
 def test_archived_recipe_cannot_be_newly_assigned(client):
-    recipe_id = client.post("/api/v1/recipes", json={"name": "Архивный рецепт"}).json()["id"]
+    recipe_id = _create_published_club_recipe(client, "Архивный рецепт")
     dish_response = client.post(
         "/api/v1/dishes",
         json={"name": "Историческое блюдо", "recipe_id": recipe_id},
@@ -284,7 +308,9 @@ def test_archived_recipe_cannot_be_newly_assigned(client):
         json={"name": "Новое блюдо", "recipe_id": recipe_id},
     )
     assert create_response.status_code == 422
-    assert create_response.json()["error"] == "Archived recipe cannot be assigned to a dish"
+    assert create_response.json()["error"] == (
+        "Dish default must be an active published club recipe"
+    )
 
 
 def test_dish_endpoints_return_not_found(client):
