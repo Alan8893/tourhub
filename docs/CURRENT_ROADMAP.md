@@ -14,7 +14,9 @@ Project preparation baseline
   → Access foundation
   → Working mail delivery
   → Multi-user operational readiness
-  → Recipe ownership and lifecycle
+  → Recipe ownership foundation
+  → Recipe publication and moderation
+  → Dish recipe variants and generation modes
   → Central alcohol prohibition
   → Actor-aware audit
   → Consolidated Russian exports
@@ -46,42 +48,40 @@ Project preparation baseline
 - public onboarding and invitation acceptance;
 - Administrator-only settings, invitations, and user management.
 
-PR #90 merged as `26c4d4eb9246de44579451fe3d6e7bd631538324`. PR #91 merged as `2348870864efa1da20547c1a6564dc5f9b6488ef`. PR #92 merged as `257d82a9f4f7e47095f8e96635bf62a9ed14e722`. PR #93 merged as `21a66a2caae4e52f8e1a87bd242666703c4bc296`.
-
 ### Working mail delivery — PR #94
 
-- Python standard-library SMTP client with plain, STARTTLS, and implicit TLS modes;
-- optional SMTP authentication using the deployment-managed `TOURHUB_SMTP_SECRET` value only when a username is configured;
+- plain, STARTTLS, and implicit TLS SMTP;
+- optional external authentication through `TOURHUB_SMTP_SECRET`;
 - Administrator-only connection check and fixed Russian test message;
-- configured timeout and bounded synchronous retries;
-- invitation create/reissue attempts automatic delivery after the invitation transaction commits;
-- delivery failure never rolls back a valid invitation and the manual one-time link always remains available;
-- safe status messages, responsive UI, fake-SMTP tests, and Chrome acceptance;
-- no migration; Alembic remains at `h10016`.
-
-PR #94 merged as `3c51d4c1d0bb0bd96d23a1f4ace0947ae48e9101`.
+- best-effort invitation delivery after commit with manual-link fallback.
 
 ### Multi-user operational readiness — TH-0085 / PR #95
 
-- focused Backend integration for two independent sessions belonging to one user;
-- current persisted role is resolved on every request and becomes visible to both sessions immediately;
-- user deactivation revokes every active session for that user;
-- protected frontend HTTP 401 responses clear stale identity centrally;
-- exact path, query, and hash are preserved through re-authentication;
-- explicit logout preserves the current destination;
-- the current role is visible in the application header;
-- browser acceptance covers bootstrap, route return, logout/login, server-side revocation, and recovery;
-- no migration; Alembic remains at `h10016`.
+- multiple independent sessions and current persisted role resolution;
+- complete session revocation on deactivation;
+- centralized protected-401 handling and exact route return;
+- visible current user role.
 
-Implementation head `4879e6dc701550935eb4d173e5098de85d264fd5` passed Quality #835, Document Quality #452, Guided Release Acceptance #403, Operator Docs #389, and Docker Release Runtime #384.
+### Recipe ownership foundation — TH-0086 / PR #96
+
+- Recipe scope is `club` or `personal`;
+- database ownership-shape constraints and migration `h10017`;
+- existing recipes remain CLUB; interactive creation produces owned PERSONAL recipes;
+- role-aware visibility and editing for Administrator, Instructor, and Verified Instructor;
+- Administrator-only permanent deletion with preserved Dish usage guards;
+- one Backend policy protects root, component, note, and equipment operations;
+- responsive frontend ownership labels and server-projected capabilities.
+
+PR #96 implementation head `29b84be3f98a721d8d0faf2fa1908f65681820cd` passed Quality #858, Document Quality #474, Guided Release Acceptance #425, Operator Docs #411, and Docker Release Runtime #406.
 
 ## NEXT
 
-1. **Recipe ownership and lifecycle** — CLUB/PERSONAL ownership, variants, submission, review, publication, rejection, archive, and Verified Instructor distinctions.
-2. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import paths.
-3. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
-4. **Consolidated export completeness** — approved complete Russian PDF and workbook contents using one immutable brand snapshot.
-5. **Product acceptance and feature freeze** — catalogue/import acceptance, optional-scope decisions, and end-to-end scenarios.
+1. **Recipe publication and moderation** — submission, review queue, publication, rejection with comment, resubmission, and lifecycle history.
+2. **Dish recipe variants and generation modes** — multiple recipes per Dish and approved club/personal selection modes.
+3. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import paths.
+4. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
+5. **Consolidated export completeness** — approved complete Russian PDF and workbook contents using one immutable brand snapshot.
+6. **Product acceptance and feature freeze** — catalogue/import acceptance, optional-scope decisions, and end-to-end scenarios.
 
 ## Deferred operations
 

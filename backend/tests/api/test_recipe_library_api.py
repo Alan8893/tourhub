@@ -4,6 +4,18 @@ from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_note import RecipeNoteORM
 
 
+ADMIN_CAPABILITIES = {
+    "scope": "club",
+    "owner_user_id": None,
+    "owner_display_name": None,
+    "is_owned_by_current_user": False,
+    "can_edit": True,
+    "can_archive": True,
+    "can_restore": False,
+    "can_delete": True,
+}
+
+
 def test_list_recipes_returns_sorted_summary(client, db_session):
     first = RecipeORM(id="recipe-b", name="Борщ")
     second = RecipeORM(id="recipe-a", name="Каша")
@@ -45,6 +57,7 @@ def test_list_recipes_returns_sorted_summary(client, db_session):
                 "is_archived": False,
                 "component_count": 0,
                 "note_count": 0,
+                **ADMIN_CAPABILITIES,
             },
             {
                 "id": "recipe-a",
@@ -52,6 +65,7 @@ def test_list_recipes_returns_sorted_summary(client, db_session):
                 "is_archived": False,
                 "component_count": 1,
                 "note_count": 1,
+                **ADMIN_CAPABILITIES,
             },
         ]
     }
@@ -94,6 +108,7 @@ def test_get_recipe_returns_components_products_and_notes(client, db_session):
     assert data["id"] == "recipe-1"
     assert data["name"] == "Походная каша"
     assert data["is_archived"] is False
+    assert {key: data[key] for key in ADMIN_CAPABILITIES} == ADMIN_CAPABILITIES
     assert data["components"] == [
         {
             "id": "component-1",

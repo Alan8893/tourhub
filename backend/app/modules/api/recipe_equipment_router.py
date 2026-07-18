@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.session import get_session
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
+from app.models.user import UserORM
 from app.schemas.equipment import (
     RecipeEquipmentRequirementListResponse,
     RecipeEquipmentRequirementResponse,
@@ -13,8 +15,11 @@ from app.services.recipe_equipment_service import RecipeEquipmentService
 router = APIRouter(prefix="/recipes", tags=["Recipes"])
 
 
-def get_service(session: Session = Depends(get_session)) -> RecipeEquipmentService:
-    return RecipeEquipmentService(session)
+def get_service(
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> RecipeEquipmentService:
+    return RecipeEquipmentService(session, actor=actor)
 
 
 def _response(
@@ -59,6 +64,8 @@ def add_requirement(
         requirement = service.add(recipe_id, **request.model_dump())
     except LookupError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+    except PermissionError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
     except ValueError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     return _response(requirement)
@@ -82,6 +89,8 @@ def update_requirement(
         )
     except LookupError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+    except PermissionError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
     except ValueError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     return _response(requirement)
@@ -100,6 +109,8 @@ def delete_requirement(
         service.delete(recipe_id, requirement_id)
     except LookupError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
+    except PermissionError as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
     except ValueError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     return Response(status_code=status.HTTP_204_NO_CONTENT)

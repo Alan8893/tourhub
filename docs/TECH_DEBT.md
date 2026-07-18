@@ -2,25 +2,32 @@
 
 Status date: 2026-07-18
 
-## Implemented through PR #95
+## Implemented through PR #96
 
 - complete guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
 - installation, update, backup, restore, recovery, release images, health checks, API proxy, and restart persistence;
 - complete typed System Settings foundation through `h10013`;
-- initial Administrator, sign-in, and settings permissions through `h10014`;
-- operational invitations and invited-user creation through `h10015`;
-- user list, explicit roles, activity controls, and optimistic user versions through `h10016`;
-- authenticated preparation routes and APIs for all three approved active roles;
-- Administrator-only settings, invitation management, and user administration;
+- invitation-only Access foundation and user administration through `h10016`;
 - working SMTP connection check, fixed Russian test message, and best-effort invitation delivery with manual fallback;
-- multiple independent sessions per user with current-role propagation on every request;
-- complete active-session revocation when a user is deactivated;
-- centralized frontend handling for protected HTTP 401 responses;
-- exact route return through sign-in and explicit logout;
-- visible current user role in the common application header;
+- multiple independent sessions per user with current-role propagation and complete deactivation revocation;
+- centralized frontend handling for protected HTTP 401 responses and exact route return;
+- Recipe CLUB/PERSONAL scope, owner identity, visibility filtering, role-aware editing, and nested ownership enforcement through `h10017`;
+- safe recipe owner/capability projection and responsive ownership UI;
 - conflict handling, PostgreSQL row locks, safe settings history, and deferred final downgrade/re-upgrade smoke.
 
-TH-0085 implementation head `4879e6dc701550935eb4d173e5098de85d264fd5` passed Quality #835, Document Quality #452, Guided Release Acceptance #403, Operator Docs #389, and Docker Release Runtime #384.
+PR #96 implementation head `29b84be3f98a721d8d0faf2fa1908f65681820cd` passed Quality #858, Document Quality #474, Guided Release Acceptance #425, Operator Docs #411, and Docker Release Runtime #406.
+
+## Remaining recipe lifecycle debt
+
+1. Submission and resubmission states for PERSONAL recipes.
+2. Verified Instructor and Administrator review queue.
+3. Publication transition from PERSONAL to CLUB with an explicit immutable origin policy.
+4. Rejection with required comment and visible feedback to the owner.
+5. Moderation lifecycle history before the consolidated actor-aware audit exists.
+6. Multiple Recipe variants per Dish.
+7. Club-only, club-plus-personal, and personal-preferred generation modes.
+8. Optimistic recipe versions when lifecycle transitions and concurrent editing are introduced.
+9. Ownership-aware CSV import preview/apply UX beyond trusted shared-catalogue import.
 
 ## Remaining Access debt
 
@@ -44,11 +51,12 @@ TH-0085 implementation head `4879e6dc701550935eb4d173e5098de85d264fd5` passed Qu
 
 ## Remaining release-blocking product debt
 
-1. **Recipe ownership and lifecycle** — CLUB/PERSONAL ownership, variants, submission, review, publication, rejection, archive, and Verified Instructor distinctions.
-2. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import plus existing-record handling.
-3. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
-4. **Consolidated export completeness** — approved complete Russian PDF and workbook sheets using the immutable brand snapshot.
-5. **Product acceptance** — active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
+1. **Recipe publication and moderation** — submission, review, publication, rejection, resubmission, and Verified Instructor distinctions.
+2. **Dish recipe variants and generation modes** — multiple recipes per Dish and approved club/personal selection modes.
+3. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import plus existing-record handling.
+4. **Actor-aware audit log** — safe real-actor history for project, menu, recipe, settings, mail, user, and role changes.
+5. **Consolidated export completeness** — approved complete Russian PDF and workbook sheets using the immutable brand snapshot.
+6. **Product acceptance** — active catalogue data, import interaction, optional-scope decisions, and end-to-end scenarios.
 
 ## Configuration export and import debt
 

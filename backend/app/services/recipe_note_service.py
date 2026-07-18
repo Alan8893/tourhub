@@ -6,17 +6,24 @@ from sqlalchemy.orm import Session
 
 from app.models.recipe import RecipeORM
 from app.models.recipe_note import RecipeNoteORM
+from app.models.user import UserORM
+from app.services.recipe_access_service import RecipeAccessService
 
 
 class RecipeNoteService:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, actor: UserORM | None = None):
         self.session = session
+        self.actor = actor
 
     def _get_recipe(self, recipe_id: str) -> RecipeORM:
         recipe = self.session.get(RecipeORM, recipe_id)
         if recipe is None:
             raise LookupError(f"Recipe not found: {recipe_id}")
-        return recipe
+        return RecipeAccessService.require_visible(recipe, self.actor)
+
+    def _get_editable_recipe(self, recipe_id: str) -> RecipeORM:
+        recipe = self._get_recipe(recipe_id)
+        return RecipeAccessService.require_editable(recipe, self.actor)
 
     def _get_note(self, recipe_id: str, note_id: str) -> RecipeNoteORM:
         note = self.session.scalar(
@@ -46,7 +53,7 @@ class RecipeNoteService:
         text: str,
         priority: int,
     ) -> RecipeNoteORM:
-        self._get_recipe(recipe_id)
+        self._get_editable_recipe(recipe_id)
         note = RecipeNoteORM(
             id=str(uuid4()),
             recipe_id=recipe_id,
@@ -68,6 +75,7 @@ class RecipeNoteService:
         text: str,
         priority: int,
     ) -> RecipeNoteORM:
+        self._get_editable_recipe(recipe_id)
         note = self._get_note(recipe_id, note_id)
         note.type = note_type
         note.text = text.strip()
@@ -77,6 +85,7 @@ class RecipeNoteService:
         return note
 
     def delete(self, recipe_id: str, note_id: str) -> None:
+        self._get_editable_recipe(recipe_id)
         note = self._get_note(recipe_id, note_id)
         self.session.delete(note)
         self.session.commit()

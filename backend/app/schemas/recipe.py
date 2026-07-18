@@ -1,7 +1,20 @@
 from pydantic import BaseModel, Field, model_validator
 
+from app.models.recipe_scope import RecipeScope
 
-class RecipeListItemResponse(BaseModel):
+
+class RecipeOwnershipResponse(BaseModel):
+    scope: RecipeScope
+    owner_user_id: int | None
+    owner_display_name: str | None
+    is_owned_by_current_user: bool
+    can_edit: bool
+    can_archive: bool
+    can_restore: bool
+    can_delete: bool
+
+
+class RecipeListItemResponse(RecipeOwnershipResponse):
     id: str
     name: str
     is_archived: bool
@@ -46,7 +59,7 @@ class RecipeDetailNoteResponse(BaseModel):
     created_at: str
 
 
-class RecipeDetailResponse(BaseModel):
+class RecipeDetailResponse(RecipeOwnershipResponse):
     id: str
     name: str
     is_archived: bool
@@ -77,7 +90,7 @@ class RecipeComponentWriteRequest(BaseModel):
         return self
 
 
-class RecipeWriteResponse(BaseModel):
+class RecipeWriteResponse(RecipeOwnershipResponse):
     id: str
     name: str
     is_archived: bool

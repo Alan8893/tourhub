@@ -58,6 +58,7 @@ Exact task IDs for implementation slices are assigned when each slice starts fro
 | TH-0083 | Preparation Authorization Matrix | DONE |
 | TH-0084 | Working Mail Delivery | DONE |
 | TH-0085 | Multi-User Operational Readiness | DONE |
+| TH-0086 | Recipe Ownership Foundation | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 

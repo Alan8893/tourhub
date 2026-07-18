@@ -1,6 +1,19 @@
 import { apiClient } from "@/shared/api/client";
 
-export interface RecipeListItem {
+export type RecipeScope = "club" | "personal";
+
+export interface RecipeOwnership {
+  scope: RecipeScope;
+  owner_user_id: number | null;
+  owner_display_name: string | null;
+  is_owned_by_current_user: boolean;
+  can_edit: boolean;
+  can_archive: boolean;
+  can_restore: boolean;
+  can_delete: boolean;
+}
+
+export interface RecipeListItem extends RecipeOwnership {
   id: string;
   name: string;
   component_count: number;
@@ -55,7 +68,7 @@ export interface RecipeNoteWriteInput {
   priority: number;
 }
 
-export interface RecipeDetail {
+export interface RecipeDetail extends RecipeOwnership {
   id: string;
   name: string;
   is_archived: boolean;
@@ -63,7 +76,7 @@ export interface RecipeDetail {
   notes: RecipeNote[];
 }
 
-export interface RecipeWriteResponse {
+export interface RecipeWriteResponse extends RecipeOwnership {
   id: string;
   name: string;
   is_archived: boolean;
