@@ -54,7 +54,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - delivery failure never invalidates the new invitation or removes the one-time manual link;
 - queues, background workers, provider APIs, arbitrary templates, attachments, bounce processing, and delivery history remain separate future capabilities.
 
-The `main` Alembic head is `h10016`; draft PR #96 advances it to `h10017`.
+The current Alembic head is `h10017`.
 
 MealSlot and MealSlotDish remain primary. MealPlanItem remains compatibility-only.
 
