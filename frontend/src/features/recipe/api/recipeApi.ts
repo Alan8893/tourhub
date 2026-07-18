@@ -1,16 +1,29 @@
 import { apiClient } from "@/shared/api/client";
 
 export type RecipeScope = "club" | "personal";
+export type RecipeLifecycleStatus = "draft" | "submitted" | "rejected" | "published";
+export type RecipeView = "library" | "moderation";
 
 export interface RecipeOwnership {
   scope: RecipeScope;
   owner_user_id: number | null;
   owner_display_name: string | null;
   is_owned_by_current_user: boolean;
+  lifecycle_status: RecipeLifecycleStatus;
+  submitted_by_user_id: number | null;
+  submitted_by_display_name: string | null;
+  submitted_at: string | null;
+  reviewed_by_user_id: number | null;
+  reviewed_by_display_name: string | null;
+  reviewed_at: string | null;
+  review_comment: string | null;
   can_edit: boolean;
   can_archive: boolean;
   can_restore: boolean;
   can_delete: boolean;
+  can_submit: boolean;
+  can_publish: boolean;
+  can_reject: boolean;
 }
 
 export interface RecipeListItem extends RecipeOwnership {
@@ -91,9 +104,15 @@ export interface RecipeComponentWriteInput {
   people_count: number | null;
 }
 
-export async function getRecipes(includeArchived = false): Promise<RecipeListResponse> {
+export async function getRecipes(
+  includeArchived = false,
+  view: RecipeView = "library",
+): Promise<RecipeListResponse> {
   const response = await apiClient.get<RecipeListResponse>("/recipes", {
-    params: includeArchived ? { include_archived: true } : undefined,
+    params: {
+      ...(includeArchived ? { include_archived: true } : {}),
+      ...(view === "moderation" ? { view } : {}),
+    },
   });
   return response.data;
 }
@@ -120,6 +139,26 @@ export async function createRecipe(name: string): Promise<RecipeWriteResponse> {
 
 export async function renameRecipe(recipeId: string, name: string): Promise<RecipeWriteResponse> {
   const response = await apiClient.patch<RecipeWriteResponse>(`/recipes/${recipeId}`, { name });
+  return response.data;
+}
+
+export async function submitRecipe(recipeId: string): Promise<RecipeWriteResponse> {
+  const response = await apiClient.post<RecipeWriteResponse>(`/recipes/${recipeId}/submit`);
+  return response.data;
+}
+
+export async function publishRecipe(recipeId: string): Promise<RecipeWriteResponse> {
+  const response = await apiClient.post<RecipeWriteResponse>(`/recipes/${recipeId}/publish`);
+  return response.data;
+}
+
+export async function rejectRecipe(
+  recipeId: string,
+  comment: string,
+): Promise<RecipeWriteResponse> {
+  const response = await apiClient.post<RecipeWriteResponse>(`/recipes/${recipeId}/reject`, {
+    comment,
+  });
   return response.data;
 }
 
