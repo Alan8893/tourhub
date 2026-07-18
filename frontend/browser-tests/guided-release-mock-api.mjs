@@ -27,6 +27,14 @@ export function createGuidedReleaseMockApi(port) {
     last_meal: "dinner",
     status: "draft",
   };
+  const currentUser = {
+    id: 1,
+    email: "instructor@tourhub.local",
+    display_name: "Тестовый инструктор",
+    role: "instructor",
+    is_active: true,
+    created_at: "2026-07-18T00:00:00",
+  };
   const mealPlan = {
     id: "meal-plan-77",
     project_id: 77,
@@ -58,6 +66,12 @@ export function createGuidedReleaseMockApi(port) {
       : undefined;
     requests.push({ method: request.method ?? "GET", path: url.pathname, body });
 
+    if (request.method === "GET" && url.pathname === "/api/v1/auth/bootstrap-status") {
+      return json(response, 200, { bootstrap_required: false });
+    }
+    if (request.method === "GET" && url.pathname === "/api/v1/auth/me") {
+      return json(response, 200, { user: currentUser });
+    }
     if (request.method === "POST" && url.pathname === "/api/v1/projects") {
       project = { ...project, ...body, start_date: body.start_date ?? null };
       return json(response, 200, project);
