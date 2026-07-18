@@ -30,13 +30,13 @@ Administrator bootstrap and invitations
   → Menu
   → Club and personal recipes
   → Recipe publication and moderation
-  → Dishes
+  → Dish recipe variants and generation modes
   → Shopping and packaging
   → Equipment
   → PDF, Excel, print, and ZIP
 ```
 
-The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, multi-user operational readiness, and Recipe Ownership Foundation are complete through PR #96. Draft PR #97 implements recipe publication and moderation.
+The complete guided preparation baseline, production-like runtime, typed System Settings, first-release Access foundation, working SMTP invitation delivery, multi-user operational readiness, Recipe Ownership Foundation, and Recipe Publication and Moderation are complete through TH-0087 / PR #97. The next capability is multiple Recipe variants per Dish with club/personal generation modes.
 
 ## 3. Architecture
 
@@ -76,14 +76,14 @@ docker compose up -d --build
 
 The operator release path uses `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally. PostgreSQL and Redis remain internal to the release Compose network. Redis is available but no current business workflow depends on it.
 
-## 4. Implemented baseline and active slice
+## 4. Implemented baseline
 
 ### Access and users
 
 - one-time first-Administrator bootstrap;
 - password hashing and server-owned HttpOnly sessions;
 - Administrator-created one-time invitations and automatic SMTP delivery with manual-link fallback;
-- invited-user creation, role and activity administration, optimistic versions, and final-active-Administrator protection;
+- invited-user creation, role/activity administration, optimistic versions, and final-active-Administrator protection;
 - preparation access for active Administrator, Instructor, and Verified Instructor users;
 - Administrator-only settings, invitation management, user administration, and mail operations;
 - multiple independent sessions, current-role resolution, complete deactivation revocation, centralized 401 handling, exact route return, and visible current role.
@@ -102,6 +102,7 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 - resubmission clears the previous decision;
 - publication converts PERSONAL to CLUB and preserves submitter attribution;
 - row-locked lifecycle transitions and Backend capabilities remain authoritative;
+- focused Chrome acceptance covers moderation and rejection on mobile;
 - permanent deletion remains Administrator-only and preserves Dish usage guards.
 
 ### Projects and preparation
@@ -128,16 +129,16 @@ The operator release path uses `docker-compose.release.yml`. Frontend, Backend, 
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
-- TH-0087 — Recipe Publication and Moderation in draft PR #97.
+
+The next task should establish Dish recipe variants and approved club/personal generation modes from the merged TH-0087 baseline.
 
 ## 6. Immediate sequence
 
-1. Complete and merge recipe publication and moderation.
-2. Implement multiple Recipe variants per Dish and club/personal generation modes.
-3. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
-4. Implement actor-aware audit history, including full moderation history.
-5. Complete consolidated Russian exports and product acceptance.
-6. Freeze features, run the final migration cycle, and complete release gates.
+1. Implement multiple Recipe variants per Dish and club/personal generation modes.
+2. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
+3. Implement actor-aware audit history, including immutable moderation history.
+4. Complete consolidated Russian exports and product acceptance.
+5. Freeze features, run the final migration cycle, and complete release gates.
 
 ## 7. Development rules
 
