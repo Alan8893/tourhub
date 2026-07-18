@@ -7,6 +7,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0087 | Recipe Publication and Moderation | IN PROGRESS | ./active/TH-0087-recipe-publication-moderation.md |
 
 ## Planned release sequence
 
