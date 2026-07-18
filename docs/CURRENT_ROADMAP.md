@@ -61,9 +61,7 @@ PR #90 merged as `26c4d4eb9246de44579451fe3d6e7bd631538324`. PR #91 merged as `2
 
 PR #94 merged as `3c51d4c1d0bb0bd96d23a1f4ace0947ae48e9101`.
 
-## IN PROGRESS — TH-0085
-
-### Multi-user operational readiness
+### Multi-user operational readiness — TH-0085 / PR #95
 
 - focused Backend integration for two independent sessions belonging to one user;
 - current persisted role is resolved on every request and becomes visible to both sessions immediately;
@@ -75,10 +73,7 @@ PR #94 merged as `3c51d4c1d0bb0bd96d23a1f4ace0947ae48e9101`.
 - browser acceptance covers bootstrap, route return, logout/login, server-side revocation, and recovery;
 - no migration; Alembic remains at `h10016`.
 
-Scope boundary:
-
-- no session-management UI, account recovery, project ownership, row-level ACLs, live collaboration, or multi-tenancy;
-- recipe ownership and role-specific moderation remain the next business capability.
+Implementation head `4879e6dc701550935eb4d173e5098de85d264fd5` passed Quality #835, Document Quality #452, Guided Release Acceptance #403, Operator Docs #389, and Docker Release Runtime #384.
 
 ## NEXT
 
