@@ -1,7 +1,9 @@
 from datetime import timedelta
 
+from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+from app.main import app
 from app.models.auth_session import AuthSessionORM
 from app.models.user import UserORM
 from app.services.auth_service import hash_password, utc_now
@@ -182,3 +184,59 @@ def test_self_demotion_is_allowed_when_another_active_administrator_exists(
     assert response.json()["role"] == "instructor"
     assert auth_client.get("/api/v1/auth/me").json()["user"]["role"] == "instructor"
     assert auth_client.get("/api/v1/users").status_code == 403
+
+
+def test_role_changes_reach_all_sessions_and_deactivation_revokes_them(
+    auth_client,
+    db_session,
+) -> None:
+    bootstrap(auth_client)
+    member = add_user(db_session, email="multi.session@example.org")
+    login_payload = {
+        "email": member.email,
+        "password": "member-password-12345",
+    }
+    first_client = TestClient(app)
+    second_client = TestClient(app)
+
+    try:
+        assert first_client.post("/api/v1/auth/login", json=login_payload).status_code == 200
+        assert second_client.post("/api/v1/auth/login", json=login_payload).status_code == 200
+        assert first_client.get("/api/v1/auth/me").json()["user"]["role"] == "instructor"
+        assert second_client.get("/api/v1/auth/me").json()["user"]["role"] == "instructor"
+
+        promoted = auth_client.patch(
+            f"/api/v1/users/{member.id}",
+            json={
+                "expected_version": member.version,
+                "role": "verified_instructor",
+                "is_active": True,
+            },
+        )
+        assert promoted.status_code == 200, promoted.text
+        promoted_body = promoted.json()
+        assert promoted_body["version"] == 2
+        assert first_client.get("/api/v1/auth/me").json()["user"]["role"] == "verified_instructor"
+        assert second_client.get("/api/v1/auth/me").json()["user"]["role"] == "verified_instructor"
+
+        deactivated = auth_client.patch(
+            f"/api/v1/users/{member.id}",
+            json={
+                "expected_version": promoted_body["version"],
+                "role": "verified_instructor",
+                "is_active": False,
+            },
+        )
+        assert deactivated.status_code == 200, deactivated.text
+        assert first_client.get("/api/v1/auth/me").status_code == 401
+        assert second_client.get("/api/v1/auth/me").status_code == 401
+    finally:
+        first_client.close()
+        second_client.close()
+
+    db_session.expire_all()
+    sessions = db_session.scalars(
+        select(AuthSessionORM).where(AuthSessionORM.user_id == member.id)
+    ).all()
+    assert len(sessions) == 2
+    assert all(session.revoked_at is not None for session in sessions)
