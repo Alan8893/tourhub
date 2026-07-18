@@ -17,9 +17,10 @@ def test_add_dish_to_slot_marks_slot_as_manual():
     service = MealSlotService()
     slot = make_slot()
 
-    item = service.add_dish(slot, "dish-1")
+    item = service.add_dish(slot, "dish-1", "recipe-1")
 
     assert item.dish_id == "dish-1"
+    assert item.recipe_id == "recipe-1"
     assert len(slot.dishes) == 1
     assert slot.dishes[0].order == 0
     assert slot.is_manually_edited is True
@@ -32,13 +33,15 @@ def test_replace_dish_in_slot_marks_slot_as_manual():
     item = MealSlotDishORM(
         id="slot-dish-1",
         dish_id="old-dish",
+        recipe_id="old-recipe",
         order=0,
     )
     slot.dishes = [item]
 
-    service.replace_dish(slot, "slot-dish-1", "new-dish")
+    service.replace_dish(slot, "slot-dish-1", "new-dish", "new-recipe")
 
     assert slot.dishes[0].dish_id == "new-dish"
+    assert slot.dishes[0].recipe_id == "new-recipe"
     assert slot.is_manually_edited is True
 
 
@@ -47,8 +50,8 @@ def test_remove_dish_reorders_items_and_marks_empty_slot_as_manual():
     slot = make_slot()
 
     slot.dishes = [
-        MealSlotDishORM(id="1", dish_id="dish-1", order=0),
-        MealSlotDishORM(id="2", dish_id="dish-2", order=1),
+        MealSlotDishORM(id="1", dish_id="dish-1", recipe_id="recipe-1", order=0),
+        MealSlotDishORM(id="2", dish_id="dish-2", recipe_id="recipe-2", order=1),
     ]
 
     service.remove_dish(slot, "1")

@@ -7,56 +7,51 @@ from app.services.shopping_list_service import ShoppingListService
 
 
 class MealPlanShoppingService:
-    """Calculate shopping requirements from the current meal-plan composition."""
+    """Calculate shopping requirements from persisted assignment Recipes."""
 
     def __init__(self, shopping_list_service: ShoppingListService):
         self.shopping_list_service = shopping_list_service
 
     def calculate(self, meal_plan: MealPlanORM) -> ShoppingListResult:
         recipes = self._collect_recipe_occurrences(meal_plan)
-
         return self.shopping_list_service.calculate_for_recipes(
             recipes=recipes,
             people=meal_plan.participants,
-            # Recipe occurrences already encode the exact trip-day frequency.
             days=1,
         )
 
     def calculate_packaged(self, meal_plan: MealPlanORM) -> PackagedShoppingResult:
         recipes = self._collect_recipe_occurrences(meal_plan)
-
         return self.shopping_list_service.calculate_packaged_for_recipes(
             recipes=recipes,
             people=meal_plan.participants,
-            # Recipe occurrences already encode the exact trip-day frequency.
             days=1,
         )
 
+    @staticmethod
+    def _assignment_recipe(assignment: Any) -> Any | None:
+        recipe = getattr(assignment, "recipe", None)
+        if recipe is not None:
+            return recipe
+        dish = getattr(assignment, "dish", None)
+        return getattr(dish, "recipe", None)
+
     def _collect_recipe_occurrences(self, meal_plan: MealPlanORM) -> list[Any]:
-        """Collect one recipe entry for every dish occurrence in the menu.
-
-        MealSlot is the canonical composition source. Legacy MealPlanItem records
-        are read only for days without slots, preventing double counting during
-        the evolutionary migration.
-        """
+        """Collect the selected Recipe for every persisted dish occurrence."""
         recipes: list[Any] = []
-
         for day in meal_plan.days:
             if day.slots:
                 for slot in day.slots:
                     for slot_dish in slot.dishes:
-                        dish = slot_dish.dish
-                        if dish and dish.recipe:
-                            recipes.append(dish.recipe)
+                        recipe = self._assignment_recipe(slot_dish)
+                        if recipe is not None:
+                            recipes.append(recipe)
                 continue
-
             for item in day.items:
-                if item.dish and item.dish.recipe:
-                    recipes.append(item.dish.recipe)
-
+                recipe = self._assignment_recipe(item)
+                if recipe is not None:
+                    recipes.append(recipe)
         return recipes
 
-    # Compatibility for existing callers and tests while the old private name is
-    # phased out. It now returns occurrences rather than unique recipes.
     def _collect_recipes(self, meal_plan: MealPlanORM) -> list[Any]:
         return self._collect_recipe_occurrences(meal_plan)

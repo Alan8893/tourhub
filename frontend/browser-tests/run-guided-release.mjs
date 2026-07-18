@@ -116,6 +116,7 @@ async function run() {
       days: 3,
       first_meal: "dinner",
       last_meal: "dinner",
+      recipe_generation_mode: "club_only",
     });
 
     await clickButton(client, "Сформировать меню");

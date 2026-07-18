@@ -6,17 +6,7 @@ from app.models.base import Base
 
 class MealPlanItemORM(Base):
     """
-    Single meal inside a meal plan day.
-
-    Example:
-
-    Day 1:
-
-    breakfast:
-    Oatmeal
-
-    dinner:
-    Camp pilaf
+    Compatibility meal-plan item with selected Recipe snapshot.
     """
 
     __tablename__ = "meal_plan_items"
@@ -36,6 +26,11 @@ class MealPlanItemORM(Base):
         nullable=False,
     )
 
+    recipe_id: Mapped[str] = mapped_column(
+        ForeignKey("recipes.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+
     meal_type: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
@@ -46,6 +41,5 @@ class MealPlanItemORM(Base):
         back_populates="items",
     )
 
-    dish = relationship(
-        "DishORM",
-    )
+    dish = relationship("DishORM")
+    recipe = relationship("RecipeORM")

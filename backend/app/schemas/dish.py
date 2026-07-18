@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from app.models.recipe_scope import RecipeScope
 from app.modules.domain.meal_role import MealRole
 from app.modules.domain.meal_type import MealType
 
@@ -8,6 +9,9 @@ class DishRecipeResponse(BaseModel):
     id: str
     name: str
     is_archived: bool
+    scope: RecipeScope
+    owner_display_name: str | None = None
+    is_default: bool = False
 
 
 class DishMealRoleResponse(BaseModel):
@@ -20,6 +24,7 @@ class DishResponse(BaseModel):
     id: str
     name: str
     recipe: DishRecipeResponse
+    recipes: list[DishRecipeResponse] = Field(default_factory=list)
     meal_roles: list[DishMealRoleResponse] = Field(default_factory=list)
 
 
@@ -47,11 +52,13 @@ class DishCatalogueReadinessResponse(BaseModel):
 class DishCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     recipe_id: str = Field(min_length=1)
+    recipe_ids: list[str] = Field(default_factory=list)
 
 
 class DishUpdateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     recipe_id: str = Field(min_length=1)
+    recipe_ids: list[str] = Field(default_factory=list)
 
 
 class DishMealRoleRequest(BaseModel):

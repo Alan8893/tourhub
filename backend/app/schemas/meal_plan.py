@@ -10,6 +10,8 @@ class MealPlanItemResponse(BaseModel):
     meal_type: str
     dish_id: UUID
     dish_name: str
+    recipe_id: UUID
+    recipe_name: str
 
 
 class MealSlotDishResponse(BaseModel):
@@ -18,6 +20,8 @@ class MealSlotDishResponse(BaseModel):
     id: str
     dish_id: UUID
     dish_name: str
+    recipe_id: UUID
+    recipe_name: str
 
 
 class MealSlotResponse(BaseModel):

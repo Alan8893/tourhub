@@ -32,5 +32,5 @@ def test_meal_slot_rejects_dish_with_archived_recipe(client, db_session):
 
     assert response.status_code == 422
     assert response.json()["error"] == (
-        "Dish with archived recipe cannot be assigned to a meal slot"
+        "Dish has no recipe available for the project generation mode"
     )

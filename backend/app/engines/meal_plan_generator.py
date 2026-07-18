@@ -26,6 +26,7 @@ class DishInput:
     id: str
     name: str
     meal_roles: tuple[DishRoleInput, ...] = ()
+    recipe_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,7 @@ class MealPlanItemResult:
     meal_type: str
     dish_id: str
     dish_name: str
+    recipe_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -133,15 +135,25 @@ class MealPlanGenerator:
                     )
                 )
                 items.extend(
-                    MealPlanItemResult(day_number, meal_type, dish.id, dish.name)
+                    MealPlanItemResult(
+                        day_number,
+                        meal_type,
+                        dish.id,
+                        dish.name,
+                        dish.recipe_id,
+                    )
                     for dish in preserved_dishes
                 )
                 continue
 
-            composition = (("snack", True),) if meal_type == "snack" else (
-                ("main", True),
-                ("addition", False),
-                ("drink", False),
+            composition = (
+                (("snack", True),)
+                if meal_type == "snack"
+                else (
+                    ("main", True),
+                    ("addition", False),
+                    ("drink", False),
+                )
             )
             selected: list[DishInput] = []
             selected_ids: set[str] = set()
@@ -179,18 +191,74 @@ class MealPlanGenerator:
                         reason="eligible",
                     )
                     continue
+
                 selected.append(chosen)
                 selected_ids.add(chosen.id)
-                context.register_selected(
-                    chosen,
-                    role=role,
-                    is_repeatable=repeatable,
-                )
-                items.append(MealPlanItemResult(day_number, meal_type, chosen.id, chosen.name))
+                context.register_selected(chosen, role, repeatable)
 
-            slots.append(MealSlotResult(day_number, meal_type, selected))
+            slots.append(
+                MealSlotResult(
+                    day_number=day_number,
+                    meal_type=meal_type,
+                    dishes=selected,
+                )
+            )
+            items.extend(
+                MealPlanItemResult(
+                    day_number,
+                    meal_type,
+                    dish.id,
+                    dish.name,
+                    dish.recipe_id,
+                )
+                for dish in selected
+            )
 
         return MealPlanGenerationResult(items=items, slots=slots, warnings=warnings)
+
+    @staticmethod
+    def _candidates(
+        dishes: list[DishInput],
+        role: str,
+        meal_type: str,
+    ) -> list[DishInput]:
+        return [
+            dish
+            for dish in dishes
+            if any(
+                assignment.role == role
+                and meal_type in assignment.allowed_meal_types
+                for assignment in dish.meal_roles
+            )
+        ]
+
+    @staticmethod
+    def _select_role_candidate(
+        candidates: list[DishInput],
+        start_index: int,
+        context: SelectionContext,
+        selected_ids: set[str],
+        role: str,
+        meal_type: str,
+    ) -> tuple[DishInput | None, int, bool]:
+        for offset in range(len(candidates)):
+            index = (start_index + offset) % len(candidates)
+            candidate = candidates[index]
+            assignment = next(
+                item
+                for item in candidate.meal_roles
+                if item.role == role and meal_type in item.allowed_meal_types
+            )
+            if candidate.id in selected_ids:
+                continue
+            if MealCompositionPolicy.can_select(
+                candidate,
+                context,
+                assignment.is_repeatable,
+                role,
+            ):
+                return candidate, (index + 1) % len(candidates), assignment.is_repeatable
+        return None, start_index, False
 
     @staticmethod
     def _warn_required_gap(
@@ -207,93 +275,44 @@ class MealPlanGenerator:
         if key in warned_missing:
             return
         warned_missing.add(key)
-        if reason == "eligible":
-            warnings.append(f"No eligible {role} dishes available for {meal_type}")
-        else:
+        if reason == "catalogue":
             warnings.append(f"No {role} dishes available for {meal_type}")
+        else:
+            warnings.append(f"No eligible {role} dishes available for {meal_type}")
 
     @staticmethod
-    def _candidates(dishes: list[DishInput], role: str, meal_type: str) -> list[DishInput]:
-        return [
-            dish
-            for dish in dishes
-            if any(
-                assignment.role == role and meal_type in assignment.allowed_meal_types
-                for assignment in dish.meal_roles
-            )
-        ]
-
-    @staticmethod
-    def _assignment(dish: DishInput, role: str, meal_type: str) -> DishRoleInput:
-        return next(
-            assignment
-            for assignment in dish.meal_roles
-            if assignment.role == role and meal_type in assignment.allowed_meal_types
-        )
-
-    def _select_role_candidate(
-        self,
-        candidates: list[DishInput],
-        start_index: int,
-        context: SelectionContext,
-        selected_ids: set[str],
-        role: str,
-        meal_type: str,
-    ) -> tuple[DishInput | None, int, bool]:
-        for offset in range(len(candidates)):
-            candidate_index = start_index + offset
-            candidate = candidates[candidate_index % len(candidates)]
-            assignment = self._assignment(candidate, role, meal_type)
-            if candidate.id in selected_ids:
-                continue
-            if not MealCompositionPolicy.can_select(
-                candidate,
-                context,
-                assignment.is_repeatable,
-                role,
-            ):
-                continue
-            return candidate, candidate_index + 1, assignment.is_repeatable
-
-        return None, start_index + 1, False
-
     def _generate_legacy(
-        self,
         dishes: list[DishInput],
         meal_sequence: list[tuple[int, str]],
         dishes_per_meal: int,
     ) -> MealPlanGenerationResult:
-        warnings: list[str] = []
         items: list[MealPlanItemResult] = []
         slots: list[MealSlotResult] = []
-        meals_by_day = Counter(day_number for day_number, _ in meal_sequence)
-        if len(dishes) < max(meals_by_day.values(), default=0) * dishes_per_meal:
+        for index, (day_number, meal_type) in enumerate(meal_sequence):
+            selected = [
+                dishes[(index * dishes_per_meal + offset) % len(dishes)]
+                for offset in range(dishes_per_meal)
+            ]
+            slots.append(
+                MealSlotResult(
+                    day_number=day_number,
+                    meal_type=meal_type,
+                    dishes=selected,
+                )
+            )
+            items.extend(
+                MealPlanItemResult(
+                    day_number,
+                    meal_type,
+                    dish.id,
+                    dish.name,
+                    dish.recipe_id,
+                )
+                for dish in selected
+            )
+
+        counts = Counter(item.dish_id for item in items)
+        warnings = []
+        if any(count > 1 for count in counts.values()):
             warnings.append(INSUFFICIENT_DISHES_WARNING)
-
-        dish_index = 0
-        context = SelectionContext(used_for_day=set())
-        for day_number, meal_type in meal_sequence:
-            context.begin_day(day_number)
-            selected: list[DishInput] = []
-            for _ in range(dishes_per_meal):
-                dish, dish_index = self._select_next_dish(dishes, dish_index, context)
-                selected.append(dish)
-                context.register_selected(dish)
-                items.append(MealPlanItemResult(day_number, meal_type, dish.id, dish.name))
-            slots.append(MealSlotResult(day_number, meal_type, selected))
         return MealPlanGenerationResult(items=items, slots=slots, warnings=warnings)
-
-    @staticmethod
-    def _select_next_dish(
-        dishes: list[DishInput],
-        start_index: int,
-        context: SelectionContext,
-    ) -> tuple[DishInput, int]:
-        for offset in range(len(dishes)):
-            candidate_index = start_index + offset
-            candidate = dishes[candidate_index % len(dishes)]
-            if not MealCompositionPolicy.can_select(candidate, context):
-                continue
-            return candidate, candidate_index + 1
-        fallback = dishes[start_index % len(dishes)]
-        return fallback, start_index + 1

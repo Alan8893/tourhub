@@ -1,7 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.dish import DishORM
 from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_slot import MealSlotORM
 from app.models.meal_slot_dish import MealSlotDishORM
@@ -11,7 +10,7 @@ from app.services.equipment_list_service import EquipmentListService
 
 
 class RecipeEquipmentRecalculationService:
-    """Refresh prepared equipment lists affected by one recipe requirement change."""
+    """Refresh prepared equipment lists using one persisted assignment Recipe."""
 
     def __init__(self, session: Session) -> None:
         self.session = session
@@ -27,8 +26,7 @@ class RecipeEquipmentRecalculationService:
             select(MealPlanDayORM.meal_plan_id)
             .join(MealSlotORM, MealSlotORM.meal_plan_day_id == MealPlanDayORM.id)
             .join(MealSlotDishORM, MealSlotDishORM.meal_slot_id == MealSlotORM.id)
-            .join(DishORM, DishORM.id == MealSlotDishORM.dish_id)
-            .where(DishORM.recipe_id == recipe_id)
+            .where(MealSlotDishORM.recipe_id == recipe_id)
             .distinct()
         )
         meal_plan_ids = list(self.session.scalars(statement).all())

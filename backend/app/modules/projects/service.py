@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from app.engines.meal_schedule import MealScheduleEngine
+from app.models.recipe_generation_mode import RecipeGenerationMode
 from app.modules.projects.models.project import ProjectORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
 
@@ -14,6 +15,7 @@ class Project:
     start_date: str | None
     first_meal: str | None
     last_meal: str | None
+    recipe_generation_mode: str
     status: str
 
 
@@ -34,12 +36,14 @@ class ProjectService:
         start_date: str | None = None,
         first_meal: str | None = None,
         last_meal: str | None = None,
+        recipe_generation_mode: str = RecipeGenerationMode.CLUB_ONLY.value,
     ) -> Project:
         if participants <= 0:
             raise ValueError("Participants must be greater than zero")
         if days <= 0:
             raise ValueError("Days must be greater than zero")
         self._validate_meal_boundaries(days, first_meal, last_meal)
+        self._validate_generation_mode(recipe_generation_mode)
 
         project = self.repository.create(
             ProjectORM(
@@ -49,6 +53,7 @@ class ProjectService:
                 start_date=start_date,
                 first_meal=first_meal,
                 last_meal=last_meal,
+                recipe_generation_mode=recipe_generation_mode,
                 status="draft",
             )
         )
@@ -58,6 +63,20 @@ class ProjectService:
         project = self.repository.get_by_id(project_id)
         if project is None:
             raise ValueError("Project not found")
+        return self._map(project)
+
+    def update_recipe_generation_mode(
+        self,
+        project_id: int,
+        recipe_generation_mode: str,
+    ) -> Project:
+        self._validate_generation_mode(recipe_generation_mode)
+        project = self.repository.get_by_id(project_id)
+        if project is None:
+            raise ValueError("Project not found")
+        project.recipe_generation_mode = recipe_generation_mode
+        self.repository.session.commit()
+        self.repository.session.refresh(project)
         return self._map(project)
 
     def _validate_meal_boundaries(
@@ -77,6 +96,13 @@ class ProjectService:
         )
 
     @staticmethod
+    def _validate_generation_mode(value: str) -> None:
+        try:
+            RecipeGenerationMode(value)
+        except ValueError as exc:
+            raise ValueError("Unsupported recipe generation mode") from exc
+
+    @staticmethod
     def _map(project: ProjectORM) -> Project:
         return Project(
             id=project.id,
@@ -86,5 +112,10 @@ class ProjectService:
             start_date=getattr(project, "start_date", None),
             first_meal=getattr(project, "first_meal", None),
             last_meal=getattr(project, "last_meal", None),
+            recipe_generation_mode=getattr(
+                project,
+                "recipe_generation_mode",
+                RecipeGenerationMode.CLUB_ONLY.value,
+            ),
             status=project.status,
         )

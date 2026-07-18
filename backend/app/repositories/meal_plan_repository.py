@@ -1,13 +1,14 @@
 from sqlalchemy.orm import Session, joinedload
 
+from app.models.dish import DishORM
+from app.models.ingredient import IngredientORM
 from app.models.meal_plan import MealPlanORM
 from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_plan_item import MealPlanItemORM
 from app.models.meal_slot import MealSlotORM
 from app.models.meal_slot_dish import MealSlotDishORM
-from app.models.dish import DishORM
 from app.models.recipe import RecipeORM
-from app.models.ingredient import IngredientORM
+from app.models.recipe_component import RecipeComponentORM
 
 
 class MealPlanRepository:
@@ -43,22 +44,35 @@ class MealPlanRepository:
         )
 
     def get_with_details(self, meal_plan_id: str) -> MealPlanORM | None:
+        item_recipe = joinedload(MealPlanORM.days).joinedload(MealPlanDayORM.items)
+        slot_recipe = (
+            joinedload(MealPlanORM.days)
+            .joinedload(MealPlanDayORM.slots)
+            .joinedload(MealSlotORM.dishes)
+        )
         return (
             self.session.query(MealPlanORM)
             .options(
-                joinedload(MealPlanORM.days)
-                .joinedload(MealPlanDayORM.items)
-                .joinedload(MealPlanItemORM.dish)
+                item_recipe.joinedload(MealPlanItemORM.dish)
                 .joinedload(DishORM.recipe)
                 .joinedload(RecipeORM.ingredients)
                 .joinedload(IngredientORM.product),
-                joinedload(MealPlanORM.days)
-                .joinedload(MealPlanDayORM.slots)
-                .joinedload(MealSlotORM.dishes)
-                .joinedload(MealSlotDishORM.dish)
+                item_recipe.joinedload(MealPlanItemORM.recipe)
+                .joinedload(RecipeORM.ingredients)
+                .joinedload(IngredientORM.product),
+                item_recipe.joinedload(MealPlanItemORM.recipe)
+                .joinedload(RecipeORM.components)
+                .joinedload(RecipeComponentORM.product),
+                slot_recipe.joinedload(MealSlotDishORM.dish)
                 .joinedload(DishORM.recipe)
                 .joinedload(RecipeORM.ingredients)
                 .joinedload(IngredientORM.product),
+                slot_recipe.joinedload(MealSlotDishORM.recipe)
+                .joinedload(RecipeORM.ingredients)
+                .joinedload(IngredientORM.product),
+                slot_recipe.joinedload(MealSlotDishORM.recipe)
+                .joinedload(RecipeORM.components)
+                .joinedload(RecipeComponentORM.product),
             )
             .filter(MealPlanORM.id == meal_plan_id)
             .first()

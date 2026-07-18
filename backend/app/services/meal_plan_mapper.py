@@ -1,3 +1,5 @@
+from typing import Any
+
 from app.models.meal_plan import MealPlanORM
 from app.schemas.meal_plan import (
     MealPlanItemResponse,
@@ -9,6 +11,22 @@ from app.schemas.meal_plan import (
 
 class MealPlanMapper:
     """Maps MealPlan ORM entities to API schemas."""
+
+    @staticmethod
+    def _assignment_recipe(assignment: Any) -> tuple[str, str]:
+        recipe = getattr(assignment, "recipe", None)
+        dish = getattr(assignment, "dish", None)
+        if recipe is None and dish is not None:
+            recipe = getattr(dish, "recipe", None)
+        recipe_id = getattr(assignment, "recipe_id", None)
+        if recipe_id is None and recipe is not None:
+            recipe_id = recipe.id
+        if recipe_id is None and dish is not None:
+            recipe_id = getattr(dish, "recipe_id", None)
+        if recipe_id is None:
+            raise ValueError("Meal-plan assignment has no selected recipe")
+        recipe_name = recipe.name if recipe is not None else str(recipe_id)
+        return str(recipe_id), recipe_name
 
     @staticmethod
     def to_response(
@@ -28,12 +46,17 @@ class MealPlanMapper:
                             if slot_dish.dish
                             else str(slot_dish.dish_id)
                         )
+                        recipe_id, recipe_name = MealPlanMapper._assignment_recipe(
+                            slot_dish
+                        )
                         items.append(
                             MealPlanItemResponse(
                                 day_number=day.day_number,
                                 meal_type=slot.meal_type,
                                 dish_id=slot_dish.dish_id,
                                 dish_name=dish_name,
+                                recipe_id=recipe_id,
+                                recipe_name=recipe_name,
                             )
                         )
                         slot_dishes.append(
@@ -41,6 +64,8 @@ class MealPlanMapper:
                                 id=slot_dish.id,
                                 dish_id=slot_dish.dish_id,
                                 dish_name=dish_name,
+                                recipe_id=recipe_id,
+                                recipe_name=recipe_name,
                             )
                         )
 
@@ -57,12 +82,15 @@ class MealPlanMapper:
             legacy_meals: dict[str, list[MealSlotDishResponse]] = {}
             for item in day.items:
                 dish_name = item.dish.name if item.dish else str(item.dish_id)
+                recipe_id, recipe_name = MealPlanMapper._assignment_recipe(item)
                 items.append(
                     MealPlanItemResponse(
                         day_number=day.day_number,
                         meal_type=item.meal_type,
                         dish_id=item.dish_id,
                         dish_name=dish_name,
+                        recipe_id=recipe_id,
+                        recipe_name=recipe_name,
                     )
                 )
                 legacy_meals.setdefault(item.meal_type, []).append(
@@ -70,6 +98,8 @@ class MealPlanMapper:
                         id=f"legacy:{item.id}",
                         dish_id=item.dish_id,
                         dish_name=dish_name,
+                        recipe_id=recipe_id,
+                        recipe_name=recipe_name,
                     )
                 )
 

@@ -9,6 +9,8 @@ export interface MealSlotDish {
   id: string;
   dish_id: string;
   dish_name: string;
+  recipe_id: string;
+  recipe_name: string;
 }
 
 export interface MealSlot {
@@ -24,6 +26,8 @@ export interface ProjectMealPlan extends MealPlan {
     meal_type: string;
     dish_id: string;
     dish_name: string;
+    recipe_id: string;
+    recipe_name: string;
   }>;
   meals: MealSlot[];
   warnings: string[];

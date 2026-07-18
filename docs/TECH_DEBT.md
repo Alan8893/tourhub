@@ -2,7 +2,7 @@
 
 Status date: 2026-07-18
 
-## Implemented through TH-0087 / PR #97
+## Implemented through TH-0088 / PR #98
 
 - guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
 - production-like runtime, backup/restore, health checks, API proxy, and restart persistence;
@@ -10,19 +10,21 @@ Status date: 2026-07-18
 - invitation-only Access, roles, users, and multi-session readiness through `h10016`;
 - working SMTP invitation delivery with manual fallback;
 - Recipe CLUB/PERSONAL ownership and nested authorization through `h10017`;
-- Recipe lifecycle and moderation through `h10018`: draft, submission, row-locked review, publication, rejection feedback, resubmission, attribution, capability-driven UI, and focused Chrome acceptance.
+- Recipe lifecycle and moderation through `h10018`;
+- ordered Dish Recipe variants, three Project generation modes, and persisted assignment Recipe snapshots through `h10019`;
+- shopping/equipment calculations based on assignment Recipes rather than mutable Dish defaults;
+- responsive Dish variant, Project mode, and selected-Recipe UI;
+- focused Backend coverage for actor filtering, mode order, deterministic rotation, manual preservation, migration compatibility, and catalogue behavior.
 
-TH-0087 implementation head `7dd0ddd398b4f4b82d43f30db8c95c0489f2f31b` passed Quality #887, Document Quality #502, Guided Release Acceptance #453, Operator Docs #439, and Docker Release Runtime #434.
+## Remaining Recipe and menu debt
 
-## Remaining recipe debt
-
-1. Multiple Recipe variants per Dish.
-2. Club-only, club-plus-personal, and personal-preferred generation modes.
-3. Immutable moderation history beyond the latest decision.
-4. Optional moderation notifications.
-5. Ownership-aware CSV import UX beyond trusted shared-catalogue import.
-6. Preparation technology, dietary metadata, season metadata, and richer categories.
-7. Decide whether recipe-level optimistic versions are required beyond serialized lifecycle transitions.
+1. Immutable moderation history beyond the latest decision.
+2. Optional moderation notifications.
+3. Ownership-aware CSV import UX beyond trusted shared-catalogue import.
+4. Preparation technology, dietary metadata, season metadata, and richer categories.
+5. Decide whether Recipe-level optimistic versions are required beyond serialized lifecycle transitions.
+6. Per-meal manual Recipe switching without replacing the Dish.
+7. Preference weights or ranking beyond `club_only`, `club_and_personal`, and `personal_preferred`.
 
 ## Remaining Access and mail debt
 
@@ -37,11 +39,10 @@ TH-0087 implementation head `7dd0ddd398b4f4b82d43f30db8c95c0489f2f31b` passed Qu
 
 ## Remaining release-blocking product debt
 
-1. **Dish recipe variants and generation modes**.
-2. **Central alcohol prohibition** across Product, Recipe, and CSV import.
-3. **Actor-aware audit log**, including immutable moderation history.
-4. **Consolidated export completeness** for the approved PDF and workbook.
-5. **Product acceptance and feature freeze**.
+1. **Central alcohol prohibition** across Product, Recipe, and CSV import, including existing-record handling.
+2. **Actor-aware audit log**, including immutable moderation history.
+3. **Consolidated export completeness** for the approved PDF and workbook.
+4. **Product acceptance and feature freeze**.
 
 ## Configuration export/import debt
 
@@ -51,8 +52,8 @@ TH-0087 implementation head `7dd0ddd398b4f4b82d43f30db8c95c0489f2f31b` passed Qu
 
 ## Product Owner decisions still required
 
-- whether preference-based menu priority blocks first release;
-- mandatory recipe metadata for first release;
+- whether preference weighting beyond the approved generation modes belongs in a later release;
+- mandatory Recipe metadata for first release;
 - encrypted settings archive format.
 
 ## Deferred final release debt

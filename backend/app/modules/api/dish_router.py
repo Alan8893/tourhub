@@ -1,8 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.session import get_session
 from app.models.dish import DishORM
+from app.models.recipe import RecipeORM
+from app.models.recipe_scope import RecipeScope
+from app.models.user import UserORM
 from app.modules.domain.meal_role import MEAL_ROLE_ORDER, MealRole
 from app.modules.domain.meal_type import MEAL_TYPE_ORDER, MealType
 from app.schemas.dish import (
@@ -30,8 +34,11 @@ _MEAL_TYPE_POSITION = {
 }
 
 
-def get_dish_service(session: Session = Depends(get_session)) -> DishService:
-    return DishService(session)
+def get_dish_service(
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> DishService:
+    return DishService(session, actor=actor)
 
 
 def get_dish_catalogue_readiness_service(
@@ -40,19 +47,35 @@ def get_dish_catalogue_readiness_service(
     return DishCatalogueReadinessService(session)
 
 
-def _dish_response(dish: DishORM) -> DishResponse:
+def _recipe_response(
+    recipe: RecipeORM,
+    *,
+    default_recipe_id: str,
+) -> DishRecipeResponse:
+    return DishRecipeResponse(
+        id=recipe.id,
+        name=recipe.name,
+        is_archived=recipe.is_archived,
+        scope=RecipeScope(recipe.scope),
+        owner_display_name=recipe.owner.display_name if recipe.owner is not None else None,
+        is_default=recipe.id == default_recipe_id,
+    )
+
+
+def _dish_response(dish: DishORM, service: DishService) -> DishResponse:
     meal_roles = sorted(
         dish.meal_roles,
         key=lambda assignment: _MEAL_ROLE_POSITION[assignment.role],
     )
+    variants = service.visible_variants(dish)
     return DishResponse(
         id=dish.id,
         name=dish.name,
-        recipe=DishRecipeResponse(
-            id=dish.recipe.id,
-            name=dish.recipe.name,
-            is_archived=dish.recipe.is_archived,
-        ),
+        recipe=_recipe_response(dish.recipe, default_recipe_id=dish.recipe_id),
+        recipes=[
+            _recipe_response(recipe, default_recipe_id=dish.recipe_id)
+            for recipe in variants
+        ],
         meal_roles=[
             DishMealRoleResponse(
                 role=MealRole(assignment.role),
@@ -72,7 +95,9 @@ def _dish_response(dish: DishORM) -> DishResponse:
 
 @router.get("", response_model=DishListResponse)
 def list_dishes(service: DishService = Depends(get_dish_service)) -> DishListResponse:
-    return DishListResponse(items=[_dish_response(dish) for dish in service.list_dishes()])
+    return DishListResponse(
+        items=[_dish_response(dish, service) for dish in service.list_dishes()]
+    )
 
 
 @router.get(
@@ -110,7 +135,7 @@ def get_dish(
     service: DishService = Depends(get_dish_service),
 ) -> DishResponse:
     try:
-        return _dish_response(service.get_dish(dish_id))
+        return _dish_response(service.get_dish(dish_id), service)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
@@ -121,13 +146,15 @@ def create_dish(
     service: DishService = Depends(get_dish_service),
 ) -> DishResponse:
     try:
-        dish = service.create_dish(request.name, request.recipe_id)
+        dish = service.create_dish(request.name, request.recipe_id, request.recipe_ids)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValueError as exc:
         status_code = 409 if "unique" in str(exc) else 422
         raise HTTPException(status_code=status_code, detail=str(exc)) from exc
-    return _dish_response(dish)
+    return _dish_response(dish, service)
 
 
 @router.put("/{dish_id}", response_model=DishResponse)
@@ -137,13 +164,20 @@ def update_dish(
     service: DishService = Depends(get_dish_service),
 ) -> DishResponse:
     try:
-        dish = service.update_dish(dish_id, request.name, request.recipe_id)
+        dish = service.update_dish(
+            dish_id,
+            request.name,
+            request.recipe_id,
+            request.recipe_ids,
+        )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     except ValueError as exc:
         status_code = 409 if "unique" in str(exc) else 422
         raise HTTPException(status_code=status_code, detail=str(exc)) from exc
-    return _dish_response(dish)
+    return _dish_response(dish, service)
 
 
 @router.put("/{dish_id}/meal-roles", response_model=DishResponse)
@@ -168,4 +202,4 @@ def replace_dish_meal_roles(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return _dish_response(dish)
+    return _dish_response(dish, service)

@@ -18,10 +18,17 @@ def _dish(
     *assignments,
     is_archived: bool = False,
 ):
+    recipe_id = f"recipe-{dish_id}"
     return SimpleNamespace(
         id=dish_id,
         name=name,
-        recipe=SimpleNamespace(is_archived=is_archived),
+        recipe_id=recipe_id,
+        recipe=SimpleNamespace(
+            id=recipe_id,
+            name=f"{name} recipe",
+            is_archived=is_archived,
+        ),
+        recipe_variants=[],
         meal_roles=list(assignments),
     )
 
@@ -60,8 +67,10 @@ def test_meal_plan_service_generates_plan():
     assert result.items[0].day_number == 1
     assert result.items[0].meal_type == "breakfast"
     assert result.items[0].dish_name == "Овсяная каша"
+    assert result.items[0].recipe_id == "recipe-1"
     assert result.items[1].meal_type == "dinner"
     assert result.items[1].dish_name == "Борщ"
+    assert result.items[1].recipe_id == "recipe-2"
     assert result.warnings == []
 
 
@@ -112,5 +121,11 @@ def test_meal_plan_service_applies_calendar_day_main_diversity():
         "main-b",
         "main-c",
         "main-a",
+    ]
+    assert [item.recipe_id for item in result.items] == [
+        "recipe-main-a",
+        "recipe-main-b",
+        "recipe-main-c",
+        "recipe-main-a",
     ]
     assert result.warnings == []

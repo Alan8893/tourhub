@@ -19,7 +19,7 @@ def _required_by_product(items):
     return {item.product_id: item.required_quantity for item in items}
 
 
-def test_dish_recipe_change_refreshes_all_affected_purchasing(client, db_session):
+def test_dish_default_change_preserves_historical_purchasing_snapshot(client, db_session):
     rice = ProductORM(
         id="rice",
         name="Rice",
@@ -60,7 +60,14 @@ def test_dish_recipe_change_refreshes_all_affected_purchasing(client, db_session
     day = MealPlanDayORM(id="day", meal_plan=meal_plan, day_number=1)
     slot = MealSlotORM(id="slot", day=day, meal_type="dinner")
     slot.dishes.append(
-        MealSlotDishORM(id="slot-dish", dish=dish, dish_id=dish.id, order=0)
+        MealSlotDishORM(
+            id="slot-dish",
+            dish=dish,
+            dish_id=dish.id,
+            recipe=rice_recipe,
+            recipe_id=rice_recipe.id,
+            order=0,
+        )
     )
     purchase_list = PurchaseListORM(
         id="purchase-list",
@@ -121,8 +128,10 @@ def test_dish_recipe_change_refreshes_all_affected_purchasing(client, db_session
     assert response.status_code == 200
     db_session.expire_all()
     updated_dish = db_session.get(DishORM, "dish")
+    assignment = db_session.get(MealSlotDishORM, "slot-dish")
     updated_list = db_session.get(PurchaseListORM, "purchase-list")
     updated_checklist = db_session.get(PurchaseChecklistORM, "checklist")
     assert updated_dish.recipe_id == "beans-recipe"
-    assert _required_by_product(updated_list.items) == {"beans": Decimal("500.00")}
-    assert _required_by_product(updated_checklist.items) == {"beans": Decimal("500.00")}
+    assert assignment.recipe_id == "rice-recipe"
+    assert _required_by_product(updated_list.items) == {"rice": Decimal("1000.00")}
+    assert _required_by_product(updated_checklist.items) == {"rice": Decimal("1000.00")}

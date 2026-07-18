@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.session import get_session
+from app.models.user import UserORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.repositories.dish_repository import DishRepository
 from app.repositories.equipment_list_repository import EquipmentListRepository
@@ -14,10 +16,14 @@ from app.services.meal_plan_service import MealPlanService
 router = APIRouter(prefix="/meal-plans", tags=["Meal Plans"])
 
 
-def get_meal_plan_service(session: Session = Depends(get_session)) -> MealPlanService:
+def get_meal_plan_service(
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> MealPlanService:
     return MealPlanService(
         dish_repository=DishRepository(session),
         meal_plan_repository=MealPlanRepository(session),
+        actor=actor,
     )
 
 
@@ -50,6 +56,7 @@ def generate_project_meal_plan(
         project_id=project.id,
         start_meal=project.first_meal or "breakfast",
         end_meal=project.last_meal or "dinner",
+        recipe_generation_mode=project.recipe_generation_mode,
     )
     equipment_service = EquipmentListService(
         EquipmentListRepository(session),

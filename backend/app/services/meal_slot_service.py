@@ -6,26 +6,23 @@ from app.models.meal_slot_dish import MealSlotDishORM
 
 
 class MealSlotService:
-    """
-    Application service for editing meal compositions.
+    """Application service for editing MealSlot composition snapshots."""
 
-    Works only with MealSlot layer.
-    Legacy MealPlanItem remains untouched.
-    """
-
-    def add_dish(self, slot: MealSlotORM, dish_id: str) -> MealSlotDishORM:
+    def add_dish(
+        self,
+        slot: MealSlotORM,
+        dish_id: str,
+        recipe_id: str,
+    ) -> MealSlotDishORM:
         dishes = cast(list[MealSlotDishORM], slot.dishes)
         item = MealSlotDishORM(
             id=str(uuid4()),
             slot=slot,
             dish_id=dish_id,
+            recipe_id=recipe_id,
             order=len(dishes),
         )
         slot.is_manually_edited = True
-
-        # SQLAlchemy relationship already attaches the item through slot=slot.
-        # Do not append manually, otherwise the relationship collection receives
-        # the same object twice.
         return item
 
     def remove_dish(self, slot: MealSlotORM, slot_dish_id: str) -> MealSlotORM:
@@ -38,10 +35,8 @@ class MealSlotService:
             raise ValueError("Meal slot dish not found")
 
         dishes.remove(item)
-
         for index, dish in enumerate(dishes):
             dish.order = index
-
         slot.is_manually_edited = True
         return slot
 
@@ -50,12 +45,13 @@ class MealSlotService:
         slot: MealSlotORM,
         slot_dish_id: str,
         new_dish_id: str,
+        recipe_id: str,
     ) -> MealSlotDishORM:
         dishes = cast(list[MealSlotDishORM], slot.dishes)
         for item in dishes:
             if item.id == slot_dish_id:
                 item.dish_id = new_dish_id
+                item.recipe_id = recipe_id
                 slot.is_manually_edited = True
                 return item
-
         raise ValueError("Meal slot dish not found")

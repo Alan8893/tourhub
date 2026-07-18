@@ -28,7 +28,7 @@ cd tourhub
 git checkout <release-tag-or-commit>
 ```
 
-Set a deployment-specific database password before the first start. Characters with special URL meaning must be percent-encoded because the same value is used in the backend PostgreSQL URL:
+Set a deployment-specific database password before the first start. Characters with special URL meaning must be percent-encoded because the same value is used in the Backend PostgreSQL URL:
 
 ```bash
 export TOURHUB_DB_PASSWORD='<url-encoded-password>'
@@ -48,7 +48,7 @@ Keep this value only in protected host environment configuration. Do not put it 
 
 A local relay that does not require authentication may leave both the SMTP username and this environment value unset. If a username is configured without the environment value, TourHub reports that delivery is unavailable and does not attempt authentication.
 
-The backend container must be able to resolve and reach the saved SMTP host and port. Configure the mail server and firewall for the selected mode:
+The Backend container must be able to resolve and reach the saved SMTP host and port. Configure the mail server and firewall for the selected mode:
 
 - `plain` — unencrypted SMTP, normally only for a trusted local relay;
 - `starttls` — plain connection upgraded with STARTTLS;
@@ -69,7 +69,7 @@ docker compose -f docker-compose.release.yml \
   up -d --build --wait --wait-timeout 180
 ```
 
-The backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10018`. The frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
+The Backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10019`. The Frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
 
 ## Verify the installation
 
@@ -79,13 +79,13 @@ Check container state:
 docker compose -f docker-compose.release.yml ps
 ```
 
-Check the backend health endpoint:
+Check the Backend health endpoint:
 
 ```bash
 curl -fsS http://localhost:8000/api/v1/health
 ```
 
-Check the frontend container and its same-origin backend proxy:
+Check the Frontend container and its same-origin Backend proxy:
 
 ```bash
 curl -fsS http://localhost:5173/healthz
@@ -136,11 +136,11 @@ Connection or delivery errors are returned as bounded Russian messages. TourHub 
 
 If connection checking fails:
 
-- verify DNS resolution and network access from the backend container;
+- verify DNS resolution and network access from the Backend container;
 - confirm host, port, and connection mode;
 - confirm that the SMTP server supports the selected mode;
 - when a username is configured, confirm that `TOURHUB_SMTP_SECRET` is present in the environment used by Docker Compose;
-- restart the backend after changing deployment environment values:
+- restart the Backend after changing deployment environment values:
 
 ```bash
 docker compose -f docker-compose.release.yml restart backend
@@ -202,7 +202,7 @@ The default `docker-compose.yml` is the development stack. It uses source bind m
 
 ## Troubleshooting
 
-If the backend does not become healthy:
+If the Backend does not become healthy:
 
 ```bash
 docker compose -f docker-compose.release.yml ps

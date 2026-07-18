@@ -14,6 +14,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Working mail delivery follows ADR-019.
 - Recipe ownership follows ADR-020.
 - Recipe publication and moderation follow ADR-021.
+- Dish Recipe variants and project generation modes follow ADR-022.
 - Active Administrator, Instructor, and Verified Instructor users may use preparation workflows.
 - Settings, invitation management, user management, connection checks, and test-message actions remain Administrator-only.
 - Module visibility is presentation only and never grants access.
@@ -23,48 +24,55 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 
 - one User may own multiple independent server sessions;
 - PostgreSQL stores only session-token hashes and session metadata;
-- Backend resolves the current persisted User on every authorized request, so role and active-state changes are not cached in the browser token;
+- Backend resolves the current persisted User on every authorized request;
 - deactivation revokes every active session for the affected User in the same transaction;
-- the common frontend API client treats a protected HTTP 401 as session invalidation and clears stale local identity through AuthProvider;
-- failed authentication entry requests remain local form errors and do not represent revocation of an active session;
-- route guards preserve the exact path, query, and hash through sign-in;
-- explicit logout preserves the current destination for the next sign-in;
-- the application header exposes the current display name and role;
-- session-list administration, individual revocation, global sign-out, account recovery, project ownership, and row-level ACLs remain separate future capabilities.
+- protected HTTP 401 responses clear stale frontend identity centrally;
+- route guards preserve exact path, query, and hash through sign-in and logout;
+- the application header exposes current display name and role;
+- session administration, account recovery, project ownership, and row-level ACLs remain separate future capabilities.
 
 ## Recipe ownership and lifecycle boundary
 
 - Recipe owns scope, nullable current owner, lifecycle state, submission/decision metadata, archive state, components, notes, and equipment requirements;
 - the database permits CLUB only as ownerless `published`, or PERSONAL with an owner as `draft`, `submitted`, or `rejected`;
-- existing shared catalogue rows remain published CLUB records;
 - interactive creation produces owned PERSONAL drafts;
-- ownership-aware query services filter unrelated personal recipes before API projection;
+- unrelated personal recipes are filtered before API projection;
 - the normal library and moderation queue are separate query views;
-- one centralized Recipe access policy is used by root, component, note, equipment, archive, submission, and moderation operations;
+- one centralized Recipe access policy protects root, component, note, equipment, archive, submission, and moderation operations;
 - submitted recipes are immutable through ordinary edit paths;
-- submit, publish, and reject acquire a PostgreSQL row lock, validate the current state, mutate, and commit in one transaction;
-- Administrator may review any submitted recipe;
-- Verified Instructor may review another user's submitted recipe but cannot self-review;
+- submit, publish, and reject lock the Recipe row and commit one state transition;
 - publication converts PERSONAL to CLUB while preserving submitter attribution;
-- rejection requires a comment; resubmission clears the previous decision;
-- API capability fields guide Frontend controls, while Backend services remain authoritative;
-- focused Chrome acceptance validates the moderation queue, rejection comment payload, empty-queue refresh, and mobile overflow;
-- full moderation history, notifications, Dish variants, and generation modes remain later slices.
+- rejection requires a comment and resubmission clears the previous decision;
+- API capabilities guide Frontend controls while Backend services remain authoritative.
+
+## Dish variant and generation boundary
+
+- Dish retains one required `recipe_id` as the published CLUB default and compatibility fallback;
+- `DishRecipeVariant` stores the ordered complete variant set by `(dish_id, recipe_id, position)`;
+- a write replaces the complete ordered set atomically and the default must be included;
+- additional variants may be active published CLUB recipes or active PERSONAL recipes visible to the current actor;
+- another user's PERSONAL recipe is neither accepted by writes nor projected in Dish responses;
+- Project owns `recipe_generation_mode`: `club_only`, `club_and_personal`, or `personal_preferred`;
+- generation groups eligible variants according to the Project mode, keeps the CLUB default first in the club group, and rotates deterministically through repeated Dish occurrences;
+- MealSlotDish and compatibility MealPlanItem persist the exact selected `recipe_id`;
+- manually edited slots retain the stored Recipe through regeneration;
+- manual add/replace uses the same Project mode selector;
+- shopping and equipment read assignment Recipes, so later Dish default or variant edits do not rewrite historical project calculations;
+- Frontend exposes variant scope, owner, default status, Project mode, and the stored Recipe without owning selection rules.
 
 ## Mail boundary
 
-- `MailSettings` owns only non-secret host, port, connection mode, optional username, sender metadata, test recipient, timeout, retry count, and optimistic version;
-- the deployment-managed SMTP value remains in `TOURHUB_SMTP_SECRET` and is not accepted or returned by application APIs;
-- `MailDeliveryService` owns plain, STARTTLS, and implicit-TLS connection behavior, fixed message construction, bounded synchronous retries, and safe results;
-- no-auth SMTP is allowed when no username is configured;
-- invitation persistence commits before automatic delivery is attempted;
-- delivery failure never invalidates the new invitation or removes the one-time manual link;
-- queues, background workers, provider APIs, arbitrary templates, attachments, bounce processing, and delivery history remain separate future capabilities.
+- `MailSettings` owns only non-secret SMTP metadata and optimistic version;
+- the deployment-managed SMTP value remains in `TOURHUB_SMTP_SECRET` and is never accepted or returned by application APIs;
+- `MailDeliveryService` owns plain, STARTTLS, implicit-TLS, optional authentication, bounded retries, and safe results;
+- invitation persistence commits before automatic delivery;
+- delivery failure never invalidates the invitation or removes its manual link;
+- queues, background workers, provider APIs, templates, attachments, bounce processing, and delivery history remain future capabilities.
 
-The current Alembic head is `h10018`.
+The current Alembic head is `h10019`.
 
 MealSlot and MealSlotDish remain primary. MealPlanItem remains compatibility-only.
 
 Multi-tenancy and microservices remain prohibited.
 
-See `PRODUCT_SPEC.md` and ADR-012 through ADR-021.
+See `PRODUCT_SPEC.md` and ADR-012 through ADR-022.
