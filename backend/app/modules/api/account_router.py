@@ -53,7 +53,7 @@ def update_user(
     db: Session = Depends(get_db),
 ) -> UserAdministrationResponse:
     try:
-        user = UserAdministrationService(db).update(user_id, request)
+        user = UserAdministrationService(db, actor=administrator).update(user_id, request)
     except UserNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except UserVersionConflictError as error:

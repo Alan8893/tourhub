@@ -1,8 +1,8 @@
 # TourHub — PROJECT_CONTEXT
 
-Version: 0.0.5-alpha
+Version: 0.0.6-alpha
 
-Last update: 2026-07-18
+Last update: 2026-07-19
 
 Status: Active Development
 
@@ -34,9 +34,12 @@ Administrator bootstrap and invitations
   → Shopping and packaging
   → Equipment
   → PDF, Excel, print, and ZIP
+  → Actor-aware operational accountability
 ```
 
-The guided preparation baseline, production-like runtime, typed System Settings, Access/mail foundation, multi-user readiness, Recipe ownership, publication/moderation, and Dish Recipe variants with generation modes are complete through TH-0088 / PR #98. The next capability is the centralized alcohol prohibition.
+The guided preparation baseline, production-like runtime, typed System Settings, Access/mail foundation, multi-user readiness, Recipe ownership/publication/moderation, Dish Recipe variants with generation modes, and Actor-Aware Audit Foundation are complete through TH-0089 / PR #99.
+
+The next capability is consolidated Russian export completeness. The centralized alcohol prohibition is scheduled immediately before product acceptance.
 
 ## 3. Architecture
 
@@ -51,7 +54,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, form state, navigation, and API integration. It renders server-projected capabilities and persisted selection results but does not own business validation, generation rules, lifecycle transitions, calculations, or authorization decisions.
+Frontend owns presentation, form state, navigation, and API integration. It renders server-projected capabilities, persisted selection results, and safe audit responses but does not own business validation, generation rules, lifecycle transitions, calculations, authorization, or audit sanitization.
 
 ### Backend
 
@@ -64,7 +67,7 @@ Frontend owns presentation, form state, navigation, and API integration. It rend
 - Redis configuration;
 - deterministic calculation engines.
 
-Backend owns validation, persistence, identity and authorization, Recipe ownership/lifecycle, Dish variant selection, menu generation, catalogue import, recalculation, mail boundaries, and document generation.
+Backend owns validation, persistence, identity and authorization, Recipe ownership/lifecycle, Dish variant selection, menu generation, catalogue import, recalculation, mail boundaries, document generation, and actor-aware audit recording/query rules.
 
 ### Runtime
 
@@ -85,7 +88,7 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - automatic SMTP invitation delivery with manual fallback;
 - roles, activation controls, optimistic user versions, and final-active-Administrator protection;
 - preparation access for all approved active roles;
-- Administrator-only settings, invitations, users, and mail operations;
+- Administrator-only settings, invitations, users, mail operations, and audit reads;
 - multiple sessions, current-role resolution, deactivation revocation, centralized protected-401 handling, exact route return, and visible role.
 
 ### Recipe ownership, publication, and Dish variants
@@ -101,6 +104,16 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - manual assignments survive regeneration with their stored Recipe;
 - shopping and equipment use assignment Recipe snapshots rather than mutable Dish defaults;
 - responsive ownership, moderation, variant, mode, and selected-Recipe UI.
+
+### Actor-aware audit
+
+- append-only AuditEvent persistence through `h10020`;
+- actor ID, display-name, email, and role snapshots;
+- bounded recursive removal of password/hash/credential/cookie/session/token/authorization/secret keys;
+- semantic user-access and Recipe submit/publish/reject events in the same business transaction;
+- immutable moderation history beyond the latest Recipe state;
+- Administrator-only filtered API and responsive Audit section;
+- no normal update/delete API and ORM immutability guards.
 
 ### Projects and preparation
 
@@ -125,14 +138,14 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-The next task should enforce the approved central alcohol prohibition without reopening completed Recipe or Access work.
+The next task should complete the approved consolidated Russian PDF/workbook contents. Audit coverage expansion remains explicit later domain work rather than automatic ORM interception.
 
 ## 6. Immediate sequence
 
-1. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
-2. Implement actor-aware audit history, including immutable moderation history.
-3. Complete consolidated Russian exports and product acceptance.
-4. Freeze features, run the final migration cycle, and complete release gates.
+1. Complete consolidated Russian exports.
+2. Enforce the central alcohol prohibition across Product, Recipe, and import paths.
+3. Run product acceptance and feature freeze.
+4. Run the final migration cycle and release gates.
 
 ## 7. Development rules
 

@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-07-18
+Last updated: 2026-07-19
 
 ## Purpose
 
@@ -24,9 +24,41 @@ Implemented identity model:
 - at least one active Administrator must always remain;
 - user updates use optimistic versions and stale writes return HTTP 409.
 
-Active users with any approved role may use current preparation workflows. System Settings, invitation management, user administration, SMTP connection checks, and test-message actions are Administrator-only.
+Active users with any approved role may use preparation workflows. System Settings, invitation management, user administration, SMTP operations, and audit reads are Administrator-only.
 
-Per-project ownership, private projects, user profiles, account recovery, session administration, and actor-aware audit remain future capabilities.
+Per-project ownership, private projects, user profiles, account recovery, and session administration remain future capabilities.
+
+## AuditEvent
+
+AuditEvent is the append-only history record introduced by TH-0089 / ADR-023.
+
+```text
+AuditEvent
+  ├─ actor_user_id: int?
+  ├─ actor_display_name
+  ├─ actor_email
+  ├─ actor_role
+  ├─ action
+  ├─ entity_type
+  ├─ entity_id?
+  ├─ before_data: JSON?
+  ├─ after_data: JSON?
+  ├─ context_data: JSON
+  └─ created_at
+```
+
+Rules:
+
+- actor display name, email, and role are snapshots at action time;
+- actor identity is not joined through a live User foreign key, so history survives later account changes;
+- safe JSON is recursively bounded and removes password, hash, credential, cookie, session, token, authorization, and secret keys;
+- AuditEvent is added to the same transaction as its business mutation;
+- normal ORM update and delete operations are rejected;
+- the application exposes Administrator-only filtered reads and no AuditEvent mutation API;
+- current semantic actions cover user role/activation changes and Recipe submit/publish/reject transitions;
+- project/menu, settings, mail, invitation, catalogue/import, shopping, equipment, and document write paths are not yet instrumented.
+
+Existing `SystemSettingsHistory` remains a separate bounded compatibility history for focused settings screens.
 
 ## Project
 
@@ -38,7 +70,7 @@ Supported Recipe generation modes:
 - `club_and_personal` — use published CLUB variants first, then PERSONAL variants owned by the current actor;
 - `personal_preferred` — use current-actor PERSONAL variants first, then published CLUB fallback.
 
-Project creation validates meal boundaries and the generation mode in Backend. Changing the mode affects later generation and manual Dish assignment; it does not rewrite existing assignment Recipe snapshots.
+Project creation validates meal boundaries and generation mode in Backend. Changing the mode affects later generation and manual Dish assignment; it does not rewrite existing assignment Recipe snapshots.
 
 Current projects remain shared inside the one-club preparation space. Project ownership and row-level access are not implemented.
 
@@ -60,10 +92,9 @@ Implemented generation behavior:
 - non-repeatable main-dish diversity uses trip calendar days and permits reuse on day four;
 - repeatability is evaluated per `(dish, role)` assignment;
 - Dishes without an eligible Recipe under the current Project mode are excluded;
-- missing or exhausted required pools leave the automatic position empty and return a deterministic warning;
-- incompatible dishes are never used as a hidden fallback;
-- repeated occurrences rotate deterministically through the Dish's eligible ordered Recipe variants;
-- manually edited MealSlots remain authoritative during regeneration, including intentionally empty slots and their selected Recipes;
+- missing required pools leave the automatic position empty and return a deterministic warning;
+- repeated occurrences rotate deterministically through eligible ordered Recipe variants;
+- manually edited MealSlots remain authoritative during regeneration, including intentionally empty slots and selected Recipes;
 - generation warnings are persisted as the latest successful snapshot;
 - generated compositions persist through MealSlot/MealSlotDish and compatibility MealPlanItem rows.
 
@@ -72,8 +103,6 @@ Legacy MealPlanItem remains a compatibility path.
 ## Dish and Recipe
 
 Dish and Recipe are separate entities.
-
-The implemented Dish shape is:
 
 ```text
 Dish
@@ -92,14 +121,11 @@ Dish rules:
 - the complete variant set is replaced atomically and preserves caller order;
 - additional variants may be active published CLUB Recipes or active PERSONAL Recipes owned by the current actor;
 - unrelated PERSONAL Recipes are not accepted or projected;
-- the default remains first in the CLUB generation group;
-- removing or reordering a catalogue variant does not change existing MealSlotDish or MealPlanItem Recipe snapshots;
+- removing or reordering a variant does not change existing assignment Recipe snapshots;
 - archiving a Recipe keeps historical assignments readable but makes it ineligible for new assignment;
 - permanent Recipe deletion remains blocked when a Dish or persisted assignment uses it.
 
-Dish role compatibility is stored per `(dish_id, role, meal_type)`. A Dish may have multiple roles with independent repeatability and meal-type compatibility. Unclassified dishes remain valid for manual selection but are excluded from role-aware automatic generation.
-
-The implemented Recipe shape is:
+Dish role compatibility is stored per `(dish_id, role, meal_type)`. Unclassified dishes remain valid for manual selection but are excluded from role-aware automatic generation.
 
 ```text
 Recipe
@@ -126,9 +152,10 @@ Persistence and lifecycle constraints enforce:
 - Administrator may review any submission;
 - Verified Instructor may review another user's submission but cannot self-review;
 - Instructor edits owned `draft` or `rejected` recipes;
-- unrelated PERSONAL drafts/rejections are returned as not found.
+- unrelated PERSONAL drafts/rejections are returned as not found;
+- every submit, publish, and reject transition also appends immutable actor-aware AuditEvent history.
 
-Full immutable moderation history, preparation technology, dietary metadata, season metadata, richer categories, preference weights, and per-meal manual Recipe switching remain incomplete.
+Preparation technology, dietary metadata, season metadata, richer categories, preference weights, per-meal manual Recipe switching, and moderation notifications remain incomplete.
 
 ## Product and import
 
@@ -144,21 +171,13 @@ Products aggregate across the exact Recipes stored on MealSlotDish and compatibi
 
 Participant-count changes, menu edits, manual assignment changes, and relevant Recipe component changes refresh persisted purchasing where affected. Changing the mutable Dish default alone does not reinterpret historical assignments. Checklist state is preserved for products that remain after refresh.
 
-The workflow persists checklist state, comments, surplus presentation, and optional responsible-person text. Prices, shops, stock balances, and procurement aggregation remain future work.
+Prices, shops, stock balances, and procurement aggregation remain future work.
 
 ## Equipment
 
 Equipment requirements are attached to Recipes and projected from the exact Recipe selected on each meal assignment.
 
-Implemented behavior:
-
-- identical requirements aggregate by maximum simultaneously required quantity rather than sum across trip days;
-- participant, menu, selected-Recipe, and Recipe requirement changes refresh prepared equipment;
-- Dish default/variant edits do not rewrite historical assignment calculations;
-- manual rows, quantity overrides, and removals are persisted;
-- user-facing equipment values are included in Russian PDF, Excel, print, and ZIP outputs.
-
-Warehouse balances, issue workflow, and participant/team distribution remain future domains.
+Identical requirements aggregate by maximum simultaneously required quantity. Manual rows, quantity overrides, and removals are persisted. Warehouse balances, issue workflow, and participant/team distribution remain future domains.
 
 ## Documents and mail
 

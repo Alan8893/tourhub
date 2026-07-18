@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
+import AuditLogPanel from "@/features/audit/components/AuditLogPanel";
 import AppearanceSettingsForm from "@/features/system-settings/components/AppearanceSettingsForm";
 import ClubSettingsForm from "@/features/system-settings/components/ClubSettingsForm";
 import DocumentAppearanceSettingsForm from "@/features/system-settings/components/DocumentAppearanceSettingsForm";
@@ -31,7 +32,8 @@ type SettingsSectionId =
   | "modules"
   | "users"
   | "invitations"
-  | "mail";
+  | "mail"
+  | "audit";
 
 const SECTIONS: Array<{
   id: SettingsSectionId;
@@ -73,6 +75,11 @@ const SECTIONS: Array<{
     label: "Почта",
     description: "TourHub пока не использует несохранённые SMTP-параметры; проверка и доставка работают по сохранённой версии.",
   },
+  {
+    id: "audit",
+    label: "Аудит",
+    description: "Неизменяемая история критичных действий пользователей.",
+  },
 ];
 
 function PlannedSection({ sectionId }: { sectionId: SettingsSectionId }) {
@@ -106,6 +113,7 @@ export default function SettingsPage() {
     if (activeSection === "users") return <UserAdministrationPanel />;
     if (activeSection === "invitations") return <InvitationSettingsWorkspace />;
     if (activeSection === "mail") return <MailSettingsWorkspace />;
+    if (activeSection === "audit") return <AuditLogPanel />;
     return <PlannedSection sectionId={activeSection} />;
   }
 

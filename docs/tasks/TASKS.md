@@ -16,9 +16,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | 2 | Access and mail foundation | Bootstrap Administrator, sessions, functional invitations, users, roles, guarded routes, Backend authorization, working SMTP delivery |
 | 3 | Multi-user operational readiness | Multiple sessions, immediate role propagation, revoked-session handling, exact route return, visible current role |
 | 4 | Recipe ownership and lifecycle | CLUB/PERSONAL ownership, variants, publication, moderation, generation modes |
-| 5 | Central alcohol prohibition | Shared API/import policy and existing-record handling |
-| 6 | Actor-aware audit log | Safe history for project, menu, Recipe, settings, user, and role changes |
-| 7 | Consolidated export completeness | Approved Russian PDF and workbook contents using one brand snapshot |
+| 5 | Actor-aware audit | Safe actor-attributed history foundation and explicit domain coverage |
+| 6 | Consolidated export completeness | Approved Russian PDF and workbook contents using one brand snapshot |
+| 7 | Central alcohol prohibition | Shared API/import policy and existing-record handling immediately before acceptance |
 | 8 | Product acceptance and feature freeze | End-to-end acceptance and explicit optional-scope decisions |
 | 9 | Final release readiness | Migration cycle, deployment checklist, and final release workflow |
 
@@ -61,6 +61,7 @@ Exact task IDs for implementation slices are assigned when each slice starts fro
 | TH-0086 | Recipe Ownership Foundation | DONE |
 | TH-0087 | Recipe Publication and Moderation | DONE |
 | TH-0088 | Dish Recipe Variants and Generation Modes | DONE |
+| TH-0089 | Actor-Aware Audit Foundation | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
