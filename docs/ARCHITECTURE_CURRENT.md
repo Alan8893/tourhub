@@ -26,6 +26,7 @@ Access runtime:
 - the common frontend API client treats a protected HTTP 401 as session invalidation and clears stale local identity through AuthProvider;
 - failed authentication entry requests remain local form errors and do not represent revocation of an active session;
 - route guards preserve the exact path, query, and hash through sign-in;
+- explicit logout preserves the current destination for the next sign-in;
 - the application header exposes the current display name and role;
 - session-list administration, individual revocation, global sign-out, account recovery, project ownership, and row-level ACLs remain separate future capabilities.
 
@@ -39,7 +40,7 @@ Mail boundary:
 - delivery failure never invalidates the new invitation or removes the one-time manual link;
 - queues, background workers, provider APIs, arbitrary templates, attachments, bounce processing, and delivery history remain separate future capabilities.
 
-`main` uses Alembic head `h10016`. TH-0085 has no migration.
+The current Alembic head is `h10016`. PR #93 through PR #95 require no migration.
 
 MealSlot and MealSlotDish remain primary. MealPlanItem remains compatibility-only.
 
