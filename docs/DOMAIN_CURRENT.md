@@ -6,7 +6,7 @@ Last updated: 2026-07-18
 
 ## Purpose
 
-This document describes the implemented domain baseline plus the active draft slice. `PRODUCT_SPEC.md` describes approved target scope. Deferred capabilities are not current implementation.
+This document describes the implemented domain baseline. `PRODUCT_SPEC.md` describes approved target scope. Deferred capabilities are not current implementation.
 
 ## Club, identity, and access
 
@@ -91,7 +91,7 @@ The backend validates:
 
 Dish recipe replacement recalculates affected persisted purchasing and equipment projections in the same transaction.
 
-The current Recipe shape through draft PR #97 is:
+The implemented Recipe shape through TH-0087 / ADR-021 is:
 
 ```text
 Recipe
