@@ -53,41 +53,26 @@ Project preparation baseline
 - plain, STARTTLS, and implicit TLS SMTP;
 - optional external authentication through `TOURHUB_SMTP_SECRET`;
 - Administrator-only connection check and fixed Russian test message;
-- best-effort invitation delivery after commit with manual-link fallback;
-- no migration; Alembic remained at `h10016`.
+- best-effort invitation delivery after commit with manual-link fallback.
 
 ### Multi-user operational readiness — TH-0085 / PR #95
 
 - multiple independent sessions and current persisted role resolution;
 - complete session revocation on deactivation;
 - centralized protected-401 handling and exact route return;
-- visible current user role;
-- no migration; Alembic remained at `h10016`.
+- visible current user role.
 
-PR #95 merged as `82315e0ff9520b52ae5244f69bc05d4a5d0db5b3`. Exact implementation head `8570670209566f6860b71c0173557bb71bf6fe00` passed Quality #843, Document Quality #460, Guided Release Acceptance #411, Operator Docs #397, and Docker Release Runtime #392.
-
-## IN PROGRESS — TH-0086 / DRAFT PR #96
-
-### Recipe ownership foundation
+### Recipe ownership foundation — TH-0086 / PR #96
 
 - Recipe scope is `club` or `personal`;
-- `owner_user_id` is required for PERSONAL and prohibited for CLUB;
-- migration `h10017` preserves existing recipes as CLUB;
-- interactive creation produces a PERSONAL recipe owned by the current user;
-- Administrator sees all recipes; other roles see CLUB plus owned PERSONAL recipes;
-- Instructor edits owned PERSONAL recipes;
-- Verified Instructor edits owned PERSONAL and CLUB recipes;
-- Administrator edits all and remains the only permanent-delete role;
-- root, component, note, and equipment endpoints share one Backend policy;
-- frontend displays scope, owner, read-only state, and server-projected capabilities.
+- database ownership-shape constraints and migration `h10017`;
+- existing recipes remain CLUB; interactive creation produces owned PERSONAL recipes;
+- role-aware visibility and editing for Administrator, Instructor, and Verified Instructor;
+- Administrator-only permanent deletion with preserved Dish usage guards;
+- one Backend policy protects root, component, note, and equipment operations;
+- responsive frontend ownership labels and server-projected capabilities.
 
-Scope boundary:
-
-- no submission, publication, review queue, rejection comments, or moderation history;
-- no PERSONAL-to-CLUB transition;
-- no multiple Recipe variants per Dish;
-- no personal-recipe generation modes;
-- no actor-aware audit in this slice.
+PR #96 implementation head `29b84be3f98a721d8d0faf2fa1908f65681820cd` passed Quality #858, Document Quality #474, Guided Release Acceptance #425, Operator Docs #411, and Docker Release Runtime #406.
 
 ## NEXT
 
