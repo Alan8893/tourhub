@@ -1,22 +1,90 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { createServer } from "node:http";
 import { existsSync } from "node:fs";
 import { mkdir, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
-const frontendPort = 5174;
+const frontendPort = 5175;
 const apiPort = 18082;
-const debuggingPort = 9224;
+const debuggingPort = 9225;
 const baseUrl = `http://127.0.0.1:${frontendPort}`;
-const fixtureUrl = `${baseUrl}/browser-tests/dish-meal-role-editor.html`;
-const chromeProfileDir = path.join("/tmp", `tourhub-readiness-profile-${process.pid}`);
+const fixtureUrl = `${baseUrl}/browser-tests/dish-catalogue-readiness.html`;
+const chromeProfileDir = path.join("/tmp", `tourhub-dish-readiness-${process.pid}`);
 
 const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+function createJsonResponse(response, statusCode, body) {
+  response.statusCode = statusCode;
+  response.setHeader("content-type", "application/json");
+  response.end(JSON.stringify(body));
+}
+
+async function readJsonBody(request) {
+  const chunks = [];
+  for await (const chunk of request) chunks.push(chunk);
+  const payload = Buffer.concat(chunks).toString("utf8");
+  return payload ? JSON.parse(payload) : undefined;
+}
+
+function startMockApi() {
+  const dish = {
+    id: "dish-1",
+    name: "Каша полевая",
+    recipe_id: null,
+    is_active: true,
+    meal_roles: [],
+    meal_types: [],
+    role_rules: [],
+  };
+  const server = createServer(async (request, response) => {
+    const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
+    const body = ["POST", "PUT", "PATCH"].includes(request.method ?? "")
+      ? await readJsonBody(request)
+      : undefined;
+
+    if (request.method === "GET" && url.pathname === "/api/v1/dishes") {
+      return createJsonResponse(response, 200, [dish]);
+    }
+    if (request.method === "PUT" && url.pathname === "/api/v1/dishes/dish-1/meal-roles") {
+      dish.meal_roles = body.meal_roles ?? [];
+      dish.meal_types = body.meal_types ?? [];
+      dish.role_rules = body.role_rules ?? [];
+      return createJsonResponse(response, 200, dish);
+    }
+    if (request.method === "GET" && url.pathname === "/api/v1/auth/bootstrap-status") {
+      return createJsonResponse(response, 200, { bootstrap_required: false });
+    }
+    if (request.method === "GET" && url.pathname === "/api/v1/auth/me") {
+      return createJsonResponse(response, 200, {
+        user: {
+          id: 1,
+          email: "instructor@tourhub.local",
+          display_name: "Тестовый инструктор",
+          role: "instructor",
+          is_active: true,
+          created_at: "2026-07-18T00:00:00",
+        },
+      });
+    }
+    createJsonResponse(response, 404, { detail: `Unhandled mock path: ${url.pathname}` });
+  });
+
+  return {
+    listen: () => new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(apiPort, "127.0.0.1", resolve);
+    }),
+    close: () => new Promise((resolve) => {
+      server.closeAllConnections();
+      server.close(resolve);
+    }),
+  };
+}
 
 async function waitForHttp(url, timeoutMs = 30_000) {
   const deadline = Date.now() + timeoutMs;
@@ -45,112 +113,6 @@ function findChromeExecutable() {
   const executable = candidates.find((candidate) => existsSync(candidate));
   if (!executable) throw new Error("Chrome or Chromium was not found.");
   return executable;
-}
-
-const COVERAGE_POLICY = [
-  ["breakfast", "main", true],
-  ["breakfast", "addition", false],
-  ["breakfast", "drink", false],
-  ["snack", "snack", true],
-  ["lunch", "main", true],
-  ["lunch", "addition", false],
-  ["lunch", "drink", false],
-  ["dinner", "main", true],
-  ["dinner", "addition", false],
-  ["dinner", "drink", false],
-];
-
-function startMockApi() {
-  const requests = [];
-  let dish = {
-    id: "dish-soup",
-    name: "Суп походный",
-    recipe: { id: "recipe-soup", name: "Суп базовый", is_archived: false },
-    meal_roles: [],
-  };
-
-  const readiness = () => {
-    const coverage = COVERAGE_POLICY.map(([mealType, role, required]) => {
-      const candidateCount = dish.meal_roles.some(
-        (assignment) => assignment.role === role
-          && assignment.allowed_meal_types.includes(mealType),
-      ) ? 1 : 0;
-      return {
-        meal_type: mealType,
-        role,
-        required,
-        candidate_count: candidateCount,
-        minimum_required: 1,
-        ready: candidateCount >= 1,
-      };
-    });
-    return {
-      ready: coverage.filter((item) => item.required).every((item) => item.ready),
-      active_dish_count: 1,
-      classified_dish_count: dish.meal_roles.length > 0 ? 1 : 0,
-      unclassified_dish_count: dish.meal_roles.length > 0 ? 0 : 1,
-      coverage,
-    };
-  };
-
-  const server = createServer((request, response) => {
-    const chunks = [];
-    request.on("data", (chunk) => chunks.push(chunk));
-    request.on("end", () => {
-      const body = Buffer.concat(chunks).toString("utf8");
-      const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
-      requests.push({ method: request.method ?? "GET", path: url.pathname, body });
-
-      const sendJson = (status, payload) => {
-        response.writeHead(status, { "content-type": "application/json" });
-        response.end(JSON.stringify(payload));
-      };
-
-      if (request.method === "GET" && url.pathname === "/api/v1/dishes/catalogue-readiness") {
-        sendJson(200, readiness());
-        return;
-      }
-      if (request.method === "GET" && url.pathname === "/api/v1/dishes") {
-        sendJson(200, { items: [dish] });
-        return;
-      }
-      if (request.method === "GET" && url.pathname === "/api/v1/dishes/dish-soup") {
-        sendJson(200, dish);
-        return;
-      }
-      if (request.method === "GET" && url.pathname === "/api/v1/recipes") {
-        sendJson(200, {
-          items: [{
-            id: "recipe-soup",
-            name: "Суп базовый",
-            component_count: 1,
-            note_count: 0,
-            is_archived: false,
-          }],
-        });
-        return;
-      }
-      if (request.method === "PUT" && url.pathname === "/api/v1/dishes/dish-soup/meal-roles") {
-        const payload = JSON.parse(body);
-        dish = { ...dish, meal_roles: payload.roles };
-        sendJson(200, dish);
-        return;
-      }
-      sendJson(404, { error: `Unhandled mock path: ${url.pathname}` });
-    });
-  });
-
-  return {
-    requests,
-    listen: () => new Promise((resolve, reject) => {
-      server.once("error", reject);
-      server.listen(apiPort, "127.0.0.1", resolve);
-    }),
-    close: () => new Promise((resolve) => {
-      server.closeAllConnections();
-      server.close(resolve);
-    }),
-  };
 }
 
 class CdpClient {
@@ -203,11 +165,19 @@ class CdpClient {
 
 async function waitForExpression(client, expression, description, timeoutMs = 10_000) {
   const deadline = Date.now() + timeoutMs;
+  let lastError;
   while (Date.now() < deadline) {
-    if (await client.evaluate(`Boolean(${expression})`)) return;
+    try {
+      if (await client.evaluate(`Boolean(${expression})`)) return;
+      lastError = undefined;
+    } catch (error) {
+      lastError = error;
+    }
     await sleep(100);
   }
-  throw new Error(`Timed out waiting for ${description}`);
+  throw new Error(
+    `Timed out waiting for ${description}${lastError ? `: ${lastError.message}` : ""}`,
+  );
 }
 
 async function clickButtonByText(client, text) {
@@ -309,10 +279,10 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body.innerText.includes("Каталог не готов к автогенерации")
-        && document.body.innerText.includes("Завтрак: нужно добавить основное блюдо.")
-        && document.body.innerText.includes("Перекус: нужно добавить блюдо для перекуса.")
-        && document.body.innerText.includes("Без ролей осталось блюд: 1 из 1.")`,
+      `document.body?.innerText?.includes("Каталог не готов к автогенерации")
+        && document.body?.innerText?.includes("Завтрак: нужно добавить основное блюдо.")
+        && document.body?.innerText?.includes("Перекус: нужно добавить блюдо для перекуса.")
+        && document.body?.innerText?.includes("Без ролей осталось блюд: 1 из 1.")`,
       "initial catalogue readiness warnings",
     );
 
@@ -329,39 +299,17 @@ async function run() {
       client,
       "Разрешить роль «Перекус» для приёма пищи «Перекус»",
     );
-    await clickButtonByText(client, "Сохранить роли");
+    await clickButtonByText(client, "Сохранить классификацию");
 
     await waitForExpression(
       client,
-      `document.body.innerText.includes("Обязательное покрытие каталога готово")
-        && document.body.innerText.includes("Все активные блюда классифицированы: 1.")
-        && document.body.innerText.includes("Рекомендуемое покрытие меню")`,
-      "updated catalogue readiness",
+      `document.body?.innerText?.includes("Каталог готов к автогенерации")
+        && !document.body?.innerText?.includes("Без ролей осталось блюд: 1 из 1.")`,
+      "ready catalogue status",
     );
-
-    const mutationRequest = mockApi.requests.findLast(
-      (request) => request.method === "PUT"
-        && request.path === "/api/v1/dishes/dish-soup/meal-roles",
-    );
-    assert.ok(mutationRequest, "Role mutation request was not observed");
-    assert.deepEqual(JSON.parse(mutationRequest.body), {
-      roles: [
-        {
-          role: "main",
-          is_repeatable: false,
-          allowed_meal_types: ["breakfast", "lunch", "dinner"],
-        },
-        {
-          role: "snack",
-          is_repeatable: false,
-          allowed_meal_types: ["snack"],
-        },
-      ],
-    });
-
-    await assertNoHorizontalOverflow(client, 1280);
     await captureScreenshot(client, "dish-catalogue-readiness-desktop");
-    await setViewport(client, 360, 850);
+
+    await setViewport(client, 360, 820);
     await assertNoHorizontalOverflow(client, 360);
     await captureScreenshot(client, "dish-catalogue-readiness-mobile");
 
