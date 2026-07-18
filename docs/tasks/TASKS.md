@@ -7,7 +7,6 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
-| TH-0089 | Actor-Aware Audit Foundation | IN PROGRESS | ./active/TH-0089-actor-aware-audit-foundation.md |
 
 ## Planned release sequence
 
@@ -62,6 +61,7 @@ Exact task IDs for implementation slices are assigned when each slice starts fro
 | TH-0086 | Recipe Ownership Foundation | DONE |
 | TH-0087 | Recipe Publication and Moderation | DONE |
 | TH-0088 | Dish Recipe Variants and Generation Modes | DONE |
+| TH-0089 | Actor-Aware Audit Foundation | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
