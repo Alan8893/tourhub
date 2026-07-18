@@ -7,6 +7,7 @@ from app.models.auth_session import AuthSessionORM
 from app.models.user import UserORM
 from app.schemas.auth import UserRole
 from app.schemas.user_administration import UserAdministrationUpdateRequest
+from app.services.audit_service import AuditService
 from app.services.auth_service import utc_now
 
 
@@ -27,8 +28,9 @@ class LastActiveAdministratorError(UserAdministrationError):
 
 
 class UserAdministrationService:
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: Session, actor: UserORM | None = None) -> None:
         self.session = session
+        self.actor = actor
 
     def list(self) -> Sequence[UserORM]:
         return self.session.scalars(
@@ -75,6 +77,13 @@ class UserAdministrationService:
         if not role_changed and not active_changed:
             return user
 
+        before = {
+            "display_name": user.display_name,
+            "email": user.email,
+            "role": user.role,
+            "is_active": user.is_active,
+            "version": user.version,
+        }
         was_active = user.is_active
         user.role = request.role.value
         user.is_active = request.is_active
@@ -90,6 +99,47 @@ class UserAdministrationService:
                 .values(revoked_at=utc_now())
             )
 
+        if self.actor is not None:
+            changed_fields = []
+            if role_changed:
+                changed_fields.append("role")
+            if active_changed:
+                changed_fields.append("is_active")
+            AuditService(self.session).record(
+                actor=self.actor,
+                action=self._audit_action(
+                    role_changed=role_changed,
+                    active_changed=active_changed,
+                    is_active=user.is_active,
+                ),
+                entity_type="user",
+                entity_id=user.id,
+                before=before,
+                after={
+                    "display_name": user.display_name,
+                    "email": user.email,
+                    "role": user.role,
+                    "is_active": user.is_active,
+                    "version": user.version,
+                },
+                context={"changed_fields": changed_fields},
+            )
+
         self.session.commit()
         self.session.refresh(user)
         return user
+
+    @staticmethod
+    def _audit_action(
+        *,
+        role_changed: bool,
+        active_changed: bool,
+        is_active: bool,
+    ) -> str:
+        if role_changed and active_changed:
+            return "user_access_updated"
+        if role_changed:
+            return "user_role_changed"
+        if active_changed and is_active:
+            return "user_reactivated"
+        return "user_deactivated"
