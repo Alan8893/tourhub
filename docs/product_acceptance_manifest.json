@@ -18,7 +18,7 @@
         "docker-compose.release.yml",
         "docs/INSTALLATION.md",
         "docs/UPDATING.md",
-        "scripts/ci/verify_release_runtime.py"
+        ".github/workflows/docker-release-runtime.yml"
       ]
     },
     {
