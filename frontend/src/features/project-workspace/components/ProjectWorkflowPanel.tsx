@@ -33,6 +33,7 @@ export default function ProjectWorkflowPanel() {
     },
     {
       label: "Документы",
+      completeLabel: "Документы готовы",
       detail: "Готовы к скачиванию",
       complete: Boolean(
         preparationResult?.purchase_list_id &&
@@ -77,7 +78,7 @@ export default function ProjectWorkflowPanel() {
                   >
                     {step.complete ? "✓" : "○"}
                   </Typography>{" "}
-                  {step.label}
+                  {step.complete ? step.completeLabel ?? step.label : step.label}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {step.complete ? step.detail : "Не готово"}
