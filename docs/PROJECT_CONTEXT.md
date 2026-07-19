@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-19
 
-Status: Release Ready — v0.1.0
+Status: Post-release UX delivered — TH-0095
 
 ## 1. Product boundary
 
@@ -41,7 +41,7 @@ Administrator bootstrap and invitations
   → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093. The exact merged `main` SHA receives tag `v0.1.0` only after every required push workflow succeeds.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation and responsive presentation without changing that released business baseline.
 
 ## 3. Architecture
 
@@ -56,7 +56,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, form state, navigation, API integration, server-projected capabilities, safe audit responses, and download controls. It does not own business validation, alcohol classification, document content, generation, lifecycle, calculation, authorization, or audit sanitization.
+Frontend owns presentation, responsive application navigation, Project workspace routing, form state, API integration, server-projected capabilities, safe audit responses, and download controls. It does not own business validation, alcohol classification, document content, generation, lifecycle, calculation, authorization, or audit sanitization.
 
 ### Backend
 
@@ -114,9 +114,16 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 ### Projects, preparation, documents, and operations
 
-- project catalogue/workspace, participant count, duration, dates, meal boundaries, Recipe generation mode, persisted MealPlan/MealSlotDish, shopping, checklist, equipment, readiness, and recalculation;
+- project catalogue, participant count, duration, dates, meal boundaries, Recipe generation mode, persisted MealPlan/MealSlotDish, shopping, checklist, equipment, readiness, and recalculation;
+- compact Project Overview at `/projects/:id`;
+- routed Menu, Shopping, Equipment, and Documents work areas under `/projects/:id/*`;
+- Project settings dialog for Recipe generation mode;
+- separate Shopping calculation/packing and checklist views;
+- temporary global navigation drawer below desktop width and a permanent sidebar on desktop;
+- readable stacked checklist controls through tablet widths;
 - complete Russian Project PDF and workbook sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование`;
 - compatibility purchase/equipment PDF/XLSX/print and coordinated ZIP;
+- compact full-package download on Overview and complete download controls in Documents;
 - one immutable club/document settings snapshot per package request;
 - installation, update, backup, restore, health, LAN, recovery, and production-like Docker acceptance.
 
@@ -128,7 +135,7 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - real PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` verification with representative historical data;
 - versioned deployment checklist and v0.1.0 release notes;
 - exact-head push workflows for all required gates;
-- automatic lightweight `v0.1.0` tag creation only after the exact merged SHA is green;
+- lightweight `v0.1.0` tag on the verified merged SHA;
 - backup-based production rollback boundary;
 - no active release-blocking capability or operational debt.
 
@@ -136,12 +143,12 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-No release-blocking task remains active. Post-release work requires a separately selected task and must not silently expand the v0.1.0 feature-frozen baseline.
+TH-0095 is complete. No additional post-release task is selected automatically, and the v0.1.0 business baseline remains unchanged.
 
 ## 6. Immediate sequence
 
-1. Complete the merge-triggered exact-head workflows and create tag `v0.1.0`.
-2. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
+1. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
+2. Use the routed Project workspace for Overview, Menu, Shopping, Equipment, and Documents.
 3. Select the next post-release task explicitly from documented debt or a new Product Owner decision.
 
 ## 7. Development rules
@@ -152,5 +159,5 @@ No release-blocking task remains active. Post-release work requires a separately
 - Do not describe a feature as implemented unless code and tests confirm it.
 - Architecture or stack changes require Product Owner approval and an ADR.
 - One logical task is squash-merged to `main`.
-- Released v0.1.0 scope may change only through an explicit post-release task; fixes require regression, security, or documented operational evidence.
+- Released v0.1.0 scope may change only through an explicit post-release task; fixes require regression, security, operational, or approved UX evidence.
 - Documentation, task state, roadmap, and technical debt are updated with code.
