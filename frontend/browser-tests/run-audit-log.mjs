@@ -19,6 +19,12 @@ const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5192/browser-tests/audit-log.html";
 const profileDir = "/tmp/tourhub-audit-log-profile";
+const normalizeText = (value) =>
+  String(value ?? "")
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 async function run() {
   await rm(profileDir, { recursive: true, force: true });
@@ -80,7 +86,7 @@ async function run() {
        document.body?.innerText?.includes("Найдено записей: 5")`,
       "loaded audit event collection",
     );
-    const loadedText = await client.evaluate("document.body.innerText");
+    const loadedText = normalizeText(await client.evaluate("document.body.innerText"));
     for (const label of [
       "Меню сгенерировано",
       "Блюдо заменено в приём пищи",
@@ -91,7 +97,7 @@ async function run() {
       "Журнал не содержит пароли",
     ]) {
       assert.ok(
-        loadedText.includes(label),
+        loadedText.includes(normalizeText(label)),
         `Missing audit label: ${label}\nRendered text:\n${loadedText}`,
       );
     }
@@ -112,14 +118,16 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Блюдо заменено в приём пищи") &&
-       document.body?.innerText?.includes("Приём пищи") &&
-       !document.body?.innerText?.includes("Меню сгенерировано") &&
-       !document.body?.innerText?.includes("Подготовка проекта выполнена") &&
-       !document.body?.innerText?.includes("Рецепт отклонён") &&
-       document.body?.innerText?.includes("Найдено записей: 1")`,
+      `document.body?.innerText?.includes("Найдено записей: 1") &&
+       document.body?.innerText?.includes("Анна Администратор")`,
       "filtered MealSlot audit history",
     );
+    const filteredText = normalizeText(await client.evaluate("document.body.innerText"));
+    assert.ok(filteredText.includes(normalizeText("Блюдо заменено в приём пищи")));
+    assert.ok(filteredText.includes(normalizeText("Приём пищи")));
+    assert.ok(!filteredText.includes(normalizeText("Меню сгенерировано")));
+    assert.ok(!filteredText.includes(normalizeText("Подготовка проекта выполнена")));
+    assert.ok(!filteredText.includes(normalizeText("Рецепт отклонён")));
     assert.ok(
       auditRequests.some(
         (request) =>
