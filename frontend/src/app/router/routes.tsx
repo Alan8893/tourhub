@@ -27,6 +27,7 @@ export const routes: RouteObject[] = [
       { path: "/projects/new", element: <CreateProjectPage /> },
       { path: "/projects", element: <ProjectsPage /> },
       { path: "/projects/:id", element: <ProjectWorkspacePage /> },
+      { path: "/projects/:id/:section", element: <ProjectWorkspacePage /> },
       { path: "/recipes", element: <RecipesPage /> },
       { path: "/recipes/:id", element: <RecipesPage /> },
       { path: "/dishes", element: <DishesWorkspacePage /> },
