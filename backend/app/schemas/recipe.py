@@ -53,6 +53,10 @@ class ProductCreateRequest(BaseModel):
     package_size: int | None = Field(default=None, gt=0)
 
 
+class ProductUpdateRequest(ProductCreateRequest):
+    pass
+
+
 class RecipeComponentResponse(BaseModel):
     id: str
     component_type: str
