@@ -32,6 +32,9 @@ jobs:
           python -m ruff check \
             app/engines/documents/branding.py \
             app/engines/documents/branding_render.py \
+            app/engines/documents/consolidated_dto.py \
+            app/engines/documents/consolidated_excel.py \
+            app/engines/documents/consolidated_pdf.py \
             app/engines/documents/equipment_dto.py \
             app/engines/documents/equipment_excel.py \
             app/engines/documents/equipment_pdf.py \
@@ -43,6 +46,7 @@ jobs:
             app/modules/projects/router.py \
             app/schemas/club_settings.py \
             app/services/club_settings_service.py \
+            app/services/consolidated_document_mapper.py \
             app/services/document_mapper.py \
             app/services/equipment_document_mapper.py \
             app/services/project_document_package_service.py \
@@ -61,9 +65,13 @@ jobs:
           set -o pipefail
           python -m mypy \
             app/engines/documents/branding.py \
+            app/engines/documents/consolidated_dto.py \
+            app/engines/documents/consolidated_excel.py \
+            app/engines/documents/consolidated_pdf.py \
             app/models/club_settings.py \
             app/schemas/club_settings.py \
             app/services/club_settings_service.py \
+            app/services/consolidated_document_mapper.py \
             app/engines/documents/equipment_dto.py \
             app/services/equipment_document_mapper.py \
             app/services/project_document_service.py 2>&1 | tee document-mypy.txt
@@ -79,6 +87,7 @@ jobs:
         run: |
           set -o pipefail
           python -m pytest -q \
+            tests/services/test_consolidated_project_documents.py \
             tests/services/test_equipment_document_export.py \
             tests/services/test_club_branding_documents.py \
             tests/api/test_club_settings_api.py \
