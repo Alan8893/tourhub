@@ -6,7 +6,7 @@ Status date: 2026-07-19
 
 TourHub v0.1.0 is release-ready at Alembic head `h10021`.
 
-The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds final migration and release readiness. TH-0095 delivers the routed responsive Project workspace. TH-0097 adds safe shared Product catalogue editing. TH-0098 / PR #108 synchronizes every newly published CLUB Recipe into the Dish catalogue while keeping generator classification explicitly human-owned.
+The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds final migration and release readiness. TH-0095 delivers the routed responsive Project workspace. TH-0097 adds safe shared Product catalogue editing. TH-0098 / PR #108 synchronizes newly published CLUB Recipes into the Dish catalogue while keeping generator classification explicitly human-owned. TH-0099 is the active post-release task and adds semantic Project audit coverage without a migration or new product capability.
 
 ## Verified baseline
 
@@ -22,7 +22,7 @@ The approved first local single-club release is feature frozen through TH-0092 /
 - PR #103 verified final migration/release readiness and created `v0.1.0`.
 - PR #105 replaced the long Project landing page with routed Overview, Menu, Shopping, Equipment, and Documents work areas without a migration.
 - PR #107 added Product catalogue editing while preserving Product IDs, Recipe relationships, and RecipeComponent quantities.
-- PR #108 adds transaction-owned published Recipe-to-Dish synchronization and explicit generator readiness states without a migration.
+- PR #108 added transaction-owned published Recipe-to-Dish synchronization and explicit generator readiness states without a migration.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Accepted first-release baseline
@@ -75,9 +75,19 @@ The approved first local single-club release is feature frozen through TH-0092 /
 - no role, meal type, or repeatability value is inferred automatically;
 - Backend transaction tests and focused real-Chrome acceptance cover the workflow.
 
+## Active post-release work — TH-0099
+
+- Project creation records `project_created` in the same commit;
+- participant recalculation records `project_participants_updated` with Project and derived-data rollback;
+- Recipe generation-mode changes record `project_generation_mode_updated` and suppress no-op events;
+- full Project preparation records `project_prepared` in one caller-owned transaction with purchase list, checklist, and equipment writes;
+- all events use the authenticated preparation actor and the existing immutable AuditEvent contract;
+- Administrator Audit UI/API expose Russian Project labels and filters;
+- menu generation, manual MealSlot changes, and other audit domains remain outside TH-0099.
+
 ## Deferred non-blocking debt
 
-- explicit audit instrumentation for project/menu, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation writes;
+- audit instrumentation for menu/MealSlot, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation writes;
 - ownership-aware import UX, Product/Dish archive-management UI, and reviewed policy-vocabulary evolution;
 - moderation notifications, session administration, account recovery, asynchronous delivery, and bounce handling;
 - richer Recipe metadata, per-meal Recipe switching, and preference weights;
@@ -87,4 +97,4 @@ The approved first local single-club release is feature frozen through TH-0092 /
 
 ## Next work
 
-No additional post-release capability is selected automatically after TH-0098. The next task requires an explicit Product Owner decision and must preserve the released architecture, immutable tag, and Alembic head unless separately approved.
+Complete TH-0099 on one exact green head. No later post-release capability is selected automatically; another task requires an explicit Product Owner decision and must preserve the released architecture, immutable tag, and Alembic head unless separately approved.
