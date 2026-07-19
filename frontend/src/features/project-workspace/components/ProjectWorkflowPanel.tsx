@@ -1,4 +1,10 @@
-import { Card, CardContent, Typography } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  LinearProgress,
+  Stack,
+  Typography,
+} from "@mui/material";
 
 import { useProjectWorkflow } from "@/features/project-workflow";
 
@@ -6,42 +12,80 @@ export default function ProjectWorkflowPanel() {
   const { preparationResult } = useProjectWorkflow();
   const steps = [
     {
-      label: "Меню похода",
+      label: "Меню",
+      detail: "Сформировано",
       complete: Boolean(preparationResult?.meal_plan_id),
     },
     {
-      label: "Закупка продуктов",
+      label: "Закупка",
+      detail: "Расчёт готов",
       complete: Boolean(preparationResult?.purchase_list_id),
     },
     {
-      label: "Чек-лист покупок",
+      label: "Чек-лист",
+      detail: "Создан",
       complete: Boolean(preparationResult?.purchase_checklist_id),
     },
     {
       label: "Оборудование",
+      detail: "Список готов",
       complete: Boolean(preparationResult?.equipment_list_id),
     },
     {
       label: "Документы",
+      detail: "Готовы к скачиванию",
       complete: Boolean(
         preparationResult?.purchase_list_id &&
           preparationResult.purchase_checklist_id &&
           preparationResult.equipment_list_id,
       ),
-      completeLabel: "Документы готовы",
     },
   ];
+  const completed = steps.filter((step) => step.complete).length;
 
   return (
-    <Card sx={{ mt: 3 }}>
+    <Card variant="outlined" sx={{ height: "100%" }}>
       <CardContent>
-        <Typography variant="h6">Подготовка проекта</Typography>
+        <Stack spacing={2}>
+          <Stack spacing={0.5}>
+            <Typography variant="h6">Готовность проекта</Typography>
+            <Typography variant="h4" component="p" fontWeight={700}>
+              {completed} из {steps.length}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={(completed / steps.length) * 100}
+              aria-label="Готовность проекта"
+              sx={{ height: 7, borderRadius: 999 }}
+            />
+          </Stack>
 
-        {steps.map((step) => (
-          <Typography key={step.label} sx={{ mt: 1 }}>
-            {step.complete ? "✓" : "○"} {step.complete ? step.completeLabel ?? step.label : step.label}
-          </Typography>
-        ))}
+          <Stack spacing={1.25}>
+            {steps.map((step) => (
+              <Stack
+                key={step.label}
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Typography>
+                  <Typography
+                    component="span"
+                    color={step.complete ? "success.main" : "text.disabled"}
+                    aria-hidden
+                  >
+                    {step.complete ? "✓" : "○"}
+                  </Typography>{" "}
+                  {step.label}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {step.complete ? step.detail : "Не готово"}
+                </Typography>
+              </Stack>
+            ))}
+          </Stack>
+        </Stack>
       </CardContent>
     </Card>
   );
