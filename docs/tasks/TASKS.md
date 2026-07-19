@@ -7,8 +7,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0099 | Project Audit Coverage | IN PROGRESS | ./active/TH-0099-project-audit-coverage.md |
 
-TH-0098 is complete. No additional post-release capability is selected automatically; the next task requires an explicit Product Owner decision.
+TH-0099 is the active Product Owner-approved post-release task. It adds semantic Project audit events in the owning transactions and does not expand into menu, MealSlot, settings, or other audit domains.
 
 ## First-release sequence
 
