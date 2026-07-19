@@ -24,6 +24,18 @@ Status date: 2026-07-19
 
 None. The approved first-release capability scope is feature frozen and release-ready. Any new blocking classification requires reproducible regression, security, migration, or operator evidence.
 
+## Resolved post-release UX debt — TH-0095
+
+- the Project page no longer renders Menu, Shopping, Checklist, Equipment, and Documents as one very long landing page;
+- the compact Overview now exposes readiness, direct section navigation, preparation actions, and full-package download;
+- Menu, Shopping, Equipment, and Documents have stable Project section URLs;
+- Recipe generation mode moved into a Project settings dialog;
+- Shopping calculation/packing and the purchase checklist no longer compete in a compressed two-column layout;
+- checklist inputs, save actions, and purchased state remain stacked through tablet widths;
+- the permanent global sidebar no longer consumes space at the Product Owner's approximately 831 px viewport and becomes a temporary drawer below desktop width;
+- responsive browser acceptance covers 360 px, 831 px, and 1280 px without horizontal overflow;
+- the UX improvement required no Backend, migration, calculation, authorization, or document-contract change.
+
 ## Remaining audit debt
 
 1. Project creation/update/preparation actions.
@@ -81,7 +93,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Product Owner decisions required for later releases
 
-- which post-release debt slice is next;
+- which post-release debt slice is next after TH-0095;
 - whether preference weighting beyond approved generation modes belongs in a later release;
 - mandatory Recipe metadata for a later release;
 - encrypted settings archive format.

@@ -30,7 +30,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           color="inherit"
           aria-label="Открыть меню"
           onClick={onMenuClick}
-          sx={{ display: { xs: "inline-flex", sm: "none" }, mr: 1 }}
+          sx={{ display: { xs: "inline-flex", md: "none" }, mr: 1 }}
         >
           <Box component="span" aria-hidden sx={{ fontSize: 26, lineHeight: 1 }}>
             ☰

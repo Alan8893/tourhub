@@ -23,6 +23,7 @@ Project preparation baseline
   → Product acceptance and feature freeze
   → Final migration and release readiness
   → v0.1.0
+  → Project workspace UX (TH-0095)
 ```
 
 ## RELEASED FIRST-RELEASE SEQUENCE
@@ -81,11 +82,24 @@ Project preparation baseline
 - one Alembic head and final revision `h10021`;
 - versioned deployment checklist, release notes, and backup-based rollback boundary;
 - Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, and Docker Release Runtime on pushes to `main`;
-- exact-head final workflow that creates lightweight tag `v0.1.0` only after every required merged-SHA workflow succeeds.
+- exact-head final workflow that created lightweight tag `v0.1.0` only after every required merged-SHA workflow succeeded.
 
-## POST-RELEASE SELECTION
+## DELIVERED POST-RELEASE UX
 
-No next product capability is selected automatically. The Product Owner must choose a separate post-release task from the documented debt or approve a new priority. The v0.1.0 release baseline remains unchanged until that decision.
+### Project workspace navigation and responsive layout — TH-0095 / PR #105
+
+- `/projects/:id` is a compact Overview with readiness progress, section summaries, the existing next action, and direct full-package download;
+- stable routed work areas are available at `/menu`, `/shopping`, `/equipment`, and `/documents` under each Project;
+- Recipe generation mode is edited in a Project settings dialog instead of occupying the landing page;
+- Shopping separates calculation/packing from the purchase checklist;
+- the global navigation uses a temporary drawer below the desktop breakpoint, including the Product Owner's approximately 831 px viewport;
+- checklist controls remain stacked and readable through tablet widths;
+- responsive acceptance verifies no horizontal overflow at 360 px, 831 px, and 1280 px;
+- Backend contracts, calculations, preparation persistence, authorization, documents, module visibility, and Alembic `h10021` remain unchanged.
+
+## NEXT POST-RELEASE SELECTION
+
+No additional product capability is selected automatically after TH-0095. The Product Owner must choose a separate task from documented debt or approve a new priority. The released v0.1.0 business baseline remains unchanged until that decision.
 
 ## Deferred non-blocking priorities
 

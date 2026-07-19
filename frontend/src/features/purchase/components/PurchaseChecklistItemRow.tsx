@@ -97,7 +97,7 @@ export default function PurchaseChecklistItemRow({
       <Stack
         direction={purchaseChecklistResponsiveDirection}
         spacing={1.5}
-        alignItems={{ xs: "stretch", sm: "center" }}
+        alignItems={{ xs: "stretch", md: "center" }}
       >
         <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="subtitle1" fontWeight={600}>
@@ -111,41 +111,49 @@ export default function PurchaseChecklistItemRow({
           </Typography>
         </Stack>
 
-        <TextField
-          size="small"
-          type="number"
-          label="Куплено"
-          value={purchasedValue}
-          onChange={(event) => setPurchasedValue(event.target.value)}
-          inputProps={{
-            min: 0,
-            step: "any",
-            "aria-label": `Куплено для ${item.product_name}`,
-          }}
-          sx={{ width: { xs: "100%", sm: 150 } }}
-        />
-
-        <Button
-          variant="outlined"
-          onClick={savePurchasedQuantity}
-          disabled={updateItem.isPending}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={1}
+          alignItems={{ xs: "stretch", sm: "center" }}
+          sx={{ width: { xs: "100%", md: "auto" } }}
         >
-          Сохранить
-        </Button>
+          <TextField
+            size="small"
+            type="number"
+            label="Куплено"
+            value={purchasedValue}
+            onChange={(event) => setPurchasedValue(event.target.value)}
+            inputProps={{
+              min: 0,
+              step: "any",
+              "aria-label": `Куплено для ${item.product_name}`,
+            }}
+            sx={{ width: { xs: "100%", sm: 170 } }}
+          />
 
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={item.is_checked}
-              onChange={(event) => setChecked(event.target.checked)}
-              disabled={updateItem.isPending}
-              inputProps={{
-                "aria-label": `Отметить ${item.product_name} купленным`,
-              }}
-            />
-          }
-          label="Куплено"
-        />
+          <Button
+            variant="outlined"
+            onClick={savePurchasedQuantity}
+            disabled={updateItem.isPending}
+          >
+            Сохранить
+          </Button>
+
+          <FormControlLabel
+            sx={{ m: 0, whiteSpace: "nowrap" }}
+            control={
+              <Checkbox
+                checked={item.is_checked}
+                onChange={(event) => setChecked(event.target.checked)}
+                disabled={updateItem.isPending}
+                inputProps={{
+                  "aria-label": `Отметить ${item.product_name} купленным`,
+                }}
+              />
+            }
+            label="Куплено"
+          />
+        </Stack>
       </Stack>
 
       {feedback ? (

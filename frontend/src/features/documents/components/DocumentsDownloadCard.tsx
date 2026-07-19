@@ -24,9 +24,14 @@ function saveBlob(blob: Blob, filename: string): void {
 interface Props {
   projectId: number;
   ready: boolean;
+  compact?: boolean;
 }
 
-export default function DocumentsDownloadCard({ projectId, ready }: Props) {
+export default function DocumentsDownloadCard({
+  projectId,
+  ready,
+  compact = false,
+}: Props) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,11 +78,14 @@ export default function DocumentsDownloadCard({ projectId, ready }: Props) {
   }
 
   return (
-    <Card sx={{ "& .MuiButton-root": { textTransform: "none" } }}>
+    <Card
+      variant={compact ? "outlined" : undefined}
+      sx={{ height: compact ? "100%" : undefined, "& .MuiButton-root": { textTransform: "none" } }}
+    >
       <CardContent>
-        <Stack spacing={1.5}>
+        <Stack spacing={1.5} alignItems={compact ? "flex-start" : "stretch"}>
           <Typography variant="h6">Документы</Typography>
-          <Typography>
+          <Typography color={compact ? "text.secondary" : undefined}>
             {ready
               ? "Русские документы закупки и оборудования готовы. Полный комплект также содержит параметры похода, меню, раскладку, предупреждения и комментарии."
               : "Сначала подготовьте закупку, чек-лист и список оборудования."}
@@ -85,7 +93,17 @@ export default function DocumentsDownloadCard({ projectId, ready }: Props) {
 
           {error && <Alert severity="error">{error}</Alert>}
 
-          {ready && (
+          {ready && compact && (
+            <Button
+              variant="contained"
+              disabled={isDownloading}
+              onClick={handlePackageDownload}
+            >
+              Скачать полный пакет
+            </Button>
+          )}
+
+          {ready && !compact && (
             <Stack spacing={2}>
               <Stack spacing={0.75}>
                 <Typography variant="subtitle2">Полный комплект</Typography>

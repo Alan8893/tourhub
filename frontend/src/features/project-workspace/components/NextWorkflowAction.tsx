@@ -1,7 +1,7 @@
 import { Alert, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 
-import { useGenerateMealPlan } from "@/features/meal-plan/hooks/useGenerateMealPlan";
 import { useProjectMealPlan } from "@/features/meal-plan";
+import { useGenerateMealPlan } from "@/features/meal-plan/hooks/useGenerateMealPlan";
 import { usePrepareProject } from "@/features/project";
 import { useProjectWorkflow } from "@/features/project-workflow";
 
@@ -15,7 +15,7 @@ export default function NextWorkflowAction() {
 
   if (isMealPlanLoading && !preparationResult?.meal_plan_id) {
     return (
-      <Card sx={{ mt: 3 }}>
+      <Card variant="outlined">
         <CardContent>
           <Typography>Проверяем состояние проекта…</Typography>
         </CardContent>
@@ -25,9 +25,9 @@ export default function NextWorkflowAction() {
 
   if (!hasMealPlan) {
     return (
-      <Card sx={{ mt: 3 }}>
+      <Card variant="outlined">
         <CardContent>
-          <Stack spacing={1}>
+          <Stack spacing={1.25} alignItems="flex-start">
             <Typography variant="h6">Следующее действие</Typography>
             <Typography>Сформируйте меню для этого похода.</Typography>
             {generateMealPlan.isError && (
@@ -65,9 +65,9 @@ export default function NextWorkflowAction() {
     !preparationResult.equipment_list_id
   ) {
     return (
-      <Card sx={{ mt: 3 }}>
+      <Card variant="outlined">
         <CardContent>
-          <Stack spacing={1}>
+          <Stack spacing={1.25} alignItems="flex-start">
             <Typography variant="h6">Следующее действие</Typography>
             <Typography>
               Рассчитайте закупку, создайте чек-лист и список оборудования.
@@ -95,10 +95,10 @@ export default function NextWorkflowAction() {
   }
 
   return (
-    <Card sx={{ mt: 3 }}>
+    <Card variant="outlined">
       <CardContent>
         <Typography variant="h6">Проект подготовлен</Typography>
-        <Typography>
+        <Typography color="text.secondary" sx={{ mt: 0.5 }}>
           Закупка, чек-лист и оборудование сформированы. Документы доступны для скачивания.
         </Typography>
       </CardContent>

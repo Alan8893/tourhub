@@ -4,7 +4,7 @@ import ProjectWorkspace from "../features/project-workspace/ProjectWorkspace";
 
 export default function ProjectWorkspacePage() {
   return (
-    <Box sx={{ mt: 4 }}>
+    <Box sx={{ pb: 4 }}>
       <ProjectWorkspace />
     </Box>
   );

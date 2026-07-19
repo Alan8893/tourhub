@@ -48,7 +48,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         onClose={onMobileClose}
         ModalProps={{ keepMounted: true }}
         sx={{
-          display: { xs: "block", sm: "none" },
+          display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": {
             boxSizing: "border-box",
             width: "min(78vw, 280px)",
@@ -61,7 +61,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       <Drawer
         variant="permanent"
         sx={{
-          display: { xs: "none", sm: "block" },
+          display: { xs: "none", md: "block" },
           width: drawerWidth,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
