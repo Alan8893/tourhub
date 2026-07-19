@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import require_preparation_access
 from app.core.database import get_db
+from app.engines.documents.dto import GeneratedDocument
 from app.models.user import UserORM
+from app.modules.projects.models.project import ProjectORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.modules.projects.schemas import (
     ProjectCreateRequest,
@@ -12,7 +14,7 @@ from app.modules.projects.schemas import (
     ProjectRecipeGenerationModeUpdateRequest,
     ProjectResponse,
 )
-from app.modules.projects.service import ProjectService
+from app.modules.projects.service import Project, ProjectService
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
@@ -28,7 +30,10 @@ from app.services.project_document_service import ProjectDocumentService
 from app.services.project_participant_recalculation_service import (
     ProjectParticipantRecalculationService,
 )
-from app.services.project_preparation_service import ProjectPreparationService
+from app.services.project_preparation_service import (
+    ProjectPreparationResult,
+    ProjectPreparationService,
+)
 from app.services.purchase_checklist_service import PurchaseChecklistService
 from app.services.purchase_list_service import PurchaseListService
 from app.services.shopping_list_service import ShoppingListService
@@ -36,7 +41,7 @@ from app.services.shopping_list_service import ShoppingListService
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
-def _project_response(project) -> ProjectResponse:
+def _project_response(project: Project | ProjectORM) -> ProjectResponse:
     return ProjectResponse(
         id=project.id,
         name=project.name,
@@ -133,7 +138,7 @@ def prepare_project(
     project_id: int,
     db: Session = Depends(get_db),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> ProjectPreparationResult:
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -175,7 +180,7 @@ def _document_service(db: Session) -> ProjectDocumentService:
     )
 
 
-def _download(document) -> Response:
+def _download(document: GeneratedDocument) -> Response:
     return Response(
         content=document.content,
         media_type=document.content_type,
