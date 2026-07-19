@@ -74,6 +74,9 @@ jobs:
             tests/api/test_project_preparation_status_api.py \
             tests/api/test_audit_api.py \
             tests/api/test_project_audit_api.py \
+            tests/api/test_project_meal_plan_regeneration_api.py \
+            tests/api/test_meal_slot_purchasing_recalculation_api.py \
+            tests/api/test_menu_meal_slot_audit_rollback_api.py \
             tests/api/test_project_document_package_api.py \
             tests/api/test_alcohol_prohibition_api.py \
             tests/migrations/test_h10021_alcohol_prohibition.py \
