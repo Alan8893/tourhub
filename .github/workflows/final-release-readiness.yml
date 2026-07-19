@@ -37,6 +37,7 @@ jobs:
           python -m py_compile scripts/release/validate_release_readiness.py
           python -m py_compile scripts/release/verify_final_migration_cycle.py
           python -m py_compile scripts/release/finalize_release.py
+          python -m py_compile scripts/release/tests/test_finalize_release.py
 
       - name: Ruff release validators
         run: |
@@ -44,9 +45,13 @@ jobs:
             scripts/release/validate_release_readiness.py \
             scripts/release/verify_final_migration_cycle.py \
             scripts/release/finalize_release.py \
+            scripts/release/tests/test_finalize_release.py \
             --select E,F,I,UP,B \
             --target-version py313 \
             --line-length 100
+
+      - name: Test release tag lifecycle
+        run: python -m unittest discover -s scripts/release/tests -p 'test_*.py'
 
       - name: Validate release readiness manifest
         run: python scripts/release/validate_release_readiness.py
@@ -103,7 +108,7 @@ jobs:
           if-no-files-found: error
 
   tag-release:
-    name: Verify exact-head workflows and create release tag
+    name: Verify exact-head workflows and immutable release tag
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs:
       - contract
@@ -122,10 +127,10 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Validate release-ready state
+      - name: Validate release lifecycle state
         run: python scripts/release/validate_release_readiness.py
 
-      - name: Wait for exact-head workflows and create tag
+      - name: Wait for exact-head workflows and verify release tag
         run: |
           python scripts/release/finalize_release.py \
             --sha "$GITHUB_SHA" \
