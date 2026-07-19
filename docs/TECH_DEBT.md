@@ -2,7 +2,7 @@
 
 Status date: 2026-07-19
 
-## Implemented through TH-0091 / PR #101
+## Accepted and feature frozen through TH-0092 / PR #102
 
 - guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
 - production-like runtime, backup/restore, health checks, API proxy, and restart persistence;
@@ -18,7 +18,8 @@ Status date: 2026-07-19
 - Product/Dish archive state and policy markers through `h10021`;
 - deterministic archival of existing prohibited Product → Recipe → default Dish records;
 - historical relationships retained while archived records are excluded from active catalogues/new preparation;
-- classifier false-positive boundaries, API/import/lifecycle tests, reversible migration coverage, and complete repository acceptance.
+- classifier false-positive boundaries, API/import/lifecycle tests, reversible migration coverage, and complete repository acceptance;
+- machine-readable product acceptance evidence and explicit feature-freeze rules.
 
 ## Remaining audit debt
 
@@ -62,9 +63,16 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - approved mail templates and attachments;
 - additional same-origin request hardening if deployment expands beyond trusted LAN.
 
+## Deferred product domains
+
+- participant profiles;
+- routes and GPX;
+- warehouse balances, issue workflow, and participant distribution;
+- procurement prices, shops, stock balances, and external aggregators.
+
 ## Remaining release-blocking product debt
 
-1. **Product Acceptance and Feature Freeze**.
+None. The approved first-release capability scope is accepted and feature frozen.
 
 ## Configuration export/import debt
 
@@ -72,16 +80,14 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - protected-value exclusion from unencrypted exports;
 - approved encryption, integrity, preview, and rollback design.
 
-## Product Owner decisions still required
+## Product Owner decisions still required for later releases
 
 - whether preference weighting beyond approved generation modes belongs in a later release;
 - mandatory Recipe metadata for a later release;
 - encrypted settings archive format.
 
-## Deferred final release debt
+## Current release-readiness work
 
-Only after first-release feature freeze:
-
-- PostgreSQL previous → head → previous → head migration smoke;
+- PostgreSQL previous → `h10021` → previous → `h10021` migration smoke;
 - final deployment checklist;
-- final release workflow and tag.
+- final release workflow and tag after green exact-head gates.
