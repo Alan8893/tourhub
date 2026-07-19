@@ -7,8 +7,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0094 | Project and Menu Audit Instrumentation | IN PROGRESS | ./active/TH-0094-project-menu-audit-instrumentation.md |
 
-No release-blocking task remains active after TH-0093. Any post-release capability or debt-reduction slice requires a separate task selected from current documented priorities.
+TH-0094 is the first post-release debt-reduction slice. It implements already-approved Product Spec audit coverage without changing the released v0.1.0 workflow or feature boundary.
 
 ## First-release sequence
 
@@ -24,7 +25,7 @@ No release-blocking task remains active after TH-0093. Any post-release capabili
 | 8 | Product acceptance and feature freeze | End-to-end acceptance, explicit optional-scope decisions, and frozen first-release capability scope |
 | 9 | Final release readiness | PostgreSQL migration cycle, deployment checklist, exact-head final workflow, and release tag |
 
-The complete first-release sequence is delivered through TH-0093. The feature-frozen product scope remains the baseline for maintenance and post-release planning.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. Post-release work remains independently scoped and must not modify that tag.
 
 ## Completed
 
@@ -77,5 +78,5 @@ Details are stored in `./closed/` using the task ID and descriptive slug.
 - Completed tasks are moved to `closed/` after verification.
 - Architectural decisions are documented separately.
 - Current status documents override historical task wording when scope has been explicitly deferred.
-- Feature-frozen release scope cannot be expanded without an explicit Product Owner decision and a new post-release task.
-- Release tag `v0.1.0` may be created only by the exact-head Final Release Readiness workflow after merged-`main` push gates pass.
+- Post-release work cannot rewrite tag `v0.1.0` or silently expand its feature-frozen baseline.
+- New product behavior requires an explicit Product Owner decision; documented debt-reduction work may proceed as an independently reviewable task.
