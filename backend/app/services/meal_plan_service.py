@@ -6,6 +6,7 @@ from app.engines.meal_plan_generator import (
     DishInput,
     DishRoleInput,
     MealPlanGenerationResult,
+    MealPlanGenerator,
     MealPlanItemResult,
     MealSlotResult,
     PreservedMealSlotInput,
