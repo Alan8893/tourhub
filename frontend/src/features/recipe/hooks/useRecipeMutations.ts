@@ -14,6 +14,7 @@ import {
   renameRecipe,
   restoreRecipe,
   submitRecipe,
+  updateProduct,
   updateRecipeComponent,
   updateRecipeNote,
   type ProductWriteInput,
@@ -151,5 +152,19 @@ export function useCreateProduct() {
   return useMutation({
     mutationFn: (input: ProductWriteInput) => createProduct(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["recipe-products"] }),
+  });
+}
+
+export function useUpdateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ productId, input }: { productId: string; input: ProductWriteInput }) =>
+      updateProduct(productId, input),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["recipe-products"] }),
+        queryClient.invalidateQueries({ queryKey: ["recipes"] }),
+      ]);
+    },
   });
 }
