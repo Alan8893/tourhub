@@ -1,6 +1,6 @@
 export const purchaseChecklistResponsiveDirection = {
   xs: "column",
-  sm: "row",
+  md: "row",
 } as const;
 
 export function formatPurchaseQuantity(value: number): string {
