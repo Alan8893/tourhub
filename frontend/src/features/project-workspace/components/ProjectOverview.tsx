@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 
+import DocumentsDownloadCard from "@/features/documents/components/DocumentsDownloadCard";
 import { useProjectWorkflow } from "@/features/project-workflow";
 import { useModuleVisibility } from "@/features/system-settings/providers/ModuleVisibilityProvider";
 
@@ -62,7 +63,11 @@ export default function ProjectOverview() {
             <Grid item xs={12} sm={6}>
               <SummaryCard
                 title="Меню"
-                detail={hasMenu ? "Меню сформировано и доступно для редактирования." : "Сформируйте меню похода."}
+                detail={
+                  hasMenu
+                    ? "Меню сформировано и доступно для редактирования."
+                    : "Сформируйте меню похода."
+                }
                 actionLabel="Открыть меню"
                 to={buildProjectWorkspacePath(projectId, "menu")}
               />
@@ -85,7 +90,11 @@ export default function ProjectOverview() {
               <Grid item xs={12} sm={6}>
                 <SummaryCard
                   title="Оборудование"
-                  detail={hasEquipment ? "Список оборудования сформирован." : "Список появится после подготовки проекта."}
+                  detail={
+                    hasEquipment
+                      ? "Список оборудования сформирован."
+                      : "Список появится после подготовки проекта."
+                  }
                   actionLabel="Открыть"
                   to={buildProjectWorkspacePath(projectId, "equipment")}
                 />
@@ -93,11 +102,10 @@ export default function ProjectOverview() {
             )}
             {settings.documents_visible && (
               <Grid item xs={12} sm={6}>
-                <SummaryCard
-                  title="Документы"
-                  detail={hasDocuments ? "PDF, Excel и полный пакет готовы к скачиванию." : "Документы появятся после подготовки проекта."}
-                  actionLabel="Открыть документы"
-                  to={buildProjectWorkspacePath(projectId, "documents")}
+                <DocumentsDownloadCard
+                  projectId={projectId}
+                  ready={hasDocuments}
+                  compact
                 />
               </Grid>
             )}
