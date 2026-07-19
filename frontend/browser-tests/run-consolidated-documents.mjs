@@ -24,6 +24,16 @@ const pageUrl = "http://127.0.0.1:5194/browser-tests/consolidated-documents.html
 const profileDir = "/tmp/tourhub-consolidated-documents-profile";
 
 async function clickButton(client, label) {
+  await waitForExpression(
+    client,
+    `(() => {
+      const button = [...document.querySelectorAll("button")].find(
+        (item) => item.textContent?.trim() === ${JSON.stringify(label)},
+      );
+      return Boolean(button && !button.disabled);
+    })()`,
+    `${label} button enabled`,
+  );
   const clicked = await client.evaluate(`(() => {
     const button = [...document.querySelectorAll("button")].find(
       (item) => item.textContent?.trim() === ${JSON.stringify(label)},
