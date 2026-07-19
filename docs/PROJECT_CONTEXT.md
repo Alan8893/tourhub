@@ -1,10 +1,10 @@
 # TourHub — PROJECT_CONTEXT
 
-Version: 0.0.8-alpha
+Version: 0.1.0
 
 Last update: 2026-07-19
 
-Status: Feature Frozen — Final Migration and Release Readiness In Progress
+Status: Release Ready — v0.1.0
 
 ## 1. Product boundary
 
@@ -15,15 +15,15 @@ TourHub is a local ERP application for one tourist club.
 - The runtime supports multiple invited users inside the same club.
 - Registration is invitation-only after one-time Administrator bootstrap.
 - Approved roles are Administrator, Instructor, and Verified Instructor.
-- Participant profiles are outside the current release workflow; calculations use participant count.
+- Participant profiles are outside the released workflow; calculations use participant count.
 - Alcohol is prohibited without exceptions through one Backend policy.
-- Paid external services are not used.
+- Paid or externally hosted runtime services are not used.
 
-The approved target scope is defined in `PRODUCT_SPEC.md`. The accepted first-release state is defined by code, tests, `PRODUCT_ACCEPTANCE.md`, `product_acceptance_manifest.json`, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
+The approved target scope is defined in `PRODUCT_SPEC.md`. The released first-release state is defined by code, tests, `PRODUCT_ACCEPTANCE.md`, `product_acceptance_manifest.json`, `release_readiness_manifest.json`, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
 
-## 2. Current product goal
+## 2. Released product workflow
 
-The approved Russian local workflow is accepted and feature frozen:
+The approved Russian local workflow is accepted, feature frozen, and release-ready:
 
 ```text
 Administrator bootstrap and invitations
@@ -38,9 +38,10 @@ Administrator bootstrap and invitations
   → Actor-aware operational accountability
   → Central alcohol prohibition
   → Product acceptance and feature freeze
+  → Final migration and release readiness
 ```
 
-The release-blocking functional sequence is complete through TH-0092 / PR #102. TH-0093 Final Migration and Release Readiness is active and must not expand the accepted first-release scope.
+The complete first-release sequence is delivered through TH-0093. The exact merged `main` SHA receives tag `v0.1.0` only after every required push workflow succeeds.
 
 ## 3. Architecture
 
@@ -78,9 +79,9 @@ Development starts with:
 docker compose up -d --build
 ```
 
-The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally. PostgreSQL and Redis remain internal to the release network. Redis is available but no current business workflow depends on it.
+The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally. PostgreSQL and Redis remain internal to the release network. Redis is available but no released business workflow depends on it.
 
-## 4. Accepted first-release baseline
+## 4. Released baseline
 
 ### Access and users
 
@@ -119,27 +120,29 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - one immutable club/document settings snapshot per package request;
 - installation, update, backup, restore, health, LAN, recovery, and production-like Docker acceptance.
 
-### Product acceptance and freeze
+### Product acceptance and release readiness
 
-- versioned machine-readable manifest for accepted capabilities, evidence, architecture boundaries, deferred scope, and acceptance commands;
-- dedicated manifest, selected Backend, and six-scenario Chrome acceptance gate;
-- Alembic head fixed at `h10021` for the accepted product baseline;
-- no active release-blocking capability remains;
-- optional gaps are explicitly deferred and non-blocking;
-- first-release scope changes are restricted to acceptance defects, security fixes, final release-readiness work, and documentation corrections.
+- versioned Product Acceptance and Release Readiness manifests;
+- dedicated selected Backend and six-scenario Chrome Product Acceptance gate;
+- Alembic accepted head fixed at `h10021`;
+- real PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` verification with representative historical data;
+- versioned deployment checklist and v0.1.0 release notes;
+- exact-head push workflows for all required gates;
+- automatic lightweight `v0.1.0` tag creation only after the exact merged SHA is green;
+- backup-based production rollback boundary;
+- no active release-blocking capability or operational debt.
 
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
-- TH-0093 — Final Migration and Release Readiness.
 
-TH-0093 verifies PostgreSQL 18 `h10020 → h10021 → h10020 → h10021`, the deployment checklist, final exact-head release evidence, and the release tag without adding product capabilities.
+No release-blocking task remains active. Post-release work requires a separately selected task and must not silently expand the v0.1.0 feature-frozen baseline.
 
 ## 6. Immediate sequence
 
-1. Complete TH-0093 migration and deployment readiness evidence.
-2. Run all final workflows on one exact head.
-3. Create the release tag only from that verified head.
+1. Complete the merge-triggered exact-head workflows and create tag `v0.1.0`.
+2. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
+3. Select the next post-release task explicitly from documented debt or a new Product Owner decision.
 
 ## 7. Development rules
 
@@ -149,5 +152,5 @@ TH-0093 verifies PostgreSQL 18 `h10020 → h10021 → h10020 → h10021`, the de
 - Do not describe a feature as implemented unless code and tests confirm it.
 - Architecture or stack changes require Product Owner approval and an ADR.
 - One logical task is squash-merged to `main`.
-- During feature freeze, only acceptance defect fixes, security fixes, final release-readiness work, and documentation corrections may change first-release scope.
+- Released v0.1.0 scope may change only through an explicit post-release task; fixes require regression, security, or documented operational evidence.
 - Documentation, task state, roadmap, and technical debt are updated with code.
