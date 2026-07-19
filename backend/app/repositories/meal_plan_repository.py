@@ -32,8 +32,11 @@ class MealPlanRepository:
     def add_slot_dish(self, slot_dish: MealSlotDishORM) -> None:
         self.session.add(slot_dish)
 
-    def commit(self) -> None:
+    def flush(self) -> None:
         self.session.flush()
+
+    def commit(self) -> None:
+        self.flush()
         self.session.commit()
 
     def get_by_project_id(self, project_id: int) -> MealPlanORM | None:
