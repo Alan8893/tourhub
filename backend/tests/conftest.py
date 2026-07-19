@@ -8,20 +8,7 @@ from app.core.auth import require_administrator, require_preparation_access
 from app.core.database import get_db
 from app.core.session import get_session
 from app.main import app
-from app.models import (
-    Base,
-    DishORM,
-    IngredientORM,
-    MealPlanDayORM,
-    MealPlanItemORM,
-    MealPlanORM,
-    ProductORM,
-    PurchaseChecklistItemORM,
-    PurchaseChecklistORM,
-    PurchaseListItemORM,
-    PurchaseListORM,
-    RecipeORM,
-)
+from app.models import Base, DishORM
 from app.models.user import UserORM
 from app.modules.api.meal_plan_router import get_meal_plan_service
 from app.services.meal_plan_service import MealPlanService
