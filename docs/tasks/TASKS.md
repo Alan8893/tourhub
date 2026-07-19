@@ -8,7 +8,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
 
-No release-blocking task remains active after TH-0093. Any post-release capability or debt-reduction slice requires a separate task selected from current documented priorities.
+No release-blocking task remains active after TH-0093. TH-0095 is the first completed post-release UX slice. Any further capability or debt-reduction work requires a separate selected task.
 
 ## First-release sequence
 
@@ -68,6 +68,7 @@ The complete first-release sequence is delivered through TH-0093. The feature-fr
 | TH-0091 | Central Alcohol Prohibition | DONE |
 | TH-0092 | Product Acceptance and Feature Freeze | DONE |
 | TH-0093 | Final Migration and Release Readiness | DONE |
+| TH-0095 | Project Workspace Navigation and Responsive Layout | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
