@@ -52,6 +52,9 @@ class PurchaseChecklistRepository:
             .first()
         )
 
-    def commit(self) -> None:
+    def flush(self) -> None:
         self.session.flush()
+
+    def commit(self) -> None:
+        self.flush()
         self.session.commit()
