@@ -69,7 +69,7 @@ docker compose -f docker-compose.release.yml \
   up -d --build --wait --wait-timeout 180
 ```
 
-The Backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10020`. The Frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
+The Backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10021`. During this migration, existing catalogue records classified by the central alcohol policy are archived rather than deleted; historical Project assignments remain available. The Frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
 
 ## Verify the installation
 
