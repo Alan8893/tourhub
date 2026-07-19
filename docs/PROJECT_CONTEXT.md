@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-19
 
-Status: Release Ready — v0.1.0
+Status: Released — Post-Release Audit Instrumentation
 
 ## 1. Product boundary
 
@@ -19,11 +19,11 @@ TourHub is a local ERP application for one tourist club.
 - Alcohol is prohibited without exceptions through one Backend policy.
 - Paid or externally hosted runtime services are not used.
 
-The approved target scope is defined in `PRODUCT_SPEC.md`. The released first-release state is defined by code, tests, `PRODUCT_ACCEPTANCE.md`, `product_acceptance_manifest.json`, `release_readiness_manifest.json`, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
+The approved target scope is defined in `PRODUCT_SPEC.md`. The released first-release state is defined by tag `v0.1.0`, code, tests, `PRODUCT_ACCEPTANCE.md`, `product_acceptance_manifest.json`, `release_readiness_manifest.json`, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
 
 ## 2. Released product workflow
 
-The approved Russian local workflow is accepted, feature frozen, and release-ready:
+The approved Russian local workflow is accepted, feature frozen, and released:
 
 ```text
 Administrator bootstrap and invitations
@@ -39,9 +39,10 @@ Administrator bootstrap and invitations
   → Central alcohol prohibition
   → Product acceptance and feature freeze
   → Final migration and release readiness
+  → v0.1.0
 ```
 
-The complete first-release sequence is delivered through TH-0093. The exact merged `main` SHA receives tag `v0.1.0` only after every required push workflow succeeds.
+Tag `v0.1.0` points exactly to commit `8bcc2d2d9414d812d81634330034b15121c8442f`. Post-release tasks do not modify that tag or reinterpret its feature-frozen scope.
 
 ## 3. Architecture
 
@@ -110,7 +111,8 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - append-only AuditEvent persistence through `h10020`;
 - actor identity snapshots and bounded recursive secret removal;
 - semantic user-access and Recipe moderation events in the same transaction;
-- immutable moderation history and Administrator-only filtered UI/API.
+- immutable moderation history and Administrator-only filtered UI/API;
+- Project/menu and other owning-domain instrumentation remain post-release slices rather than an automatic ORM interceptor.
 
 ### Projects, preparation, documents, and operations
 
@@ -128,21 +130,23 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - real PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` verification with representative historical data;
 - versioned deployment checklist and v0.1.0 release notes;
 - exact-head push workflows for all required gates;
-- automatic lightweight `v0.1.0` tag creation only after the exact merged SHA is green;
+- lightweight tag `v0.1.0` created at exact verified merge commit;
 - backup-based production rollback boundary;
-- no active release-blocking capability or operational debt.
+- no release-blocking capability or operational debt.
 
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
+- TH-0094 — Project and Menu Audit Instrumentation.
 
-No release-blocking task remains active. Post-release work requires a separately selected task and must not silently expand the v0.1.0 feature-frozen baseline.
+TH-0094 implements Product Spec-required semantic audit coverage for Project changes, participant-count changes, menu generation/regeneration, and manual menu edits. It reuses AuditEvent and existing authorization, performs no migration, and leaves the released v0.1.0 workflow unchanged.
 
 ## 6. Immediate sequence
 
-1. Complete the merge-triggered exact-head workflows and create tag `v0.1.0`.
-2. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
-3. Select the next post-release task explicitly from documented debt or a new Product Owner decision.
+1. Map current Project and Menu transaction owners and mutation paths.
+2. Add explicit safe snapshots and AuditService records before the owning commit.
+3. Verify API behavior, rollback atomicity, audit querying/UI compatibility, and Alembic `h10021`.
+4. Synchronize current architecture/domain/status/roadmap/technical debt and squash-merge TH-0094.
 
 ## 7. Development rules
 
@@ -152,5 +156,6 @@ No release-blocking task remains active. Post-release work requires a separately
 - Do not describe a feature as implemented unless code and tests confirm it.
 - Architecture or stack changes require Product Owner approval and an ADR.
 - One logical task is squash-merged to `main`.
-- Released v0.1.0 scope may change only through an explicit post-release task; fixes require regression, security, or documented operational evidence.
+- Released v0.1.0 remains immutable; post-release coverage is delivered through separately reviewable tasks.
+- Audit instrumentation is semantic and transaction-owned; automatic ORM-wide auditing remains prohibited.
 - Documentation, task state, roadmap, and technical debt are updated with code.
