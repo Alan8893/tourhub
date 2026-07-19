@@ -10,7 +10,6 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "docs" / "release_readiness_manifest.json"
 DEFAULT_EVIDENCE = ROOT / "final-release-tag-evidence.json"
