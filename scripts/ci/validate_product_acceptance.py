@@ -62,7 +62,8 @@ def main() -> None:
 
     if manifest.get("schema_version") != 1:
         fail("schema_version must be 1")
-    if require_string(manifest.get("alembic_head"), "alembic_head") != "h10021":
+    alembic_head = require_string(manifest.get("alembic_head"), "alembic_head")
+    if alembic_head != "h10021":
         fail("alembic_head must be h10021")
 
     status = require_string(manifest.get("status"), "status")
@@ -84,8 +85,14 @@ def main() -> None:
         fail("accepted_capabilities must be a list")
     capability_ids: set[str] = set()
     for index, raw_capability in enumerate(raw_capabilities):
-        capability = require_mapping(raw_capability, f"accepted_capabilities[{index}]")
-        capability_id = require_string(capability.get("id"), f"capability[{index}].id")
+        capability = require_mapping(
+            raw_capability,
+            f"accepted_capabilities[{index}]",
+        )
+        capability_id = require_string(
+            capability.get("id"),
+            f"capability[{index}].id",
+        )
         if capability_id in capability_ids:
             fail(f"duplicate capability: {capability_id}")
         capability_ids.add(capability_id)
@@ -107,23 +114,44 @@ def main() -> None:
         manifest.get("deferred_non_blocking_scope"),
         "deferred_non_blocking_scope",
     )
-    require_string_list(manifest.get("feature_freeze_rules"), "feature_freeze_rules")
+    require_string_list(
+        manifest.get("feature_freeze_rules"),
+        "feature_freeze_rules",
+    )
 
-    commands = require_mapping(manifest.get("acceptance_commands"), "acceptance_commands")
+    commands = require_mapping(
+        manifest.get("acceptance_commands"),
+        "acceptance_commands",
+    )
     for command_name in ("manifest", "backend", "browser"):
-        require_string(commands.get(command_name), f"acceptance_commands.{command_name}")
+        require_string(
+            commands.get(command_name),
+            f"acceptance_commands.{command_name}",
+        )
 
-    migration = ROOT / "backend" / "alembic" / "versions" / (
-        "h10021_enforce_alcohol_prohibition.py"
+    migration = (
+        ROOT
+        / "backend"
+        / "alembic"
+        / "versions"
+        / "h10021_enforce_alcohol_prohibition.py"
     )
     if not migration.is_file():
         fail("h10021 migration file is missing")
 
-    active_task = ROOT / "docs" / "tasks" / "active" / (
-        "TH-0092-product-acceptance-feature-freeze.md"
+    active_task = (
+        ROOT
+        / "docs"
+        / "tasks"
+        / "active"
+        / "TH-0092-product-acceptance-feature-freeze.md"
     )
-    closed_task = ROOT / "docs" / "tasks" / "closed" / (
-        "TH-0092-product-acceptance-feature-freeze.md"
+    closed_task = (
+        ROOT
+        / "docs"
+        / "tasks"
+        / "closed"
+        / "TH-0092-product-acceptance-feature-freeze.md"
     )
     if status == "acceptance_candidate" and not active_task.is_file():
         fail("candidate status requires active TH-0092 task")
@@ -136,7 +164,7 @@ def main() -> None:
     print(
         "Product acceptance manifest valid: "
         f"{status}, {len(capability_ids)} accepted capabilities, "
-        f"Alembic {manifest['alembic_head']}."
+        f"Alembic {alembic_head}."
     )
 
 
