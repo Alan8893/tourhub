@@ -4,7 +4,7 @@ Version: 0.0.8-alpha
 
 Last update: 2026-07-19
 
-Status: Feature Frozen — Final Migration and Release Readiness
+Status: Feature Frozen — Final Migration and Release Readiness In Progress
 
 ## 1. Product boundary
 
@@ -40,7 +40,7 @@ Administrator bootstrap and invitations
   → Product acceptance and feature freeze
 ```
 
-The release-blocking functional sequence is complete through TH-0092 / PR #102. Final Migration and Release Readiness is the only next phase.
+The release-blocking functional sequence is complete through TH-0092 / PR #102. TH-0093 Final Migration and Release Readiness is active and must not expand the accepted first-release scope.
 
 ## 3. Architecture
 
@@ -131,13 +131,15 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
+- TH-0093 — Final Migration and Release Readiness.
 
-No release-blocking feature task remains active. The next task starts Final Migration and Release Readiness without expanding the accepted first-release scope.
+TH-0093 verifies PostgreSQL 18 `h10020 → h10021 → h10020 → h10021`, the deployment checklist, final exact-head release evidence, and the release tag without adding product capabilities.
 
 ## 6. Immediate sequence
 
-1. Run Final Migration and Release Readiness.
-2. Create the release tag only after the final exact-head gates pass.
+1. Complete TH-0093 migration and deployment readiness evidence.
+2. Run all final workflows on one exact head.
+3. Create the release tag only from that verified head.
 
 ## 7. Development rules
 
