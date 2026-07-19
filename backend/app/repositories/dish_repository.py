@@ -22,7 +22,7 @@ class DishRepository:
                     DishMealRoleORM.meal_types
                 ),
             )
-            .where(DishORM.id == dish_id)
+            .where(DishORM.id == dish_id, DishORM.is_archived.is_(False))
         )
 
     def list(self) -> list[DishORM]:
@@ -38,6 +38,7 @@ class DishRepository:
                         DishMealRoleORM.meal_types
                     ),
                 )
+                .where(DishORM.is_archived.is_(False))
                 .order_by(DishORM.name)
             )
             .unique()
