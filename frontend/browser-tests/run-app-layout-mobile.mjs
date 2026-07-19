@@ -243,6 +243,20 @@ async function run() {
     await waitForExpression(client, `!(${visibleDrawerExpression})`, "drawer close after navigation");
     await captureScreenshot(client, "app-layout-mobile-after-navigation");
 
+    await setViewport(client, 831, 1000);
+    await waitForExpression(
+      client,
+      `getComputedStyle(document.querySelector('button[aria-label="Открыть меню"]')).display !== "none"`,
+      "tablet menu button visible",
+    );
+    assert.equal(
+      await visibleDrawerCount(client),
+      0,
+      "Tablet must use the closed temporary drawer instead of a permanent sidebar",
+    );
+    await assertNoHorizontalOverflow(client, 831);
+    await captureScreenshot(client, "app-layout-tablet");
+
     await setViewport(client, 1280, 850);
     await waitForExpression(
       client,
