@@ -6,7 +6,7 @@ Status date: 2026-07-19
 
 TourHub v0.1.0 is release-ready at Alembic head `h10021`.
 
-The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds final migration and release readiness. TH-0095 delivers the routed responsive Project workspace. TH-0097 adds safe shared Product catalogue editing. TH-0098 / PR #108 synchronizes newly published CLUB Recipes into the Dish catalogue while keeping generator classification explicitly human-owned. TH-0099 is the active post-release task and adds semantic Project audit coverage without a migration or new product capability.
+The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds final migration and release readiness. TH-0095 delivers the routed responsive Project workspace. TH-0097 adds safe shared Product catalogue editing. TH-0098 / PR #108 synchronizes newly published CLUB Recipes into the Dish catalogue while keeping generator classification explicitly human-owned. TH-0099 adds semantic Project audit coverage without a migration or new product capability.
 
 ## Verified baseline
 
@@ -23,6 +23,7 @@ The approved first local single-club release is feature frozen through TH-0092 /
 - PR #105 replaced the long Project landing page with routed Overview, Menu, Shopping, Equipment, and Documents work areas without a migration.
 - PR #107 added Product catalogue editing while preserving Product IDs, Recipe relationships, and RecipeComponent quantities.
 - PR #108 added transaction-owned published Recipe-to-Dish synchronization and explicit generator readiness states without a migration.
+- TH-0099 adds actor-attributed Project lifecycle and preparation events using the existing `h10020` AuditEvent schema.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Accepted first-release baseline
@@ -75,15 +76,17 @@ The approved first local single-club release is feature frozen through TH-0092 /
 - no role, meal type, or repeatability value is inferred automatically;
 - Backend transaction tests and focused real-Chrome acceptance cover the workflow.
 
-## Active post-release work — TH-0099
+### Project audit coverage — TH-0099
 
 - Project creation records `project_created` in the same commit;
 - participant recalculation records `project_participants_updated` with Project and derived-data rollback;
 - Recipe generation-mode changes record `project_generation_mode_updated` and suppress no-op events;
 - full Project preparation records `project_prepared` in one caller-owned transaction with purchase list, checklist, and equipment writes;
 - all events use the authenticated preparation actor and the existing immutable AuditEvent contract;
+- failed audit recording or preparation rolls back both domain changes and pending events;
+- standalone preparation services retain commit-by-default behavior;
 - Administrator Audit UI/API expose Russian Project labels and filters;
-- menu generation, manual MealSlot changes, and other audit domains remain outside TH-0099.
+- strict Ruff/mypy, all Backend tests, Product Acceptance, and real-Chrome Audit coverage verify the behavior.
 
 ## Deferred non-blocking debt
 
@@ -97,4 +100,4 @@ The approved first local single-club release is feature frozen through TH-0092 /
 
 ## Next work
 
-Complete TH-0099 on one exact green head. No later post-release capability is selected automatically; another task requires an explicit Product Owner decision and must preserve the released architecture, immutable tag, and Alembic head unless separately approved.
+TH-0099 is complete. No later post-release capability is selected automatically; menu generation/manual MealSlot auditing remains documented debt and requires another explicit Product Owner decision.
