@@ -2,7 +2,7 @@
 
 TourHub is a local ERP application for preparing tourist-club trips: projects, meal plans, dishes, recipes, shopping projections, equipment, branded Russian exports, and operational backup/restore.
 
-One installation represents one tourist club. The current release supports Administrator bootstrap, invitation-only multi-user access, explicit roles, guarded preparation workflows, working SMTP invitation delivery, multi-session readiness, CLUB/PERSONAL Recipe ownership, publication/moderation with rejection feedback, ordered Recipe variants per Dish, project-level generation modes with persisted assignment Recipe snapshots, an append-only actor-aware audit foundation, complete consolidated Russian Project PDF/XLSX exports, and one centralized no-exceptions alcohol policy across Product, Recipe, Dish, API, and CSV import paths. The next release phase is Product Acceptance and Feature Freeze.
+One installation represents one tourist club. The feature-frozen first release supports Administrator bootstrap, invitation-only multi-user access, explicit roles, guarded preparation workflows, working SMTP invitation delivery, multi-session readiness, CLUB/PERSONAL Recipe ownership, publication/moderation with rejection feedback, ordered Recipe variants per Dish, project-level generation modes with persisted assignment Recipe snapshots, an append-only actor-aware audit foundation, complete consolidated Russian Project PDF/XLSX exports, and one centralized no-exceptions alcohol policy across Product, Recipe, Dish, API, and CSV import paths. The only remaining release-blocking phase is Final Migration and Release Readiness.
 
 ## Quick start
 
@@ -56,6 +56,8 @@ COMPOSE_FILE=docker-compose.release.yml \
 Use these documents for current decisions:
 
 - [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) — approved full product target;
+- [`docs/PRODUCT_ACCEPTANCE.md`](docs/PRODUCT_ACCEPTANCE.md) — accepted feature-frozen first-release scope and deferred non-blocking capabilities;
+- [`docs/product_acceptance_manifest.json`](docs/product_acceptance_manifest.json) — machine-readable acceptance source of truth;
 - [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) — verified implemented state;
 - [`docs/CURRENT_ROADMAP.md`](docs/CURRENT_ROADMAP.md) — delivery order and selected release scope;
 - [`docs/ARCHITECTURE_CURRENT.md`](docs/ARCHITECTURE_CURRENT.md) — current architecture boundaries;
@@ -63,7 +65,7 @@ Use these documents for current decisions:
 - [`docs/TECH_DEBT.md`](docs/TECH_DEBT.md) — active and completed debt;
 - [`docs/tasks/TASKS.md`](docs/tasks/TASKS.md) — active and closed task index.
 
-`PRODUCT_SPEC.md` describes the approved full target, including capabilities intentionally deferred from the current release. `CURRENT_ROADMAP.md` and `PROJECT_STATUS.md` define what is implemented now and what is scheduled next. Current documents and accepted ADRs override historical files under archive or legacy directories.
+`PRODUCT_SPEC.md` describes the approved full target, including capabilities intentionally deferred from the current release. `PRODUCT_ACCEPTANCE.md`, `CURRENT_ROADMAP.md`, and `PROJECT_STATUS.md` define the accepted implementation and the only remaining release-readiness work. Current documents and accepted ADRs override historical files under archive or legacy directories.
 
 ## Quality gates
 
@@ -73,6 +75,7 @@ GitHub Actions enforce:
 - selected Ruff and strict mypy baselines;
 - Alembic single-head validation;
 - Frontend tests, production build, and browser acceptance;
+- dedicated Product Acceptance manifest, selected Backend API/migration, and six critical Chrome scenarios;
 - guided desktop/mobile create-to-ZIP release acceptance;
 - moderate-severity dependency audit;
 - PostgreSQL 18 backup/restore smoke testing;
@@ -86,4 +89,5 @@ GitHub Actions enforce:
 - Backend owns calculations, import validation, transaction boundaries, identity, authorization, lifecycle, generation, audit, document content, and central catalogue policies;
 - Frontend owns presentation, navigation, form state, and API integration;
 - Frontend features use the shared API client and do not hardcode browser-visible service origins;
+- first-release scope is feature frozen: only acceptance defects, security fixes, final release-readiness work, and documentation corrections are allowed without a new Product Owner decision;
 - documentation must be synchronized when product, domain, architecture, persistence, or release scope changes.
