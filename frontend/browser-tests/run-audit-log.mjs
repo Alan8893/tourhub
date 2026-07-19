@@ -76,21 +76,25 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
+       document.body?.innerText?.includes("Меню сгенерировано") &&
+       document.body?.innerText?.includes("Меню") &&
+       document.body?.innerText?.includes("Блюдо заменено в приём пищи") &&
+       document.body?.innerText?.includes("Приём пищи") &&
        document.body?.innerText?.includes("Подготовка проекта выполнена") &&
-       document.body?.innerText?.includes("Проект") &&
        document.body?.innerText?.includes("Рецепт отклонён") &&
        document.body?.innerText?.includes("Роль пользователя изменена") &&
        document.body?.innerText?.includes("Анна Администратор") &&
-       document.body?.innerText?.includes("submitted → rejected") &&
+       document.body?.innerText?.includes("dish-rice") &&
+       document.body?.innerText?.includes("dish-beans") &&
        document.body?.innerText?.includes("Журнал не содержит пароли")`,
-      "loaded audit history",
+      "loaded menu and MealSlot audit history",
     );
 
     const filtered = await client.evaluate(`(() => {
-      const input = document.querySelector('input[placeholder="Например: project_prepared"]');
+      const input = document.querySelector('input[placeholder="Например: meal_plan_generated"]');
       if (!input) return false;
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-      setter?.call(input, "project_prepared");
+      setter?.call(input, "meal_slot_dish_replaced");
       input.dispatchEvent(new Event("input", { bubbles: true }));
       const button = [...document.querySelectorAll("button")].find(
         (item) => item.textContent?.trim() === "Применить фильтры",
@@ -102,17 +106,19 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Подготовка проекта выполнена") &&
+      `document.body?.innerText?.includes("Блюдо заменено в приём пищи") &&
+       document.body?.innerText?.includes("Приём пищи") &&
+       !document.body?.innerText?.includes("Меню сгенерировано") &&
+       !document.body?.innerText?.includes("Подготовка проекта выполнена") &&
        !document.body?.innerText?.includes("Рецепт отклонён") &&
-       !document.body?.innerText?.includes("Роль пользователя изменена") &&
        document.body?.innerText?.includes("Найдено записей: 1")`,
-      "filtered audit history",
+      "filtered MealSlot audit history",
     );
     assert.ok(
       auditRequests.some(
         (request) =>
           request.path === "/api/v1/audit/events" &&
-          request.query.action === "project_prepared",
+          request.query.action === "meal_slot_dish_replaced",
       ),
     );
 
