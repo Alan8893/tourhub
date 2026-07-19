@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-19
 
-Status: Post-release Project audit coverage delivered — TH-0099
+Status: Post-release menu and MealSlot audit coverage delivered — TH-0100
 
 ## 1. Product boundary
 
@@ -26,7 +26,7 @@ The approved target scope is defined in `PRODUCT_SPEC.md`. The current state is 
 ```text
 Administrator bootstrap and invitations
   → Project
-  → Menu
+  → Menu generation and manual MealSlot editing
   → Club and personal Recipes
   → Recipe publication and moderation
   → automatic published Recipe synchronization into Dishes
@@ -41,7 +41,7 @@ Administrator bootstrap and invitations
   → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, TH-0098 closes the publication-to-Dish workflow without inferring generator classification, and TH-0099 extends actor-aware audit to Project creation, participant recalculation, generation-mode changes, and full preparation orchestration.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, TH-0098 closes the publication-to-Dish workflow, TH-0099 adds Project audit coverage, and TH-0100 adds transactional audit coverage for menu generation/regeneration and manual MealSlot changes.
 
 ## 3. Architecture
 
@@ -56,7 +56,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, responsive navigation, Project workspace routing, Product create/edit state, Dish generator-readiness presentation, query invalidation, API integration, safe audit responses, and download controls. It does not own business validation, Recipe publication synchronization, role inference, alcohol classification, document content, generation, calculation, authorization, unit conversion, or audit sanitization.
+Frontend owns presentation, responsive navigation, Project workspace routing, Product create/edit state, Dish generator-readiness presentation, query invalidation, safe AuditEvent rendering/filtering, and download controls. It does not own business validation, generation rules, Recipe publication synchronization, role inference, calculations, authorization, unit conversion, or audit sanitization.
 
 ### Backend
 
@@ -69,7 +69,7 @@ Frontend owns presentation, responsive navigation, Project workspace routing, Pr
 - Redis configuration;
 - deterministic calculation, document, audit, and catalogue-policy boundaries.
 
-Backend owns validation, persistence, identity/authorization, Product catalogue policy, Recipe ownership/lifecycle, transaction-owned published Recipe-to-Dish synchronization, Dish variant selection, menu generation, catalogue import, central alcohol policy, recalculation, mail boundaries, document generation, and semantic audit rules in owning business transactions.
+Backend owns validation, persistence, identity/authorization, Product policy, Recipe ownership/lifecycle, published Recipe-to-Dish synchronization, Dish variant selection, menu generation, manual MealSlot mutation, catalogue import, central alcohol policy, recalculation, mail boundaries, document generation, and semantic audit rules in owning transactions.
 
 ### Runtime
 
@@ -95,39 +95,34 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 ### Product catalogue, Recipe publication, and Dish catalogue
 
-- active shared Products can be created and edited from the Recipe component workflow;
-- Product edits preserve identifiers and Recipe relationships and never convert RecipeComponent values implicitly;
+- active shared Products can be created and edited without changing IDs or Recipe relationships;
 - Recipe CLUB/PERSONAL ownership, owner-aware visibility, submission/rejection/publication, and row-locked moderation;
 - publication and Dish synchronization occur in one SQLAlchemy transaction;
-- an already attached Recipe produces no duplicate;
-- an active exact-name Dish receives the Recipe as the next ordered variant while keeping its default and roles;
-- otherwise publication creates one active Dish with the published CLUB Recipe as default and only variant;
-- new publication-created Dishes have no generator roles until a user explicitly assigns them;
-- role-less Dishes remain available for manual choice and display `Не настроено для генератора`;
-- role-configured Dishes display `Готово для генератора` and contribute to catalogue readiness;
+- existing attachments are not duplicated and active exact-name Dishes receive ordered variants without changing default or roles;
+- otherwise publication creates one role-less Dish with the Recipe as default and only variant;
+- role-less Dishes display `Не настроено для генератора`; configured Dishes display `Готово для генератора`;
 - no role, meal type, or repeatability value is inferred from Recipe content;
-- Project modes `club_only`, `club_and_personal`, and `personal_preferred` remain unchanged;
 - exact selected Recipe persists on every meal assignment;
 - shopping, equipment, and exports use assignment Recipe snapshots;
-- one complete-word normalized alcohol policy applies across Product, Recipe, Dish, lifecycle, and CSV import;
-- archive state and policy markers preserve history while excluding prohibited records from new selection;
+- central alcohol policy and archive markers preserve historical data while preventing prohibited active use;
 - `h10021` remains the single Alembic head.
 
 ### Actor-aware audit
 
 - append-only AuditEvent persistence through `h10020`;
-- actor identity snapshots and bounded recursive secret removal;
-- semantic user-access and Recipe moderation events in the same transaction;
-- Recipe publication audit context includes the synchronized Dish identity;
-- Project creation, participant recalculation, Recipe generation-mode updates, and full preparation orchestration now create semantic events;
-- Project events use the authenticated preparation actor and share the owning commit/rollback boundary;
-- no-op Project participant and generation-mode updates create no event;
-- purchase-list, checklist, and equipment preparation can participate in one caller-owned Project transaction while retaining standalone commit-by-default behavior;
-- immutable history and Administrator-only filtered UI/API expose Russian Project labels.
+- actor snapshots and bounded recursive secret removal;
+- semantic user-access and Recipe moderation events in owning transactions;
+- Project creation, participant recalculation, generation-mode updates, and full preparation orchestration events through TH-0099;
+- `meal_plan_generated` records initial generation or regeneration with bounded result counts, warnings, Recipe generation mode, and preserved manual-slot context;
+- `meal_slot_dish_added`, `meal_slot_dish_removed`, and `meal_slot_dish_replaced` share the purchasing/checklist/equipment recalculation transaction;
+- failed generation, manual mutation, derived refresh, or audit recording rolls back domain changes and pending AuditEvents together;
+- standalone MealPlanService generation remains commit-by-default while supporting caller-owned transactions;
+- no-op Project updates create no misleading events;
+- Administrator-only Audit UI/API expose Russian User, Recipe, Project, Menu, and MealSlot labels and filters.
 
 ### Projects, preparation, documents, and operations
 
-- Project catalogue, participant count, dates, meal boundaries, generation mode, persisted assignments, shopping, checklist, equipment, readiness, and recalculation;
+- Project catalogue, participant count, dates, meal boundaries, generation mode, persisted MealPlan/MealSlotDish, shopping, checklist, equipment, readiness, and recalculation;
 - compact Project Overview and routed Menu, Shopping, Equipment, and Documents work areas;
 - temporary global navigation drawer below desktop width;
 - complete Russian Project PDF/workbook, compatibility files, and coordinated ZIP;
@@ -137,7 +132,7 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 ### Product acceptance and release readiness
 
 - versioned Product Acceptance and Release Readiness manifests;
-- critical Backend and Chrome Product Acceptance gates, including published Recipe Dish synchronization and Project audit coverage;
+- critical Backend and Chrome gates, including published Recipe Dish synchronization and Project/Menu/MealSlot audit coverage;
 - Alembic accepted head fixed at `h10021`;
 - real PostgreSQL 18 migration-cycle verification;
 - exact-head push workflows for required gates;
@@ -149,12 +144,12 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-TH-0099 is complete. Menu generation/manual MealSlot auditing and all other deferred domains remain unselected until another explicit Product Owner decision.
+TH-0100 is complete. System Settings, mail, invitation, catalogue/import, shopping, equipment, and document audit domains remain deferred until another explicit Product Owner decision.
 
 ## 6. Immediate sequence
 
 1. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
-2. Use the Administrator Audit surface to review user, Recipe, and Project semantic events.
+2. Use the Administrator Audit surface to review user, Recipe, Project, Menu, and MealSlot events.
 3. Select any later audit or product slice only through another explicit Product Owner decision.
 
 ## 7. Development rules
