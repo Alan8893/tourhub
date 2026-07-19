@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import Boolean, ForeignKey, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -11,25 +11,28 @@ if TYPE_CHECKING:
 
 
 class DishORM(Base):
-    """
-    Dish used in meal plan.
-    """
+    """Dish used in meal planning."""
 
     __tablename__ = "dishes"
 
-    id: Mapped[str] = mapped_column(
-        String,
-        primary_key=True,
-    )
-
-    name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-    )
-
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
     recipe_id: Mapped[str] = mapped_column(
         ForeignKey("recipes.id"),
         nullable=False,
+    )
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
+        index=True,
+    )
+    archived_by_alcohol_policy: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=text("false"),
     )
 
     recipe = relationship("RecipeORM", foreign_keys=[recipe_id])
