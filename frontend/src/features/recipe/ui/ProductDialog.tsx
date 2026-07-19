@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
+import type { RecipeProduct } from "../api/recipeApi";
 import {
   toProductWriteInput,
   validateProductDraft,
@@ -23,8 +24,19 @@ const initialDraft: ProductDraft = {
   packageSize: "",
 };
 
+function draftFromProduct(product: RecipeProduct | null): ProductDraft {
+  if (!product) return initialDraft;
+  return {
+    name: product.name,
+    category: product.category ?? "",
+    unit: product.unit,
+    packageSize: product.package_size ? String(product.package_size) : "",
+  };
+}
+
 interface ProductDialogProps {
   open: boolean;
+  product: RecipeProduct | null;
   isSubmitting: boolean;
   errorMessage: string | null;
   onClose: () => void;
@@ -33,6 +45,7 @@ interface ProductDialogProps {
 
 export default function ProductDialog({
   open,
+  product,
   isSubmitting,
   errorMessage,
   onClose,
@@ -43,10 +56,10 @@ export default function ProductDialog({
 
   useEffect(() => {
     if (open) {
-      setDraft(initialDraft);
+      setDraft(draftFromProduct(product));
       setValidationError(null);
     }
-  }, [open]);
+  }, [open, product]);
 
   const handleSubmit = () => {
     const error = validateProductDraft(draft);
@@ -58,9 +71,15 @@ export default function ProductDialog({
 
   return (
     <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Новый продукт</DialogTitle>
+      <DialogTitle>{product ? "Изменить продукт" : "Новый продукт"}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
+          {product && (
+            <Alert severity="warning">
+              Изменения будут видны во всех рецептах с этим продуктом. Количество и единица
+              конкретных компонентов рецепта автоматически не пересчитываются.
+            </Alert>
+          )}
           {(validationError || errorMessage) && (
             <Alert severity="error">{validationError ?? errorMessage}</Alert>
           )}
@@ -105,7 +124,7 @@ export default function ProductDialog({
       <DialogActions>
         <Button onClick={onClose} disabled={isSubmitting}>Отмена</Button>
         <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting}>
-          {isSubmitting ? "Сохранение…" : "Создать"}
+          {isSubmitting ? "Сохранение…" : product ? "Сохранить" : "Создать"}
         </Button>
       </DialogActions>
     </Dialog>
