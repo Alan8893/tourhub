@@ -28,8 +28,9 @@ REQUIRED_CHECKLIST_HEADINGS = {
     "## 8. Rollback boundary",
     "## 9. Operator sign-off",
 }
-ALLOWED_STATUSES = {"release_candidate", "release_ready"}
+ALLOWED_STATUSES = {"release_candidate", "release_ready", "released"}
 TAG_PATTERN = re.compile(r"^v\d+\.\d+\.\d+$")
+COMMIT_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 
 
 def fail(message: str) -> None:
@@ -103,6 +104,16 @@ def main() -> None:
     tag = require_string(manifest.get("release_tag"), "release_tag")
     if TAG_PATTERN.fullmatch(tag) is None:
         fail("release_tag must use vMAJOR.MINOR.PATCH")
+
+    release_commit_sha: str | None = None
+    if status == "released":
+        release_commit_sha = require_string(
+            manifest.get("release_commit_sha"), "release_commit_sha"
+        )
+        if COMMIT_SHA_PATTERN.fullmatch(release_commit_sha) is None:
+            fail("release_commit_sha must be a lowercase 40-character commit SHA")
+    elif manifest.get("release_commit_sha") is not None:
+        fail("release_commit_sha is allowed only when status is released")
 
     pyproject = tomllib.loads((ROOT / "backend" / "pyproject.toml").read_text(encoding="utf-8"))
     backend_version = require_string(pyproject.get("project", {}).get("version"), "backend version")
@@ -183,16 +194,17 @@ def main() -> None:
     )
     if status == "release_candidate" and not active_task.is_file():
         fail("release_candidate requires active TH-0093")
-    if status == "release_ready":
+    if status in {"release_ready", "released"}:
         if active_task.exists():
-            fail("release_ready cannot keep TH-0093 active")
+            fail(f"{status} cannot keep TH-0093 active")
         if not closed_task.is_file():
-            fail("release_ready requires closed TH-0093")
+            fail(f"{status} requires closed TH-0093")
 
+    release_detail = f", release commit {release_commit_sha}" if release_commit_sha else ""
     print(
         "Release readiness manifest valid: "
         f"{status}, {tag}, {previous_revision} -> {final_revision}, "
-        f"{len(workflows)} exact-head workflows."
+        f"{len(workflows)} exact-head workflows{release_detail}."
     )
 
 
