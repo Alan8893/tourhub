@@ -157,6 +157,14 @@ export async function createProduct(input: ProductWriteInput): Promise<RecipePro
   return response.data;
 }
 
+export async function updateProduct(
+  productId: string,
+  input: ProductWriteInput,
+): Promise<RecipeProduct> {
+  const response = await apiClient.put<RecipeProduct>(`/products/${productId}`, input);
+  return response.data;
+}
+
 export async function createRecipe(name: string): Promise<RecipeWriteResponse> {
   const response = await apiClient.post<RecipeWriteResponse>("/recipes", { name });
   return response.data;
