@@ -6,11 +6,12 @@ Status date: 2026-07-19
 
 The approved first local single-club release is feature frozen through TH-0092 / PR #102.
 
-Product Acceptance passed the machine-readable manifest gate, selected real Backend API/migration scenarios, six critical Chrome scenarios, and the existing exact-head repository workflows. The only remaining release-blocking phase is Final Migration and Release Readiness.
+TH-0093 Final Migration and Release Readiness is active. It verifies the PostgreSQL 18 downgrade/re-upgrade cycle, production-like deployment checklist, final exact-head workflow evidence, and release tag without expanding the accepted product scope.
 
 ## Verified baseline
 
 - Alembic head: `h10021`.
+- Previous Alembic revision: `h10020`.
 - PR #84 through PR #89 delivered typed System Settings (`h10008`–`h10013`).
 - PR #90 through PR #93 delivered bootstrap, sessions, invitations, users, roles, and preparation authorization (`h10014`–`h10016`).
 - PR #94 delivered working SMTP invitation delivery.
@@ -21,7 +22,7 @@ Product Acceptance passed the machine-readable manifest gate, selected real Back
 - PR #99 delivered actor-aware append-only audit events (`h10020`).
 - PR #100 delivered complete consolidated Russian PDF/XLSX exports with no migration.
 - PR #101 delivered centralized alcohol policy and existing-record archival (`h10021`).
-- TH-0092 / PR #102 accepts and freezes the approved first-release scope with a versioned manifest and dedicated acceptance workflow.
+- TH-0092 / PR #102 accepted and froze the approved first-release scope with a versioned manifest and dedicated acceptance workflow.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Accepted first-release baseline
@@ -44,9 +45,12 @@ Product Acceptance passed the machine-readable manifest gate, selected real Back
 - machine-readable accepted capability evidence and explicit deferred non-blocking scope;
 - feature-freeze rules permitting only acceptance defect fixes, security fixes, final release-readiness work, and documentation corrections.
 
-## Remaining sequence
+## Active release-readiness work
 
-1. Final Migration and Release Readiness.
+1. PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` migration cycle with representative data.
+2. Production-like deployment checklist verification.
+3. Final exact-head release workflow and machine-readable evidence.
+4. Release tag created only from the verified exact head.
 
 ## Deferred non-blocking debt
 
@@ -60,9 +64,3 @@ Product Acceptance passed the machine-readable manifest gate, selected real Back
 - audit export, retention UI, SIEM integration, undo, and event replay;
 - participant profiles, routes/GPX, warehouse balances, procurement prices, and external aggregators;
 - encrypted configuration archives.
-
-## Final release readiness
-
-- run the final PostgreSQL previous → `h10021` → previous → `h10021` migration cycle;
-- verify the production-like deployment checklist;
-- add the final release workflow and create the release tag only after green exact-head gates.
