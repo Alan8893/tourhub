@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "product": "TourHub",
+  "status": "release_candidate",
+  "status_date": "2026-07-19",
+  "release_tag": "v0.1.0",
+  "tag_format": "vMAJOR.MINOR.PATCH",
+  "previous_alembic_revision": "h10020",
+  "final_alembic_head": "h10021",
+  "migration_cycle": [
+    "h10020",
+    "h10021",
+    "h10020",
+    "h10021"
+  ],
+  "required_workflows": [
+    "Product Acceptance",
+    "Quality",
+    "Document Quality",
+    "Guided Release Acceptance",
+    "Operator Docs",
+    "Docker Release Runtime"
+  ],
+  "deployment_checklist": "docs/DEPLOYMENT_CHECKLIST.md",
+  "release_notes_source": "docs/releases/v0.1.0.md",
+  "acceptance_manifest": "docs/product_acceptance_manifest.json",
+  "migration_verifier": "scripts/release/verify_final_migration_cycle.py",
+  "final_workflow": ".github/workflows/final-release-readiness.yml",
+  "external_runtime_services": []
+}
