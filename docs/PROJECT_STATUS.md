@@ -6,7 +6,7 @@ Status date: 2026-07-19
 
 TourHub v0.1.0 is release-ready at Alembic head `h10021`.
 
-The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds final migration and release readiness. TH-0095 / PR #105 delivers the first post-release UX improvement: a routed, responsive Project workspace that preserves the released Backend, persistence, calculation, authorization, and document contracts.
+The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds final migration and release readiness. TH-0095 delivers the routed responsive Project workspace. TH-0097 / PR #107 adds safe shared Product catalogue editing without changing RecipeComponent quantities, persistence boundaries, or the released database head.
 
 ## Verified baseline
 
@@ -20,7 +20,8 @@ The approved first local single-club release is feature frozen through TH-0092 /
 - PR #101 delivered centralized alcohol policy and existing-record archival (`h10021`).
 - PR #102 accepted and feature froze the first-release scope.
 - PR #103 verified final migration/release readiness and created `v0.1.0`.
-- PR #105 replaces the long Project landing page with routed Overview, Menu, Shopping, Equipment, and Documents work areas without a migration.
+- PR #105 replaced the long Project landing page with routed Overview, Menu, Shopping, Equipment, and Documents work areas without a migration.
+- PR #107 adds Product catalogue editing from the Recipe component workflow while preserving Product IDs and existing Recipe relationships.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Accepted first-release baseline
@@ -56,10 +57,22 @@ The approved first local single-club release is feature frozen through TH-0092 /
 - Browser acceptance verifies no horizontal overflow at 360 px, 831 px, and 1280 px.
 - Existing preparation, reload persistence, module visibility, and complete-package download behavior remain intact.
 
+## Post-release Product catalogue editing
+
+- active Products can be updated through `PUT /products/{product_id}`;
+- name, category, catalogue unit, and package size use the same validation and central alcohol policy as creation;
+- Product IDs and Recipe relationships remain unchanged;
+- changing the Product catalogue unit does not convert or rewrite RecipeComponent amount/unit values;
+- the Recipe component dialog exposes `Изменить продукт` next to the selected Product;
+- the edit dialog warns that shared changes affect every referencing Recipe;
+- Product and Recipe queries refresh after save;
+- Backend API and real-Chrome acceptance cover update, duplicate, prohibited, missing, shared-reference, and responsive behavior.
+
 ## Deferred non-blocking debt
 
 - explicit audit instrumentation for project/menu, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation writes;
 - ownership-aware import UX, Product/Dish archive-management UI, and reviewed policy-vocabulary evolution;
+- automatic published Recipe-to-Dish synchronization and generator-readiness marking until TH-0098 is delivered;
 - moderation notifications, session administration, account recovery, asynchronous delivery, and bounce handling;
 - richer Recipe metadata, per-meal Recipe switching, and preference weights;
 - audit export, retention UI, SIEM, undo, and replay;
@@ -68,4 +81,4 @@ The approved first local single-club release is feature frozen through TH-0092 /
 
 ## Next work
 
-No additional post-release capability is selected automatically after TH-0095. The next task must be chosen explicitly from documented technical debt or a new Product Owner priority without altering the released v0.1.0 business baseline.
+TH-0098 Published Recipe Dish Synchronization is the next Product Owner-approved task after TH-0097 merges. It must remain a separate transactionally tested PR and must not infer generator roles automatically.
