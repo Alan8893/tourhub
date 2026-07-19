@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-19
 
-Status: Post-release Product catalogue editing delivered — TH-0097
+Status: Post-release published Recipe Dish synchronization delivered — TH-0098
 
 ## 1. Product boundary
 
@@ -19,11 +19,9 @@ TourHub is a local ERP application for one tourist club.
 - Alcohol is prohibited without exceptions through one Backend policy.
 - Paid or externally hosted runtime services are not used.
 
-The approved target scope is defined in `PRODUCT_SPEC.md`. The released first-release state is defined by code, tests, `PRODUCT_ACCEPTANCE.md`, `product_acceptance_manifest.json`, `release_readiness_manifest.json`, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
+The approved target scope is defined in `PRODUCT_SPEC.md`. The current state is defined by code, tests, Product Acceptance/Release Readiness evidence, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
 
 ## 2. Released product workflow
-
-The approved Russian local workflow is accepted, feature frozen, and release-ready:
 
 ```text
 Administrator bootstrap and invitations
@@ -31,6 +29,8 @@ Administrator bootstrap and invitations
   → Menu
   → Club and personal Recipes
   → Recipe publication and moderation
+  → automatic published Recipe synchronization into Dishes
+  → explicit Dish generator-role setup
   → Dish Recipe variants and project generation modes
   → Shopping and packaging
   → Equipment
@@ -41,7 +41,7 @@ Administrator bootstrap and invitations
   → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation and responsive presentation. TH-0097 adds shared Product catalogue editing while preserving RecipeComponent calculation inputs and the released database boundary.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, and TH-0098 closes the publication-to-Dish workflow without inferring generator classification.
 
 ## 3. Architecture
 
@@ -56,7 +56,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, responsive application navigation, Project workspace routing, Product create/edit form state, API integration, server-projected capabilities, safe audit responses, and download controls. It does not own business validation, alcohol classification, document content, generation, lifecycle, calculation, authorization, unit conversion, or audit sanitization.
+Frontend owns presentation, responsive navigation, Project workspace routing, Product create/edit state, Dish generator-readiness presentation, query invalidation, API integration, safe audit responses, and download controls. It does not own business validation, Recipe publication synchronization, role inference, alcohol classification, document content, generation, calculation, authorization, unit conversion, or audit sanitization.
 
 ### Backend
 
@@ -69,7 +69,7 @@ Frontend owns presentation, responsive application navigation, Project workspace
 - Redis configuration;
 - deterministic calculation, document, audit, and catalogue-policy boundaries.
 
-Backend owns validation, persistence, identity/authorization, Product catalogue policy, Recipe ownership/lifecycle, Dish variant selection, menu generation, catalogue import, central alcohol policy, recalculation, mail boundaries, document content/generation, and audit recording/query rules.
+Backend owns validation, persistence, identity/authorization, Product catalogue policy, Recipe ownership/lifecycle, transaction-owned published Recipe-to-Dish synchronization, Dish variant selection, menu generation, catalogue import, central alcohol policy, recalculation, mail boundaries, document generation, and audit rules.
 
 ### Runtime
 
@@ -93,75 +93,75 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - Administrator-only settings, invitations, users, mail operations, and audit reads;
 - multiple sessions, current-role resolution, deactivation revocation, protected-401 handling, exact route return, and visible role.
 
-### Product catalogue, Recipe ownership, publication, Dish variants, and alcohol policy
+### Product catalogue, Recipe publication, and Dish catalogue
 
 - active shared Products can be created and edited from the Recipe component workflow;
-- Product edits preserve identifiers and existing Recipe relationships;
-- Product name, category, catalogue unit, and package size remain Backend-validated;
-- changing a Product catalogue unit never converts or rewrites RecipeComponent amount/unit values;
-- Recipe CLUB/PERSONAL scope, owner-aware visibility, submission/rejection/publication, and row-locked moderation;
-- ordered CLUB/current-actor PERSONAL Recipe variants per Dish;
-- Project modes `club_only`, `club_and_personal`, and `personal_preferred`;
-- exact selected Recipe persisted on every meal assignment;
+- Product edits preserve identifiers and Recipe relationships and never convert RecipeComponent values implicitly;
+- Recipe CLUB/PERSONAL ownership, owner-aware visibility, submission/rejection/publication, and row-locked moderation;
+- publication and Dish synchronization occur in one SQLAlchemy transaction;
+- an already attached Recipe produces no duplicate;
+- an active exact-name Dish receives the Recipe as the next ordered variant while keeping its default and roles;
+- otherwise publication creates one active Dish with the published CLUB Recipe as default and only variant;
+- new publication-created Dishes have no generator roles until a user explicitly assigns them;
+- role-less Dishes remain available for manual choice and display `Не настроено для генератора`;
+- role-configured Dishes display `Готово для генератора` and contribute to catalogue readiness;
+- no role, meal type, or repeatability value is inferred from Recipe content;
+- Project modes `club_only`, `club_and_personal`, and `personal_preferred` remain unchanged;
+- exact selected Recipe persists on every meal assignment;
 - shopping, equipment, and exports use assignment Recipe snapshots;
-- one complete-word normalized alcohol policy across Product, Recipe, Dish, lifecycle activation, and Product/Recipe CSV import;
-- archive state and policy markers preserve historical records while excluding them from active catalogues/new selection;
-- `h10021` archives existing prohibited Product → Recipe → default Dish records;
-- policy-archived Recipes cannot be restored.
+- one complete-word normalized alcohol policy applies across Product, Recipe, Dish, lifecycle, and CSV import;
+- archive state and policy markers preserve history while excluding prohibited records from new selection;
+- `h10021` remains the single Alembic head.
 
 ### Actor-aware audit
 
 - append-only AuditEvent persistence through `h10020`;
 - actor identity snapshots and bounded recursive secret removal;
 - semantic user-access and Recipe moderation events in the same transaction;
+- Recipe publication audit context includes the synchronized Dish identity;
 - immutable moderation history and Administrator-only filtered UI/API.
 
 ### Projects, preparation, documents, and operations
 
-- project catalogue, participant count, duration, dates, meal boundaries, Recipe generation mode, persisted MealPlan/MealSlotDish, shopping, checklist, equipment, readiness, and recalculation;
-- compact Project Overview at `/projects/:id`;
-- routed Menu, Shopping, Equipment, and Documents work areas under `/projects/:id/*`;
-- Project settings dialog for Recipe generation mode;
-- separate Shopping calculation/packing and checklist views;
-- temporary global navigation drawer below desktop width and a permanent sidebar on desktop;
-- readable stacked checklist controls through tablet widths;
-- complete Russian Project PDF and workbook sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование`;
-- compatibility purchase/equipment PDF/XLSX/print and coordinated ZIP;
-- compact full-package download on Overview and complete download controls in Documents;
+- Project catalogue, participant count, dates, meal boundaries, generation mode, persisted assignments, shopping, checklist, equipment, readiness, and recalculation;
+- compact Project Overview and routed Menu, Shopping, Equipment, and Documents work areas;
+- temporary global navigation drawer below desktop width;
+- complete Russian Project PDF/workbook, compatibility files, and coordinated ZIP;
 - one immutable club/document settings snapshot per package request;
 - installation, update, backup, restore, health, LAN, recovery, and production-like Docker acceptance.
 
 ### Product acceptance and release readiness
 
 - versioned Product Acceptance and Release Readiness manifests;
-- dedicated selected Backend and six-scenario Chrome Product Acceptance gate;
+- critical Backend and Chrome Product Acceptance gates, including published Recipe Dish synchronization;
 - Alembic accepted head fixed at `h10021`;
-- real PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` verification with representative historical data;
-- versioned deployment checklist and v0.1.0 release notes;
-- exact-head push workflows for all required gates;
-- lightweight `v0.1.0` tag on the verified merged SHA;
+- real PostgreSQL 18 migration-cycle verification;
+- exact-head push workflows for required gates;
+- immutable lightweight tag `v0.1.0` at the recorded release SHA;
 - backup-based production rollback boundary;
-- no active release-blocking capability or operational debt.
+- no active release-blocking debt.
 
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-TH-0097 is complete. TH-0098 Published Recipe Dish Synchronization is the next Product Owner-approved post-release task and starts only from the merged TH-0097 baseline.
+TH-0098 is complete. No additional post-release task is selected automatically.
 
 ## 6. Immediate sequence
 
 1. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
-2. Use Product catalogue editing to correct shared Product name, category, unit, or package size without recreating Recipe components.
-3. Deliver TH-0098 as a separate task: synchronize a published Recipe into Dishes without inferring generator roles.
+2. Correct shared Product settings through the Recipe component workflow when needed.
+3. Publish reviewed Recipes; configure the synchronized Dish roles explicitly before expecting generator participation.
+4. Select the next post-release task through an explicit Product Owner decision.
 
 ## 7. Development rules
 
 - Do not invent missing business requirements.
 - Do not add microservices or multi-tenant infrastructure.
 - Do not put business rules or permission decisions only in React.
+- Do not infer Dish generator roles from Recipe content without a separate approved design.
 - Do not describe a feature as implemented unless code and tests confirm it.
 - Architecture or stack changes require Product Owner approval and an ADR.
 - One logical task is squash-merged to `main`.
-- Released v0.1.0 scope may change only through an explicit post-release task; fixes require regression, security, operational, or approved UX evidence.
+- Released v0.1.0 scope may change only through an explicit post-release task.
 - Documentation, task state, roadmap, and technical debt are updated with code.
