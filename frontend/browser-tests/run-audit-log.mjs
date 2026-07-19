@@ -76,16 +76,25 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
-       document.body?.innerText?.includes("Меню сгенерировано") &&
-       document.body?.innerText?.includes("Блюдо заменено в приём пищи") &&
-       document.body?.innerText?.includes("Приём пищи") &&
-       document.body?.innerText?.includes("Подготовка проекта выполнена") &&
-       document.body?.innerText?.includes("Рецепт отклонён") &&
-       document.body?.innerText?.includes("Роль пользователя изменена") &&
        document.body?.innerText?.includes("Анна Администратор") &&
-       document.body?.innerText?.includes("Журнал не содержит пароли")`,
-      "loaded menu and MealSlot audit history",
+       document.body?.innerText?.includes("Найдено записей: 5")`,
+      "loaded audit event collection",
     );
+    const loadedText = await client.evaluate("document.body.innerText");
+    for (const label of [
+      "Меню сгенерировано",
+      "Блюдо заменено в приём пищи",
+      "Приём пищи",
+      "Подготовка проекта выполнена",
+      "Рецепт отклонён",
+      "Роль пользователя изменена",
+      "Журнал не содержит пароли",
+    ]) {
+      assert.ok(
+        loadedText.includes(label),
+        `Missing audit label: ${label}\nRendered text:\n${loadedText}`,
+      );
+    }
 
     const filtered = await client.evaluate(`(() => {
       const input = document.querySelector('input[placeholder="Например: meal_plan_generated"]');
