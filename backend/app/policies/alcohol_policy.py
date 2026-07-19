@@ -121,10 +121,9 @@ _EXACT_TERMS = frozenset(
 class AlcoholPolicy:
     """One Backend rule for alcohol classification and rejection.
 
-    Classification is deliberately deterministic and text-based because the current
-    Product/Dish schemas expose names and categories rather than a separate alcohol
-    flag. Tokens are matched as complete normalized words, so terms such as ``ром``
-    do not match unrelated words such as ``ромашка``.
+    The current catalogue exposes names/categories rather than a dedicated alcohol
+    flag. Tokens are matched as complete normalized words, so ``ром`` does not match
+    unrelated words such as ``ромашка``.
     """
 
     ERROR_MESSAGE = "Алкоголь запрещён в TourHub без исключений."
@@ -163,11 +162,15 @@ class AlcoholPolicy:
             )
 
     @classmethod
-    def require_recipe_record_allowed(cls, recipe: RecipeLike) -> None:
+    def require_recipe_content_allowed(cls, recipe: RecipeLike) -> None:
         cls.require_recipe_name_allowed(recipe.name)
+        for component in recipe.components:
+            cls.require_product_record_allowed(component.product)
+
+    @classmethod
+    def require_recipe_record_allowed(cls, recipe: RecipeLike) -> None:
+        cls.require_recipe_content_allowed(recipe)
         if recipe.is_archived:
             raise AlcoholPolicyViolation(
                 "Архивный рецепт нельзя использовать в новом или изменяемом блюде."
             )
-        for component in recipe.components:
-            cls.require_product_record_allowed(component.product)
