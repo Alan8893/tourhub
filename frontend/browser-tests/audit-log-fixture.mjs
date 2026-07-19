@@ -4,6 +4,58 @@ export const auditRequests = [];
 
 const events = [
   {
+    id: 6,
+    actor_user_id: 1,
+    actor_display_name: "Анна Администратор",
+    actor_email: "admin@tourhub.local",
+    actor_role: "administrator",
+    action: "meal_slot_dish_replaced",
+    entity_type: "meal_slot",
+    entity_id: "slot-dinner-42",
+    before_data: {
+      meal_type: "dinner",
+      dish_count: 1,
+      dishes: [{ dish_id: "dish-rice", recipe_id: "recipe-rice", order: 0 }],
+    },
+    after_data: {
+      meal_type: "dinner",
+      dish_count: 1,
+      dishes: [{ dish_id: "dish-beans", recipe_id: "recipe-beans", order: 0 }],
+    },
+    context_data: {
+      project_id: 42,
+      meal_plan_id: "plan-42",
+      previous_dish_id: "dish-rice",
+      dish_id: "dish-beans",
+    },
+    created_at: "2026-07-19T08:55:00Z",
+  },
+  {
+    id: 5,
+    actor_user_id: 1,
+    actor_display_name: "Анна Администратор",
+    actor_email: "admin@tourhub.local",
+    actor_role: "administrator",
+    action: "meal_plan_generated",
+    entity_type: "meal_plan",
+    entity_id: "plan-42",
+    before_data: null,
+    after_data: {
+      participants: 12,
+      days_count: 3,
+      slot_count: 10,
+      slot_dish_count: 10,
+      manual_slot_count: 0,
+      warnings: [],
+    },
+    context_data: {
+      project_id: 42,
+      generation_kind: "initial",
+      recipe_generation_mode: "club_only",
+    },
+    created_at: "2026-07-19T08:50:00Z",
+  },
+  {
     id: 4,
     actor_user_id: 1,
     actor_display_name: "Анна Администратор",

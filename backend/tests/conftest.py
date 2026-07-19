@@ -8,20 +8,7 @@ from app.core.auth import require_administrator, require_preparation_access
 from app.core.database import get_db
 from app.core.session import get_session
 from app.main import app
-from app.models import (
-    Base,
-    DishORM,
-    IngredientORM,
-    MealPlanDayORM,
-    MealPlanItemORM,
-    MealPlanORM,
-    ProductORM,
-    PurchaseChecklistItemORM,
-    PurchaseChecklistORM,
-    PurchaseListItemORM,
-    PurchaseListORM,
-    RecipeORM,
-)
+from app.models import Base, DishORM
 from app.models.user import UserORM
 from app.modules.api.meal_plan_router import get_meal_plan_service
 from app.services.meal_plan_service import MealPlanService
@@ -82,6 +69,8 @@ class FakeMealPlanRepository:
         self.meal_plans = []
         self.days = []
         self.items = []
+        self.slots = []
+        self.slot_dishes = []
         self.meal_plan = None
 
     def add(self, meal_plan):
@@ -94,8 +83,22 @@ class FakeMealPlanRepository:
     def add_item(self, item):
         self.items.append(item)
 
+    def add_slot(self, slot):
+        self.slots.append(slot)
+
+    def add_slot_dish(self, slot_dish):
+        self.slot_dishes.append(slot_dish)
+
+    def flush(self):
+        pass
+
     def commit(self):
         pass
+
+    def get_by_project_id(self, project_id: int):
+        if self.meal_plan is None:
+            return None
+        return self.meal_plan if self.meal_plan.project_id == project_id else None
 
     def get_with_details(self, meal_plan_id: str):
         return self.meal_plan

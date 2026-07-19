@@ -1,5 +1,8 @@
 from decimal import Decimal
 
+from sqlalchemy import select
+
+from app.models.audit_event import AuditEventORM
 from app.models.dish import DishORM
 from app.models.ingredient import IngredientORM
 from app.models.meal_plan import MealPlanORM
@@ -71,6 +74,8 @@ def test_meal_slot_edits_refresh_existing_purchase_data(client, db_session):
         slot=slot,
         dish=rice_dish,
         dish_id=rice_dish.id,
+        recipe=rice_recipe,
+        recipe_id=rice_recipe.id,
         order=0,
     )
     purchase_list = PurchaseListORM(
@@ -174,3 +179,29 @@ def test_meal_slot_edits_refresh_existing_purchase_data(client, db_session):
     assert _required_by_product(updated_checklist.items) == {
         "beans": Decimal("500.00")
     }
+
+    events = list(
+        db_session.scalars(
+            select(AuditEventORM)
+            .where(AuditEventORM.entity_type == "meal_slot")
+            .order_by(AuditEventORM.id)
+        ).all()
+    )
+    assert [event.action for event in events] == [
+        "meal_slot_dish_replaced",
+        "meal_slot_dish_added",
+        "meal_slot_dish_removed",
+    ]
+    assert all(event.entity_id == "slot" for event in events)
+    assert all(event.actor_user_id == 1 for event in events)
+    replaced, added, removed = events
+    assert replaced.before_data["dishes"][0]["dish_id"] == "rice-dish"
+    assert replaced.after_data["dishes"][0]["dish_id"] == "beans-dish"
+    assert replaced.context_data["previous_dish_id"] == "rice-dish"
+    assert replaced.context_data["dish_id"] == "beans-dish"
+    assert added.before_data["dish_count"] == 1
+    assert added.after_data["dish_count"] == 2
+    assert added.context_data["dish_id"] == "rice-dish"
+    assert removed.before_data["dish_count"] == 2
+    assert removed.after_data["dish_count"] == 1
+    assert removed.context_data["slot_dish_id"] == added_slot_dish_id

@@ -46,6 +46,7 @@ jobs:
             app/modules/projects/router.py \
             app/modules/projects/service.py \
             app/repositories/equipment_list_repository.py \
+            app/repositories/meal_plan_repository.py \
             app/repositories/purchase_checklist_repository.py \
             app/repositories/purchase_list_repository.py \
             app/services/catalog_import_service.py \
@@ -54,6 +55,7 @@ jobs:
             app/services/dish_service.py \
             app/services/equipment_list_service.py \
             app/services/meal_plan_derived_refresh_service.py \
+            app/services/meal_plan_service.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
             app/services/meal_slot_service.py \
@@ -78,7 +80,10 @@ jobs:
             app/modules/api/recipe_router.py \
             app/modules/api/product_router.py \
             app/schemas/equipment.py \
+            tests/conftest.py \
             tests/api/test_project_audit_api.py \
+            tests/api/test_meal_slot_purchasing_recalculation_api.py \
+            tests/api/test_menu_meal_slot_audit_rollback_api.py \
             --select E,F,I,UP,B --ignore B008 2>&1 | tee ruff-diagnostics.txt
 
       - name: Upload Ruff diagnostics
@@ -102,6 +107,7 @@ jobs:
             app/modules/projects/router.py \
             app/modules/projects/service.py \
             app/repositories/equipment_list_repository.py \
+            app/repositories/meal_plan_repository.py \
             app/repositories/purchase_checklist_repository.py \
             app/repositories/purchase_list_repository.py \
             app/services/catalog_import_service.py \
@@ -110,6 +116,7 @@ jobs:
             app/services/dish_service.py \
             app/services/equipment_list_service.py \
             app/services/meal_plan_derived_refresh_service.py \
+            app/services/meal_plan_service.py \
             app/services/meal_plan_shopping_service.py \
             app/services/meal_plan_purchasing_refresh_service.py \
             app/services/meal_slot_service.py \

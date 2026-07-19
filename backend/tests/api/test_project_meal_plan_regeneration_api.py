@@ -1,7 +1,13 @@
-from uuid import NAMESPACE_URL, uuid5
+import uuid
 
+from sqlalchemy import select
+
+from app.models.audit_event import AuditEventORM
 from app.models.dish import DishORM
-from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
+from app.models.dish_meal_role import (
+    DishMealRoleMealTypeORM,
+    DishMealRoleORM,
+)
 from app.models.meal_plan import MealPlanORM
 from app.models.recipe import RecipeORM
 from app.modules.projects.models.project import ProjectORM
@@ -19,7 +25,10 @@ def _classified_dish(
     role: str,
     meal_type: str,
 ) -> tuple[RecipeORM, DishORM]:
-    recipe = RecipeORM(id=str(uuid5(NAMESPACE_URL, f"recipe:{dish_id}")), name=f"{name} recipe")
+    recipe = RecipeORM(
+        id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"recipe:{dish_id}")),
+        name=f"{name} recipe",
+    )
     dish = DishORM(id=dish_id, name=name, recipe=recipe)
     assignment = DishMealRoleORM(
         dish=dish,
@@ -52,10 +61,14 @@ def test_project_regeneration_preserves_manual_and_empty_slots(client, db_sessio
         _classified_dish(SOUP_ID, "Soup", "main", "lunch"),
     ]
     manual_recipe = RecipeORM(
-        id=str(uuid5(NAMESPACE_URL, "recipe:manual-regeneration")),
+        id=str(uuid.uuid5(uuid.NAMESPACE_URL, "recipe:manual-regeneration")),
         name="Manual recipe",
     )
-    manual_dish = DishORM(id=MANUAL_ID, name="Manual unclassified dish", recipe=manual_recipe)
+    manual_dish = DishORM(
+        id=MANUAL_ID,
+        name="Manual unclassified dish",
+        recipe=manual_recipe,
+    )
     db_session.add(project)
     for recipe, dish in classified:
         db_session.add_all([recipe, dish])
@@ -106,3 +119,25 @@ def test_project_regeneration_preserves_manual_and_empty_slots(client, db_sessio
         MANUAL_ID
     ]
     assert stored_slots["snack"]["dishes"] == []
+
+    db_session.expire_all()
+    events = list(
+        db_session.scalars(
+            select(AuditEventORM)
+            .where(AuditEventORM.action == "meal_plan_generated")
+            .order_by(AuditEventORM.id)
+        ).all()
+    )
+    assert len(events) == 2
+    initial_event, regeneration_event = events
+    assert initial_event.entity_type == "meal_plan"
+    assert initial_event.entity_id == initial["id"]
+    assert initial_event.before_data is None
+    assert initial_event.after_data["manual_slot_count"] == 0
+    assert initial_event.context_data["generation_kind"] == "initial"
+    assert initial_event.context_data["project_id"] == 41
+    assert regeneration_event.before_data["manual_slot_count"] == 2
+    assert regeneration_event.after_data["manual_slot_count"] == 2
+    assert regeneration_event.context_data["generation_kind"] == "regeneration"
+    assert regeneration_event.context_data["preserved_manual_slot_count"] == 2
+    assert all(event.actor_user_id == 1 for event in events)

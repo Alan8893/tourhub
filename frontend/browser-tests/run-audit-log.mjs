@@ -19,6 +19,12 @@ const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5192/browser-tests/audit-log.html";
 const profileDir = "/tmp/tourhub-audit-log-profile";
+const normalizeText = (value) =>
+  String(value ?? "")
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 async function run() {
   await rm(profileDir, { recursive: true, force: true });
@@ -76,21 +82,31 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
-       document.body?.innerText?.includes("Подготовка проекта выполнена") &&
-       document.body?.innerText?.includes("Проект") &&
-       document.body?.innerText?.includes("Рецепт отклонён") &&
-       document.body?.innerText?.includes("Роль пользователя изменена") &&
        document.body?.innerText?.includes("Анна Администратор") &&
-       document.body?.innerText?.includes("submitted → rejected") &&
-       document.body?.innerText?.includes("Журнал не содержит пароли")`,
-      "loaded audit history",
+       document.body?.innerText?.includes("Найдено записей: 5")`,
+      "loaded audit event collection",
     );
+    const loadedText = normalizeText(await client.evaluate("document.body.innerText"));
+    for (const label of [
+      "Меню сгенерировано",
+      "Блюдо заменено в приёме пищи",
+      "Приём пищи",
+      "Подготовка проекта выполнена",
+      "Рецепт отклонён",
+      "Роль пользователя изменена",
+      "Журнал не содержит пароли",
+    ]) {
+      assert.ok(
+        loadedText.includes(normalizeText(label)),
+        `Missing audit label: ${label}\nRendered text:\n${loadedText}`,
+      );
+    }
 
     const filtered = await client.evaluate(`(() => {
-      const input = document.querySelector('input[placeholder="Например: project_prepared"]');
+      const input = document.querySelector('input[placeholder="Например: meal_plan_generated"]');
       if (!input) return false;
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-      setter?.call(input, "project_prepared");
+      setter?.call(input, "meal_slot_dish_replaced");
       input.dispatchEvent(new Event("input", { bubbles: true }));
       const button = [...document.querySelectorAll("button")].find(
         (item) => item.textContent?.trim() === "Применить фильтры",
@@ -102,17 +118,21 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Подготовка проекта выполнена") &&
-       !document.body?.innerText?.includes("Рецепт отклонён") &&
-       !document.body?.innerText?.includes("Роль пользователя изменена") &&
-       document.body?.innerText?.includes("Найдено записей: 1")`,
-      "filtered audit history",
+      `document.body?.innerText?.includes("Найдено записей: 1") &&
+       document.body?.innerText?.includes("Анна Администратор")`,
+      "filtered MealSlot audit history",
     );
+    const filteredText = normalizeText(await client.evaluate("document.body.innerText"));
+    assert.ok(filteredText.includes(normalizeText("Блюдо заменено в приёме пищи")));
+    assert.ok(filteredText.includes(normalizeText("Приём пищи")));
+    assert.ok(!filteredText.includes(normalizeText("Меню сгенерировано")));
+    assert.ok(!filteredText.includes(normalizeText("Подготовка проекта выполнена")));
+    assert.ok(!filteredText.includes(normalizeText("Рецепт отклонён")));
     assert.ok(
       auditRequests.some(
         (request) =>
           request.path === "/api/v1/audit/events" &&
-          request.query.action === "project_prepared",
+          request.query.action === "meal_slot_dish_replaced",
       ),
     );
 

@@ -7,11 +7,12 @@ from app.engines.meal_plan_generator import (
     DishRoleInput,
     MealPlanGenerationResult,
     MealPlanGenerator,
-    MealPlanItemResult,
+    MealScheduleDayInput,
     MealSlotResult,
     PreservedMealSlotInput,
 )
 from app.engines.meal_schedule import MealScheduleEngine
+from app.models.dish import DishORM
 from app.models.meal_plan import MealPlanORM
 from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_plan_item import MealPlanItemORM
@@ -49,7 +50,7 @@ class MealPlanService:
         self.actor = actor
 
     @staticmethod
-    def _dish_input(dish, recipe_id: str | None = None) -> DishInput:
+    def _dish_input(dish: DishORM, recipe_id: str | None = None) -> DishInput:
         roles = tuple(
             DishRoleInput(
                 role=assignment.role,
@@ -58,7 +59,7 @@ class MealPlanService:
                     item.meal_type for item in assignment.meal_types
                 ),
             )
-            for assignment in getattr(dish, "meal_roles", [])
+            for assignment in dish.meal_roles
         )
         return DishInput(
             id=dish.id,
@@ -178,6 +179,8 @@ class MealPlanService:
         start_meal: str | None = None,
         end_meal: str | None = None,
         recipe_generation_mode: str = RecipeGenerationMode.CLUB_ONLY.value,
+        *,
+        commit: bool = True,
     ) -> MealPlanORM:
         return self.generate_and_save_result(
             name=name,
@@ -188,6 +191,7 @@ class MealPlanService:
             start_meal=start_meal,
             end_meal=end_meal,
             recipe_generation_mode=recipe_generation_mode,
+            commit=commit,
         ).meal_plan
 
     def generate_and_save_result(
@@ -200,16 +204,19 @@ class MealPlanService:
         start_meal: str | None = None,
         end_meal: str | None = None,
         recipe_generation_mode: str = RecipeGenerationMode.CLUB_ONLY.value,
+        *,
+        commit: bool = True,
     ) -> SavedMealPlanResult:
-        if self.meal_plan_repository is None:
+        repository = self.meal_plan_repository
+        if repository is None:
             raise ValueError("MealPlanRepository is required")
         RecipeGenerationMode(recipe_generation_mode)
 
         existing_plan = None
         if project_id is not None:
-            current_plan = self.meal_plan_repository.get_by_project_id(project_id)
+            current_plan = repository.get_by_project_id(project_id)
             if current_plan is not None:
-                existing_plan = self.meal_plan_repository.get_with_details(current_plan.id)
+                existing_plan = repository.get_with_details(current_plan.id)
                 if existing_plan is None:
                     raise ValueError(
                         f"Meal plan not found before regeneration: {current_plan.id}"
@@ -227,7 +234,7 @@ class MealPlanService:
             generated = self.generator.generate(
                 dishes=dishes,
                 days=days,
-                schedule=schedule,
+                schedule=cast(list[MealScheduleDayInput], schedule),
                 role_aware=True,
                 preserved_slots=preserved_slots,
             )
@@ -249,7 +256,7 @@ class MealPlanService:
                 participants=participants,
                 days_count=days,
             )
-            self.meal_plan_repository.add(meal_plan)
+            repository.add(meal_plan)
         else:
             meal_plan = existing_plan
             meal_plan.name = name
@@ -263,8 +270,8 @@ class MealPlanService:
         for item in result.items:
             if item.recipe_id is None:
                 raise ValueError("Generated meal-plan item has no selected recipe")
-            day = self._get_or_create_day(meal_plan, days_map, item.day_number)
-            self.meal_plan_repository.add_item(
+            day = self._get_or_create_day(repository, meal_plan, days_map, item.day_number)
+            repository.add_item(
                 MealPlanItemORM(
                     id=str(uuid4()),
                     day=day,
@@ -276,7 +283,7 @@ class MealPlanService:
 
         slot_order_by_day: dict[int, int] = {}
         for slot in result.slots:
-            day = self._get_or_create_day(meal_plan, days_map, slot.day_number)
+            day = self._get_or_create_day(repository, meal_plan, days_map, slot.day_number)
             slot_order = slot_order_by_day.get(slot.day_number, 0)
             slot_order_by_day[slot.day_number] = slot_order + 1
             meal_slot = MealSlotORM(
@@ -286,12 +293,12 @@ class MealPlanService:
                 order=slot_order,
                 is_manually_edited=slot.is_manually_edited,
             )
-            self.meal_plan_repository.add_slot(meal_slot)
+            repository.add_slot(meal_slot)
 
             for index, dish in enumerate(slot.dishes):
                 if dish.recipe_id is None:
                     raise ValueError("Generated meal-slot dish has no selected recipe")
-                self.meal_plan_repository.add_slot_dish(
+                repository.add_slot_dish(
                     MealSlotDishORM(
                         id=str(uuid4()),
                         slot=meal_slot,
@@ -301,8 +308,11 @@ class MealPlanService:
                     )
                 )
 
-        self.meal_plan_repository.commit()
-        loaded_meal_plan = self.meal_plan_repository.get_with_details(meal_plan.id)
+        if commit:
+            repository.commit()
+        else:
+            repository.flush()
+        loaded_meal_plan = repository.get_with_details(meal_plan.id)
         if loaded_meal_plan is None:
             raise ValueError(f"Meal plan not found after save: {meal_plan.id}")
         return SavedMealPlanResult(
@@ -310,8 +320,9 @@ class MealPlanService:
             warnings=list(loaded_meal_plan.warnings),
         )
 
+    @staticmethod
     def _get_or_create_day(
-        self,
+        repository: MealPlanRepository,
         meal_plan: MealPlanORM,
         days_map: dict[int, MealPlanDayORM],
         day_number: int,
@@ -326,5 +337,5 @@ class MealPlanService:
             meal_plan=meal_plan,
         )
         days_map[day_number] = day
-        self.meal_plan_repository.add_day(day)
+        repository.add_day(day)
         return day
