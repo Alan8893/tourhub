@@ -26,6 +26,7 @@ Project preparation baseline
   → Project workspace UX (TH-0095)
   → Product catalogue editing (TH-0097)
   → Published Recipe Dish synchronization (TH-0098)
+  → Project audit coverage (TH-0099)
 ```
 
 ## RELEASED FIRST-RELEASE SEQUENCE
@@ -117,15 +118,27 @@ Project preparation baseline
 - strict Ruff/mypy, full Backend regression, Product Acceptance Chrome, and responsive focused Chrome coverage verify the behavior;
 - Alembic remains `h10021`.
 
+### Project audit coverage — TH-0099 / PR #109
+
+- `project_created` is recorded with the authenticated actor in the Project creation commit;
+- `project_participants_updated` shares the participant and derived-data recalculation transaction;
+- `project_generation_mode_updated` shares the Project update commit;
+- `project_prepared` shares one caller-owned transaction with purchase list, checklist, and equipment preparation;
+- no-op participant and generation-mode updates do not create events;
+- failures roll back both domain changes and pending AuditEvents;
+- standalone preparation services retain commit-by-default behavior;
+- the Administrator Audit surface exposes Russian Project labels and filters;
+- focused success/no-op/attribution/rollback tests, strict Ruff/mypy, all Backend tests, Product Acceptance, and real-Chrome Audit coverage verify the behavior;
+- no migration, architecture change, new Project capability, or release-tag movement occurred.
+
 ## NEXT POST-RELEASE SELECTION
 
-No additional capability is selected automatically after TH-0098. The Product Owner must choose a separate task from documented debt or approve a new priority.
+No task after TH-0099 is selected automatically. Menu generation/manual MealSlot auditing remains the next listed audit debt, but work requires a separate Product Owner decision.
 
 ## Deferred non-blocking priorities
 
 ### Audit coverage
 
-- project creation/update/preparation;
 - menu generation and manual MealSlot changes;
 - System Settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation writes;
 - audit export, retention UI, SIEM, undo, and replay.

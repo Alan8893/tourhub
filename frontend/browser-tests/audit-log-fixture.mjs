@@ -4,6 +4,33 @@ export const auditRequests = [];
 
 const events = [
   {
+    id: 4,
+    actor_user_id: 1,
+    actor_display_name: "Анна Администратор",
+    actor_email: "admin@tourhub.local",
+    actor_role: "administrator",
+    action: "project_prepared",
+    entity_type: "project",
+    entity_id: "42",
+    before_data: {
+      purchase_list_count: 0,
+      purchase_checklist_count: 0,
+      equipment_list_id: null,
+    },
+    after_data: {
+      purchase_list_count: 1,
+      purchase_checklist_count: 1,
+      equipment_list_id: "equipment-42",
+    },
+    context_data: {
+      meal_plan_id: "plan-42",
+      purchase_list_id: "purchase-42",
+      purchase_checklist_id: "checklist-42",
+      equipment_list_id: "equipment-42",
+    },
+    created_at: "2026-07-19T08:40:00Z",
+  },
+  {
     id: 3,
     actor_user_id: 1,
     actor_display_name: "Анна Администратор",

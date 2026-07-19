@@ -2,8 +2,10 @@ from dataclasses import dataclass
 
 from app.engines.meal_schedule import MealScheduleEngine
 from app.models.recipe_generation_mode import RecipeGenerationMode
+from app.models.user import UserORM
 from app.modules.projects.models.project import ProjectORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
+from app.services.audit_service import AuditService
 
 
 @dataclass(frozen=True)
@@ -24,9 +26,11 @@ class ProjectService:
         self,
         repository: ProjectRepository,
         schedule_engine: MealScheduleEngine | None = None,
+        actor: UserORM | None = None,
     ) -> None:
         self.repository = repository
         self.schedule_engine = schedule_engine or MealScheduleEngine()
+        self.actor = actor
 
     def create_project(
         self,
@@ -45,18 +49,35 @@ class ProjectService:
         self._validate_meal_boundaries(days, first_meal, last_meal)
         self._validate_generation_mode(recipe_generation_mode)
 
-        project = self.repository.create(
-            ProjectORM(
-                name=name,
-                participants=participants,
-                days=days,
-                start_date=start_date,
-                first_meal=first_meal,
-                last_meal=last_meal,
-                recipe_generation_mode=recipe_generation_mode,
-                status="draft",
+        session = self.repository.session
+        try:
+            project = self.repository.create(
+                ProjectORM(
+                    name=name,
+                    participants=participants,
+                    days=days,
+                    start_date=start_date,
+                    first_meal=first_meal,
+                    last_meal=last_meal,
+                    recipe_generation_mode=recipe_generation_mode,
+                    status="draft",
+                )
             )
-        )
+            if self.actor is not None:
+                AuditService(session).record(
+                    actor=self.actor,
+                    action="project_created",
+                    entity_type="project",
+                    entity_id=project.id,
+                    after=self._snapshot(project),
+                    context={"project_name": project.name},
+                )
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+
+        session.refresh(project)
         return self._map(project)
 
     def get_project(self, project_id: int) -> Project:
@@ -74,9 +95,29 @@ class ProjectService:
         project = self.repository.get_by_id(project_id)
         if project is None:
             raise ValueError("Project not found")
-        project.recipe_generation_mode = recipe_generation_mode
-        self.repository.session.commit()
-        self.repository.session.refresh(project)
+        if project.recipe_generation_mode == recipe_generation_mode:
+            return self._map(project)
+
+        session = self.repository.session
+        before = self._snapshot(project)
+        try:
+            project.recipe_generation_mode = recipe_generation_mode
+            if self.actor is not None:
+                AuditService(session).record(
+                    actor=self.actor,
+                    action="project_generation_mode_updated",
+                    entity_type="project",
+                    entity_id=project.id,
+                    before=before,
+                    after=self._snapshot(project),
+                    context={"changed_fields": ["recipe_generation_mode"]},
+                )
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+
+        session.refresh(project)
         return self._map(project)
 
     def _validate_meal_boundaries(
@@ -101,6 +142,19 @@ class ProjectService:
             RecipeGenerationMode(value)
         except ValueError as exc:
             raise ValueError("Unsupported recipe generation mode") from exc
+
+    @staticmethod
+    def _snapshot(project: ProjectORM) -> dict[str, object]:
+        return {
+            "name": project.name,
+            "participants": project.participants,
+            "days": project.days,
+            "start_date": project.start_date,
+            "first_meal": project.first_meal,
+            "last_meal": project.last_meal,
+            "recipe_generation_mode": project.recipe_generation_mode,
+            "status": project.status,
+        }
 
     @staticmethod
     def _map(project: ProjectORM) -> Project:

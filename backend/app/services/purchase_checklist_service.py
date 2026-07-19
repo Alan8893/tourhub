@@ -54,7 +54,12 @@ class PurchaseChecklistService:
             "progress_percent": round((checked_items / total_items) * 100, 2) if total_items else 0,
         }
 
-    def create_from_purchase_list(self, purchase_list: PurchaseListORM) -> PurchaseChecklistORM:
+    def create_from_purchase_list(
+        self,
+        purchase_list: PurchaseListORM,
+        *,
+        commit: bool = True,
+    ) -> PurchaseChecklistORM:
         checklist = PurchaseChecklistORM(
             id=str(uuid4()),
             project_id=purchase_list.project_id,
@@ -74,21 +79,33 @@ class PurchaseChecklistService:
                     is_checked=False,
                 )
             )
-        self.repository.commit()
+        self._finish_write(commit=commit)
         return checklist
 
     def create_from_meal_plan_id(
-        self, meal_plan_id: str, project_id: int | None = None
+        self,
+        meal_plan_id: str,
+        project_id: int | None = None,
+        *,
+        commit: bool = True,
     ) -> PurchaseChecklistORM:
         if not self.meal_plan_repository:
             raise ValueError("Meal plan repository is required")
         meal_plan = self.meal_plan_repository.get_with_details(meal_plan_id)
         if not meal_plan:
             raise ValueError("Meal plan not found")
-        return self.create_from_meal_plan(meal_plan, project_id=project_id)
+        return self.create_from_meal_plan(
+            meal_plan,
+            project_id=project_id,
+            commit=commit,
+        )
 
     def create_from_meal_plan(
-        self, meal_plan: MealPlanORM, project_id: int | None = None
+        self,
+        meal_plan: MealPlanORM,
+        project_id: int | None = None,
+        *,
+        commit: bool = True,
     ) -> PurchaseChecklistORM:
         if not self.shopping_service:
             raise ValueError("Shopping service is required")
@@ -96,10 +113,16 @@ class PurchaseChecklistService:
             meal_plan.id,
             self.shopping_service.calculate(meal_plan),
             project_id=project_id or meal_plan.project_id,
+            commit=commit,
         )
 
     def create_from_shopping_list(
-        self, meal_plan_id: str, shopping_list: ShoppingListResult, project_id: int | None = None
+        self,
+        meal_plan_id: str,
+        shopping_list: ShoppingListResult,
+        project_id: int | None = None,
+        *,
+        commit: bool = True,
     ) -> PurchaseChecklistORM:
         checklist = PurchaseChecklistORM(
             id=str(uuid4()),
@@ -123,11 +146,14 @@ class PurchaseChecklistService:
                     is_checked=False,
                 )
             )
-        self.repository.commit()
+        self._finish_write(commit=commit)
         return checklist
 
     def update_item(
-        self, item_id: str, checked: bool | None = None, purchased_quantity: float | None = None
+        self,
+        item_id: str,
+        checked: bool | None = None,
+        purchased_quantity: float | None = None,
     ) -> PurchaseChecklistItemORM:
         item = self.repository.get_item_by_id(item_id)
         if not item:
@@ -148,3 +174,9 @@ class PurchaseChecklistService:
             checklist.status = PurchaseChecklistWorkflow.transition(current_status, target_status)
         self.repository.commit()
         return item
+
+    def _finish_write(self, *, commit: bool) -> None:
+        if commit:
+            self.repository.commit()
+        else:
+            self.repository.flush()

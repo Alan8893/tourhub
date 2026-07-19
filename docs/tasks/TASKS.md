@@ -8,7 +8,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
 
-TH-0098 is complete. No additional post-release capability is selected automatically; the next task requires an explicit Product Owner decision.
+TH-0099 is complete. No later post-release capability is selected automatically; menu generation and manual MealSlot audit remain deferred until a separate Product Owner decision.
 
 ## First-release sequence
 
@@ -72,6 +72,7 @@ The complete first-release sequence is delivered through TH-0093. The feature-fr
 | TH-0096 | Immutable Release Tag Lifecycle | DONE |
 | TH-0097 | Product Catalogue Editing | DONE |
 | TH-0098 | Published Recipe Dish Synchronization | DONE |
+| TH-0099 | Project Audit Coverage | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 

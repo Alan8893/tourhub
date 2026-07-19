@@ -22,6 +22,8 @@ class EquipmentListService:
         self,
         meal_plan_id: str,
         project_id: int | None = None,
+        *,
+        commit: bool = True,
     ) -> EquipmentListORM:
         meal_plan = self.meal_plan_repository.get_with_details(meal_plan_id)
         if meal_plan is None:
@@ -44,7 +46,10 @@ class EquipmentListService:
             equipment_list.status = "prepared"
 
         self._synchronize(equipment_list, meal_plan)
-        self.repository.commit()
+        if commit:
+            self.repository.commit()
+        else:
+            self.repository.flush()
         return equipment_list
 
     def refresh_existing(self, meal_plan: MealPlanORM) -> EquipmentListORM | None:

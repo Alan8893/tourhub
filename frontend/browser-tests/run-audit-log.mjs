@@ -76,6 +76,8 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
+       document.body?.innerText?.includes("Подготовка проекта выполнена") &&
+       document.body?.innerText?.includes("Проект") &&
        document.body?.innerText?.includes("Рецепт отклонён") &&
        document.body?.innerText?.includes("Роль пользователя изменена") &&
        document.body?.innerText?.includes("Анна Администратор") &&
@@ -85,10 +87,10 @@ async function run() {
     );
 
     const filtered = await client.evaluate(`(() => {
-      const input = document.querySelector('input[placeholder="Например: recipe_published"]');
+      const input = document.querySelector('input[placeholder="Например: project_prepared"]');
       if (!input) return false;
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-      setter?.call(input, "user_role_changed");
+      setter?.call(input, "project_prepared");
       input.dispatchEvent(new Event("input", { bubbles: true }));
       const button = [...document.querySelectorAll("button")].find(
         (item) => item.textContent?.trim() === "Применить фильтры",
@@ -100,8 +102,9 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Роль пользователя изменена") &&
+      `document.body?.innerText?.includes("Подготовка проекта выполнена") &&
        !document.body?.innerText?.includes("Рецепт отклонён") &&
+       !document.body?.innerText?.includes("Роль пользователя изменена") &&
        document.body?.innerText?.includes("Найдено записей: 1")`,
       "filtered audit history",
     );
@@ -109,7 +112,7 @@ async function run() {
       auditRequests.some(
         (request) =>
           request.path === "/api/v1/audit/events" &&
-          request.query.action === "user_role_changed",
+          request.query.action === "project_prepared",
       ),
     );
 

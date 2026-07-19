@@ -73,6 +73,7 @@ jobs:
             tests/api/test_catalog_import_api.py \
             tests/api/test_project_preparation_status_api.py \
             tests/api/test_audit_api.py \
+            tests/api/test_project_audit_api.py \
             tests/api/test_project_document_package_api.py \
             tests/api/test_alcohol_prohibition_api.py \
             tests/migrations/test_h10021_alcohol_prohibition.py \

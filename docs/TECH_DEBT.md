@@ -54,15 +54,27 @@ None. The approved first-release capability scope is feature frozen and release-
 - strict Ruff/mypy, transaction rollback tests, full Backend regression, and focused real-Chrome acceptance cover the workflow;
 - no migration was required and Alembic remains `h10021`.
 
+## Resolved Project audit debt — TH-0099
+
+- Project creation records `project_created` with the authenticated actor in the creation commit;
+- participant changes record `project_participants_updated` in the same transaction as derived purchasing, checklist, and equipment recalculation;
+- generation-mode changes record `project_generation_mode_updated` in the Project update commit;
+- full preparation records `project_prepared` in one transaction with purchase list, checklist, and equipment writes;
+- no-op participant and generation-mode updates create no event;
+- failed creation, recalculation, audit recording, or preparation rolls back both domain changes and pending events;
+- existing standalone preparation services retain commit-by-default behavior while supporting caller-owned transactions;
+- the Administrator Audit UI/API exposes Russian Project labels and filters;
+- strict Ruff/mypy, all Backend tests, Product Acceptance, and real-Chrome Audit coverage verify the behavior;
+- no migration was required and Alembic remains `h10021`.
+
 ## Remaining audit debt
 
-1. Project creation/update/preparation actions.
-2. Menu generation and manual MealSlot changes.
-3. System Settings and mail operations with real actor attribution.
-4. Invitation creation, revocation, acceptance, and delivery-result actions.
-5. Catalogue/import, shopping, equipment, and document-generation actions.
-6. Audit export, retention UI, external SIEM integration, and operational diagnostics.
-7. Undo and event replay remain outside v0.1.0.
+1. Menu generation and manual MealSlot changes.
+2. System Settings and mail operations with real actor attribution.
+3. Invitation creation, revocation, acceptance, and delivery-result actions.
+4. Catalogue/import, shopping, equipment, and document-generation actions.
+5. Audit export, retention UI, external SIEM integration, and operational diagnostics.
+6. Undo and event replay remain outside v0.1.0.
 
 Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and the owning business transaction.
 
@@ -112,7 +124,8 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Product Owner decisions required for later releases
 
-- which post-release debt slice follows TH-0098;
+- which post-release debt slice follows TH-0099;
+- whether menu generation/manual MealSlot audit should be selected next;
 - whether preference weighting beyond approved generation modes belongs in a later release;
 - mandatory Recipe metadata for a later release;
 - encrypted settings archive format.

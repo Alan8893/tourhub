@@ -25,11 +25,16 @@ const ACTION_LABELS: Record<string, string> = {
   recipe_submitted: "Рецепт отправлен на проверку",
   recipe_published: "Рецепт опубликован",
   recipe_rejected: "Рецепт отклонён",
+  project_created: "Проект создан",
+  project_participants_updated: "Количество участников изменено",
+  project_generation_mode_updated: "Режим рецептов проекта изменён",
+  project_prepared: "Подготовка проекта выполнена",
 };
 
 const ENTITY_LABELS: Record<string, string> = {
   user: "Пользователь",
   recipe: "Рецепт",
+  project: "Проект",
 };
 
 function formatDate(value: string): string {
@@ -143,7 +148,7 @@ export default function AuditLogPanel() {
           <Box>
             <Typography variant="h5">Аудит действий</Typography>
             <Typography color="text.secondary">
-              Неизменяемая история критичных действий с пользователем и ролью на момент изменения.
+              Неизменяемая история критичных действий с пользователями, рецептами и проектами.
             </Typography>
           </Box>
 
@@ -172,13 +177,14 @@ export default function AuditLogPanel() {
                 <MenuItem value="">Все</MenuItem>
                 <MenuItem value="user">Пользователь</MenuItem>
                 <MenuItem value="recipe">Рецепт</MenuItem>
+                <MenuItem value="project">Проект</MenuItem>
               </Select>
             </FormControl>
             <TextField
               label="Действие"
               value={action}
               onChange={(event) => setAction(event.target.value)}
-              placeholder="Например: recipe_published"
+              placeholder="Например: project_prepared"
             />
             <TextField
               label="ID сущности"
