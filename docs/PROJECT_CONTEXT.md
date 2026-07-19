@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-19
 
-Status: Post-release published Recipe Dish synchronization delivered — TH-0098
+Status: Post-release Project audit coverage in progress — TH-0099
 
 ## 1. Product boundary
 
@@ -41,7 +41,7 @@ Administrator bootstrap and invitations
   → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, and TH-0098 closes the publication-to-Dish workflow without inferring generator classification.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, and TH-0098 closes the publication-to-Dish workflow without inferring generator classification. TH-0099 extends the existing actor-aware audit foundation to Project creation, participant recalculation, generation-mode changes, and full preparation orchestration.
 
 ## 3. Architecture
 
@@ -69,7 +69,7 @@ Frontend owns presentation, responsive navigation, Project workspace routing, Pr
 - Redis configuration;
 - deterministic calculation, document, audit, and catalogue-policy boundaries.
 
-Backend owns validation, persistence, identity/authorization, Product catalogue policy, Recipe ownership/lifecycle, transaction-owned published Recipe-to-Dish synchronization, Dish variant selection, menu generation, catalogue import, central alcohol policy, recalculation, mail boundaries, document generation, and audit rules.
+Backend owns validation, persistence, identity/authorization, Product catalogue policy, Recipe ownership/lifecycle, transaction-owned published Recipe-to-Dish synchronization, Dish variant selection, menu generation, catalogue import, central alcohol policy, recalculation, mail boundaries, document generation, and semantic audit rules in owning business transactions.
 
 ### Runtime
 
@@ -119,7 +119,10 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - actor identity snapshots and bounded recursive secret removal;
 - semantic user-access and Recipe moderation events in the same transaction;
 - Recipe publication audit context includes the synchronized Dish identity;
-- immutable moderation history and Administrator-only filtered UI/API.
+- TH-0099 adds semantic Project events to creation, participant recalculation, Recipe generation-mode updates, and full preparation orchestration;
+- Project events use the authenticated preparation actor and share the owning commit/rollback boundary;
+- no-op Project updates create no misleading event;
+- immutable history and Administrator-only filtered UI/API remain unchanged.
 
 ### Projects, preparation, documents, and operations
 
@@ -133,7 +136,7 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 ### Product acceptance and release readiness
 
 - versioned Product Acceptance and Release Readiness manifests;
-- critical Backend and Chrome Product Acceptance gates, including published Recipe Dish synchronization;
+- critical Backend and Chrome Product Acceptance gates, including published Recipe Dish synchronization and Project audit coverage;
 - Alembic accepted head fixed at `h10021`;
 - real PostgreSQL 18 migration-cycle verification;
 - exact-head push workflows for required gates;
@@ -144,15 +147,15 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
+- TH-0099 — Project Audit Coverage: semantic actor-attributed Project events in the owning transactions.
 
-TH-0098 is complete. No additional post-release task is selected automatically.
+TH-0099 is limited to Project creation, participant recalculation, generation-mode updates, and full preparation orchestration. Menu/MealSlot and all other audit domains remain deferred.
 
 ## 6. Immediate sequence
 
-1. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
-2. Correct shared Product settings through the Recipe component workflow when needed.
-3. Publish reviewed Recipes; configure the synchronized Dish roles explicitly before expecting generator participation.
-4. Select the next post-release task through an explicit Product Owner decision.
+1. Complete TH-0099 transaction, no-op, rollback, API, and real-Chrome evidence.
+2. Preserve Alembic `h10021`, the modular-monolith boundary, and immutable `v0.1.0`.
+3. Select any later audit or product slice only through another explicit Product Owner decision.
 
 ## 7. Development rules
 
@@ -160,6 +163,7 @@ TH-0098 is complete. No additional post-release task is selected automatically.
 - Do not add microservices or multi-tenant infrastructure.
 - Do not put business rules or permission decisions only in React.
 - Do not infer Dish generator roles from Recipe content without a separate approved design.
+- Do not implement ORM-wide automatic auditing; record semantic actions in owning transactions.
 - Do not describe a feature as implemented unless code and tests confirm it.
 - Architecture or stack changes require Product Owner approval and an ADR.
 - One logical task is squash-merged to `main`.
