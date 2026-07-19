@@ -73,7 +73,14 @@ def test_meal_slot_recalculation_commits_successful_operation() -> None:
 
 def test_participant_recalculation_rolls_back_when_refresh_fails() -> None:
     session = RecordingSession()
-    project = SimpleNamespace(id=1, participants=10)
+    project = SimpleNamespace(
+        id=1,
+        name="Rollback project",
+        participants=10,
+        days=2,
+        recipe_generation_mode="club_only",
+        status="draft",
+    )
     meal_plan = SimpleNamespace(id="plan", participants=10)
     service = ProjectParticipantRecalculationService(session, SimpleNamespace())
     service.project_repository = ProjectRepositoryStub(project)
