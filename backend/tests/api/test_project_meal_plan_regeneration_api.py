@@ -1,5 +1,8 @@
 from uuid import NAMESPACE_URL, uuid5
 
+from sqlalchemy import select
+
+from app.models.audit_event import AuditEventORM
 from app.models.dish import DishORM
 from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
 from app.models.meal_plan import MealPlanORM
@@ -106,3 +109,25 @@ def test_project_regeneration_preserves_manual_and_empty_slots(client, db_sessio
         MANUAL_ID
     ]
     assert stored_slots["snack"]["dishes"] == []
+
+    db_session.expire_all()
+    events = list(
+        db_session.scalars(
+            select(AuditEventORM)
+            .where(AuditEventORM.action == "meal_plan_generated")
+            .order_by(AuditEventORM.id)
+        ).all()
+    )
+    assert len(events) == 2
+    initial_event, regeneration_event = events
+    assert initial_event.entity_type == "meal_plan"
+    assert initial_event.entity_id == initial["id"]
+    assert initial_event.before_data is None
+    assert initial_event.after_data["manual_slot_count"] == 0
+    assert initial_event.context_data["generation_kind"] == "initial"
+    assert initial_event.context_data["project_id"] == 41
+    assert regeneration_event.before_data["manual_slot_count"] == 2
+    assert regeneration_event.after_data["manual_slot_count"] == 2
+    assert regeneration_event.context_data["generation_kind"] == "regeneration"
+    assert regeneration_event.context_data["preserved_manual_slot_count"] == 2
+    assert all(event.actor_user_id == 1 for event in events)
