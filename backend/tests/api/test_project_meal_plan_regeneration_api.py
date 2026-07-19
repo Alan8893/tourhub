@@ -1,4 +1,4 @@
-from uuid import NAMESPACE_URL, uuid5
+import uuid
 
 from sqlalchemy import select
 
@@ -25,7 +25,10 @@ def _classified_dish(
     role: str,
     meal_type: str,
 ) -> tuple[RecipeORM, DishORM]:
-    recipe = RecipeORM(id=str(uuid5(NAMESPACE_URL, f"recipe:{dish_id}")), name=f"{name} recipe")
+    recipe = RecipeORM(
+        id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"recipe:{dish_id}")),
+        name=f"{name} recipe",
+    )
     dish = DishORM(id=dish_id, name=name, recipe=recipe)
     assignment = DishMealRoleORM(
         dish=dish,
@@ -58,10 +61,14 @@ def test_project_regeneration_preserves_manual_and_empty_slots(client, db_sessio
         _classified_dish(SOUP_ID, "Soup", "main", "lunch"),
     ]
     manual_recipe = RecipeORM(
-        id=str(uuid5(NAMESPACE_URL, "recipe:manual-regeneration")),
+        id=str(uuid.uuid5(uuid.NAMESPACE_URL, "recipe:manual-regeneration")),
         name="Manual recipe",
     )
-    manual_dish = DishORM(id=MANUAL_ID, name="Manual unclassified dish", recipe=manual_recipe)
+    manual_dish = DishORM(
+        id=MANUAL_ID,
+        name="Manual unclassified dish",
+        recipe=manual_recipe,
+    )
     db_session.add(project)
     for recipe, dish in classified:
         db_session.add_all([recipe, dish])
