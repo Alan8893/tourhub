@@ -4,7 +4,10 @@ from sqlalchemy import select
 
 from app.models.audit_event import AuditEventORM
 from app.models.dish import DishORM
-from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
+from app.models.dish_meal_role import (
+    DishMealRoleMealTypeORM,
+    DishMealRoleORM,
+)
 from app.models.meal_plan import MealPlanORM
 from app.models.recipe import RecipeORM
 from app.modules.projects.models.project import ProjectORM
