@@ -9,6 +9,9 @@ from app.models.recipe_scope import RecipeScope
 from app.models.user import UserORM
 from app.policies.alcohol_policy import AlcoholPolicy
 from app.services.audit_service import AuditService
+from app.services.published_recipe_dish_sync_service import (
+    PublishedRecipeDishSyncService,
+)
 from app.services.recipe_access_service import RecipeAccessService
 
 
@@ -32,18 +35,32 @@ class RecipeLifecycleService:
         return self._commit_and_refresh(recipe)
 
     def publish(self, recipe_id: str) -> RecipeORM:
-        recipe = self._get_locked_recipe(recipe_id)
-        RecipeAccessService.require_reviewable(recipe, self.actor)
-        AlcoholPolicy.require_recipe_content_allowed(recipe)
-        before = self._snapshot(recipe)
-        recipe.scope = RecipeScope.CLUB.value
-        recipe.owner_user_id = None
-        recipe.lifecycle_status = RecipeLifecycleStatus.PUBLISHED.value
-        recipe.reviewed_by_user_id = self.actor.id
-        recipe.reviewed_at = datetime.now(UTC)
-        recipe.review_comment = None
-        self._record(recipe, action="recipe_published", before=before)
-        return self._commit_and_refresh(recipe)
+        try:
+            recipe = self._get_locked_recipe(recipe_id)
+            RecipeAccessService.require_reviewable(recipe, self.actor)
+            AlcoholPolicy.require_recipe_content_allowed(recipe)
+            before = self._snapshot(recipe)
+            recipe.scope = RecipeScope.CLUB.value
+            recipe.owner_user_id = None
+            recipe.lifecycle_status = RecipeLifecycleStatus.PUBLISHED.value
+            recipe.reviewed_by_user_id = self.actor.id
+            recipe.reviewed_at = datetime.now(UTC)
+            recipe.review_comment = None
+            dish = PublishedRecipeDishSyncService(self.session).synchronize(recipe)
+            self._record(
+                recipe,
+                action="recipe_published",
+                before=before,
+                context={
+                    "recipe_name": recipe.name,
+                    "dish_id": dish.id,
+                    "dish_name": dish.name,
+                },
+            )
+            return self._commit_and_refresh(recipe)
+        except Exception:
+            self.session.rollback()
+            raise
 
     def reject(self, recipe_id: str, comment: str) -> RecipeORM:
         recipe = self._get_locked_recipe(recipe_id)
@@ -73,6 +90,7 @@ class RecipeLifecycleService:
         *,
         action: str,
         before: dict[str, object],
+        context: dict[str, object] | None = None,
     ) -> None:
         AuditService(self.session).record(
             actor=self.actor,
@@ -81,7 +99,7 @@ class RecipeLifecycleService:
             entity_id=recipe.id,
             before=before,
             after=self._snapshot(recipe),
-            context={"recipe_name": recipe.name},
+            context=context ?? {"recipe_name": recipe.name},
         )
 
     @staticmethod
