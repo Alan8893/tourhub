@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,19 +23,19 @@ def fail(message: str) -> None:
     raise SystemExit(f"Product acceptance manifest invalid: {message}")
 
 
-def require_mapping(value: Any, field: str) -> dict[str, Any]:
+def require_mapping(value: object, field: str) -> dict[str, object]:
     if not isinstance(value, dict):
         fail(f"{field} must be an object")
     return value
 
 
-def require_string(value: Any, field: str) -> str:
+def require_string(value: object, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         fail(f"{field} must be a non-empty string")
     return value
 
 
-def require_string_list(value: Any, field: str) -> list[str]:
+def require_string_list(value: object, field: str) -> list[str]:
     if not isinstance(value, list) or not value:
         fail(f"{field} must be a non-empty list")
     result: list[str] = []
