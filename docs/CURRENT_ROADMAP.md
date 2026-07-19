@@ -45,35 +45,36 @@ Project preparation baseline
 - lifecycle `draft`, `submitted`, `rejected`, and `published` with row-locked moderation (`h10018`);
 - ordered Dish Recipe variants with one published CLUB default (`h10019`);
 - project modes `club_only`, `club_and_personal`, and `personal_preferred`;
-- private PERSONAL variants, deterministic rotation, persisted assignment Recipe snapshots, and assignment-based shopping/equipment calculations;
-- responsive ownership, moderation, variant, mode, and selected-Recipe UI.
+- private PERSONAL variants, deterministic rotation, persisted assignment Recipe snapshots, and assignment-based shopping/equipment calculations.
 
 ### Actor-aware audit foundation — TH-0089 / PR #99
 
 - append-only `AuditEvent` persistence and migration `h10020`;
-- actor User ID, display-name, email, and role snapshots at action time;
-- bounded recursive secret-field removal;
-- semantic user role/activation and Recipe submit/publish/reject events in the same transaction;
+- actor identity snapshots, bounded secret filtering, semantic user-access and Recipe moderation events;
 - immutable moderation history, Administrator filtering, and responsive Audit UI.
 
 ### Consolidated Russian exports — TH-0090 / PR #100
 
-- one Backend export contract for Project parameters, persisted menu Recipe snapshots, food loadout, purchasing/checklist state, equipment, warnings, comments, and responsible person;
-- one branded landscape PDF with every approved section;
-- one branded workbook with sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование`;
-- one immutable club/document appearance snapshot reused during a package request;
-- primary complete PDF/XLSX downloads plus preserved focused purchase/equipment endpoints;
-- coordinated ZIP containing complete and compatibility artifacts;
-- focused Backend and Chrome desktop/mobile acceptance.
+- one complete Project PDF and one workbook with sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование`;
+- persisted assignment Recipe snapshots, purchasing/checklist state, equipment, warnings, comments, and one immutable branding snapshot;
+- complete downloads plus preserved compatibility endpoints and ZIP artifacts.
+
+### Central alcohol prohibition — TH-0091 / PR #101
+
+- one normalized complete-word Backend policy for Russian/English alcohol terms;
+- one HTTP 422 boundary across Product, Recipe, Dish, Recipe lifecycle, and Product/Recipe CSV preview/apply;
+- archive filtering for active Product/Dish catalogues and preparation selection;
+- migration `h10021` archives existing prohibited Products, Recipes, and default Dishes while retaining historical foreign-key relationships;
+- policy markers distinguish automatic archival and prevent Recipe restore;
+- false-positive boundaries such as `ромашка`, `пивные дрожжи`, and `винный уксус` remain allowed.
 
 ## NEXT
 
-1. **Central alcohol prohibition** — one Backend policy across Product, Recipe, Dish, and CSV import paths, including deterministic existing-record handling.
-2. **Product acceptance and feature freeze** — catalogue/import acceptance, explicit optional-scope decisions, and end-to-end scenarios.
+1. **Product Acceptance and Feature Freeze** — run approved end-to-end catalogue/import/access/preparation/export scenarios, classify remaining gaps, and explicitly freeze or defer optional scope.
 
 ## Audit coverage still required
 
-The shared foundation is implemented, but later explicit instrumentation is still required for project/menu edits, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation actions. Automatic ORM-wide auditing remains rejected because business actions must remain semantic and transaction-owned.
+The shared foundation is implemented, but later explicit instrumentation remains for project/menu edits, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation actions. Automatic ORM-wide auditing remains rejected.
 
 ## Deferred operations
 
@@ -83,6 +84,8 @@ The shared foundation is implemented, but later explicit instrumentation is stil
 - per-meal manual Recipe switching and preference weights beyond the approved three project modes;
 - audit export, retention UI, SIEM integration, undo, and event replay;
 - scheduled or emailed document generation and document-download audit events;
+- Product/Dish archive-management UI;
+- fuzzy/external alcohol classification and user-configurable exceptions;
 - additional same-origin request hardening if deployment expands beyond trusted LAN;
 - external identity providers and MFA.
 
