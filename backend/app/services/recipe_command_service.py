@@ -69,7 +69,8 @@ class RecipeCommandService:
         RecipeAccessService.require_restorable(recipe, self.actor)
         if recipe.archived_by_alcohol_policy:
             raise AlcoholPolicyViolation(
-                "Рецепт архивирован центральной политикой запрета алкоголя и не может быть восстановлен."
+                "Рецепт архивирован политикой запрета алкоголя "
+                "и не может быть восстановлен."
             )
         AlcoholPolicy.require_recipe_content_allowed(recipe)
         recipe.is_archived = False
