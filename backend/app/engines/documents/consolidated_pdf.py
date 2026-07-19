@@ -159,7 +159,7 @@ class ConsolidatedPDFDocumentGenerator:
             style.fontName = font_name
         apply_pdf_heading_styles(styles, branding)
 
-        summary_rows = [
+        summary_rows: list[list[object]] = [
             ["Название", document.summary.project_name],
             ["Участников", document.summary.participants],
             ["Дней", document.summary.days],
