@@ -2,8 +2,9 @@
   "schema_version": 1,
   "product": "TourHub",
   "release_scope": "first_local_single_club_release",
-  "status": "acceptance_candidate",
+  "status": "feature_frozen",
   "status_date": "2026-07-19",
+  "acceptance_evidence_commit": "ce05a181242d2888f25a8bccc1794ebbc422046a",
   "alembic_head": "h10021",
   "architecture": {
     "deployment_model": "local_single_club",
