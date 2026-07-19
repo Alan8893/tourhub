@@ -6,7 +6,6 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_PATH = ROOT / "docs" / "release_readiness_manifest.json"
 ACCEPTANCE_PATH = ROOT / "docs" / "product_acceptance_manifest.json"
