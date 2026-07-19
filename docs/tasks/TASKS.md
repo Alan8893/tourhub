@@ -7,8 +7,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0098 | Published Recipe Dish Synchronization | IN PROGRESS | ./active/TH-0098-published-recipe-dish-synchronization.md |
 
-TH-0097 is complete. TH-0098 Published Recipe Dish Synchronization is the next Product Owner-approved post-release task and starts from the merged TH-0097 baseline.
+TH-0098 is the active Product Owner-approved post-release catalogue workflow. It starts from merged TH-0097 and must not infer generator roles automatically.
 
 ## First-release sequence
 
