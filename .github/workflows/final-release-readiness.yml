@@ -44,7 +44,9 @@ jobs:
             scripts/release/validate_release_readiness.py \
             scripts/release/verify_final_migration_cycle.py \
             scripts/release/finalize_release.py \
-            --select E,F,I,UP,B
+            --select E,F,I,UP,B \
+            --target-version py313 \
+            --line-length 100
 
       - name: Validate release readiness manifest
         run: python scripts/release/validate_release_readiness.py
