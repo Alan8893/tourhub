@@ -6,7 +6,7 @@ Status date: 2026-07-19
 
 TourHub v0.1.0 is release-ready at Alembic head `h10021`.
 
-The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds the final PostgreSQL migration cycle, deployment checklist, machine-readable release contract, exact-head main workflows, release notes, and automated tag gate. No release-blocking product or operational task remains after the merge-triggered workflow creates `v0.1.0`.
+The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds final migration and release readiness. TH-0095 / PR #105 delivers the first post-release UX improvement: a routed, responsive Project workspace that preserves the released Backend, persistence, calculation, authorization, and document contracts.
 
 ## Verified baseline
 
@@ -19,7 +19,8 @@ The approved first local single-club release is feature frozen through TH-0092 /
 - PR #100 delivered complete consolidated Russian PDF/XLSX exports.
 - PR #101 delivered centralized alcohol policy and existing-record archival (`h10021`).
 - PR #102 accepted and feature froze the first-release scope.
-- TH-0093 verifies and automates final migration/release readiness for `v0.1.0`.
+- PR #103 verified final migration/release readiness and created `v0.1.0`.
+- PR #105 replaces the long Project landing page with routed Overview, Menu, Shopping, Equipment, and Documents work areas without a migration.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Accepted first-release baseline
@@ -37,12 +38,23 @@ The approved first local single-club release is feature frozen through TH-0092 /
 
 ## Final release evidence
 
-- PostgreSQL 18 passes `h10020 → h10021 → h10020 → h10021` against the real historical schema with allowed, prohibited, manually archived, non-default variant, and historical assignment data.
+- PostgreSQL 18 passes `h10020 → h10021 → h10020 → h10021` against the real historical schema with representative data.
 - Alembic retains exactly one head and finishes at `h10021`.
 - `docs/DEPLOYMENT_CHECKLIST.md` defines prerequisites, secrets, backup, upgrade, health, LAN, product smoke, rollback, and operator sign-off.
 - Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, and Docker Release Runtime run on both pull requests and pushes to `main`.
 - Final Release Readiness creates lightweight tag `v0.1.0` only after those workflows pass on the exact merged `main` SHA.
 - Production rollback remains backup-based; Alembic downgrade is verification evidence rather than the normal operator rollback mechanism.
+
+## Post-release Project workspace UX
+
+- `/projects/:id` is a compact Overview rather than one long page.
+- Menu, Shopping, Equipment, and Documents have stable section URLs.
+- Project Recipe generation mode is edited in a settings dialog.
+- Shopping uses separate calculation/packing and checklist tabs.
+- The global sidebar becomes a temporary drawer below the desktop breakpoint, including the 831 px viewport reported by the Product Owner.
+- Checklist controls remain readable on tablet/mobile widths.
+- Browser acceptance verifies no horizontal overflow at 360 px, 831 px, and 1280 px.
+- Existing preparation, reload persistence, module visibility, and complete-package download behavior remain intact.
 
 ## Deferred non-blocking debt
 
@@ -56,4 +68,4 @@ The approved first local single-club release is feature frozen through TH-0092 /
 
 ## Next work
 
-No post-release capability is selected automatically. The next task must be chosen explicitly from documented technical debt or a new Product Owner priority without altering the released v0.1.0 baseline.
+No additional post-release capability is selected automatically after TH-0095. The next task must be chosen explicitly from documented technical debt or a new Product Owner priority without altering the released v0.1.0 business baseline.
