@@ -7,6 +7,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0093 | Final Migration and Release Readiness | IN PROGRESS | ./active/TH-0093-final-migration-release-readiness.md |
 
 ## Planned release sequence
 
@@ -22,7 +23,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 | 8 | Product acceptance and feature freeze | End-to-end acceptance, explicit optional-scope decisions, and frozen first-release capability scope |
 | 9 | Final release readiness | Migration cycle, deployment checklist, final release workflow, and release tag |
 
-The first-release feature sequence is complete through order 8. Final Migration and Release Readiness is the only remaining release-blocking task and receives its exact task ID when started from merged `main`.
+The first-release feature sequence is complete through order 8. TH-0093 is the active final release-readiness task and must not expand the feature-frozen product scope.
 
 ## Completed
 
@@ -74,5 +75,5 @@ Details are stored in `./closed/` using the task ID and descriptive slug.
 - Completed tasks are moved to `closed/` after merge and verification.
 - Architectural decisions are documented separately.
 - Current status documents override historical task wording when scope has been explicitly deferred.
-- A task is not DONE while its pull request is only open or draft; the TH-0092 closure state in PR #102 becomes authoritative when the PR is squash-merged.
-- Final migration downgrade/re-upgrade smoke starts only after first-release feature freeze; that condition is now satisfied.
+- A task is not DONE while its pull request is only open or draft.
+- Final migration downgrade/re-upgrade smoke may run only against the feature-frozen accepted baseline.
