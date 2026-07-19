@@ -19,10 +19,10 @@ This file contains task status and links. Detailed task descriptions are stored 
 | 5 | Actor-aware audit | Safe actor-attributed history foundation and explicit domain coverage |
 | 6 | Consolidated export completeness | Approved Russian PDF and workbook contents using one brand snapshot |
 | 7 | Central alcohol prohibition | Shared API/import policy and existing-record handling immediately before acceptance |
-| 8 | Product acceptance and feature freeze | End-to-end acceptance and explicit optional-scope decisions |
-| 9 | Final release readiness | Migration cycle, deployment checklist, and final release workflow |
+| 8 | Product acceptance and feature freeze | End-to-end acceptance, explicit optional-scope decisions, and frozen first-release capability scope |
+| 9 | Final release readiness | Migration cycle, deployment checklist, final release workflow, and release tag |
 
-Exact task IDs for implementation slices are assigned when each slice starts from the then-current `main`.
+The first-release feature sequence is complete through order 8. Final Migration and Release Readiness is the only remaining release-blocking task and receives its exact task ID when started from merged `main`.
 
 ## Completed
 
@@ -64,6 +64,7 @@ Exact task IDs for implementation slices are assigned when each slice starts fro
 | TH-0089 | Actor-Aware Audit Foundation | DONE |
 | TH-0090 | Consolidated Russian Export Completeness | DONE |
 | TH-0091 | Central Alcohol Prohibition | DONE |
+| TH-0092 | Product Acceptance and Feature Freeze | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
@@ -73,5 +74,5 @@ Details are stored in `./closed/` using the task ID and descriptive slug.
 - Completed tasks are moved to `closed/` after merge and verification.
 - Architectural decisions are documented separately.
 - Current status documents override historical task wording when scope has been explicitly deferred.
-- A task is not DONE while its pull request is only open or draft.
-- Final migration downgrade/re-upgrade smoke starts only after first-release feature freeze.
+- A task is not DONE while its pull request is only open or draft; the TH-0092 closure state in PR #102 becomes authoritative when the PR is squash-merged.
+- Final migration downgrade/re-upgrade smoke starts only after first-release feature freeze; that condition is now satisfied.
