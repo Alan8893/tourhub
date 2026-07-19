@@ -2,10 +2,10 @@
 
 Status date: 2026-07-19
 
-## Accepted and feature frozen through TH-0092 / PR #102
+## Released through TH-0093 / v0.1.0
 
-- guided preparation, persisted shopping/equipment, recalculation, readiness, and Russian document package;
-- production-like runtime, backup/restore, health checks, API proxy, and restart persistence;
+- guided preparation, persisted shopping/equipment, recalculation, readiness, and complete Russian document package;
+- production-like runtime, backup/restore, health checks, same-origin API proxy, LAN access, and restart persistence;
 - typed System Settings through `h10013`;
 - invitation-only Access, roles, users, and multi-session readiness through `h10016`;
 - working SMTP invitation delivery with manual fallback;
@@ -14,12 +14,15 @@ Status date: 2026-07-19
 - Dish Recipe variants, three Project generation modes, and persisted assignment Recipe snapshots through `h10019`;
 - append-only actor-aware AuditEvent persistence through `h10020`;
 - complete consolidated Russian PDF/XLSX exports and compatibility ZIP package;
-- one centralized complete-word alcohol policy across Product, Recipe, Dish, lifecycle activation, and Product/Recipe CSV preview/apply;
-- Product/Dish archive state and policy markers through `h10021`;
-- deterministic archival of existing prohibited Product → Recipe → default Dish records;
-- historical relationships retained while archived records are excluded from active catalogues/new preparation;
-- classifier false-positive boundaries, API/import/lifecycle tests, reversible migration coverage, and complete repository acceptance;
-- machine-readable product acceptance evidence and explicit feature-freeze rules.
+- centralized complete-word alcohol policy, archive markers, historical preservation, and `h10021`;
+- machine-readable Product Acceptance and Release Readiness contracts;
+- PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` evidence with representative historical data;
+- deployment checklist, v0.1.0 release notes, exact-head merged-main gates, and automated tag creation;
+- backup-based production rollback boundary.
+
+## Release-blocking debt
+
+None. The approved first-release capability scope is feature frozen and release-ready. Any new blocking classification requires reproducible regression, security, migration, or operator evidence.
 
 ## Remaining audit debt
 
@@ -29,7 +32,7 @@ Status date: 2026-07-19
 4. Invitation creation, revocation, acceptance, and delivery-result actions.
 5. Catalogue/import, shopping, equipment, and document-generation actions.
 6. Audit export, retention UI, external SIEM integration, and operational diagnostics.
-7. Undo and event replay remain out of scope for the current release.
+7. Undo and event replay remain outside v0.1.0.
 
 Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and the owning business transaction.
 
@@ -61,7 +64,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - invitation retention and cleanup;
 - asynchronous mail delivery, scheduled retries, delivery history, and bounce diagnostics;
 - approved mail templates and attachments;
-- additional same-origin request hardening if deployment expands beyond trusted LAN.
+- additional same-origin request hardening only if deployment expands beyond trusted LAN.
 
 ## Deferred product domains
 
@@ -70,24 +73,17 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - warehouse balances, issue workflow, and participant distribution;
 - procurement prices, shops, stock balances, and external aggregators.
 
-## Remaining release-blocking product debt
-
-None. The approved first-release capability scope is accepted and feature frozen.
-
 ## Configuration export/import debt
 
 - versioned validated archive;
 - protected-value exclusion from unencrypted exports;
 - approved encryption, integrity, preview, and rollback design.
 
-## Product Owner decisions still required for later releases
+## Product Owner decisions required for later releases
 
+- which post-release debt slice is next;
 - whether preference weighting beyond approved generation modes belongs in a later release;
 - mandatory Recipe metadata for a later release;
 - encrypted settings archive format.
 
-## Current release-readiness work
-
-- PostgreSQL previous → `h10021` → previous → `h10021` migration smoke;
-- final deployment checklist;
-- final release workflow and tag after green exact-head gates.
+No deferred item is active merely because it appears in this document. Work starts only through an explicitly selected task.

@@ -2,6 +2,9 @@ name: Guided Release Acceptance
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
