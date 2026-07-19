@@ -9,7 +9,7 @@ export default function AppLayout() {
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", width: "100%" }}>
       <Sidebar
         mobileOpen={mobileNavigationOpen}
         onMobileClose={() => setMobileNavigationOpen(false)}
@@ -17,7 +17,7 @@ export default function AppLayout() {
 
       <Box component="main" sx={{ flex: 1, minWidth: 0 }}>
         <Header onMenuClick={() => setMobileNavigationOpen(true)} />
-        <Box sx={{ p: { xs: 2, sm: 3 } }}>
+        <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}>
           <Outlet />
         </Box>
       </Box>
