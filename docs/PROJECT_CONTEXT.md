@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-19
 
-Status: Post-release UX delivered — TH-0095
+Status: Post-release Product catalogue editing delivered — TH-0097
 
 ## 1. Product boundary
 
@@ -41,7 +41,7 @@ Administrator bootstrap and invitations
   → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation and responsive presentation without changing that released business baseline.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation and responsive presentation. TH-0097 adds shared Product catalogue editing while preserving RecipeComponent calculation inputs and the released database boundary.
 
 ## 3. Architecture
 
@@ -56,7 +56,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, responsive application navigation, Project workspace routing, form state, API integration, server-projected capabilities, safe audit responses, and download controls. It does not own business validation, alcohol classification, document content, generation, lifecycle, calculation, authorization, or audit sanitization.
+Frontend owns presentation, responsive application navigation, Project workspace routing, Product create/edit form state, API integration, server-projected capabilities, safe audit responses, and download controls. It does not own business validation, alcohol classification, document content, generation, lifecycle, calculation, authorization, unit conversion, or audit sanitization.
 
 ### Backend
 
@@ -69,7 +69,7 @@ Frontend owns presentation, responsive application navigation, Project workspace
 - Redis configuration;
 - deterministic calculation, document, audit, and catalogue-policy boundaries.
 
-Backend owns validation, persistence, identity/authorization, Recipe ownership/lifecycle, Dish variant selection, menu generation, catalogue import, central alcohol policy, recalculation, mail boundaries, document content/generation, and audit recording/query rules.
+Backend owns validation, persistence, identity/authorization, Product catalogue policy, Recipe ownership/lifecycle, Dish variant selection, menu generation, catalogue import, central alcohol policy, recalculation, mail boundaries, document content/generation, and audit recording/query rules.
 
 ### Runtime
 
@@ -93,8 +93,12 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - Administrator-only settings, invitations, users, mail operations, and audit reads;
 - multiple sessions, current-role resolution, deactivation revocation, protected-401 handling, exact route return, and visible role.
 
-### Recipe ownership, publication, Dish variants, and alcohol policy
+### Product catalogue, Recipe ownership, publication, Dish variants, and alcohol policy
 
+- active shared Products can be created and edited from the Recipe component workflow;
+- Product edits preserve identifiers and existing Recipe relationships;
+- Product name, category, catalogue unit, and package size remain Backend-validated;
+- changing a Product catalogue unit never converts or rewrites RecipeComponent amount/unit values;
 - Recipe CLUB/PERSONAL scope, owner-aware visibility, submission/rejection/publication, and row-locked moderation;
 - ordered CLUB/current-actor PERSONAL Recipe variants per Dish;
 - Project modes `club_only`, `club_and_personal`, and `personal_preferred`;
@@ -143,13 +147,13 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-TH-0095 is complete. No additional post-release task is selected automatically, and the v0.1.0 business baseline remains unchanged.
+TH-0097 is complete. TH-0098 Published Recipe Dish Synchronization is the next Product Owner-approved post-release task and starts only from the merged TH-0097 baseline.
 
 ## 6. Immediate sequence
 
 1. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
-2. Use the routed Project workspace for Overview, Menu, Shopping, Equipment, and Documents.
-3. Select the next post-release task explicitly from documented debt or a new Product Owner decision.
+2. Use Product catalogue editing to correct shared Product name, category, unit, or package size without recreating Recipe components.
+3. Deliver TH-0098 as a separate task: synchronize a published Recipe into Dishes without inferring generator roles.
 
 ## 7. Development rules
 

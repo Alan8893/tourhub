@@ -36,6 +36,18 @@ None. The approved first-release capability scope is feature frozen and release-
 - responsive browser acceptance covers 360 px, 831 px, and 1280 px without horizontal overflow;
 - the UX improvement required no Backend, migration, calculation, authorization, or document-contract change.
 
+## Resolved Product catalogue editing debt — TH-0097
+
+- active shared Products can now be edited without recreation;
+- editable fields are name, category, catalogue unit, and package size;
+- Product identifiers and every existing Recipe relationship remain intact;
+- duplicate names and prohibited Product content preserve the established API boundaries;
+- changing the shared catalogue unit does not convert existing RecipeComponent amount/unit values;
+- the Recipe component workflow exposes a responsive `Изменить продукт` action and shared-impact warning;
+- Product and Recipe queries refresh after save;
+- focused Backend and real-Chrome acceptance cover update, missing, duplicate, prohibited, shared-reference, and mobile behavior;
+- no migration was required and Alembic remains `h10021`.
+
 ## Remaining audit debt
 
 1. Project creation/update/preparation actions.
@@ -50,6 +62,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Remaining Recipe, menu, and catalogue debt
 
+- TH-0098: synchronize every newly published Recipe into the Dish catalogue without guessing generator roles;
 - optional moderation notifications;
 - ownership-aware CSV import UX beyond trusted shared-catalogue import;
 - preparation technology, dietary metadata, season metadata, and richer categories;
@@ -93,7 +106,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Product Owner decisions required for later releases
 
-- which post-release debt slice is next after TH-0095;
+- which post-release debt slice follows TH-0098;
 - whether preference weighting beyond approved generation modes belongs in a later release;
 - mandatory Recipe metadata for a later release;
 - encrypted settings archive format.

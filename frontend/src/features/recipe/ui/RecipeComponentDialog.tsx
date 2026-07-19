@@ -12,14 +12,21 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
+import { isAxiosError } from "axios";
 import { useEffect, useState } from "react";
 
-import type { RecipeComponent, RecipeProduct } from "../api/recipeApi";
+import type {
+  ProductWriteInput,
+  RecipeComponent,
+  RecipeProduct,
+} from "../api/recipeApi";
+import { useUpdateProduct } from "../hooks/useRecipeMutations";
 import {
   toRecipeComponentWriteInput,
   validateRecipeComponentDraft,
   type RecipeComponentDraft,
 } from "../model/recipeEditor";
+import ProductDialog from "./ProductDialog";
 
 const initialDraft: RecipeComponentDraft = {
   productId: "",
@@ -29,6 +36,13 @@ const initialDraft: RecipeComponentDraft = {
   calculationType: "per_person",
   peopleCount: "",
 };
+
+function getProductErrorMessage(error: unknown): string {
+  if (isAxiosError<{ error?: string; detail?: string }>(error)) {
+    return error.response?.data?.error ?? error.response?.data?.detail ?? "Не удалось изменить продукт.";
+  }
+  return error instanceof Error ? error.message : "Не удалось изменить продукт.";
+}
 
 interface RecipeComponentDialogProps {
   open: boolean;
@@ -53,6 +67,10 @@ export default function RecipeComponentDialog({
 }: RecipeComponentDialogProps) {
   const [draft, setDraft] = useState<RecipeComponentDraft>(initialDraft);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [editingProduct, setEditingProduct] = useState<RecipeProduct | null>(null);
+  const [productError, setProductError] = useState<string | null>(null);
+  const updateProductMutation = useUpdateProduct();
+  const selectedProduct = products.find((product) => product.id === draft.productId) ?? null;
 
   useEffect(() => {
     if (!open) {
@@ -85,127 +103,164 @@ export default function RecipeComponentDialog({
     onSubmit(toRecipeComponentWriteInput(draft));
   };
 
-  return (
-    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{component ? "Редактировать компонент" : "Добавить компонент"}</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          {(validationError || errorMessage) && (
-            <Alert severity="error">{validationError ?? errorMessage}</Alert>
-          )}
+  const submitProduct = async (input: ProductWriteInput) => {
+    if (!editingProduct) return;
+    setProductError(null);
+    try {
+      await updateProductMutation.mutateAsync({ productId: editingProduct.id, input });
+      setEditingProduct(null);
+    } catch (error) {
+      setProductError(getProductErrorMessage(error));
+    }
+  };
 
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="stretch">
+  return (
+    <>
+      <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
+        <DialogTitle>{component ? "Редактировать компонент" : "Добавить компонент"}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {(validationError || errorMessage) && (
+              <Alert severity="error">{validationError ?? errorMessage}</Alert>
+            )}
+
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1} alignItems="stretch">
+              <FormControl fullWidth>
+                <InputLabel id="recipe-product-label">Продукт</InputLabel>
+                <Select
+                  labelId="recipe-product-label"
+                  label="Продукт"
+                  value={draft.productId}
+                  onChange={(event) => {
+                    const productId = event.target.value;
+                    const product = products.find((item) => item.id === productId);
+                    setDraft((current) => ({
+                      ...current,
+                      productId,
+                      unit: product?.unit ?? current.unit,
+                    }));
+                  }}
+                >
+                  {products.map((product) => (
+                    <MenuItem key={product.id} value={product.id}>
+                      {product.name}{product.category ? ` · ${product.category}` : ""}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <Button variant="outlined" onClick={onCreateProduct} sx={{ whiteSpace: "nowrap" }}>
+                  Новый продукт
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    if (!selectedProduct) return;
+                    setProductError(null);
+                    updateProductMutation.reset();
+                    setEditingProduct(selectedProduct);
+                  }}
+                  disabled={!selectedProduct}
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  Изменить продукт
+                </Button>
+              </Stack>
+            </Stack>
+
             <FormControl fullWidth>
-              <InputLabel id="recipe-product-label">Продукт</InputLabel>
+              <InputLabel id="component-type-label">Роль компонента</InputLabel>
               <Select
-                labelId="recipe-product-label"
-                label="Продукт"
-                value={draft.productId}
-                onChange={(event) => {
-                  const productId = event.target.value;
-                  const product = products.find((item) => item.id === productId);
+                labelId="component-type-label"
+                label="Роль компонента"
+                value={draft.componentType}
+                onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
-                    productId,
-                    unit: product?.unit ?? current.unit,
-                  }));
-                }}
+                    componentType: event.target.value as RecipeComponentDraft["componentType"],
+                  }))
+                }
               >
-                {products.map((product) => (
-                  <MenuItem key={product.id} value={product.id}>
-                    {product.name}{product.category ? ` · ${product.category}` : ""}
-                  </MenuItem>
-                ))}
+                <MenuItem value="base">Основа</MenuItem>
+                <MenuItem value="cooking">Для приготовления</MenuItem>
+                <MenuItem value="optional">Дополнительно</MenuItem>
+                <MenuItem value="serving_add_on">Для подачи</MenuItem>
               </Select>
             </FormControl>
-            <Button variant="outlined" onClick={onCreateProduct} sx={{ whiteSpace: "nowrap" }}>
-              Новый продукт
-            </Button>
+
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <TextField
+                label="Количество"
+                type="number"
+                value={draft.amount}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, amount: event.target.value }))
+                }
+                inputProps={{ min: 1 }}
+                fullWidth
+              />
+              <TextField
+                label="Единица"
+                value={draft.unit}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, unit: event.target.value }))
+                }
+                fullWidth
+              />
+            </Stack>
+
+            <FormControl fullWidth>
+              <InputLabel id="calculation-type-label">Способ расчёта</InputLabel>
+              <Select
+                labelId="calculation-type-label"
+                label="Способ расчёта"
+                value={draft.calculationType}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    calculationType:
+                      event.target.value as RecipeComponentDraft["calculationType"],
+                    peopleCount:
+                      event.target.value === "package_per_people" ? current.peopleCount : "",
+                  }))
+                }
+              >
+                <MenuItem value="per_person">На человека</MenuItem>
+                <MenuItem value="fixed_group">На всю группу</MenuItem>
+                <MenuItem value="package_per_people">Упаковка на группу</MenuItem>
+              </Select>
+            </FormControl>
+
+            {draft.calculationType === "package_per_people" && (
+              <TextField
+                label="Человек на упаковку"
+                type="number"
+                value={draft.peopleCount}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, peopleCount: event.target.value }))
+                }
+                inputProps={{ min: 1 }}
+                fullWidth
+              />
+            )}
           </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} disabled={isSubmitting}>Отмена</Button>
+          <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting}>
+            {isSubmitting ? "Сохранение…" : "Сохранить"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-          <FormControl fullWidth>
-            <InputLabel id="component-type-label">Роль компонента</InputLabel>
-            <Select
-              labelId="component-type-label"
-              label="Роль компонента"
-              value={draft.componentType}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  componentType: event.target.value as RecipeComponentDraft["componentType"],
-                }))
-              }
-            >
-              <MenuItem value="base">Основа</MenuItem>
-              <MenuItem value="cooking">Для приготовления</MenuItem>
-              <MenuItem value="optional">Дополнительно</MenuItem>
-              <MenuItem value="serving_add_on">Для подачи</MenuItem>
-            </Select>
-          </FormControl>
-
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField
-              label="Количество"
-              type="number"
-              value={draft.amount}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, amount: event.target.value }))
-              }
-              inputProps={{ min: 1 }}
-              fullWidth
-            />
-            <TextField
-              label="Единица"
-              value={draft.unit}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, unit: event.target.value }))
-              }
-              fullWidth
-            />
-          </Stack>
-
-          <FormControl fullWidth>
-            <InputLabel id="calculation-type-label">Способ расчёта</InputLabel>
-            <Select
-              labelId="calculation-type-label"
-              label="Способ расчёта"
-              value={draft.calculationType}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  calculationType:
-                    event.target.value as RecipeComponentDraft["calculationType"],
-                  peopleCount:
-                    event.target.value === "package_per_people" ? current.peopleCount : "",
-                }))
-              }
-            >
-              <MenuItem value="per_person">На человека</MenuItem>
-              <MenuItem value="fixed_group">На всю группу</MenuItem>
-              <MenuItem value="package_per_people">Упаковка на группу</MenuItem>
-            </Select>
-          </FormControl>
-
-          {draft.calculationType === "package_per_people" && (
-            <TextField
-              label="Человек на упаковку"
-              type="number"
-              value={draft.peopleCount}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, peopleCount: event.target.value }))
-              }
-              inputProps={{ min: 1 }}
-              fullWidth
-            />
-          )}
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isSubmitting}>Отмена</Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting}>
-          {isSubmitting ? "Сохранение…" : "Сохранить"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      <ProductDialog
+        open={editingProduct !== null}
+        product={editingProduct}
+        isSubmitting={updateProductMutation.isPending}
+        errorMessage={productError}
+        onClose={() => setEditingProduct(null)}
+        onSubmit={(input) => void submitProduct(input)}
+      />
+    </>
   );
 }
