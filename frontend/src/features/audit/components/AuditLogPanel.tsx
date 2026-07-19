@@ -29,12 +29,18 @@ const ACTION_LABELS: Record<string, string> = {
   project_participants_updated: "Количество участников изменено",
   project_generation_mode_updated: "Режим рецептов проекта изменён",
   project_prepared: "Подготовка проекта выполнена",
+  meal_plan_generated: "Меню сгенерировано",
+  meal_slot_dish_added: "Блюдо добавлено в приём пищи",
+  meal_slot_dish_removed: "Блюдо удалено из приёма пищи",
+  meal_slot_dish_replaced: "Блюдо заменено в приёме пищи",
 };
 
 const ENTITY_LABELS: Record<string, string> = {
   user: "Пользователь",
   recipe: "Рецепт",
   project: "Проект",
+  meal_plan: "Меню",
+  meal_slot: "Приём пищи",
 };
 
 function formatDate(value: string): string {
@@ -148,7 +154,7 @@ export default function AuditLogPanel() {
           <Box>
             <Typography variant="h5">Аудит действий</Typography>
             <Typography color="text.secondary">
-              Неизменяемая история критичных действий с пользователями, рецептами и проектами.
+              Неизменяемая история критичных действий с пользователями, рецептами, проектами и меню.
             </Typography>
           </Box>
 
@@ -178,13 +184,15 @@ export default function AuditLogPanel() {
                 <MenuItem value="user">Пользователь</MenuItem>
                 <MenuItem value="recipe">Рецепт</MenuItem>
                 <MenuItem value="project">Проект</MenuItem>
+                <MenuItem value="meal_plan">Меню</MenuItem>
+                <MenuItem value="meal_slot">Приём пищи</MenuItem>
               </Select>
             </FormControl>
             <TextField
               label="Действие"
               value={action}
               onChange={(event) => setAction(event.target.value)}
-              placeholder="Например: project_prepared"
+              placeholder="Например: meal_plan_generated"
             />
             <TextField
               label="ID сущности"
