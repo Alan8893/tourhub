@@ -28,7 +28,7 @@ Project preparation baseline
 
 ### Infrastructure, preparation, and operations
 
-- complete guided preparation from project creation through shopping, equipment, readiness, and Russian PDF/Excel/print/ZIP outputs;
+- complete guided preparation from project creation through shopping, equipment, readiness, and Russian documents;
 - installation, update, backup, restore, recovery, production-like release images, health checks, same-origin API proxy, restart persistence, and cleanup validation;
 - PostgreSQL 18 and Redis remain internal to the release network.
 
@@ -52,17 +52,24 @@ Project preparation baseline
 
 - append-only `AuditEvent` persistence and migration `h10020`;
 - actor User ID, display-name, email, and role snapshots at action time;
-- bounded recursive removal of password, hash, credential, cookie, session, token, authorization, and secret fields;
-- semantic user role/activation and Recipe submit/publish/reject events in the same business transaction;
-- immutable moderation history beyond the latest Recipe fields;
-- Administrator-only filtered API and responsive Audit section;
-- focused Backend and Chrome acceptance for attribution, filtering, sanitization, immutability, and mobile containment.
+- bounded recursive secret-field removal;
+- semantic user role/activation and Recipe submit/publish/reject events in the same transaction;
+- immutable moderation history, Administrator filtering, and responsive Audit UI.
+
+### Consolidated Russian exports — TH-0090 / PR #100
+
+- one Backend export contract for Project parameters, persisted menu Recipe snapshots, food loadout, purchasing/checklist state, equipment, warnings, comments, and responsible person;
+- one branded landscape PDF with every approved section;
+- one branded workbook with sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование`;
+- one immutable club/document appearance snapshot reused during a package request;
+- primary complete PDF/XLSX downloads plus preserved focused purchase/equipment endpoints;
+- coordinated ZIP containing complete and compatibility artifacts;
+- focused Backend and Chrome desktop/mobile acceptance.
 
 ## NEXT
 
-1. **Consolidated export completeness** — approved complete Russian PDF and workbook contents using one immutable brand snapshot.
-2. **Central alcohol prohibition** — one Backend policy across Product, Recipe, and CSV import paths, including existing-record handling.
-3. **Product acceptance and feature freeze** — catalogue/import acceptance, explicit optional-scope decisions, and end-to-end scenarios.
+1. **Central alcohol prohibition** — one Backend policy across Product, Recipe, Dish, and CSV import paths, including deterministic existing-record handling.
+2. **Product acceptance and feature freeze** — catalogue/import acceptance, explicit optional-scope decisions, and end-to-end scenarios.
 
 ## Audit coverage still required
 
@@ -75,6 +82,7 @@ The shared foundation is implemented, but later explicit instrumentation is stil
 - moderation notifications;
 - per-meal manual Recipe switching and preference weights beyond the approved three project modes;
 - audit export, retention UI, SIEM integration, undo, and event replay;
+- scheduled or emailed document generation and document-download audit events;
 - additional same-origin request hardening if deployment expands beyond trusted LAN;
 - external identity providers and MFA.
 

@@ -1,7 +1,8 @@
-import { Alert, Button, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Alert, Button, Card, CardContent, Divider, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 
 import {
+  downloadConsolidatedDocument,
   downloadDocumentPackage,
   downloadEquipmentDocument,
   downloadPurchaseDocument,
@@ -43,6 +44,13 @@ export default function DocumentsDownloadCard({ projectId, ready }: Props) {
     }
   }
 
+  async function handleConsolidatedDownload(format: "pdf" | "excel") {
+    await runDownload(
+      () => downloadConsolidatedDocument(projectId, format),
+      format === "pdf" ? "документы-похода.pdf" : "документы-похода.xlsx",
+    );
+  }
+
   async function handlePurchaseDownload(format: "pdf" | "excel") {
     await runDownload(
       () => downloadPurchaseDocument(projectId, format),
@@ -71,16 +79,48 @@ export default function DocumentsDownloadCard({ projectId, ready }: Props) {
           <Typography variant="h6">Документы</Typography>
           <Typography>
             {ready
-              ? "Русские документы закупки и оборудования готовы к скачиванию."
+              ? "Русские документы закупки и оборудования готовы. Полный комплект также содержит параметры похода, меню, раскладку, предупреждения и комментарии."
               : "Сначала подготовьте закупку, чек-лист и список оборудования."}
           </Typography>
 
           {error && <Alert severity="error">{error}</Alert>}
 
           {ready && (
-            <Stack spacing={1.5}>
+            <Stack spacing={2}>
               <Stack spacing={0.75}>
-                <Typography variant="subtitle2">Закупка</Typography>
+                <Typography variant="subtitle2">Полный комплект</Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <Button
+                    variant="contained"
+                    disabled={isDownloading}
+                    onClick={() => handleConsolidatedDownload("pdf")}
+                  >
+                    Полный PDF
+                  </Button>
+                  <Button
+                    variant="contained"
+                    disabled={isDownloading}
+                    onClick={() => handleConsolidatedDownload("excel")}
+                  >
+                    Полный Excel
+                  </Button>
+                </Stack>
+                <Button
+                  variant="outlined"
+                  disabled={isDownloading}
+                  onClick={handlePackageDownload}
+                >
+                  Скачать полный пакет
+                </Button>
+              </Stack>
+
+              <Divider />
+
+              <Typography variant="subtitle2">Отдельные документы</Typography>
+              <Stack spacing={0.75}>
+                <Typography variant="body2" color="text.secondary">
+                  Закупка
+                </Typography>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                   <Button
                     disabled={isDownloading}
@@ -98,7 +138,9 @@ export default function DocumentsDownloadCard({ projectId, ready }: Props) {
               </Stack>
 
               <Stack spacing={0.75}>
-                <Typography variant="subtitle2">Оборудование</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Оборудование
+                </Typography>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                   <Button
                     disabled={isDownloading}
@@ -114,14 +156,6 @@ export default function DocumentsDownloadCard({ projectId, ready }: Props) {
                   </Button>
                 </Stack>
               </Stack>
-
-              <Button
-                variant="contained"
-                disabled={isDownloading}
-                onClick={handlePackageDownload}
-              >
-                Скачать полный пакет
-              </Button>
             </Stack>
           )}
         </Stack>

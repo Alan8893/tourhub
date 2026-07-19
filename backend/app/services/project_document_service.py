@@ -1,6 +1,9 @@
 from typing import cast
 
 from app.engines.documents.branding import ClubBrandingDTO
+from app.engines.documents.consolidated_dto import ConsolidatedProjectDocumentDTO
+from app.engines.documents.consolidated_excel import ConsolidatedExcelDocumentGenerator
+from app.engines.documents.consolidated_pdf import ConsolidatedPDFDocumentGenerator
 from app.engines.documents.dto import GeneratedDocument
 from app.engines.documents.equipment_excel import EquipmentExcelDocumentGenerator
 from app.engines.documents.equipment_pdf import EquipmentPDFDocumentGenerator
@@ -8,11 +11,14 @@ from app.engines.documents.excel import ExcelDocumentGenerator
 from app.engines.documents.pdf import PDFDocumentGenerator
 from app.engines.documents.printer import PrintDocumentGenerator
 from app.models.equipment_list import EquipmentListORM
+from app.models.meal_plan import MealPlanORM
+from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_list import PurchaseListORM
 from app.modules.projects.models.project import ProjectORM
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
 from app.services.club_settings_service import ClubSettingsService
+from app.services.consolidated_document_mapper import ConsolidatedDocumentMapper
 from app.services.document_appearance_settings_service import (
     DocumentAppearanceSettingsService,
 )
@@ -34,6 +40,9 @@ class ProjectDocumentService:
         equipment_pdf_generator: EquipmentPDFDocumentGenerator | None = None,
         equipment_excel_generator: EquipmentExcelDocumentGenerator | None = None,
         equipment_list_repository: EquipmentListRepository | None = None,
+        consolidated_document_mapper: ConsolidatedDocumentMapper | None = None,
+        consolidated_pdf_generator: ConsolidatedPDFDocumentGenerator | None = None,
+        consolidated_excel_generator: ConsolidatedExcelDocumentGenerator | None = None,
         club_settings_service: ClubSettingsService | None = None,
         document_appearance_service: DocumentAppearanceSettingsService | None = None,
     ) -> None:
@@ -52,6 +61,15 @@ class ProjectDocumentService:
             equipment_excel_generator or EquipmentExcelDocumentGenerator()
         )
         self.equipment_list_repository = equipment_list_repository
+        self.consolidated_document_mapper = (
+            consolidated_document_mapper or ConsolidatedDocumentMapper()
+        )
+        self.consolidated_pdf_generator = (
+            consolidated_pdf_generator or ConsolidatedPDFDocumentGenerator()
+        )
+        self.consolidated_excel_generator = (
+            consolidated_excel_generator or ConsolidatedExcelDocumentGenerator()
+        )
         self.club_settings_service = club_settings_service
         self.document_appearance_service = document_appearance_service
         self._branding_loaded = False
@@ -88,6 +106,34 @@ class ProjectDocumentService:
         dto = self.equipment_document_mapper.to_dto(equipment_list, project.name)
         return self.equipment_excel_generator.generate(dto, self._branding())
 
+    def generate_consolidated_pdf(self, project: ProjectORM) -> GeneratedDocument:
+        return self.consolidated_pdf_generator.generate(
+            self._consolidated_dto(project),
+            self._branding(),
+        )
+
+    def generate_consolidated_excel(self, project: ProjectORM) -> GeneratedDocument:
+        return self.consolidated_excel_generator.generate(
+            self._consolidated_dto(project),
+            self._branding(),
+        )
+
+    def _consolidated_dto(
+        self,
+        project: ProjectORM,
+    ) -> ConsolidatedProjectDocumentDTO:
+        purchase_list = self._get_purchase_list(project)
+        meal_plan = self._get_meal_plan(project, purchase_list)
+        equipment_list = self._get_equipment_list(project)
+        checklist = self._get_purchase_checklist(project, meal_plan.id)
+        return self.consolidated_document_mapper.to_dto(
+            project=project,
+            meal_plan=meal_plan,
+            purchase_list=purchase_list,
+            equipment_list=equipment_list,
+            purchase_checklist=checklist,
+        )
+
     def _branding(self) -> ClubBrandingDTO | None:
         if not self._branding_loaded:
             if self.club_settings_service is None:
@@ -119,6 +165,44 @@ class ProjectDocumentService:
                     return purchase_list
 
         raise ValueError("Purchase list not found")
+
+    @staticmethod
+    def _get_meal_plan(
+        project: ProjectORM,
+        purchase_list: PurchaseListORM,
+    ) -> MealPlanORM:
+        meal_plans = cast(list[MealPlanORM], project.meal_plans)
+        matching = next(
+            (
+                meal_plan
+                for meal_plan in meal_plans
+                if meal_plan.id == purchase_list.meal_plan_id
+            ),
+            None,
+        )
+        if matching is not None:
+            return matching
+        if meal_plans:
+            return meal_plans[0]
+        raise ValueError("Meal plan not found")
+
+    @staticmethod
+    def _get_purchase_checklist(
+        project: ProjectORM,
+        meal_plan_id: str,
+    ) -> PurchaseChecklistORM | None:
+        checklists = cast(list[PurchaseChecklistORM], project.purchase_checklists)
+        matching = next(
+            (
+                checklist
+                for checklist in checklists
+                if checklist.meal_plan_id == meal_plan_id
+            ),
+            None,
+        )
+        if matching is not None:
+            return matching
+        return checklists[0] if checklists else None
 
     def _get_equipment_list(self, project: ProjectORM) -> EquipmentListORM:
         if self.equipment_list_repository is not None:

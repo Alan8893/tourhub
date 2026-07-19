@@ -62,6 +62,7 @@ Exact task IDs for implementation slices are assigned when each slice starts fro
 | TH-0087 | Recipe Publication and Moderation | DONE |
 | TH-0088 | Dish Recipe Variants and Generation Modes | DONE |
 | TH-0089 | Actor-Aware Audit Foundation | DONE |
+| TH-0090 | Consolidated Russian Export Completeness | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 

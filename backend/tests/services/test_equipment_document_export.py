@@ -86,6 +86,12 @@ class FakeDocumentService:
             content=filename.encode(),
         )
 
+    def generate_consolidated_pdf(self, project):
+        return self._document(f"tourhub_project_{project.id}_complete.pdf")
+
+    def generate_consolidated_excel(self, project):
+        return self._document(f"tourhub_project_{project.id}_complete.xlsx")
+
     def generate_purchase_pdf(self, project):
         return self._document("purchase_list.pdf")
 
@@ -102,12 +108,14 @@ class FakeDocumentService:
         return self._document("equipment_list.xlsx")
 
 
-def test_project_package_contains_purchase_and_equipment_documents():
+def test_project_package_contains_complete_and_compatibility_documents():
     generated = ProjectDocumentPackageService(FakeDocumentService()).generate_package(
         SimpleNamespace(id=76)
     )
     with ZipFile(BytesIO(bytes(generated.content))) as archive:
         assert set(archive.namelist()) == {
+            "tourhub_project_76_complete.pdf",
+            "tourhub_project_76_complete.xlsx",
             "purchase_list.pdf",
             "purchase_list.xlsx",
             "purchase_list.html",
