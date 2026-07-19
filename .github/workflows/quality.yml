@@ -42,7 +42,12 @@ jobs:
             app/models/equipment_list.py \
             app/models/equipment_list_item.py \
             app/models/recipe_equipment_requirement.py \
+            app/modules/projects/repositories/project_repository.py \
+            app/modules/projects/router.py \
+            app/modules/projects/service.py \
             app/repositories/equipment_list_repository.py \
+            app/repositories/purchase_checklist_repository.py \
+            app/repositories/purchase_list_repository.py \
             app/services/catalog_import_service.py \
             app/services/dish_catalogue_readiness_service.py \
             app/services/dish_recipe_recalculation_service.py \
@@ -73,6 +78,7 @@ jobs:
             app/modules/api/recipe_router.py \
             app/modules/api/product_router.py \
             app/schemas/equipment.py \
+            tests/api/test_project_audit_api.py \
             --select E,F,I,UP,B --ignore B008 2>&1 | tee ruff-diagnostics.txt
 
       - name: Upload Ruff diagnostics
@@ -92,7 +98,12 @@ jobs:
             app/models/equipment_list.py \
             app/models/equipment_list_item.py \
             app/models/recipe_equipment_requirement.py \
+            app/modules/projects/repositories/project_repository.py \
+            app/modules/projects/router.py \
+            app/modules/projects/service.py \
             app/repositories/equipment_list_repository.py \
+            app/repositories/purchase_checklist_repository.py \
+            app/repositories/purchase_list_repository.py \
             app/services/catalog_import_service.py \
             app/services/dish_catalogue_readiness_service.py \
             app/services/dish_recipe_recalculation_service.py \
