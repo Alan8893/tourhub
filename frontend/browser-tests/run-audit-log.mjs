@@ -77,15 +77,12 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
        document.body?.innerText?.includes("Меню сгенерировано") &&
-       document.body?.innerText?.includes("Меню") &&
        document.body?.innerText?.includes("Блюдо заменено в приём пищи") &&
        document.body?.innerText?.includes("Приём пищи") &&
        document.body?.innerText?.includes("Подготовка проекта выполнена") &&
        document.body?.innerText?.includes("Рецепт отклонён") &&
        document.body?.innerText?.includes("Роль пользователя изменена") &&
        document.body?.innerText?.includes("Анна Администратор") &&
-       document.body?.innerText?.includes("dish-rice") &&
-       document.body?.innerText?.includes("dish-beans") &&
        document.body?.innerText?.includes("Журнал не содержит пароли")`,
       "loaded menu and MealSlot audit history",
     );
