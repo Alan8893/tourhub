@@ -51,8 +51,16 @@ export function useSubmitRecipe() {
 }
 
 export function usePublishRecipe() {
-  const invalidateRecipes = useInvalidateRecipes();
-  return useMutation({ mutationFn: publishRecipe, onSuccess: invalidateRecipes });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: publishRecipe,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["recipes"] }),
+        queryClient.invalidateQueries({ queryKey: ["dishes"] }),
+      ]);
+    },
+  });
 }
 
 export function useRejectRecipe() {
