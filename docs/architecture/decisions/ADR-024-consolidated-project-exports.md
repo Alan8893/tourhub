@@ -1,6 +1,6 @@
 # ADR-024 — Consolidated Project Exports
 
-Status: Proposed
+Status: Accepted
 
 Date: 2026-07-19
 
@@ -50,7 +50,7 @@ Document appearance and branding are applied independently to every sheet.
 
 ### Compatibility
 
-Existing focused purchase/equipment PDF, XLSX, and print endpoints remain supported. The ZIP includes both complete artifacts and the compatibility artifacts. This avoids breaking current operator workflows while making the specification-complete downloads primary in the UI.
+Existing focused purchase/equipment PDF, XLSX, and print endpoints remain supported. The ZIP includes both complete artifacts and compatibility artifacts. This avoids breaking current operator workflows while making the specification-complete downloads primary in the UI.
 
 ## Consequences
 
