@@ -4,7 +4,7 @@ Version: 0.0.8-alpha
 
 Last update: 2026-07-19
 
-Status: Product Acceptance Preparation
+Status: Feature Frozen — Final Migration and Release Readiness
 
 ## 1. Product boundary
 
@@ -15,15 +15,15 @@ TourHub is a local ERP application for one tourist club.
 - The runtime supports multiple invited users inside the same club.
 - Registration is invitation-only after one-time Administrator bootstrap.
 - Approved roles are Administrator, Instructor, and Verified Instructor.
-- Participant profiles are outside the current MVP workflow; calculations use participant count.
+- Participant profiles are outside the current release workflow; calculations use participant count.
 - Alcohol is prohibited without exceptions through one Backend policy.
 - Paid external services are not used.
 
-The approved target scope is defined in `PRODUCT_SPEC.md`. The implemented state is defined by code, tests, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
+The approved target scope is defined in `PRODUCT_SPEC.md`. The accepted first-release state is defined by code, tests, `PRODUCT_ACCEPTANCE.md`, `product_acceptance_manifest.json`, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
 
 ## 2. Current product goal
 
-Complete and stabilize the Russian local workflow:
+The approved Russian local workflow is accepted and feature frozen:
 
 ```text
 Administrator bootstrap and invitations
@@ -40,7 +40,7 @@ Administrator bootstrap and invitations
   → Product acceptance and feature freeze
 ```
 
-The release-blocking functional sequence is complete through TH-0091 / PR #101. The next task is Product Acceptance and Feature Freeze.
+The release-blocking functional sequence is complete through TH-0092 / PR #102. Final Migration and Release Readiness is the only next phase.
 
 ## 3. Architecture
 
@@ -80,7 +80,7 @@ docker compose up -d --build
 
 The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally. PostgreSQL and Redis remain internal to the release network. Redis is available but no current business workflow depends on it.
 
-## 4. Implemented baseline
+## 4. Accepted first-release baseline
 
 ### Access and users
 
@@ -119,16 +119,25 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - one immutable club/document settings snapshot per package request;
 - installation, update, backup, restore, health, LAN, recovery, and production-like Docker acceptance.
 
+### Product acceptance and freeze
+
+- versioned machine-readable manifest for accepted capabilities, evidence, architecture boundaries, deferred scope, and acceptance commands;
+- dedicated manifest, selected Backend, and six-scenario Chrome acceptance gate;
+- Alembic head fixed at `h10021` for the accepted product baseline;
+- no active release-blocking capability remains;
+- optional gaps are explicitly deferred and non-blocking;
+- first-release scope changes are restricted to acceptance defects, security fixes, final release-readiness work, and documentation corrections.
+
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-The next implementation task is Product Acceptance and Feature Freeze; it must classify remaining gaps rather than reopen completed functional scope without a failing approved scenario.
+No release-blocking feature task remains active. The next task starts Final Migration and Release Readiness without expanding the accepted first-release scope.
 
 ## 6. Immediate sequence
 
-1. Run Product Acceptance and Feature Freeze.
-2. Run the final migration cycle and release gates.
+1. Run Final Migration and Release Readiness.
+2. Create the release tag only after the final exact-head gates pass.
 
 ## 7. Development rules
 
@@ -138,4 +147,5 @@ The next implementation task is Product Acceptance and Feature Freeze; it must c
 - Do not describe a feature as implemented unless code and tests confirm it.
 - Architecture or stack changes require Product Owner approval and an ADR.
 - One logical task is squash-merged to `main`.
+- During feature freeze, only acceptance defect fixes, security fixes, final release-readiness work, and documentation corrections may change first-release scope.
 - Documentation, task state, roadmap, and technical debt are updated with code.
