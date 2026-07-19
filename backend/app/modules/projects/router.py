@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import require_preparation_access
 from app.core.database import get_db
 from app.engines.documents.dto import GeneratedDocument
+from app.models.recipe_generation_mode import RecipeGenerationMode
 from app.models.user import UserORM
 from app.modules.projects.models.project import ProjectORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
@@ -50,7 +51,7 @@ def _project_response(project: Project | ProjectORM) -> ProjectResponse:
         start_date=project.start_date,
         first_meal=project.first_meal,
         last_meal=project.last_meal,
-        recipe_generation_mode=project.recipe_generation_mode,
+        recipe_generation_mode=RecipeGenerationMode(project.recipe_generation_mode),
         status=project.status,
     )
 
