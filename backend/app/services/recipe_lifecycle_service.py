@@ -99,7 +99,7 @@ class RecipeLifecycleService:
             entity_id=recipe.id,
             before=before,
             after=self._snapshot(recipe),
-            context=context ?? {"recipe_name": recipe.name},
+            context=context if context is not None else {"recipe_name": recipe.name},
         )
 
     @staticmethod
