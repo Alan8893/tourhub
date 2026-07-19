@@ -2,7 +2,7 @@
 
 TourHub is a local ERP application for preparing tourist-club trips: projects, meal plans, dishes, recipes, shopping projections, equipment, branded Russian exports, and operational backup/restore.
 
-One installation represents one tourist club. The current release supports Administrator bootstrap, invitation-only multi-user access, explicit roles, guarded preparation workflows, working SMTP invitation delivery, multi-session readiness, CLUB/PERSONAL Recipe ownership, publication/moderation with rejection feedback, ordered Recipe variants per Dish, project-level club/personal generation modes with persisted assignment Recipe snapshots, an append-only actor-aware audit foundation, and complete consolidated Russian Project PDF/XLSX exports. The next release-blocking capability is the centralized alcohol prohibition immediately before product acceptance.
+One installation represents one tourist club. The current release supports Administrator bootstrap, invitation-only multi-user access, explicit roles, guarded preparation workflows, working SMTP invitation delivery, multi-session readiness, CLUB/PERSONAL Recipe ownership, publication/moderation with rejection feedback, ordered Recipe variants per Dish, project-level generation modes with persisted assignment Recipe snapshots, an append-only actor-aware audit foundation, complete consolidated Russian Project PDF/XLSX exports, and one centralized no-exceptions alcohol policy across Product, Recipe, Dish, API, and CSV import paths. The next release phase is Product Acceptance and Feature Freeze.
 
 ## Quick start
 
@@ -83,7 +83,7 @@ GitHub Actions enforce:
 
 - one logical change per task and pull request;
 - migrations must keep exactly one Alembic head;
-- Backend owns calculations, import validation, transaction boundaries, identity, authorization, lifecycle, generation, audit, and document-content decisions;
+- Backend owns calculations, import validation, transaction boundaries, identity, authorization, lifecycle, generation, audit, document content, and central catalogue policies;
 - Frontend owns presentation, navigation, form state, and API integration;
 - Frontend features use the shared API client and do not hardcode browser-visible service origins;
 - documentation must be synchronized when product, domain, architecture, persistence, or release scope changes.
