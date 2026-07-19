@@ -1,5 +1,16 @@
 import { apiClient } from "@/shared/api/client";
 
+export async function downloadConsolidatedDocument(
+  projectId: number,
+  format: "pdf" | "excel",
+): Promise<Blob> {
+  const response = await apiClient.get<Blob>(
+    `/projects/${projectId}/documents/consolidated/${format}`,
+    { responseType: "blob" },
+  );
+  return response.data;
+}
+
 export async function downloadPurchaseDocument(
   projectId: number,
   format: "pdf" | "excel" | "print",
