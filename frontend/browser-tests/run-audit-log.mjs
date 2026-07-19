@@ -89,7 +89,7 @@ async function run() {
     const loadedText = normalizeText(await client.evaluate("document.body.innerText"));
     for (const label of [
       "Меню сгенерировано",
-      "Блюдо заменено в приём пищи",
+      "Блюдо заменено в приёме пищи",
       "Приём пищи",
       "Подготовка проекта выполнена",
       "Рецепт отклонён",
@@ -123,7 +123,7 @@ async function run() {
       "filtered MealSlot audit history",
     );
     const filteredText = normalizeText(await client.evaluate("document.body.innerText"));
-    assert.ok(filteredText.includes(normalizeText("Блюдо заменено в приём пищи")));
+    assert.ok(filteredText.includes(normalizeText("Блюдо заменено в приёме пищи")));
     assert.ok(filteredText.includes(normalizeText("Приём пищи")));
     assert.ok(!filteredText.includes(normalizeText("Меню сгенерировано")));
     assert.ok(!filteredText.includes(normalizeText("Подготовка проекта выполнена")));
