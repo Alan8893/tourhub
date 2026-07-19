@@ -21,7 +21,7 @@ Project preparation baseline
   → Consolidated Russian exports
   → Central alcohol prohibition
   → Product acceptance and feature freeze
-  → Final migration and release gates
+  → Final migration and release readiness
 ```
 
 ## DONE
@@ -68,33 +68,36 @@ Project preparation baseline
 - policy markers distinguish automatic archival and prevent Recipe restore;
 - false-positive boundaries such as `ромашка`, `пивные дрожжи`, and `винный уксус` remain allowed.
 
+### Product acceptance and feature freeze — TH-0092 / PR #102
+
+- one machine-readable accepted release-scope manifest with evidence and architecture guards;
+- one dedicated workflow covering manifest validation, selected real Backend API/migration scenarios, and six critical Chrome scenarios;
+- approved first-release capabilities accepted and optional gaps explicitly deferred as non-blocking;
+- feature freeze activated at Alembic head `h10021`;
+- first-release scope changes limited to acceptance defects, security fixes, final release-readiness work, and documentation corrections.
+
 ## NEXT
 
-1. **Product Acceptance and Feature Freeze** — run approved end-to-end catalogue/import/access/preparation/export scenarios, classify remaining gaps, and explicitly freeze or defer optional scope.
+1. **Final Migration and Release Readiness** — run the PostgreSQL previous → `h10021` → previous → `h10021` cycle, verify the production deployment checklist, add the final release workflow, and create the release tag only after green exact-head gates.
 
-## Audit coverage still required
+## Audit coverage deferred beyond the first release
 
 The shared foundation is implemented, but later explicit instrumentation remains for project/menu edits, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation actions. Automatic ORM-wide auditing remains rejected.
 
-## Deferred operations
+## Other deferred non-blocking scope
 
-- session administration, cleanup, global sign-out, and account recovery;
-- asynchronous mail queues, scheduled retries, and delivery diagnostics beyond the current synchronous result;
+- participant profiles, routes/GPX, warehouse balances, issue workflow, and participant distribution;
+- procurement prices, shops, stock balances, and external aggregators;
+- session administration, cleanup, global sign-out, account recovery, and user profile editing;
+- asynchronous mail queues, scheduled retries, bounce handling, and advanced templates/attachments;
 - moderation notifications;
-- per-meal manual Recipe switching and preference weights beyond the approved three project modes;
+- richer Recipe metadata, per-meal manual Recipe switching, and preference weights beyond the approved generation modes;
 - audit export, retention UI, SIEM integration, undo, and event replay;
-- scheduled or emailed document generation and document-download audit events;
+- scheduled or emailed document generation, signatures, and document-download audit events;
 - Product/Dish archive-management UI;
+- encrypted configuration archives;
 - fuzzy/external alcohol classification and user-configurable exceptions;
 - additional same-origin request hardening if deployment expands beyond trusted LAN;
 - external identity providers and MFA.
-
-## Final release readiness
-
-Only after first-release feature freeze:
-
-- PostgreSQL previous → head → previous → head migration smoke;
-- production-like deployment checklist;
-- final release workflow and release tag after green exact-head gates.
 
 Multi-tenant support and microservices remain prohibited.
