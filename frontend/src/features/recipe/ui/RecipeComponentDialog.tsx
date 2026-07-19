@@ -38,6 +38,7 @@ interface RecipeComponentDialogProps {
   errorMessage: string | null;
   onClose: () => void;
   onCreateProduct: () => void;
+  onEditProduct: (product: RecipeProduct) => void;
   onSubmit: (input: ReturnType<typeof toRecipeComponentWriteInput>) => void;
 }
 
@@ -49,10 +50,12 @@ export default function RecipeComponentDialog({
   errorMessage,
   onClose,
   onCreateProduct,
+  onEditProduct,
   onSubmit,
 }: RecipeComponentDialogProps) {
   const [draft, setDraft] = useState<RecipeComponentDraft>(initialDraft);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const selectedProduct = products.find((product) => product.id === draft.productId) ?? null;
 
   useEffect(() => {
     if (!open) {
@@ -118,9 +121,19 @@ export default function RecipeComponentDialog({
                 ))}
               </Select>
             </FormControl>
-            <Button variant="outlined" onClick={onCreateProduct} sx={{ whiteSpace: "nowrap" }}>
-              Новый продукт
-            </Button>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <Button variant="outlined" onClick={onCreateProduct} sx={{ whiteSpace: "nowrap" }}>
+                Новый продукт
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => selectedProduct && onEditProduct(selectedProduct)}
+                disabled={!selectedProduct}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Изменить продукт
+              </Button>
+            </Stack>
           </Stack>
 
           <FormControl fullWidth>
