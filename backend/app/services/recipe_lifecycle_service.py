@@ -7,6 +7,7 @@ from app.models.recipe import RecipeORM
 from app.models.recipe_lifecycle_status import RecipeLifecycleStatus
 from app.models.recipe_scope import RecipeScope
 from app.models.user import UserORM
+from app.policies.alcohol_policy import AlcoholPolicy
 from app.services.audit_service import AuditService
 from app.services.recipe_access_service import RecipeAccessService
 
@@ -19,6 +20,7 @@ class RecipeLifecycleService:
     def submit(self, recipe_id: str) -> RecipeORM:
         recipe = self._get_locked_recipe(recipe_id)
         RecipeAccessService.require_submittable(recipe, self.actor)
+        AlcoholPolicy.require_recipe_content_allowed(recipe)
         before = self._snapshot(recipe)
         recipe.lifecycle_status = RecipeLifecycleStatus.SUBMITTED.value
         recipe.submitted_by_user_id = self.actor.id
@@ -32,6 +34,7 @@ class RecipeLifecycleService:
     def publish(self, recipe_id: str) -> RecipeORM:
         recipe = self._get_locked_recipe(recipe_id)
         RecipeAccessService.require_reviewable(recipe, self.actor)
+        AlcoholPolicy.require_recipe_content_allowed(recipe)
         before = self._snapshot(recipe)
         recipe.scope = RecipeScope.CLUB.value
         recipe.owner_user_id = None
