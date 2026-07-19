@@ -6,7 +6,6 @@ from app.engines.meal_plan_generator import (
     DishInput,
     DishRoleInput,
     MealPlanGenerationResult,
-    MealPlanGenerator,
     MealPlanItemResult,
     MealSlotResult,
     PreservedMealSlotInput,
@@ -178,6 +177,8 @@ class MealPlanService:
         start_meal: str | None = None,
         end_meal: str | None = None,
         recipe_generation_mode: str = RecipeGenerationMode.CLUB_ONLY.value,
+        *,
+        commit: bool = True,
     ) -> MealPlanORM:
         return self.generate_and_save_result(
             name=name,
@@ -188,6 +189,7 @@ class MealPlanService:
             start_meal=start_meal,
             end_meal=end_meal,
             recipe_generation_mode=recipe_generation_mode,
+            commit=commit,
         ).meal_plan
 
     def generate_and_save_result(
@@ -200,6 +202,8 @@ class MealPlanService:
         start_meal: str | None = None,
         end_meal: str | None = None,
         recipe_generation_mode: str = RecipeGenerationMode.CLUB_ONLY.value,
+        *,
+        commit: bool = True,
     ) -> SavedMealPlanResult:
         if self.meal_plan_repository is None:
             raise ValueError("MealPlanRepository is required")
@@ -301,7 +305,10 @@ class MealPlanService:
                     )
                 )
 
-        self.meal_plan_repository.commit()
+        if commit:
+            self.meal_plan_repository.commit()
+        else:
+            self.meal_plan_repository.flush()
         loaded_meal_plan = self.meal_plan_repository.get_with_details(meal_plan.id)
         if loaded_meal_plan is None:
             raise ValueError(f"Meal plan not found after save: {meal_plan.id}")
