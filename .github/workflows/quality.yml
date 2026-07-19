@@ -82,7 +82,6 @@ jobs:
             app/schemas/equipment.py \
             tests/conftest.py \
             tests/api/test_project_audit_api.py \
-            tests/api/test_project_meal_plan_regeneration_api.py \
             tests/api/test_meal_slot_purchasing_recalculation_api.py \
             tests/api/test_menu_meal_slot_audit_rollback_api.py \
             --select E,F,I,UP,B --ignore B008 2>&1 | tee ruff-diagnostics.txt
