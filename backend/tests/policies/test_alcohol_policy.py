@@ -26,7 +26,8 @@ def test_alcohol_policy_rejects_prohibited_product_text(
     [
         "Ромашка сушёная",
         "Виноградный сок",
-        "Пекарские дрожжи для хлеба",
+        "Пивные дрожжи для хлеба",
+        "Винный уксус",
         "Чай лесной",
     ],
 )
@@ -36,4 +37,5 @@ def test_alcohol_policy_does_not_use_unsafe_substring_matching(name: str) -> Non
 
 def test_alcohol_policy_normalizes_case_punctuation_and_yo() -> None:
     assert AlcoholPolicy.contains_prohibited_reference("ЛИКЁР, сливочный") is True
+    assert AlcoholPolicy.contains_prohibited_reference("Чай с ромом") is True
     assert AlcoholPolicy.contains_prohibited_reference("ромашка") is False
