@@ -8,7 +8,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
 
-No release-blocking task remains active after TH-0093. TH-0095 is the first completed post-release UX slice. Any further capability or debt-reduction work requires a separate selected task.
+No release-blocking task remains active after TH-0093. TH-0095 is the first completed post-release UX slice, and TH-0096 preserves the immutable published release tag for later main pushes. Any further capability or debt-reduction work requires a separate selected task.
 
 ## First-release sequence
 
@@ -69,6 +69,7 @@ The complete first-release sequence is delivered through TH-0093. The feature-fr
 | TH-0092 | Product Acceptance and Feature Freeze | DONE |
 | TH-0093 | Final Migration and Release Readiness | DONE |
 | TH-0095 | Project Workspace Navigation and Responsive Layout | DONE |
+| TH-0096 | Immutable Release Tag Lifecycle | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
@@ -79,4 +80,4 @@ Details are stored in `./closed/` using the task ID and descriptive slug.
 - Architectural decisions are documented separately.
 - Current status documents override historical task wording when scope has been explicitly deferred.
 - Feature-frozen release scope cannot be expanded without an explicit Product Owner decision and a new post-release task.
-- Release tag `v0.1.0` may be created only by the exact-head Final Release Readiness workflow after merged-`main` push gates pass.
+- Published tag `v0.1.0` remains fixed at its recorded release commit; later exact-head workflows verify it without moving or recreating it.
