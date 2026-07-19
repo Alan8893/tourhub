@@ -42,7 +42,15 @@ class ProjectPreparationService:
 
         meal_plan = project.meal_plans[0]
         meal_plan_id = str(meal_plan.id)
-        before = self._snapshot(project, meal_plan_id=meal_plan_id)
+        purchase_list_count = len(project.purchase_lists)
+        purchase_checklist_count = len(project.purchase_checklists)
+        before = self._snapshot(
+            project,
+            meal_plan_id=meal_plan_id,
+            purchase_list_count=purchase_list_count,
+            purchase_checklist_count=purchase_checklist_count,
+            equipment_list_id=None,
+        )
 
         try:
             purchase_list = self.purchase_list_service.create_from_meal_plan_id(
@@ -76,14 +84,13 @@ class ProjectPreparationService:
                         entity_type="project",
                         entity_id=project.id,
                         before=before,
-                        after={
-                            **before,
-                            "purchase_list_count": before["purchase_list_count"] + 1,
-                            "purchase_checklist_count": (
-                                before["purchase_checklist_count"] + 1
-                            ),
-                            "equipment_list_id": result.equipment_list_id,
-                        },
+                        after=self._snapshot(
+                            project,
+                            meal_plan_id=meal_plan_id,
+                            purchase_list_count=purchase_list_count + 1,
+                            purchase_checklist_count=purchase_checklist_count + 1,
+                            equipment_list_id=result.equipment_list_id,
+                        ),
                         context={
                             "meal_plan_id": result.meal_plan_id,
                             "purchase_list_id": result.purchase_list_id,
@@ -99,12 +106,19 @@ class ProjectPreparationService:
             raise
 
     @staticmethod
-    def _snapshot(project: ProjectORM, *, meal_plan_id: str) -> dict[str, object]:
+    def _snapshot(
+        project: ProjectORM,
+        *,
+        meal_plan_id: str,
+        purchase_list_count: int,
+        purchase_checklist_count: int,
+        equipment_list_id: str | None,
+    ) -> dict[str, object]:
         return {
             "name": project.name,
             "status": project.status,
             "meal_plan_id": meal_plan_id,
-            "purchase_list_count": len(project.purchase_lists),
-            "purchase_checklist_count": len(project.purchase_checklists),
-            "equipment_list_id": None,
+            "purchase_list_count": purchase_list_count,
+            "purchase_checklist_count": purchase_checklist_count,
+            "equipment_list_id": equipment_list_id,
         }
