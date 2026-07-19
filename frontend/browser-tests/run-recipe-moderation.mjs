@@ -152,7 +152,11 @@ async function run() {
 
     const productSaved = await client.evaluate(`(() => {
       const dialogs = [...document.querySelectorAll('[role="dialog"]')];
-      const dialog = dialogs.find((item) => item.textContent?.includes("Изменить продукт"));
+      const dialog = dialogs.find((item) =>
+        [...item.querySelectorAll("h2")].some(
+          (heading) => heading.textContent?.trim() === "Изменить продукт",
+        ),
+      );
       const button = [...(dialog?.querySelectorAll("button") ?? [])].find(
         (item) => item.textContent?.trim() === "Сохранить",
       );
