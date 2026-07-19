@@ -5,6 +5,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.policies.alcohol_policy import AlcoholPolicyViolation
+
 log = structlog.get_logger()
 
 
@@ -44,6 +46,25 @@ async def validation_exception_handler(
         content={
             "error": "Validation Error",
             "details": errors,
+            "request_id": getattr(request.state, "request_id", None),
+        },
+    )
+
+
+async def alcohol_policy_exception_handler(
+    request: Request,
+    exc: AlcoholPolicyViolation,
+) -> JSONResponse:
+    log.warning(
+        "alcohol_policy_violation",
+        path=request.url.path,
+        detail=str(exc),
+        request_id=getattr(request.state, "request_id", None),
+    )
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": str(exc),
             "request_id": getattr(request.state, "request_id", None),
         },
     )

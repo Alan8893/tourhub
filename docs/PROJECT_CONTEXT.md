@@ -1,10 +1,10 @@
 # TourHub — PROJECT_CONTEXT
 
-Version: 0.0.7-alpha
+Version: 0.0.8-alpha
 
 Last update: 2026-07-19
 
-Status: Active Development
+Status: Product Acceptance Preparation
 
 ## 1. Product boundary
 
@@ -16,6 +16,7 @@ TourHub is a local ERP application for one tourist club.
 - Registration is invitation-only after one-time Administrator bootstrap.
 - Approved roles are Administrator, Instructor, and Verified Instructor.
 - Participant profiles are outside the current MVP workflow; calculations use participant count.
+- Alcohol is prohibited without exceptions through one Backend policy.
 - Paid external services are not used.
 
 The approved target scope is defined in `PRODUCT_SPEC.md`. The implemented state is defined by code, tests, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
@@ -35,11 +36,11 @@ Administrator bootstrap and invitations
   → Equipment
   → Complete PDF, Excel, compatibility files, and ZIP
   → Actor-aware operational accountability
+  → Central alcohol prohibition
+  → Product acceptance and feature freeze
 ```
 
-The guided preparation baseline, production-like runtime, typed System Settings, Access/mail foundation, multi-user readiness, Recipe ownership/publication/moderation, Dish Recipe variants with generation modes, Actor-Aware Audit Foundation, and consolidated Russian exports are complete through TH-0090 / PR #100.
-
-The next capability is the centralized alcohol prohibition immediately before product acceptance.
+The release-blocking functional sequence is complete through TH-0091 / PR #101. The next task is Product Acceptance and Feature Freeze.
 
 ## 3. Architecture
 
@@ -54,7 +55,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, form state, navigation, and API integration. It renders server-projected capabilities, persisted selection results, safe audit responses, and document download controls but does not own business validation, document content, generation rules, lifecycle transitions, calculations, authorization, or audit sanitization.
+Frontend owns presentation, form state, navigation, API integration, server-projected capabilities, safe audit responses, and download controls. It does not own business validation, alcohol classification, document content, generation, lifecycle, calculation, authorization, or audit sanitization.
 
 ### Backend
 
@@ -65,9 +66,9 @@ Frontend owns presentation, form state, navigation, and API integration. It rend
 - Pydantic v2;
 - PostgreSQL 18 in the release runtime;
 - Redis configuration;
-- deterministic calculation and document engines.
+- deterministic calculation, document, audit, and catalogue-policy boundaries.
 
-Backend owns validation, persistence, identity and authorization, Recipe ownership/lifecycle, Dish variant selection, menu generation, catalogue import, recalculation, mail boundaries, document content/generation, and actor-aware audit recording/query rules.
+Backend owns validation, persistence, identity/authorization, Recipe ownership/lifecycle, Dish variant selection, menu generation, catalogue import, central alcohol policy, recalculation, mail boundaries, document content/generation, and audit recording/query rules.
 
 ### Runtime
 
@@ -85,54 +86,36 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 - one-time Administrator bootstrap and invitation-only registration;
 - password hashing and server-owned HttpOnly sessions;
-- automatic SMTP invitation delivery with manual fallback;
-- roles, activation controls, optimistic user versions, and final-active-Administrator protection;
+- working SMTP invitation delivery with manual fallback;
+- roles, activation controls, optimistic user versions, and last-active-Administrator protection;
 - preparation access for all approved active roles;
 - Administrator-only settings, invitations, users, mail operations, and audit reads;
-- multiple sessions, current-role resolution, deactivation revocation, centralized protected-401 handling, exact route return, and visible role.
+- multiple sessions, current-role resolution, deactivation revocation, protected-401 handling, exact route return, and visible role.
 
-### Recipe ownership, publication, and Dish variants
+### Recipe ownership, publication, Dish variants, and alcohol policy
 
-- Recipe scope CLUB or PERSONAL;
-- interactive owned PERSONAL drafts and shared published CLUB catalogue;
-- owner submission, rejection feedback, editing, resubmission, and row-locked moderation;
-- Administrator review of all submissions and Verified Instructor review of another user's submission;
-- one published CLUB default plus an ordered set of CLUB/current-actor PERSONAL variants per Dish;
+- Recipe CLUB/PERSONAL scope, owner-aware visibility, submission/rejection/publication, and row-locked moderation;
+- ordered CLUB/current-actor PERSONAL Recipe variants per Dish;
 - Project modes `club_only`, `club_and_personal`, and `personal_preferred`;
-- another user's PERSONAL Recipe remains private;
-- exact selected Recipe persists on every meal assignment;
-- manual assignments survive regeneration with their stored Recipe;
-- shopping, equipment, and exports use assignment Recipe snapshots rather than mutable Dish defaults;
-- responsive ownership, moderation, variant, mode, and selected-Recipe UI.
+- exact selected Recipe persisted on every meal assignment;
+- shopping, equipment, and exports use assignment Recipe snapshots;
+- one complete-word normalized alcohol policy across Product, Recipe, Dish, lifecycle activation, and Product/Recipe CSV import;
+- archive state and policy markers preserve historical records while excluding them from active catalogues/new selection;
+- `h10021` archives existing prohibited Product → Recipe → default Dish records;
+- policy-archived Recipes cannot be restored.
 
 ### Actor-aware audit
 
 - append-only AuditEvent persistence through `h10020`;
-- actor ID, display-name, email, and role snapshots;
-- bounded recursive secret-field removal;
-- semantic user-access and Recipe submit/publish/reject events in the same business transaction;
-- immutable moderation history beyond the latest Recipe state;
-- Administrator-only filtered API and responsive Audit section;
-- no normal update/delete API and ORM immutability guards.
+- actor identity snapshots and bounded recursive secret removal;
+- semantic user-access and Recipe moderation events in the same transaction;
+- immutable moderation history and Administrator-only filtered UI/API.
 
-### Projects and preparation
+### Projects, preparation, documents, and operations
 
-- project catalogue/workspace, participant count, duration, dates, meal boundaries, and Recipe generation mode;
-- persisted MealPlan, MealPlanDay, MealSlot, and MealSlotDish;
-- role-aware menu generation, deterministic Recipe variant rotation, and manual editing;
-- calendar-day diversity, authoritative manual slots, and persisted warnings;
-- participant, menu, Recipe, shopping, and equipment recalculation boundaries;
-- reload-safe preparation readiness.
-
-### Catalogue, shopping, equipment, documents, and operations
-
-- products, Recipe components/notes/equipment requirements, Dishes, and CSV preview/apply;
-- normalized Dish roles, compatibility, and repeatability;
-- persisted purchase list, packaging, checklist, comments, responsible person, equipment rows, overrides, and removals;
-- typed club/site/document/module/invitation/mail settings;
-- complete Russian Project PDF with parameters, menu, loadout, shopping, equipment, warnings, and comments;
-- complete workbook sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование`;
-- focused purchase/equipment PDF, XLSX, print, and coordinated ZIP remain compatible;
+- project catalogue/workspace, participant count, duration, dates, meal boundaries, Recipe generation mode, persisted MealPlan/MealSlotDish, shopping, checklist, equipment, readiness, and recalculation;
+- complete Russian Project PDF and workbook sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование`;
+- compatibility purchase/equipment PDF/XLSX/print and coordinated ZIP;
 - one immutable club/document settings snapshot per package request;
 - installation, update, backup, restore, health, LAN, recovery, and production-like Docker acceptance.
 
@@ -140,13 +123,12 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-The next task should enforce the approved centralized alcohol prohibition without reopening completed export, Recipe, or Access work.
+The next implementation task is Product Acceptance and Feature Freeze; it must classify remaining gaps rather than reopen completed functional scope without a failing approved scenario.
 
 ## 6. Immediate sequence
 
-1. Enforce the central alcohol prohibition across Product, Recipe, Dish, and import paths.
-2. Run product acceptance and feature freeze.
-3. Run the final migration cycle and release gates.
+1. Run Product Acceptance and Feature Freeze.
+2. Run the final migration cycle and release gates.
 
 ## 7. Development rules
 

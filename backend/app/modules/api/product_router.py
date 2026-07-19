@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.session import get_session
 from app.models.product import ProductORM
+from app.policies.alcohol_policy import AlcoholPolicy, AlcoholPolicyViolation
 from app.schemas.recipe import (
     ProductCreateRequest,
     ProductListResponse,
@@ -28,7 +29,11 @@ def _response(product: ProductORM) -> RecipeProductResponse:
 
 @router.get("", response_model=ProductListResponse)
 def list_products(session: Session = Depends(get_session)) -> ProductListResponse:
-    products = session.scalars(select(ProductORM).order_by(ProductORM.name)).all()
+    products = session.scalars(
+        select(ProductORM)
+        .where(ProductORM.is_archived.is_(False))
+        .order_by(ProductORM.name)
+    ).all()
     return ProductListResponse(items=[_response(product) for product in products])
 
 
@@ -37,10 +42,17 @@ def create_product(
     request: ProductCreateRequest,
     session: Session = Depends(get_session),
 ) -> RecipeProductResponse:
+    name = request.name.strip()
+    category = request.category.strip() if request.category else None
+    try:
+        AlcoholPolicy.require_product_allowed(name=name, category=category)
+    except AlcoholPolicyViolation as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     product = ProductORM(
         id=str(uuid4()),
-        name=request.name.strip(),
-        category=request.category.strip() if request.category else None,
+        name=name,
+        category=category,
         unit=request.unit.strip(),
         package_size=request.package_size,
     )

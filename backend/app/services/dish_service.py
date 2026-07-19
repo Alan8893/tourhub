@@ -7,6 +7,7 @@ from app.models.dish import DishORM
 from app.models.dish_meal_role import DishMealRoleMealTypeORM, DishMealRoleORM
 from app.models.dish_recipe_variant import DishRecipeVariantORM
 from app.models.recipe import RecipeORM
+from app.models.recipe_component import RecipeComponentORM
 from app.models.user import UserORM
 from app.modules.domain.meal_role import (
     MEAL_ROLE_ALLOWED_MEAL_TYPES,
@@ -14,6 +15,7 @@ from app.modules.domain.meal_role import (
     MealRole,
 )
 from app.modules.domain.meal_type import MEAL_TYPE_VALUES, MealType
+from app.policies.alcohol_policy import AlcoholPolicy
 from app.services.dish_recipe_variant_service import DishRecipeVariantService
 
 
@@ -34,6 +36,7 @@ class DishService:
                     DishMealRoleORM.meal_types
                 ),
             )
+            .where(DishORM.is_archived.is_(False))
             .order_by(DishORM.name)
         )
         return list(self.session.scalars(statement).unique().all())
@@ -50,7 +53,7 @@ class DishService:
                     DishMealRoleORM.meal_types
                 ),
             )
-            .where(DishORM.id == dish_id)
+            .where(DishORM.id == dish_id, DishORM.is_archived.is_(False))
         )
         dish = self.session.scalar(statement)
         if dish is None:
@@ -64,6 +67,7 @@ class DishService:
         recipe_ids: list[str] | None = None,
     ) -> DishORM:
         normalized_name = name.strip()
+        AlcoholPolicy.require_dish_name_allowed(normalized_name)
         self._ensure_name_available(normalized_name)
         default_recipe, variants = self._validated_variant_set(recipe_id, recipe_ids)
         dish = DishORM(
@@ -88,6 +92,7 @@ class DishService:
     ) -> DishORM:
         dish = self.get_dish(dish_id)
         normalized_name = name.strip()
+        AlcoholPolicy.require_dish_name_allowed(normalized_name)
         self._ensure_name_available(normalized_name, exclude_id=dish_id)
         default_recipe, variants = self._validated_variant_set(recipe_id, recipe_ids)
         dish.name = normalized_name
@@ -153,7 +158,13 @@ class DishService:
         )
         recipes = list(
             self.session.scalars(
-                select(RecipeORM).where(RecipeORM.id.in_(normalized_ids))
+                select(RecipeORM)
+                .options(
+                    selectinload(RecipeORM.components).joinedload(
+                        RecipeComponentORM.product
+                    )
+                )
+                .where(RecipeORM.id.in_(normalized_ids))
             ).all()
         )
         by_id = {recipe.id: recipe for recipe in recipes}
@@ -166,6 +177,8 @@ class DishService:
             raise ValueError("Dish default must be an active published club recipe")
 
         ordered = [by_id[recipe_id] for recipe_id in normalized_ids]
+        for recipe in ordered:
+            AlcoholPolicy.require_recipe_record_allowed(recipe)
         if any(
             not DishRecipeVariantService.can_attach(recipe, self.actor)
             for recipe in ordered
