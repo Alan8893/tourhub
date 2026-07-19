@@ -14,12 +14,7 @@ if TYPE_CHECKING:
 
 
 class RecipeORM(Base):
-    """
-    Recipe composition.
-
-    Example:
-    "Camp pilaf"
-    """
+    """Recipe composition and ownership/lifecycle root."""
 
     __tablename__ = "recipes"
     __table_args__ = (
@@ -59,62 +54,53 @@ class RecipeORM(Base):
         ),
     )
 
-    id: Mapped[str] = mapped_column(
-        String,
-        primary_key=True,
-    )
-
-    name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        unique=True,
-    )
-
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     scope: Mapped[str] = mapped_column(
         String(16),
         nullable=False,
         default=RecipeScope.CLUB.value,
         server_default=RecipeScope.CLUB.value,
     )
-
     owner_user_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=True,
         index=True,
     )
-
     lifecycle_status: Mapped[str] = mapped_column(
         String(16),
         nullable=False,
         default=RecipeLifecycleStatus.PUBLISHED.value,
         server_default=RecipeLifecycleStatus.PUBLISHED.value,
     )
-
     submitted_by_user_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=True,
         index=True,
     )
-
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-
     reviewed_by_user_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=True,
         index=True,
     )
-
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     review_comment: Mapped[str | None] = mapped_column(String(1000), nullable=True)
-
     is_archived: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
         default=False,
         server_default="false",
+    )
+    archived_by_alcohol_policy: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+        index=True,
     )
 
     owner: Mapped["UserORM | None"] = relationship(foreign_keys=[owner_user_id])
@@ -124,19 +110,16 @@ class RecipeORM(Base):
     reviewed_by: Mapped["UserORM | None"] = relationship(
         foreign_keys=[reviewed_by_user_id]
     )
-
     ingredients = relationship(
         "IngredientORM",
         back_populates="recipe",
         cascade="all, delete-orphan",
     )
-
     components = relationship(
         "RecipeComponentORM",
         back_populates="recipe",
         cascade="all, delete-orphan",
     )
-
     notes = relationship(
         "RecipeNoteORM",
         back_populates="recipe",
