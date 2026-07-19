@@ -7,8 +7,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0097 | Product Catalogue Editing | IN PROGRESS | ./active/TH-0097-product-catalogue-editing.md |
 
-No release-blocking task remains active after TH-0093. TH-0095 is the first completed post-release UX slice, and TH-0096 preserves the immutable published release tag for later main pushes. Any further capability or debt-reduction work requires a separate selected task.
+TH-0097 is the active Product Owner-approved post-release catalogue UX slice. TH-0098 automatic published Recipe-to-Dish synchronization starts only after TH-0097 is verified and merged.
 
 ## First-release sequence
 
