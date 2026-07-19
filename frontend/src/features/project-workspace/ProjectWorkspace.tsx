@@ -81,7 +81,7 @@ function ProjectWorkspaceContent({
   }
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2.5} sx={{ minWidth: 0, overflowX: "hidden" }}>
       <Box component="header">
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
           <Link to="/projects" style={{ color: "inherit" }}>
@@ -150,6 +150,7 @@ function ProjectWorkspaceContent({
           top: 0,
           zIndex: 2,
           bgcolor: "background.paper",
+          minWidth: 0,
         }}
       >
         <Tabs
