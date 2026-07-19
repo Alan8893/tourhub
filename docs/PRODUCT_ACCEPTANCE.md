@@ -1,16 +1,18 @@
 # TourHub Product Acceptance
 
-Status: ACCEPTANCE CANDIDATE
+Status: FEATURE FROZEN
 
 Acceptance date: 2026-07-19
 
-Candidate commit: assigned by PR exact-head validation
+Acceptance evidence commit: `ce05a181242d2888f25a8bccc1794ebbc422046a`
 
 Alembic head: `h10021`
 
-## Decision target
+## Decision
 
-Accept and freeze the approved first local single-club release after one dedicated acceptance workflow and all existing repository workflows pass on the same exact head.
+The approved first local single-club release is accepted and feature frozen.
+
+The dedicated Product Acceptance workflow passed its manifest, selected real Backend API/migration, and six critical Chrome gates on the acceptance evidence commit. The final documentation transition remains subject to the same exact-head repository workflows before PR #102 may merge.
 
 The acceptance source of truth is `product_acceptance_manifest.json`. This document explains the human product decision represented by that manifest.
 
@@ -88,6 +90,6 @@ After acceptance changes to first-release scope are limited to:
 
 Any new capability requires an explicit Product Owner decision and a post-release task.
 
-## Pending gate
+## Next phase
 
-This document changes to **FEATURE FROZEN** only after the dedicated Product Acceptance workflow and all existing exact-head workflows pass. Final migration downgrade/re-upgrade and release tagging remain a separate next task.
+Final Migration and Release Readiness is the only release-blocking next phase. It owns the PostgreSQL previous → head → previous → head cycle, deployment checklist, final release workflow, and release tag after green exact-head gates.
