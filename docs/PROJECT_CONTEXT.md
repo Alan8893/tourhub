@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-19
 
-Status: Post-release Project audit coverage in progress — TH-0099
+Status: Post-release Project audit coverage delivered — TH-0099
 
 ## 1. Product boundary
 
@@ -41,7 +41,7 @@ Administrator bootstrap and invitations
   → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, and TH-0098 closes the publication-to-Dish workflow without inferring generator classification. TH-0099 extends the existing actor-aware audit foundation to Project creation, participant recalculation, generation-mode changes, and full preparation orchestration.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, TH-0098 closes the publication-to-Dish workflow without inferring generator classification, and TH-0099 extends actor-aware audit to Project creation, participant recalculation, generation-mode changes, and full preparation orchestration.
 
 ## 3. Architecture
 
@@ -119,10 +119,11 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - actor identity snapshots and bounded recursive secret removal;
 - semantic user-access and Recipe moderation events in the same transaction;
 - Recipe publication audit context includes the synchronized Dish identity;
-- TH-0099 adds semantic Project events to creation, participant recalculation, Recipe generation-mode updates, and full preparation orchestration;
+- Project creation, participant recalculation, Recipe generation-mode updates, and full preparation orchestration now create semantic events;
 - Project events use the authenticated preparation actor and share the owning commit/rollback boundary;
-- no-op Project updates create no misleading event;
-- immutable history and Administrator-only filtered UI/API remain unchanged.
+- no-op Project participant and generation-mode updates create no event;
+- purchase-list, checklist, and equipment preparation can participate in one caller-owned Project transaction while retaining standalone commit-by-default behavior;
+- immutable history and Administrator-only filtered UI/API expose Russian Project labels.
 
 ### Projects, preparation, documents, and operations
 
@@ -147,14 +148,13 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
-- TH-0099 — Project Audit Coverage: semantic actor-attributed Project events in the owning transactions.
 
-TH-0099 is limited to Project creation, participant recalculation, generation-mode updates, and full preparation orchestration. Menu/MealSlot and all other audit domains remain deferred.
+TH-0099 is complete. Menu generation/manual MealSlot auditing and all other deferred domains remain unselected until another explicit Product Owner decision.
 
 ## 6. Immediate sequence
 
-1. Complete TH-0099 transaction, no-op, rollback, API, and real-Chrome evidence.
-2. Preserve Alembic `h10021`, the modular-monolith boundary, and immutable `v0.1.0`.
+1. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
+2. Use the Administrator Audit surface to review user, Recipe, and Project semantic events.
 3. Select any later audit or product slice only through another explicit Product Owner decision.
 
 ## 7. Development rules
