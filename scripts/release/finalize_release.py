@@ -118,12 +118,29 @@ def _wait_for_workflows(
     )
 
 
+def resolve_release_tag_policy(
+    manifest: dict[str, Any],
+    current_sha: str,
+) -> tuple[str, bool]:
+    status = manifest.get("status")
+    if status == "release_ready":
+        return current_sha, True
+    if status == "released":
+        release_commit_sha = manifest.get("release_commit_sha")
+        if not isinstance(release_commit_sha, str) or not release_commit_sha:
+            raise ValueError("released manifest requires release_commit_sha")
+        return release_commit_sha, False
+    raise ValueError("manifest status must be release_ready or released")
+
+
 def _ensure_tag(
     api_url: str,
     repository: str,
     token: str,
     tag: str,
-    sha: str,
+    expected_sha: str,
+    *,
+    allow_create: bool,
 ) -> str:
     encoded_tag = urllib.parse.quote(tag, safe="")
     ref_url = f"{api_url}/repos/{repository}/git/ref/tags/{encoded_tag}"
@@ -134,24 +151,27 @@ def _ensure_tag(
             raise
     else:
         existing_sha = existing.get("object", {}).get("sha")
-        if existing_sha != sha:
+        if existing_sha != expected_sha:
             raise RuntimeError(
-                f"Tag {tag} already points to {existing_sha}, not {sha}"
+                f"Tag {tag} points to {existing_sha}, not published commit {expected_sha}"
             )
-        return "already_present"
+        return "already_present" if allow_create else "verified_immutable"
+
+    if not allow_create:
+        raise RuntimeError(f"Published release tag {tag} is missing")
 
     _request_json(
         f"{api_url}/repos/{repository}/git/refs",
         token,
         method="POST",
-        payload={"ref": f"refs/tags/{tag}", "sha": sha},
+        payload={"ref": f"refs/tags/{tag}", "sha": expected_sha},
     )
     return "created"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Create the TourHub release tag after exact-head gates."
+        description="Create or verify the TourHub release tag after exact-head gates."
     )
     parser.add_argument("--sha", required=True)
     parser.add_argument("--tag", required=True)
@@ -171,10 +191,6 @@ def main() -> None:
         raise SystemExit("GITHUB_TOKEN and GITHUB_REPOSITORY are required")
 
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-    if manifest.get("status") != "release_ready":
-        raise SystemExit(
-            "Release readiness manifest must be release_ready before tagging"
-        )
     if manifest.get("release_tag") != args.tag:
         raise SystemExit("Requested tag does not match release readiness manifest")
     required = manifest.get("required_workflows")
@@ -183,11 +199,21 @@ def main() -> None:
     ):
         raise SystemExit("required_workflows must be a list of workflow names")
 
+    try:
+        expected_tag_sha, allow_create = resolve_release_tag_policy(
+            manifest,
+            args.sha,
+        )
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
+
     evidence: dict[str, Any] = {
         "schema_version": 1,
         "status": "running",
+        "release_status": manifest.get("status"),
         "repository": repository,
-        "commit_sha": args.sha,
+        "validated_commit_sha": args.sha,
+        "release_commit_sha": expected_tag_sha,
         "release_tag": args.tag,
         "required_workflows": required,
     }
@@ -215,12 +241,16 @@ def main() -> None:
             repository,
             token,
             args.tag,
-            args.sha,
+            expected_tag_sha,
+            allow_create=allow_create,
         )
         evidence["tag_result"] = tag_result
         evidence["status"] = "success"
         _write_evidence(args.evidence, evidence)
-        print(f"Release tag {args.tag} {tag_result} at {args.sha}.")
+        print(
+            f"Release tag {args.tag} {tag_result} at published commit "
+            f"{expected_tag_sha}; validated head {args.sha}."
+        )
     except Exception as error:
         evidence["status"] = "failure"
         evidence["error"] = {
