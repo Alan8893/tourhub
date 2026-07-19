@@ -7,9 +7,8 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
-| TH-0100 | Menu Generation and MealSlot Audit Coverage | IN PROGRESS | ./active/TH-0100-menu-meal-slot-audit.md |
 
-TH-0100 is the active Product Owner-approved post-release task. It adds semantic menu-generation and manual MealSlot events in the owning transactions without changing generator or recalculation behavior.
+TH-0100 is complete. No later post-release capability is selected automatically; System Settings and mail-operation audit remain deferred until a separate Product Owner decision.
 
 ## First-release sequence
 
@@ -74,6 +73,7 @@ The complete first-release sequence is delivered through TH-0093. The feature-fr
 | TH-0097 | Product Catalogue Editing | DONE |
 | TH-0098 | Published Recipe Dish Synchronization | DONE |
 | TH-0099 | Project Audit Coverage | DONE |
+| TH-0100 | Menu Generation and MealSlot Audit Coverage | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
