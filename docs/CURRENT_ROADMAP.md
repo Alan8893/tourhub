@@ -25,6 +25,7 @@ Project preparation baseline
   → v0.1.0
   → Project workspace UX (TH-0095)
   → Product catalogue editing (TH-0097)
+  → Published Recipe Dish synchronization (TH-0098)
 ```
 
 ## RELEASED FIRST-RELEASE SEQUENCE
@@ -72,46 +73,53 @@ Project preparation baseline
 ### Product acceptance and feature freeze — TH-0092 / PR #102
 
 - machine-readable accepted release-scope manifest with evidence and architecture guards;
-- dedicated manifest, selected Backend API/migration, and six critical Chrome scenarios;
+- dedicated manifest, selected Backend API/migration, and critical Chrome scenarios;
 - approved capabilities accepted and optional gaps explicitly deferred as non-blocking;
 - first-release scope feature frozen at Alembic `h10021`.
 
 ### Final migration and release readiness — TH-0093 / PR #103
 
 - machine-readable release contract for tag `v0.1.0`;
-- real PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` cycle with allowed, prohibited, manually archived, non-default variant, and historical assignment data;
+- real PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` cycle with historical data;
 - one Alembic head and final revision `h10021`;
-- versioned deployment checklist, release notes, and backup-based rollback boundary;
-- Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, and Docker Release Runtime on pushes to `main`;
-- exact-head final workflow that created lightweight tag `v0.1.0` only after every required merged-SHA workflow succeeded.
+- versioned deployment checklist, release notes, exact-head workflows, and backup-based rollback boundary;
+- immutable tag lifecycle verified on later `main` pushes.
 
 ## DELIVERED POST-RELEASE IMPROVEMENTS
 
 ### Project workspace navigation and responsive layout — TH-0095 / PR #105
 
-- `/projects/:id` is a compact Overview with readiness progress, section summaries, the existing next action, and direct full-package download;
-- stable routed work areas are available at `/menu`, `/shopping`, `/equipment`, and `/documents` under each Project;
-- Recipe generation mode is edited in a Project settings dialog instead of occupying the landing page;
-- Shopping separates calculation/packing from the purchase checklist;
-- the global navigation uses a temporary drawer below the desktop breakpoint, including the Product Owner's approximately 831 px viewport;
-- checklist controls remain stacked and readable through tablet widths;
-- responsive acceptance verifies no horizontal overflow at 360 px, 831 px, and 1280 px;
-- Backend contracts, calculations, preparation persistence, authorization, documents, module visibility, and Alembic `h10021` remain unchanged.
+- compact Project Overview and stable Menu, Shopping, Equipment, and Documents routes;
+- Project settings dialog and separate Shopping calculation/checklist views;
+- temporary navigation drawer below desktop width;
+- responsive acceptance at 360 px, 831 px, and 1280 px;
+- no Backend, calculation, authorization, document, or Alembic change.
 
 ### Product catalogue editing — TH-0097 / PR #107
 
 - active shared Products can be edited from the Recipe component workflow;
 - name, category, catalogue unit, and package size retain central Backend validation;
-- Product identifiers and all existing Recipe relationships remain stable;
+- Product identifiers and Recipe relationships remain stable;
 - RecipeComponent amount/unit values are never converted implicitly;
-- duplicate names, prohibited content, and missing Products preserve explicit API errors;
-- the responsive edit dialog warns that changes affect every Recipe using the Product;
-- Product and Recipe caches refresh after save;
-- focused Backend and real-Chrome acceptance cover the end-to-end behavior without a migration.
+- focused Backend and real-Chrome acceptance cover the workflow without a migration.
 
-## NEXT POST-RELEASE TASK
+### Published Recipe Dish synchronization — TH-0098 / PR #108
 
-TH-0098 Published Recipe Dish Synchronization is selected next by the Product Owner. It will create or attach a Dish in the same publication transaction, remain idempotent, leave generator roles empty, and display an explicit `Не настроено для генератора` state until roles are assigned.
+- Recipe publication and Dish synchronization use one transaction and rollback boundary;
+- an already attached Recipe is never duplicated;
+- an active exact-name Dish receives the Recipe as the next variant while keeping its default and roles;
+- otherwise publication creates one active Dish with the Recipe as default and only variant;
+- publication-created Dishes remain unclassified and available for manual selection;
+- the Dish catalogue shows `Не настроено для генератора` until explicit roles are assigned;
+- `Настроить генератор` opens the existing role editor;
+- configured Dishes show `Готово для генератора` and contribute to readiness coverage;
+- no role, meal type, or repeatability value is inferred;
+- strict Ruff/mypy, full Backend regression, Product Acceptance Chrome, and responsive focused Chrome coverage verify the behavior;
+- Alembic remains `h10021`.
+
+## NEXT POST-RELEASE SELECTION
+
+No additional capability is selected automatically after TH-0098. The Product Owner must choose a separate task from documented debt or approve a new priority.
 
 ## Deferred non-blocking priorities
 

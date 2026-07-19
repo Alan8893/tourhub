@@ -10,17 +10,20 @@ def _create_published_club_recipe(client, name: str) -> str:
     return recipe_id
 
 
-def _create_dish(client, name: str = "Тестовое блюдо") -> str:
-    recipe_id = _create_published_club_recipe(client, f"Рецепт: {name}")
-    response = client.post(
-        "/api/v1/dishes",
-        json={"name": name, "recipe_id": recipe_id},
+def _publication_created_dish(client, name: str = "Тестовое блюдо") -> str:
+    recipe_id = _create_published_club_recipe(client, name)
+    response = client.get("/api/v1/dishes")
+    assert response.status_code == 200
+    dish = next(
+        item
+        for item in response.json()["items"]
+        if item["recipe"]["id"] == recipe_id
     )
-    assert response.status_code == 201
-    assert response.json()["meal_roles"] == []
-    assert response.json()["recipe"]["is_default"] is True
-    assert [recipe["id"] for recipe in response.json()["recipes"]] == [recipe_id]
-    return response.json()["id"]
+    assert dish["name"] == name
+    assert dish["meal_roles"] == []
+    assert dish["recipe"]["is_default"] is True
+    assert [recipe["id"] for recipe in dish["recipes"]] == [recipe_id]
+    return dish["id"]
 
 
 def test_dish_catalog_create_update_and_list(client):
@@ -61,7 +64,10 @@ def test_dish_catalog_create_update_and_list(client):
 
     list_response = client.get("/api/v1/dishes")
     assert list_response.status_code == 200
-    assert list_response.json()["items"] == [update_response.json()]
+    listed = next(
+        item for item in list_response.json()["items"] if item["id"] == dish_id
+    )
+    assert listed == update_response.json()
 
     detail_response = client.get(f"/api/v1/dishes/{dish_id}")
     assert detail_response.status_code == 200
@@ -69,7 +75,7 @@ def test_dish_catalog_create_update_and_list(client):
 
 
 def test_dish_meal_roles_are_replaced_and_exposed(client):
-    dish_id = _create_dish(client, "Бутерброды")
+    dish_id = _publication_created_dish(client, "Бутерброды")
 
     first_response = client.put(
         f"/api/v1/dishes/{dish_id}/meal-roles",
@@ -126,7 +132,12 @@ def test_dish_meal_roles_are_replaced_and_exposed(client):
     ]
     assert replacement_response.json()["meal_roles"] == expected_roles
     assert client.get(f"/api/v1/dishes/{dish_id}").json()["meal_roles"] == expected_roles
-    assert client.get("/api/v1/dishes").json()["items"][0]["meal_roles"] == expected_roles
+    listed = next(
+        item
+        for item in client.get("/api/v1/dishes").json()["items"]
+        if item["id"] == dish_id
+    )
+    assert listed["meal_roles"] == expected_roles
 
     clear_response = client.put(
         f"/api/v1/dishes/{dish_id}/meal-roles",
@@ -137,7 +148,7 @@ def test_dish_meal_roles_are_replaced_and_exposed(client):
 
 
 def test_duplicate_dish_meal_roles_are_rejected_atomically(client):
-    dish_id = _create_dish(client, "Чай")
+    dish_id = _publication_created_dish(client, "Чай")
     initial_roles = [
         {
             "role": "drink",
@@ -175,7 +186,7 @@ def test_duplicate_dish_meal_roles_are_rejected_atomically(client):
 
 
 def test_meal_type_compatibility_is_validated_atomically(client):
-    dish_id = _create_dish(client, "Овсяная каша")
+    dish_id = _publication_created_dish(client, "Овсяная каша")
     initial_roles = [
         {
             "role": "main",
@@ -239,7 +250,7 @@ def test_meal_type_compatibility_is_validated_atomically(client):
 
 
 def test_invalid_or_unknown_dish_meal_roles_are_rejected(client):
-    dish_id = _create_dish(client, "Суп")
+    dish_id = _publication_created_dish(client, "Суп")
 
     invalid_role_response = client.put(
         f"/api/v1/dishes/{dish_id}/meal-roles",
@@ -290,16 +301,15 @@ def test_dish_name_must_be_unique(client):
 
 def test_archived_recipe_cannot_be_newly_assigned(client):
     recipe_id = _create_published_club_recipe(client, "Архивный рецепт")
-    dish_response = client.post(
-        "/api/v1/dishes",
-        json={"name": "Историческое блюдо", "recipe_id": recipe_id},
+    auto_dish = next(
+        item
+        for item in client.get("/api/v1/dishes").json()["items"]
+        if item["recipe"]["id"] == recipe_id
     )
-    assert dish_response.status_code == 201
-    dish_id = dish_response.json()["id"]
 
     assert client.post(f"/api/v1/recipes/{recipe_id}/archive").status_code == 200
 
-    detail_response = client.get(f"/api/v1/dishes/{dish_id}")
+    detail_response = client.get(f"/api/v1/dishes/{auto_dish['id']}")
     assert detail_response.status_code == 200
     assert detail_response.json()["recipe"]["is_archived"] is True
 

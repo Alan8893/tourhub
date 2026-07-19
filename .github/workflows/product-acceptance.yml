@@ -119,6 +119,9 @@ jobs:
       - name: Run Recipe moderation acceptance
         run: node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-recipe-moderation.mjs
 
+      - name: Run published Recipe Dish acceptance
+        run: node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-published-recipe-dish-sync.mjs
+
       - name: Run audit acceptance
         run: node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-audit-log.mjs
 

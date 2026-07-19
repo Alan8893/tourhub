@@ -179,7 +179,7 @@ def test_verified_instructor_rejects_and_owner_resubmits(
         reviewer_client.close()
 
 
-def test_publication_converts_recipe_to_club_and_preserves_submitter(
+def test_publication_converts_recipe_to_club_and_creates_unclassified_dish(
     auth_client,
     db_session,
 ) -> None:
@@ -222,6 +222,27 @@ def test_publication_converts_recipe_to_club_and_preserves_submitter(
         assert body["reviewed_by_display_name"] == "Верифицированный инструктор"
         assert body["can_edit"] is True
         assert body["can_publish"] is False
+
+        catalogue = reviewer_client.get("/api/v1/dishes")
+        assert catalogue.status_code == 200, catalogue.text
+        dishes = catalogue.json()["items"]
+        assert len(dishes) == 1
+        dish = dishes[0]
+        assert dish["name"] == "Публикуемый плов"
+        assert dish["recipe"]["id"] == created["id"]
+        assert [(item["id"], item["is_default"]) for item in dish["recipes"]] == [
+            (created["id"], True)
+        ]
+        assert dish["meal_roles"] == []
+
+        readiness = reviewer_client.get("/api/v1/dishes/catalogue-readiness")
+        assert readiness.status_code == 200, readiness.text
+        assert readiness.json()["active_dish_count"] == 1
+        assert readiness.json()["unclassified_dish_count"] == 1
+
+        repeated = reviewer_client.post(f"/api/v1/recipes/{created['id']}/publish")
+        assert repeated.status_code == 409
+        assert len(reviewer_client.get("/api/v1/dishes").json()["items"]) == 1
 
         reader_view = reader_client.get(f"/api/v1/recipes/{created['id']}")
         assert reader_view.status_code == 200, reader_view.text

@@ -54,21 +54,23 @@ jobs:
             app/services/meal_slot_service.py \
             app/services/project_participant_recalculation_service.py \
             app/services/project_preparation_service.py \
+            app/services/published_recipe_dish_sync_service.py \
             app/services/purchase_list_service.py \
             app/services/purchase_checklist_service.py \
+            app/services/recipe_command_service.py \
             app/services/recipe_equipment_service.py \
             app/services/recipe_equipment_recalculation_service.py \
-            app/services/recipe_query_service.py \
-            app/services/recipe_command_service.py \
+            app/services/recipe_lifecycle_service.py \
             app/services/recipe_note_service.py \
+            app/services/recipe_query_service.py \
             app/modules/api/catalog_import_router.py \
             app/modules/api/dish_router.py \
             app/modules/api/equipment_list_router.py \
             app/modules/api/meal_plan_router.py \
             app/modules/api/meal_slot_router.py \
             app/modules/api/recipe_equipment_router.py \
-            app/modules/api/recipe_router.py \
             app/modules/api/recipe_note_router.py \
+            app/modules/api/recipe_router.py \
             app/modules/api/product_router.py \
             app/schemas/equipment.py \
             --select E,F,I,UP,B --ignore B008 2>&1 | tee ruff-diagnostics.txt
@@ -102,21 +104,23 @@ jobs:
             app/services/meal_slot_service.py \
             app/services/project_participant_recalculation_service.py \
             app/services/project_preparation_service.py \
+            app/services/published_recipe_dish_sync_service.py \
             app/services/purchase_list_service.py \
             app/services/purchase_checklist_service.py \
+            app/services/recipe_command_service.py \
             app/services/recipe_equipment_service.py \
             app/services/recipe_equipment_recalculation_service.py \
-            app/services/recipe_query_service.py \
-            app/services/recipe_command_service.py \
+            app/services/recipe_lifecycle_service.py \
             app/services/recipe_note_service.py \
+            app/services/recipe_query_service.py \
             app/modules/api/catalog_import_router.py \
             app/modules/api/dish_router.py \
             app/modules/api/equipment_list_router.py \
             app/modules/api/meal_plan_router.py \
             app/modules/api/meal_slot_router.py \
             app/modules/api/recipe_equipment_router.py \
-            app/modules/api/recipe_router.py \
             app/modules/api/recipe_note_router.py \
+            app/modules/api/recipe_router.py \
             app/modules/api/product_router.py \
             app/schemas/equipment.py 2>&1 | tee mypy-diagnostics.txt
 

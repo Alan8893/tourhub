@@ -16,8 +16,7 @@ Status date: 2026-07-19
 - complete consolidated Russian PDF/XLSX exports and compatibility ZIP package;
 - centralized complete-word alcohol policy, archive markers, historical preservation, and `h10021`;
 - machine-readable Product Acceptance and Release Readiness contracts;
-- PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` evidence with representative historical data;
-- deployment checklist, v0.1.0 release notes, exact-head merged-main gates, and automated tag creation;
+- PostgreSQL 18 migration-cycle evidence, deployment checklist, exact-head gates, and immutable `v0.1.0` tag;
 - backup-based production rollback boundary.
 
 ## Release-blocking debt
@@ -26,26 +25,33 @@ None. The approved first-release capability scope is feature frozen and release-
 
 ## Resolved post-release UX debt — TH-0095
 
-- the Project page no longer renders Menu, Shopping, Checklist, Equipment, and Documents as one very long landing page;
-- the compact Overview now exposes readiness, direct section navigation, preparation actions, and full-package download;
-- Menu, Shopping, Equipment, and Documents have stable Project section URLs;
-- Recipe generation mode moved into a Project settings dialog;
-- Shopping calculation/packing and the purchase checklist no longer compete in a compressed two-column layout;
-- checklist inputs, save actions, and purchased state remain stacked through tablet widths;
-- the permanent global sidebar no longer consumes space at the Product Owner's approximately 831 px viewport and becomes a temporary drawer below desktop width;
-- responsive browser acceptance covers 360 px, 831 px, and 1280 px without horizontal overflow;
-- the UX improvement required no Backend, migration, calculation, authorization, or document-contract change.
+- the Project page no longer renders every preparation area as one long landing page;
+- compact Overview and stable section URLs replace extensive vertical scrolling;
+- Shopping calculation and checklist no longer compete in a narrow two-column layout;
+- the sidebar becomes a drawer below desktop width;
+- responsive browser acceptance covers 360 px, 831 px, and 1280 px.
 
 ## Resolved Product catalogue editing debt — TH-0097
 
-- active shared Products can now be edited without recreation;
-- editable fields are name, category, catalogue unit, and package size;
-- Product identifiers and every existing Recipe relationship remain intact;
-- duplicate names and prohibited Product content preserve the established API boundaries;
-- changing the shared catalogue unit does not convert existing RecipeComponent amount/unit values;
-- the Recipe component workflow exposes a responsive `Изменить продукт` action and shared-impact warning;
-- Product and Recipe queries refresh after save;
-- focused Backend and real-Chrome acceptance cover update, missing, duplicate, prohibited, shared-reference, and mobile behavior;
+- active shared Products can be edited without recreation;
+- Product identifiers and every Recipe relationship remain intact;
+- duplicate names and prohibited content preserve established API boundaries;
+- changing the catalogue unit does not convert RecipeComponent amount/unit values;
+- the Recipe component workflow exposes a responsive edit action and shared-impact warning;
+- no migration was required and Alembic remains `h10021`.
+
+## Resolved published Recipe Dish synchronization debt — TH-0098
+
+- every newly published CLUB Recipe is synchronized into Dishes in the publication transaction;
+- synchronization and the publication AuditEvent share the same rollback boundary;
+- Recipes already attached as a default or variant are not duplicated;
+- active exact-name Dishes receive the Recipe as the next variant without changing default Recipe or roles;
+- otherwise one active role-less Dish is created with the Recipe as default and only variant;
+- role-less Dishes show `Не настроено для генератора` and remain available for manual choice;
+- `Настроить генератор` opens the existing explicit role editor;
+- after role assignment the Dish shows `Готово для генератора` and updates readiness coverage;
+- no role, meal type, or repeatability value is inferred;
+- strict Ruff/mypy, transaction rollback tests, full Backend regression, and focused real-Chrome acceptance cover the workflow;
 - no migration was required and Alembic remains `h10021`.
 
 ## Remaining audit debt
@@ -62,7 +68,6 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Remaining Recipe, menu, and catalogue debt
 
-- TH-0098: synchronize every newly published Recipe into the Dish catalogue without guessing generator roles;
 - optional moderation notifications;
 - ownership-aware CSV import UX beyond trusted shared-catalogue import;
 - preparation technology, dietary metadata, season metadata, and richer categories;
@@ -70,6 +75,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - per-meal manual Recipe switching without replacing the Dish;
 - preference weights beyond the approved generation modes;
 - Product/Dish archive-management UI;
+- optional role suggestions only after a separately approved deterministic policy; automatic inference remains rejected;
 - reviewed policy-vocabulary updates when real catalogue evidence requires them;
 - fuzzy/external alcohol classification and user exceptions remain explicitly out of scope.
 
