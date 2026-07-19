@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from typing import Protocol
 
 
-class AlcoholPolicyViolation(ValueError):
+class AlcoholPolicyViolation(RuntimeError):
     """Raised when a Product, Recipe, Dish, or import row references alcohol."""
 
 
