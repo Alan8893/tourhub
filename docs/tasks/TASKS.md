@@ -7,9 +7,10 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
-| TH-0093 | Final Migration and Release Readiness | IN PROGRESS | ./active/TH-0093-final-migration-release-readiness.md |
 
-## Planned release sequence
+No release-blocking task remains active after TH-0093. Any post-release capability or debt-reduction slice requires a separate task selected from current documented priorities.
+
+## First-release sequence
 
 | Order | Capability | Gate |
 |---|---|---|
@@ -21,9 +22,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | 6 | Consolidated export completeness | Approved Russian PDF and workbook contents using one brand snapshot |
 | 7 | Central alcohol prohibition | Shared API/import policy and existing-record handling immediately before acceptance |
 | 8 | Product acceptance and feature freeze | End-to-end acceptance, explicit optional-scope decisions, and frozen first-release capability scope |
-| 9 | Final release readiness | Migration cycle, deployment checklist, final release workflow, and release tag |
+| 9 | Final release readiness | PostgreSQL migration cycle, deployment checklist, exact-head final workflow, and release tag |
 
-The first-release feature sequence is complete through order 8. TH-0093 is the active final release-readiness task and must not expand the feature-frozen product scope.
+The complete first-release sequence is delivered through TH-0093. The feature-frozen product scope remains the baseline for maintenance and post-release planning.
 
 ## Completed
 
@@ -66,14 +67,15 @@ The first-release feature sequence is complete through order 8. TH-0093 is the a
 | TH-0090 | Consolidated Russian Export Completeness | DONE |
 | TH-0091 | Central Alcohol Prohibition | DONE |
 | TH-0092 | Product Acceptance and Feature Freeze | DONE |
+| TH-0093 | Final Migration and Release Readiness | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
 ## Rules
 
 - One logical change = one task.
-- Completed tasks are moved to `closed/` after merge and verification.
+- Completed tasks are moved to `closed/` after verification.
 - Architectural decisions are documented separately.
 - Current status documents override historical task wording when scope has been explicitly deferred.
-- A task is not DONE while its pull request is only open or draft.
-- Final migration downgrade/re-upgrade smoke may run only against the feature-frozen accepted baseline.
+- Feature-frozen release scope cannot be expanded without an explicit Product Owner decision and a new post-release task.
+- Release tag `v0.1.0` may be created only by the exact-head Final Release Readiness workflow after merged-`main` push gates pass.
