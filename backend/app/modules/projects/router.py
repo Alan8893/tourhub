@@ -168,6 +168,16 @@ def _download(document) -> Response:
     )
 
 
+def _prepared_document_error(error: ValueError) -> HTTPException | None:
+    messages = {
+        "Purchase list not found": "Project purchasing is not prepared",
+        "Equipment list not found": "Project equipment is not prepared",
+        "Meal plan not found": "Project menu is not prepared",
+    }
+    detail = messages.get(str(error))
+    return HTTPException(status_code=409, detail=detail) if detail is not None else None
+
+
 @router.get("/{project_id}/documents/purchase/{format}")
 def generate_purchase_document(
     project_id: int,
@@ -189,11 +199,9 @@ def generate_purchase_document(
     try:
         return _download(generator(project))
     except ValueError as error:
-        if str(error) == "Purchase list not found":
-            raise HTTPException(
-                status_code=409,
-                detail="Project purchasing is not prepared",
-            ) from error
+        prepared_error = _prepared_document_error(error)
+        if prepared_error is not None:
+            raise prepared_error from error
         raise
 
 
@@ -217,11 +225,35 @@ def generate_equipment_document(
     try:
         return _download(generator(project))
     except ValueError as error:
-        if str(error) == "Equipment list not found":
-            raise HTTPException(
-                status_code=409,
-                detail="Project equipment is not prepared",
-            ) from error
+        prepared_error = _prepared_document_error(error)
+        if prepared_error is not None:
+            raise prepared_error from error
+        raise
+
+
+@router.get("/{project_id}/documents/consolidated/{format}")
+def generate_consolidated_project_document(
+    project_id: int,
+    format: str,
+    db: Session = Depends(get_db),
+) -> Response:
+    project = ProjectRepository(db).get_by_id(project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    service = _document_service(db)
+    generators = {
+        "pdf": service.generate_consolidated_pdf,
+        "excel": service.generate_consolidated_excel,
+    }
+    generator = generators.get(format)
+    if generator is None:
+        raise HTTPException(status_code=400, detail="Unsupported document format")
+    try:
+        return _download(generator(project))
+    except ValueError as error:
+        prepared_error = _prepared_document_error(error)
+        if prepared_error is not None:
+            raise prepared_error from error
         raise
 
 
@@ -238,15 +270,8 @@ def generate_project_document_package(
             project
         )
     except ValueError as error:
-        if str(error) == "Purchase list not found":
-            raise HTTPException(
-                status_code=409,
-                detail="Project purchasing is not prepared",
-            ) from error
-        if str(error) == "Equipment list not found":
-            raise HTTPException(
-                status_code=409,
-                detail="Project equipment is not prepared",
-            ) from error
+        prepared_error = _prepared_document_error(error)
+        if prepared_error is not None:
+            raise prepared_error from error
         raise
     return _download(document)
