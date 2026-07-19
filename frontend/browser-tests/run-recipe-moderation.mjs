@@ -31,6 +31,25 @@ async function clickText(client, text, selector = "button") {
   assert.equal(clicked, true, `Control not found: ${text}`);
 }
 
+async function setFieldByLabel(client, labelText, value) {
+  const filled = await client.evaluate(`(() => {
+    const label = [...document.querySelectorAll("label")].find(
+      (item) => item.textContent?.trim() === ${JSON.stringify(labelText)},
+    );
+    const input = label?.htmlFor ? document.getElementById(label.htmlFor) : null;
+    if (!(input instanceof HTMLInputElement)) return false;
+    const setter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      "value",
+    )?.set;
+    setter?.call(input, ${JSON.stringify(value)});
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  })()`);
+  assert.equal(filled, true, `Field not found: ${labelText}`);
+}
+
 async function run() {
   await rm(profileDir, { recursive: true, force: true });
   await mkdir(artifactDir, { recursive: true });
@@ -86,9 +105,98 @@ async function run() {
 
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Рецепты")`,
-      "loaded recipe page",
+      `document.body?.innerText?.includes("Рецепты") &&
+       document.body?.innerText?.includes("Каша для редактирования")`,
+      "loaded editable recipe library",
     );
+    await clickText(client, "Каша для редактирования", ".MuiListItemButton-root");
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Гречка") &&
+       document.body?.innerText?.includes("Упаковка: 800 gram")`,
+      "loaded editable recipe detail",
+    );
+
+    const componentEditorOpened = await client.evaluate(`(() => {
+      const card = [...document.querySelectorAll(".MuiPaper-root")].find(
+        (item) => item.textContent?.includes("Гречка") && item.textContent?.includes("Расчёт:"),
+      );
+      const button = [...(card?.querySelectorAll("button") ?? [])].find(
+        (item) => item.textContent?.trim() === "Изменить",
+      );
+      if (!button || button.disabled) return false;
+      button.click();
+      return true;
+    })()`);
+    assert.equal(componentEditorOpened, true, "Component editor action not found");
+
+    await waitForExpression(
+      client,
+      `[...document.querySelectorAll("button")].some(
+        (item) => item.textContent?.trim() === "Изменить продукт" && !item.disabled,
+      )`,
+      "loaded products in component editor",
+    );
+    await clickText(client, "Изменить продукт");
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Изменить продукт") &&
+       document.body?.innerText?.includes("Изменения будут видны во всех рецептах")`,
+      "opened product editor",
+    );
+
+    await setFieldByLabel(client, "Название", "Крупа обновлённая");
+    await setFieldByLabel(client, "Категория", "Бакалея");
+    await setFieldByLabel(client, "Единица измерения", "package");
+    await setFieldByLabel(client, "Размер упаковки", "900");
+
+    const productSaved = await client.evaluate(`(() => {
+      const dialogs = [...document.querySelectorAll('[role="dialog"]')];
+      const dialog = dialogs.find((item) => item.textContent?.includes("Изменить продукт"));
+      const button = [...(dialog?.querySelectorAll("button") ?? [])].find(
+        (item) => item.textContent?.trim() === "Сохранить",
+      );
+      if (!button || button.disabled) return false;
+      button.click();
+      return true;
+    })()`);
+    assert.equal(productSaved, true, "Product save action not found");
+
+    await waitForExpression(
+      client,
+      `!document.body?.innerText?.includes("Изменения будут видны во всех рецептах")`,
+      "closed product editor",
+    );
+    const componentDialogClosed = await client.evaluate(`(() => {
+      const dialog = [...document.querySelectorAll('[role="dialog"]')].find(
+        (item) => item.textContent?.includes("Редактировать компонент"),
+      );
+      const button = [...(dialog?.querySelectorAll("button") ?? [])].find(
+        (item) => item.textContent?.trim() === "Отмена",
+      );
+      if (!button || button.disabled) return false;
+      button.click();
+      return true;
+    })()`);
+    assert.equal(componentDialogClosed, true, "Component dialog close action not found");
+
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Крупа обновлённая") &&
+       document.body?.innerText?.includes("80 gram") &&
+       document.body?.innerText?.includes("Упаковка: 900 package")`,
+      "updated product without component conversion",
+    );
+    const productUpdate = requests.find(
+      (item) => item.method === "PUT" && item.path === "/api/v1/products/product-editable",
+    );
+    assert.deepEqual(productUpdate?.body, {
+      name: "Крупа обновлённая",
+      category: "Бакалея",
+      unit: "package",
+      package_size: 900,
+    });
+
     await clickText(client, "На проверке");
     await waitForExpression(
       client,
@@ -182,7 +290,7 @@ async function run() {
       Buffer.from(screenshot.data, "base64"),
     );
     client.close();
-    console.log("Recipe moderation browser acceptance passed.");
+    console.log("Recipe moderation and product editing browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
