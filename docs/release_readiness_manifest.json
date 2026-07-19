@@ -1,9 +1,10 @@
 {
   "schema_version": 1,
   "product": "TourHub",
-  "status": "release_ready",
+  "status": "released",
   "status_date": "2026-07-19",
   "release_tag": "v0.1.0",
+  "release_commit_sha": "8bcc2d2d9414d812d81634330034b15121c8442f",
   "tag_format": "vMAJOR.MINOR.PATCH",
   "previous_alembic_revision": "h10020",
   "final_alembic_head": "h10021",
