@@ -36,7 +36,7 @@ function draftFromProduct(product: RecipeProduct | null): ProductDraft {
 
 interface ProductDialogProps {
   open: boolean;
-  product: RecipeProduct | null;
+  product?: RecipeProduct | null;
   isSubmitting: boolean;
   errorMessage: string | null;
   onClose: () => void;
@@ -45,7 +45,7 @@ interface ProductDialogProps {
 
 export default function ProductDialog({
   open,
-  product,
+  product = null,
   isSubmitting,
   errorMessage,
   onClose,
