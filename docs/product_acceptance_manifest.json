@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "product": "TourHub",
+  "release_scope": "first_local_single_club_release",
+  "status": "acceptance_candidate",
+  "status_date": "2026-07-19",
+  "alembic_head": "h10021",
+  "architecture": {
+    "deployment_model": "local_single_club",
+    "application_shape": "modular_monolith",
+    "multi_tenancy": "prohibited",
+    "microservices": "prohibited"
+  },
+  "accepted_capabilities": [
+    {
+      "id": "runtime_operations",
+      "evidence": [
+        "docker-compose.release.yml",
+        "docs/INSTALLATION.md",
+        "docs/UPDATING.md",
+        "scripts/ci/verify_release_runtime.py"
+      ]
+    },
+    {
+      "id": "system_settings",
+      "evidence": [
+        "docs/architecture/decisions/ADR-014-typed-system-settings.md",
+        "frontend/src/pages/SettingsPage.tsx"
+      ]
+    },
+    {
+      "id": "access_roles_invitations_mail",
+      "evidence": [
+        "backend/tests/api/test_user_administration_api.py",
+        "frontend/browser-tests/run-access-auth.mjs",
+        "frontend/browser-tests/run-account-admin.mjs"
+      ]
+    },
+    {
+      "id": "recipe_ownership_publication_variants",
+      "evidence": [
+        "backend/tests/api/test_recipe_publication_api.py",
+        "frontend/browser-tests/run-recipe-moderation.mjs",
+        "docs/architecture/decisions/ADR-020-recipe-ownership-foundation.md",
+        "docs/architecture/decisions/ADR-022-dish-recipe-variants-generation-modes.md"
+      ]
+    },
+    {
+      "id": "project_preparation_shopping_equipment",
+      "evidence": [
+        "backend/tests/api/test_project_preparation_status_api.py",
+        "frontend/browser-tests/run-guided-release.mjs"
+      ]
+    },
+    {
+      "id": "actor_aware_audit",
+      "evidence": [
+        "backend/tests/api/test_audit_api.py",
+        "frontend/browser-tests/run-audit-log.mjs",
+        "docs/architecture/decisions/ADR-023-actor-aware-audit-foundation.md"
+      ]
+    },
+    {
+      "id": "consolidated_russian_exports",
+      "evidence": [
+        "backend/tests/api/test_project_document_package_api.py",
+        "backend/tests/services/test_consolidated_project_documents.py",
+        "frontend/browser-tests/run-consolidated-documents.mjs",
+        "docs/architecture/decisions/ADR-024-consolidated-project-exports.md"
+      ]
+    },
+    {
+      "id": "central_alcohol_prohibition",
+      "evidence": [
+        "backend/tests/api/test_alcohol_prohibition_api.py",
+        "backend/tests/migrations/test_h10021_alcohol_prohibition.py",
+        "backend/tests/policies/test_alcohol_policy.py",
+        "docs/architecture/decisions/ADR-025-central-alcohol-prohibition.md"
+      ]
+    }
+  ],
+  "deferred_non_blocking_scope": [
+    "participant_profiles",
+    "routes_and_gpx",
+    "warehouse_balances_and_issue_workflow",
+    "procurement_prices_and_external_aggregators",
+    "richer_recipe_metadata_and_preference_weights",
+    "per_meal_recipe_switching",
+    "session_administration_and_account_recovery",
+    "asynchronous_mail_and_bounce_processing",
+    "audit_coverage_beyond_current_semantic_events",
+    "audit_export_retention_siem_undo_replay",
+    "product_and_dish_archive_management_ui",
+    "scheduled_document_generation_and_signatures",
+    "configuration_archive_encryption"
+  ],
+  "acceptance_commands": {
+    "manifest": "python scripts/ci/validate_product_acceptance.py",
+    "backend": "python -m pytest -q backend/tests/api/test_user_administration_api.py backend/tests/api/test_recipe_publication_api.py backend/tests/api/test_catalog_import_api.py backend/tests/api/test_project_preparation_status_api.py backend/tests/api/test_audit_api.py backend/tests/api/test_project_document_package_api.py backend/tests/api/test_alcohol_prohibition_api.py backend/tests/migrations/test_h10021_alcohol_prohibition.py",
+    "browser": "node frontend/browser-tests/run-access-auth.mjs && node frontend/browser-tests/run-account-admin.mjs && node frontend/browser-tests/run-recipe-moderation.mjs && node frontend/browser-tests/run-audit-log.mjs && node frontend/browser-tests/run-consolidated-documents.mjs && node frontend/browser-tests/run-guided-release.mjs"
+  },
+  "feature_freeze_rules": [
+    "No new first-release capability after acceptance.",
+    "Allowed changes are acceptance defect fixes, security fixes, release-readiness work, and documentation corrections.",
+    "Any scope expansion requires an explicit Product Owner decision and a new post-release task."
+  ]
+}
