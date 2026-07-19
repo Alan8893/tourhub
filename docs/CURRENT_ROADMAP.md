@@ -24,6 +24,7 @@ Project preparation baseline
   → Final migration and release readiness
   → v0.1.0
   → Project workspace UX (TH-0095)
+  → Product catalogue editing (TH-0097)
 ```
 
 ## RELEASED FIRST-RELEASE SEQUENCE
@@ -84,7 +85,7 @@ Project preparation baseline
 - Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, and Docker Release Runtime on pushes to `main`;
 - exact-head final workflow that created lightweight tag `v0.1.0` only after every required merged-SHA workflow succeeded.
 
-## DELIVERED POST-RELEASE UX
+## DELIVERED POST-RELEASE IMPROVEMENTS
 
 ### Project workspace navigation and responsive layout — TH-0095 / PR #105
 
@@ -97,9 +98,20 @@ Project preparation baseline
 - responsive acceptance verifies no horizontal overflow at 360 px, 831 px, and 1280 px;
 - Backend contracts, calculations, preparation persistence, authorization, documents, module visibility, and Alembic `h10021` remain unchanged.
 
-## NEXT POST-RELEASE SELECTION
+### Product catalogue editing — TH-0097 / PR #107
 
-No additional product capability is selected automatically after TH-0095. The Product Owner must choose a separate task from documented debt or approve a new priority. The released v0.1.0 business baseline remains unchanged until that decision.
+- active shared Products can be edited from the Recipe component workflow;
+- name, category, catalogue unit, and package size retain central Backend validation;
+- Product identifiers and all existing Recipe relationships remain stable;
+- RecipeComponent amount/unit values are never converted implicitly;
+- duplicate names, prohibited content, and missing Products preserve explicit API errors;
+- the responsive edit dialog warns that changes affect every Recipe using the Product;
+- Product and Recipe caches refresh after save;
+- focused Backend and real-Chrome acceptance cover the end-to-end behavior without a migration.
+
+## NEXT POST-RELEASE TASK
+
+TH-0098 Published Recipe Dish Synchronization is selected next by the Product Owner. It will create or attach a Dish in the same publication transaction, remain idempotent, leave generator roles empty, and display an explicit `Не настроено для генератора` state until roles are assigned.
 
 ## Deferred non-blocking priorities
 
