@@ -7,9 +7,8 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
-| TH-0097 | Product Catalogue Editing | IN PROGRESS | ./active/TH-0097-product-catalogue-editing.md |
 
-TH-0097 is the active Product Owner-approved post-release catalogue UX slice. TH-0098 automatic published Recipe-to-Dish synchronization starts only after TH-0097 is verified and merged.
+TH-0097 is complete. TH-0098 Published Recipe Dish Synchronization is the next Product Owner-approved post-release task and starts from the merged TH-0097 baseline.
 
 ## First-release sequence
 
@@ -71,6 +70,7 @@ The complete first-release sequence is delivered through TH-0093. The feature-fr
 | TH-0093 | Final Migration and Release Readiness | DONE |
 | TH-0095 | Project Workspace Navigation and Responsive Layout | DONE |
 | TH-0096 | Immutable Release Tag Lifecycle | DONE |
+| TH-0097 | Product Catalogue Editing | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
