@@ -11,13 +11,95 @@ from alembic.config import Config
 from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 
-
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
 PREVIOUS_REVISION = "h10020"
 HEAD_REVISION = "h10021"
 DEFAULT_DATABASE_URL = (
     "postgresql+psycopg://tourhub:tourhub@127.0.0.1:5432/tourhub_release_cycle"
+)
+
+SEED_STATEMENTS = (
+    """
+    INSERT INTO products (id, name, category, unit, package_size) VALUES
+      ('product-vodka', 'Водка', 'Напитки', 'millilitre', 500),
+      ('product-chamomile', 'Ромашка', 'Травы', 'gram', 100),
+      ('product-vinegar', 'Винный уксус', 'Приправы', 'millilitre', 250)
+    """,
+    """
+    INSERT INTO recipes (
+      id, name, scope, owner_user_id, lifecycle_status,
+      submitted_by_user_id, submitted_at, reviewed_by_user_id,
+      reviewed_at, review_comment, is_archived
+    ) VALUES
+      ('recipe-prohibited-component', 'Походный чай', 'club', NULL, 'published',
+       NULL, NULL, NULL, NULL, NULL, false),
+      ('recipe-prohibited-name', 'Ром с чаем', 'club', NULL, 'published',
+       NULL, NULL, NULL, NULL, NULL, false),
+      ('recipe-allowed', 'Травяной чай', 'club', NULL, 'published',
+       NULL, NULL, NULL, NULL, NULL, false),
+      ('recipe-manual-archive', 'Запасной чай', 'club', NULL, 'published',
+       NULL, NULL, NULL, NULL, NULL, true)
+    """,
+    """
+    INSERT INTO recipe_components (
+      id, recipe_id, product_id, component_type, amount,
+      unit, calculation_type, people_count
+    ) VALUES
+      ('component-prohibited', 'recipe-prohibited-component', 'product-vodka',
+       'base', 10, 'millilitre', 'per_person', NULL),
+      ('component-allowed', 'recipe-allowed', 'product-chamomile',
+       'base', 5, 'gram', 'per_person', NULL),
+      ('component-manual', 'recipe-manual-archive', 'product-chamomile',
+       'base', 5, 'gram', 'per_person', NULL)
+    """,
+    """
+    INSERT INTO dishes (id, name, recipe_id) VALUES
+      ('dish-prohibited-default', 'Вечерний напиток', 'recipe-prohibited-component'),
+      ('dish-prohibited-name', 'Пиво к ужину', 'recipe-allowed'),
+      ('dish-allowed', 'Травяной чай', 'recipe-allowed'),
+      ('dish-non-default-variant', 'Чайный набор', 'recipe-allowed')
+    """,
+    """
+    INSERT INTO dish_recipe_variants (dish_id, recipe_id, position) VALUES
+      ('dish-prohibited-default', 'recipe-prohibited-component', 0),
+      ('dish-prohibited-name', 'recipe-allowed', 0),
+      ('dish-allowed', 'recipe-allowed', 0),
+      ('dish-non-default-variant', 'recipe-allowed', 0),
+      ('dish-non-default-variant', 'recipe-prohibited-name', 1)
+    """,
+    """
+    INSERT INTO projects (
+      id, name, participants, days, start_date, first_meal,
+      last_meal, recipe_generation_mode, status
+    ) VALUES
+      (1, 'Исторический проект', 4, 1, NULL, 'dinner',
+       'dinner', 'club_only', 'draft')
+    """,
+    """
+    INSERT INTO meal_plans (
+      id, name, participants, days_count, project_id, warnings
+    ) VALUES
+      ('historical-plan', 'Исторический план', 4, 1, 1, '[]'::json)
+    """,
+    """
+    INSERT INTO meal_plan_days (id, meal_plan_id, day_number) VALUES
+      ('historical-day', 'historical-plan', 1)
+    """,
+    """
+    INSERT INTO meal_slots (
+      id, meal_plan_day_id, meal_type, name, "order", is_manually_edited
+    ) VALUES
+      ('historical-slot', 'historical-day', 'dinner',
+       'Исторический ужин', 0, true)
+    """,
+    """
+    INSERT INTO meal_slot_dishes (
+      id, meal_slot_id, dish_id, recipe_id, "order"
+    ) VALUES
+      ('historical-assignment', 'historical-slot',
+       'dish-prohibited-default', 'recipe-prohibited-component', 0)
+    """,
 )
 
 
@@ -27,8 +109,12 @@ def _alembic_config() -> Config:
     return config
 
 
+def _engine(database_url: str) -> sa.Engine:
+    return sa.create_engine(database_url)
+
+
 def _current_revision(database_url: str) -> str | None:
-    engine = sa.create_engine(database_url)
+    engine = _engine(database_url)
     try:
         with engine.connect() as connection:
             return MigrationContext.configure(connection).get_current_revision()
@@ -43,350 +129,109 @@ def _assert_revision(database_url: str, expected: str) -> None:
 
 
 def _seed_h10020(database_url: str) -> None:
-    engine = sa.create_engine(database_url)
-    metadata = sa.MetaData()
+    engine = _engine(database_url)
     try:
-        products = sa.Table("products", metadata, autoload_with=engine)
-        recipes = sa.Table("recipes", metadata, autoload_with=engine)
-        components = sa.Table("recipe_components", metadata, autoload_with=engine)
-        dishes = sa.Table("dishes", metadata, autoload_with=engine)
-        variants = sa.Table("dish_recipe_variants", metadata, autoload_with=engine)
-        meal_plans = sa.Table("meal_plans", metadata, autoload_with=engine)
-        meal_plan_days = sa.Table("meal_plan_days", metadata, autoload_with=engine)
-        meal_slots = sa.Table("meal_slots", metadata, autoload_with=engine)
-        meal_slot_dishes = sa.Table("meal_slot_dishes", metadata, autoload_with=engine)
-
         with engine.begin() as connection:
-            connection.execute(
-                products.insert(),
-                [
-                    {
-                        "id": "product-vodka",
-                        "name": "Водка",
-                        "category": "Напитки",
-                        "unit": "millilitre",
-                        "package_size": 500,
-                    },
-                    {
-                        "id": "product-chamomile",
-                        "name": "Ромашка",
-                        "category": "Травы",
-                        "unit": "gram",
-                        "package_size": 100,
-                    },
-                    {
-                        "id": "product-vinegar",
-                        "name": "Винный уксус",
-                        "category": "Приправы",
-                        "unit": "millilitre",
-                        "package_size": 250,
-                    },
-                ],
-            )
-            connection.execute(
-                recipes.insert(),
-                [
-                    {
-                        "id": "recipe-prohibited-component",
-                        "name": "Походный чай",
-                        "scope": "club",
-                        "owner_user_id": None,
-                        "lifecycle_status": "published",
-                        "submitted_by_user_id": None,
-                        "submitted_at": None,
-                        "reviewed_by_user_id": None,
-                        "reviewed_at": None,
-                        "review_comment": None,
-                        "is_archived": False,
-                    },
-                    {
-                        "id": "recipe-prohibited-name",
-                        "name": "Ром с чаем",
-                        "scope": "club",
-                        "owner_user_id": None,
-                        "lifecycle_status": "published",
-                        "submitted_by_user_id": None,
-                        "submitted_at": None,
-                        "reviewed_by_user_id": None,
-                        "reviewed_at": None,
-                        "review_comment": None,
-                        "is_archived": False,
-                    },
-                    {
-                        "id": "recipe-allowed",
-                        "name": "Травяной чай",
-                        "scope": "club",
-                        "owner_user_id": None,
-                        "lifecycle_status": "published",
-                        "submitted_by_user_id": None,
-                        "submitted_at": None,
-                        "reviewed_by_user_id": None,
-                        "reviewed_at": None,
-                        "review_comment": None,
-                        "is_archived": False,
-                    },
-                    {
-                        "id": "recipe-manual-archive",
-                        "name": "Запасной чай",
-                        "scope": "club",
-                        "owner_user_id": None,
-                        "lifecycle_status": "published",
-                        "submitted_by_user_id": None,
-                        "submitted_at": None,
-                        "reviewed_by_user_id": None,
-                        "reviewed_at": None,
-                        "review_comment": None,
-                        "is_archived": True,
-                    },
-                ],
-            )
-            connection.execute(
-                components.insert(),
-                [
-                    {
-                        "id": "component-prohibited",
-                        "recipe_id": "recipe-prohibited-component",
-                        "product_id": "product-vodka",
-                        "component_type": "base",
-                        "amount": 10,
-                        "unit": "millilitre",
-                        "calculation_type": "per_person",
-                        "people_count": None,
-                    },
-                    {
-                        "id": "component-allowed",
-                        "recipe_id": "recipe-allowed",
-                        "product_id": "product-chamomile",
-                        "component_type": "base",
-                        "amount": 5,
-                        "unit": "gram",
-                        "calculation_type": "per_person",
-                        "people_count": None,
-                    },
-                    {
-                        "id": "component-manual",
-                        "recipe_id": "recipe-manual-archive",
-                        "product_id": "product-chamomile",
-                        "component_type": "base",
-                        "amount": 5,
-                        "unit": "gram",
-                        "calculation_type": "per_person",
-                        "people_count": None,
-                    },
-                ],
-            )
-            connection.execute(
-                dishes.insert(),
-                [
-                    {
-                        "id": "dish-prohibited-default",
-                        "name": "Вечерний напиток",
-                        "recipe_id": "recipe-prohibited-component",
-                    },
-                    {
-                        "id": "dish-prohibited-name",
-                        "name": "Пиво к ужину",
-                        "recipe_id": "recipe-allowed",
-                    },
-                    {
-                        "id": "dish-allowed",
-                        "name": "Травяной чай",
-                        "recipe_id": "recipe-allowed",
-                    },
-                    {
-                        "id": "dish-non-default-variant",
-                        "name": "Чайный набор",
-                        "recipe_id": "recipe-allowed",
-                    },
-                ],
-            )
-            connection.execute(
-                variants.insert(),
-                [
-                    {
-                        "dish_id": "dish-prohibited-default",
-                        "recipe_id": "recipe-prohibited-component",
-                        "position": 0,
-                    },
-                    {
-                        "dish_id": "dish-prohibited-name",
-                        "recipe_id": "recipe-allowed",
-                        "position": 0,
-                    },
-                    {
-                        "dish_id": "dish-allowed",
-                        "recipe_id": "recipe-allowed",
-                        "position": 0,
-                    },
-                    {
-                        "dish_id": "dish-non-default-variant",
-                        "recipe_id": "recipe-allowed",
-                        "position": 0,
-                    },
-                    {
-                        "dish_id": "dish-non-default-variant",
-                        "recipe_id": "recipe-prohibited-name",
-                        "position": 1,
-                    },
-                ],
-            )
-            connection.execute(
-                meal_plans.insert(),
-                {
-                    "id": "historical-plan",
-                    "project_id": None,
-                    "name": "Исторический план",
-                    "participants": 4,
-                    "days_count": 1,
-                    "warnings": [],
-                },
-            )
-            connection.execute(
-                meal_plan_days.insert(),
-                {
-                    "id": "historical-day",
-                    "meal_plan_id": "historical-plan",
-                    "day_number": 1,
-                },
-            )
-            connection.execute(
-                meal_slots.insert(),
-                {
-                    "id": "historical-slot",
-                    "meal_plan_day_id": "historical-day",
-                    "meal_type": "dinner",
-                    "name": "Исторический ужин",
-                    "order": 0,
-                    "is_manually_edited": True,
-                },
-            )
-            connection.execute(
-                meal_slot_dishes.insert(),
-                {
-                    "id": "historical-assignment",
-                    "meal_slot_id": "historical-slot",
-                    "dish_id": "dish-prohibited-default",
-                    "recipe_id": "recipe-prohibited-component",
-                    "order": 0,
-                },
-            )
+            for statement in SEED_STATEMENTS:
+                connection.execute(sa.text(statement))
     finally:
         engine.dispose()
 
 
-def _rows_by_id(engine: sa.Engine, table_name: str) -> dict[str, dict[str, Any]]:
-    metadata = sa.MetaData()
-    table = sa.Table(table_name, metadata, autoload_with=engine)
+def _flag_rows(engine: sa.Engine, table_name: str) -> dict[str, tuple[bool, bool]]:
     with engine.connect() as connection:
-        rows = connection.execute(sa.select(table)).mappings()
-        return {str(row["id"]): dict(row) for row in rows}
+        rows = connection.execute(
+            sa.text(
+                f"SELECT id, is_archived, archived_by_alcohol_policy "
+                f"FROM {table_name}"
+            )
+        ).mappings()
+        return {
+            str(row["id"]): (
+                bool(row["is_archived"]),
+                bool(row["archived_by_alcohol_policy"]),
+            )
+            for row in rows
+        }
 
 
-def _column_names(engine: sa.Engine, table_name: str) -> set[str]:
-    return {str(column["name"]) for column in sa.inspect(engine).get_columns(table_name)}
+def _active_ids(engine: sa.Engine, table_name: str) -> list[str]:
+    with engine.connect() as connection:
+        return sorted(
+            str(value)
+            for value in connection.scalars(
+                sa.text(f"SELECT id FROM {table_name} WHERE is_archived = false")
+            )
+        )
 
 
 def _historical_assignment(engine: sa.Engine) -> dict[str, Any]:
-    statement = sa.text(
-        "SELECT msd.id, msd.dish_id, msd.recipe_id, d.name AS dish_name, "
-        "r.name AS recipe_name FROM meal_slot_dishes AS msd "
-        "JOIN dishes AS d ON d.id = msd.dish_id "
-        "JOIN recipes AS r ON r.id = msd.recipe_id "
-        "WHERE msd.id = 'historical-assignment'"
-    )
     with engine.connect() as connection:
-        row = connection.execute(statement).mappings().one()
+        row = connection.execute(
+            sa.text(
+                "SELECT msd.id, msd.dish_id, msd.recipe_id, "
+                "d.name AS dish_name, r.name AS recipe_name "
+                "FROM meal_slot_dishes AS msd "
+                "JOIN dishes AS d ON d.id = msd.dish_id "
+                "JOIN recipes AS r ON r.id = msd.recipe_id "
+                "WHERE msd.id = 'historical-assignment'"
+            )
+        ).mappings().one()
         return dict(row)
 
 
 def _verify_h10021(database_url: str) -> dict[str, Any]:
-    engine = sa.create_engine(database_url)
+    engine = _engine(database_url)
     try:
-        products = _rows_by_id(engine, "products")
-        recipes = _rows_by_id(engine, "recipes")
-        dishes = _rows_by_id(engine, "dishes")
-
-        expected_flags = {
-            "product-vodka": (True, True),
-            "product-chamomile": (False, False),
-            "product-vinegar": (False, False),
+        expected = {
+            "products": {
+                "product-vodka": (True, True),
+                "product-chamomile": (False, False),
+                "product-vinegar": (False, False),
+            },
+            "recipes": {
+                "recipe-prohibited-component": (True, True),
+                "recipe-prohibited-name": (True, True),
+                "recipe-allowed": (False, False),
+                "recipe-manual-archive": (True, False),
+            },
+            "dishes": {
+                "dish-prohibited-default": (True, True),
+                "dish-prohibited-name": (True, True),
+                "dish-allowed": (False, False),
+                "dish-non-default-variant": (False, False),
+            },
         }
-        for row_id, flags in expected_flags.items():
-            actual = (
-                bool(products[row_id]["is_archived"]),
-                bool(products[row_id]["archived_by_alcohol_policy"]),
-            )
-            if actual != flags:
-                raise AssertionError(f"Unexpected Product flags for {row_id}: {actual}")
+        for table_name, table_expected in expected.items():
+            actual = _flag_rows(engine, table_name)
+            if actual != table_expected:
+                raise AssertionError(
+                    f"Unexpected {table_name} archive flags: {actual}"
+                )
 
-        expected_recipe_flags = {
-            "recipe-prohibited-component": (True, True),
-            "recipe-prohibited-name": (True, True),
-            "recipe-allowed": (False, False),
-            "recipe-manual-archive": (True, False),
+        active = {
+            "products": _active_ids(engine, "products"),
+            "recipes": _active_ids(engine, "recipes"),
+            "dishes": _active_ids(engine, "dishes"),
         }
-        for row_id, flags in expected_recipe_flags.items():
-            actual = (
-                bool(recipes[row_id]["is_archived"]),
-                bool(recipes[row_id]["archived_by_alcohol_policy"]),
-            )
-            if actual != flags:
-                raise AssertionError(f"Unexpected Recipe flags for {row_id}: {actual}")
-
-        expected_dish_flags = {
-            "dish-prohibited-default": (True, True),
-            "dish-prohibited-name": (True, True),
-            "dish-allowed": (False, False),
-            "dish-non-default-variant": (False, False),
+        expected_active = {
+            "products": ["product-chamomile", "product-vinegar"],
+            "recipes": ["recipe-allowed"],
+            "dishes": ["dish-allowed", "dish-non-default-variant"],
         }
-        for row_id, flags in expected_dish_flags.items():
-            actual = (
-                bool(dishes[row_id]["is_archived"]),
-                bool(dishes[row_id]["archived_by_alcohol_policy"]),
-            )
-            if actual != flags:
-                raise AssertionError(f"Unexpected Dish flags for {row_id}: {actual}")
+        if active != expected_active:
+            raise AssertionError(f"Unexpected active catalogue rows: {active}")
 
-        metadata = sa.MetaData()
-        product_table = sa.Table("products", metadata, autoload_with=engine)
-        recipe_table = sa.Table("recipes", metadata, autoload_with=engine)
-        dish_table = sa.Table("dishes", metadata, autoload_with=engine)
-        variant_table = sa.Table("dish_recipe_variants", metadata, autoload_with=engine)
         with engine.connect() as connection:
-            active_products = set(
-                connection.scalars(
-                    sa.select(product_table.c.id).where(
-                        product_table.c.is_archived.is_(False)
-                    )
+            variant_position = connection.scalar(
+                sa.text(
+                    "SELECT position FROM dish_recipe_variants "
+                    "WHERE dish_id = 'dish-non-default-variant' "
+                    "AND recipe_id = 'recipe-prohibited-name'"
                 )
             )
-            active_recipes = set(
-                connection.scalars(
-                    sa.select(recipe_table.c.id).where(
-                        recipe_table.c.is_archived.is_(False)
-                    )
-                )
-            )
-            active_dishes = set(
-                connection.scalars(
-                    sa.select(dish_table.c.id).where(
-                        dish_table.c.is_archived.is_(False)
-                    )
-                )
-            )
-            non_default_variant = connection.execute(
-                sa.select(variant_table).where(
-                    variant_table.c.dish_id == "dish-non-default-variant",
-                    variant_table.c.recipe_id == "recipe-prohibited-name",
-                )
-            ).mappings().one()
-
-        if active_products != {"product-chamomile", "product-vinegar"}:
-            raise AssertionError(f"Unexpected active Products: {sorted(active_products)}")
-        if active_recipes != {"recipe-allowed"}:
-            raise AssertionError(f"Unexpected active Recipes: {sorted(active_recipes)}")
-        if active_dishes != {"dish-allowed", "dish-non-default-variant"}:
-            raise AssertionError(f"Unexpected active Dishes: {sorted(active_dishes)}")
+        if variant_position != 1:
+            raise AssertionError("Non-default historical Recipe variant changed")
 
         historical = _historical_assignment(engine)
         if historical["dish_id"] != "dish-prohibited-default":
@@ -395,18 +240,23 @@ def _verify_h10021(database_url: str) -> dict[str, Any]:
             raise AssertionError("Historical Recipe reference changed")
 
         return {
-            "active_products": sorted(active_products),
-            "active_recipes": sorted(active_recipes),
-            "active_dishes": sorted(active_dishes),
+            "active_catalogue": active,
             "historical_assignment": historical,
-            "non_default_variant_position": non_default_variant["position"],
+            "non_default_variant_position": variant_position,
         }
     finally:
         engine.dispose()
 
 
+def _column_names(engine: sa.Engine, table_name: str) -> set[str]:
+    return {
+        str(column["name"])
+        for column in sa.inspect(engine).get_columns(table_name)
+    }
+
+
 def _verify_h10020_after_downgrade(database_url: str) -> dict[str, Any]:
-    engine = sa.create_engine(database_url)
+    engine = _engine(database_url)
     try:
         for table_name in ("products", "dishes"):
             unexpected = {
@@ -420,22 +270,26 @@ def _verify_h10020_after_downgrade(database_url: str) -> dict[str, Any]:
         if "archived_by_alcohol_policy" in _column_names(engine, "recipes"):
             raise AssertionError("Downgrade kept Recipe policy marker")
 
-        recipes = _rows_by_id(engine, "recipes")
-        expected_archive_state = {
+        with engine.connect() as connection:
+            rows = connection.execute(
+                sa.text("SELECT id, is_archived FROM recipes")
+            ).mappings()
+            archive_state = {
+                str(row["id"]): bool(row["is_archived"])
+                for row in rows
+            }
+        expected = {
             "recipe-prohibited-component": False,
             "recipe-prohibited-name": False,
             "recipe-allowed": False,
             "recipe-manual-archive": True,
         }
-        for row_id, expected in expected_archive_state.items():
-            actual = bool(recipes[row_id]["is_archived"])
-            if actual != expected:
-                raise AssertionError(
-                    f"Unexpected downgraded Recipe archive state for {row_id}: {actual}"
-                )
-
+        if archive_state != expected:
+            raise AssertionError(
+                f"Unexpected downgraded Recipe archive state: {archive_state}"
+            )
         return {
-            "recipe_archive_state": expected_archive_state,
+            "recipe_archive_state": archive_state,
             "historical_assignment": _historical_assignment(engine),
         }
     finally:
@@ -484,23 +338,32 @@ def main() -> None:
 
         command.upgrade(config, HEAD_REVISION)
         _assert_revision(database_url, HEAD_REVISION)
-        first_upgrade = _verify_h10021(database_url)
         evidence["steps"].append(
-            {"revision": HEAD_REVISION, "phase": "first_upgrade", **first_upgrade}
+            {
+                "revision": HEAD_REVISION,
+                "phase": "first_upgrade",
+                **_verify_h10021(database_url),
+            }
         )
 
         command.downgrade(config, PREVIOUS_REVISION)
         _assert_revision(database_url, PREVIOUS_REVISION)
-        downgrade = _verify_h10020_after_downgrade(database_url)
         evidence["steps"].append(
-            {"revision": PREVIOUS_REVISION, "phase": "downgrade", **downgrade}
+            {
+                "revision": PREVIOUS_REVISION,
+                "phase": "downgrade",
+                **_verify_h10020_after_downgrade(database_url),
+            }
         )
 
         command.upgrade(config, HEAD_REVISION)
         _assert_revision(database_url, HEAD_REVISION)
-        second_upgrade = _verify_h10021(database_url)
         evidence["steps"].append(
-            {"revision": HEAD_REVISION, "phase": "second_upgrade", **second_upgrade}
+            {
+                "revision": HEAD_REVISION,
+                "phase": "second_upgrade",
+                **_verify_h10021(database_url),
+            }
         )
 
         evidence["status"] = "success"
