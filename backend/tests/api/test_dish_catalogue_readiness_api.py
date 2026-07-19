@@ -11,14 +11,17 @@ def _create_published_club_recipe(client, name: str) -> str:
 
 
 def _create_dish(client, name: str) -> tuple[str, str]:
-    recipe_id = _create_published_club_recipe(client, f"Рецепт: {name}")
-
-    dish_response = client.post(
-        "/api/v1/dishes",
-        json={"name": name, "recipe_id": recipe_id},
+    recipe_id = _create_published_club_recipe(client, name)
+    dishes = client.get("/api/v1/dishes")
+    assert dishes.status_code == 200
+    dish = next(
+        item
+        for item in dishes.json()["items"]
+        if item["recipe"]["id"] == recipe_id
     )
-    assert dish_response.status_code == 201
-    return dish_response.json()["id"], recipe_id
+    assert dish["name"] == name
+    assert dish["meal_roles"] == []
+    return dish["id"], recipe_id
 
 
 def _replace_roles(client, dish_id: str, roles: list[dict]) -> None:
