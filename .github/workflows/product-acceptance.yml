@@ -48,6 +48,7 @@ jobs:
 
       - name: Validate acceptance code style
         run: |
+          set -o pipefail
           python -m ruff check \
             ../scripts/ci/validate_product_acceptance.py \
             tests/api/test_user_administration_api.py \
@@ -58,7 +59,15 @@ jobs:
             tests/api/test_project_document_package_api.py \
             tests/api/test_alcohol_prohibition_api.py \
             tests/migrations/test_h10021_alcohol_prohibition.py \
-            --select E,F,I,UP,B
+            --select E,F,I,UP,B \
+            2>&1 | tee product-acceptance-ruff.txt
+
+      - name: Upload Ruff diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-acceptance-ruff-diagnostics
+          path: backend/product-acceptance-ruff.txt
 
       - name: Run critical Backend acceptance
         run: |
