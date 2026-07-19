@@ -28,6 +28,6 @@ class ProjectRepository:
 
     def create(self, project: ProjectORM) -> ProjectORM:
         self.session.add(project)
-        self.session.commit()
+        self.session.flush()
         self.session.refresh(project)
         return project
