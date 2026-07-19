@@ -82,6 +82,8 @@ class FakeMealPlanRepository:
         self.meal_plans = []
         self.days = []
         self.items = []
+        self.slots = []
+        self.slot_dishes = []
         self.meal_plan = None
 
     def add(self, meal_plan):
@@ -94,8 +96,22 @@ class FakeMealPlanRepository:
     def add_item(self, item):
         self.items.append(item)
 
+    def add_slot(self, slot):
+        self.slots.append(slot)
+
+    def add_slot_dish(self, slot_dish):
+        self.slot_dishes.append(slot_dish)
+
+    def flush(self):
+        pass
+
     def commit(self):
         pass
+
+    def get_by_project_id(self, project_id: int):
+        if self.meal_plan is None:
+            return None
+        return self.meal_plan if self.meal_plan.project_id == project_id else None
 
     def get_with_details(self, meal_plan_id: str):
         return self.meal_plan
