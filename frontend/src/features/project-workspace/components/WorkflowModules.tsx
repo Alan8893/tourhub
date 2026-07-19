@@ -1,4 +1,5 @@
-import { Grid } from "@mui/material";
+import { Alert, Box, Paper, Tab, Tabs } from "@mui/material";
+import { useState } from "react";
 
 import { DocumentsWidget } from "@/features/documents";
 import CampInventoryWidget from "@/features/equipment/components/CampInventoryWidget";
@@ -7,38 +8,64 @@ import { PurchaseWidget } from "@/features/purchase";
 import { ShoppingWidget } from "@/features/shopping";
 import { useModuleVisibility } from "@/features/system-settings/providers/ModuleVisibilityProvider";
 
-export default function WorkflowModules() {
-  const { settings } = useModuleVisibility();
+import type { ProjectWorkspaceSection } from "../model/projectWorkspaceNavigation";
+
+function ShoppingWorkspace() {
+  const [activeView, setActiveView] = useState<"calculation" | "checklist">(
+    "calculation",
+  );
 
   return (
-    <Grid container spacing={2} sx={{ mt: 2 }}>
-      <Grid item xs={12}>
-        <MealPlanWidget />
-      </Grid>
+    <Box>
+      <Paper variant="outlined" sx={{ mb: 2 }}>
+        <Tabs
+          value={activeView}
+          onChange={(_, value: "calculation" | "checklist") =>
+            setActiveView(value)
+          }
+          variant="fullWidth"
+          aria-label="Раздел закупки"
+        >
+          <Tab value="calculation" label="Расчёт и фасовка" />
+          <Tab value="checklist" label="Чек-лист" />
+        </Tabs>
+      </Paper>
 
-      {settings.shopping_visible && (
-        <>
-          <Grid item xs={12} md={6}>
-            <ShoppingWidget />
-          </Grid>
+      {activeView === "calculation" ? <ShoppingWidget /> : <PurchaseWidget />}
+    </Box>
+  );
+}
 
-          <Grid item xs={12} md={6}>
-            <PurchaseWidget />
-          </Grid>
-        </>
-      )}
+interface WorkflowModulesProps {
+  section: Exclude<ProjectWorkspaceSection, "overview">;
+}
 
-      {settings.equipment_visible && (
-        <Grid item xs={12}>
-          <CampInventoryWidget />
-        </Grid>
-      )}
+export default function WorkflowModules({ section }: WorkflowModulesProps) {
+  const { settings } = useModuleVisibility();
 
-      {settings.documents_visible && (
-        <Grid item xs={12}>
-          <DocumentsWidget />
-        </Grid>
-      )}
-    </Grid>
+  if (section === "menu") {
+    return <MealPlanWidget />;
+  }
+
+  if (section === "shopping") {
+    return settings.shopping_visible ? (
+      <ShoppingWorkspace />
+    ) : (
+      <Alert severity="info">Раздел закупки отключён в настройках модулей.</Alert>
+    );
+  }
+
+  if (section === "equipment") {
+    return settings.equipment_visible ? (
+      <CampInventoryWidget />
+    ) : (
+      <Alert severity="info">Раздел оборудования отключён в настройках модулей.</Alert>
+    );
+  }
+
+  return settings.documents_visible ? (
+    <DocumentsWidget />
+  ) : (
+    <Alert severity="info">Раздел документов отключён в настройках модулей.</Alert>
   );
 }
