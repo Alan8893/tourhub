@@ -76,9 +76,9 @@ Project preparation baseline
 - feature freeze activated at Alembic head `h10021`;
 - first-release scope changes limited to acceptance defects, security fixes, final release-readiness work, and documentation corrections.
 
-## NEXT
+## ACTIVE
 
-1. **Final Migration and Release Readiness** — run the PostgreSQL previous → `h10021` → previous → `h10021` cycle, verify the production deployment checklist, add the final release workflow, and create the release tag only after green exact-head gates.
+1. **TH-0093 Final Migration and Release Readiness** — verify PostgreSQL 18 `h10020 → h10021 → h10020 → h10021`, complete the production deployment checklist, add exact-head release evidence, and create the release tag only after every required gate passes.
 
 ## Audit coverage deferred beyond the first release
 
