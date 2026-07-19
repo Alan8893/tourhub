@@ -4,96 +4,55 @@ Status date: 2026-07-19
 
 ## Product goal
 
-Deliver and operate the approved local ERP release for one tourist club without changing the modular-monolith architecture or the accepted single-club product boundary.
+Operate and improve the released local ERP for one tourist club without changing the modular-monolith architecture, single-club boundary, or immutable v0.1.0 tag.
 
 ```text
-Project preparation baseline
-  → Production-like Docker runtime
-  → Product completeness audit
-  → System Settings foundation
-  → Access foundation
-  → Working mail delivery
-  → Multi-user operational readiness
-  → Recipe ownership foundation
-  → Recipe publication and moderation
-  → Dish recipe variants and generation modes
-  → Actor-aware audit foundation
-  → Consolidated Russian exports
-  → Central alcohol prohibition
-  → Product acceptance and feature freeze
-  → Final migration and release readiness
+Released first-release sequence
   → v0.1.0
+  → Post-release semantic audit coverage
+      → TH-0094 Project and Menu Audit Instrumentation
 ```
 
-## RELEASED FIRST-RELEASE SEQUENCE
+## RELEASED — v0.1.0
 
-### Infrastructure, preparation, and operations
+The complete first-release sequence is delivered through TH-0093 and tagged at exact commit `8bcc2d2d9414d812d81634330034b15121c8442f`.
 
-- complete guided preparation from Project creation through shopping, equipment, readiness, and Russian documents;
-- installation, update, backup, restore, recovery, production-like images, health checks, same-origin API proxy, restart persistence, LAN access, and cleanup validation;
-- PostgreSQL 18 and Redis remain internal to the release network.
+Released capabilities include:
 
-### System Settings, Access, and mail — PR #84 through PR #95
+- complete guided Project preparation through shopping, equipment, readiness, consolidated Russian PDF/XLSX, compatibility files, and ZIP;
+- production-like local runtime, backup/restore, recovery, health, LAN access, and restart persistence;
+- typed System Settings, invitation-only Access, server sessions, roles, users, SMTP delivery, and multi-user readiness;
+- CLUB/PERSONAL Recipe ownership, lifecycle/moderation, Dish variants, generation modes, and persisted assignment Recipes;
+- append-only actor-aware AuditEvent foundation with user-access and Recipe moderation events;
+- complete Project export contract;
+- centralized no-exceptions alcohol policy and reversible `h10021` archival migration;
+- Product Acceptance, feature freeze, final PostgreSQL cycle, deployment checklist, exact-head release gates, and tag `v0.1.0`.
 
-- typed settings owners and responsive `/settings` surface (`h10008`–`h10013`);
-- Administrator bootstrap, sessions, invitations, users, roles, and preparation authorization (`h10014`–`h10016`);
-- working SMTP delivery with manual invitation-link fallback;
-- multiple sessions, immediate role propagation, deactivation revocation, protected-401 handling, exact route return, and visible current role.
+## ACTIVE POST-RELEASE
 
-### Recipe ownership, moderation, and Dish variants — TH-0086 through TH-0088
+### TH-0094 — Project and Menu Audit Instrumentation
 
-- CLUB/PERSONAL ownership and nested authorization (`h10017`);
-- lifecycle `draft`, `submitted`, `rejected`, and `published` with row-locked moderation (`h10018`);
-- ordered Dish Recipe variants with one published CLUB default (`h10019`);
-- three Project generation modes, private PERSONAL variants, deterministic rotation, persisted assignment Recipe snapshots, and assignment-based shopping/equipment calculations.
+Goal: implement the highest-priority remaining Product Spec audit coverage through the existing ADR-023 foundation.
 
-### Actor-aware audit foundation — TH-0089 / PR #99
+Planned coverage:
 
-- append-only `AuditEvent` persistence and migration `h10020`;
-- actor identity snapshots, bounded secret filtering, semantic user-access and Recipe moderation events;
-- immutable moderation history, Administrator filtering, and responsive Audit UI.
+- Project creation and supported Project parameter changes;
+- participant-count changes represented in safe before/after snapshots;
+- menu generation and regeneration;
+- manual MealSlot Dish add, replace, and remove operations;
+- authenticated actor snapshots;
+- semantic snake_case actions and explicit entity/context IDs;
+- business mutation and AuditEvent in one transaction;
+- existing Administrator Audit API/UI compatibility;
+- no migration, no new menu capability, and Alembic head `h10021`.
 
-### Consolidated Russian exports — TH-0090 / PR #100
+## Deferred after TH-0094
 
-- complete Project PDF and workbook sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование`;
-- persisted assignment Recipes, purchasing/checklist state, equipment, warnings, comments, and one immutable branding snapshot;
-- complete downloads plus compatibility endpoints and ZIP artifacts.
+### Remaining audit coverage
 
-### Central alcohol prohibition — TH-0091 / PR #101
-
-- one normalized complete-word Backend policy for Russian/English alcohol terms;
-- one HTTP 422 boundary across Product, Recipe, Dish, Recipe lifecycle, and Product/Recipe CSV preview/apply;
-- migration `h10021` archives existing prohibited Products, Recipes, and default Dishes while retaining historical relationships;
-- policy markers distinguish automatic archival and prevent Recipe restore;
-- false-positive boundaries such as `ромашка`, `пивные дрожжи`, and `винный уксус` remain allowed.
-
-### Product acceptance and feature freeze — TH-0092 / PR #102
-
-- machine-readable accepted release-scope manifest with evidence and architecture guards;
-- dedicated manifest, selected Backend API/migration, and six critical Chrome scenarios;
-- approved capabilities accepted and optional gaps explicitly deferred as non-blocking;
-- first-release scope feature frozen at Alembic `h10021`.
-
-### Final migration and release readiness — TH-0093 / PR #103
-
-- machine-readable release contract for tag `v0.1.0`;
-- real PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` cycle with allowed, prohibited, manually archived, non-default variant, and historical assignment data;
-- one Alembic head and final revision `h10021`;
-- versioned deployment checklist, release notes, and backup-based rollback boundary;
-- Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, and Docker Release Runtime on pushes to `main`;
-- exact-head final workflow that creates lightweight tag `v0.1.0` only after every required merged-SHA workflow succeeds.
-
-## POST-RELEASE SELECTION
-
-No next product capability is selected automatically. The Product Owner must choose a separate post-release task from the documented debt or approve a new priority. The v0.1.0 release baseline remains unchanged until that decision.
-
-## Deferred non-blocking priorities
-
-### Audit coverage
-
-- project creation/update/preparation;
-- menu generation and manual MealSlot changes;
-- System Settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation writes;
+- System Settings and mail operations;
+- invitation creation, revocation, acceptance, and delivery results;
+- catalogue/import, shopping, equipment, and document-generation writes;
 - audit export, retention UI, SIEM, undo, and replay.
 
 ### Product and operations
@@ -105,4 +64,4 @@ No next product capability is selected automatically. The Product Owner must cho
 - additional same-origin request hardening only if deployment expands beyond the trusted-LAN model;
 - external identity providers and MFA.
 
-Multi-tenant support and microservices remain prohibited.
+Multi-tenant support and microservices remain prohibited. No deferred item becomes active without a separate task.
