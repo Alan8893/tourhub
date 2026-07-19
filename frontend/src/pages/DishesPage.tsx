@@ -46,6 +46,10 @@ import {
   toDishWriteInput,
   type MealRoleDraft,
 } from "@/features/dish/model/dishEditor";
+import {
+  formatDishGeneratorState,
+  getDishGeneratorState,
+} from "@/features/dish/model/dishGeneratorReadiness";
 import { useRecipes } from "@/features/recipe/hooks/useRecipes";
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -84,6 +88,9 @@ export default function DishesPage() {
     (recipe) => recipe.scope === "club" && recipe.lifecycle_status === "published",
   );
   const mutation = dialogMode === "create" ? createMutation : updateMutation;
+  const selectedGeneratorState = dishQuery.data
+    ? getDishGeneratorState(dishQuery.data)
+    : null;
 
   useEffect(() => {
     setRoleDialogOpen(false);
@@ -105,10 +112,14 @@ export default function DishesPage() {
     const defaultRecipeId = dishQuery.data.recipe.is_archived ? "" : dishQuery.data.recipe.id;
     setName(dishQuery.data.name);
     setRecipeId(defaultRecipeId);
-    setRecipeIds(uniqueRecipeIds(
-      defaultRecipeId,
-      dishQuery.data.recipes.filter((recipe) => !recipe.is_archived).map((recipe) => recipe.id),
-    ));
+    setRecipeIds(
+      uniqueRecipeIds(
+        defaultRecipeId,
+        dishQuery.data.recipes
+          .filter((recipe) => !recipe.is_archived)
+          .map((recipe) => recipe.id),
+      ),
+    );
     setFormError(null);
     updateMutation.reset();
     setDialogMode("edit");
@@ -157,10 +168,18 @@ export default function DishesPage() {
 
   return (
     <Stack spacing={3}>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between">
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        justifyContent="space-between"
+      >
         <Box>
-          <Typography variant="h4" component="h1">Блюда</Typography>
-          <Typography color="text.secondary">Каталог блюд, вариантов рецептов и ролей в составе меню.</Typography>
+          <Typography variant="h4" component="h1">
+            Блюда
+          </Typography>
+          <Typography color="text.secondary">
+            Каталог блюд, вариантов рецептов и ролей в составе меню.
+          </Typography>
         </Box>
         <Button
           variant="contained"
@@ -176,52 +195,139 @@ export default function DishesPage() {
           Для создания блюда нужен хотя бы один опубликованный клубный рецепт.
         </Alert>
       )}
-      {dishesQuery.isLoading && <Stack alignItems="center" py={6}><CircularProgress /></Stack>}
-      {dishesQuery.isError && <Alert severity="error">Не удалось загрузить каталог блюд.</Alert>}
+      {dishesQuery.isLoading && (
+        <Stack alignItems="center" py={6}>
+          <CircularProgress />
+        </Stack>
+      )}
+      {dishesQuery.isError && (
+        <Alert severity="error">Не удалось загрузить каталог блюд.</Alert>
+      )}
       {dishesQuery.isSuccess && dishes.length === 0 && (
-        <Alert severity="info">Блюд пока нет. Создайте первое блюдо.</Alert>
+        <Alert severity="info">Блюд пока нет. Опубликуйте рецепт или создайте блюдо.</Alert>
       )}
 
       {dishes.length > 0 && (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(260px, 360px) 1fr" }, gap: 3 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "minmax(260px, 360px) 1fr" },
+            gap: 3,
+          }}
+        >
           <Paper variant="outlined">
             <List disablePadding>
-              {dishes.map((dish, index) => (
-                <Box key={dish.id}>
-                  {index > 0 && <Divider />}
-                  <ListItemButton selected={dish.id === id} onClick={() => navigate(`/dishes/${dish.id}`)}>
-                    <ListItemText
-                      primary={dish.name}
-                      secondary={`${dish.recipe.name} · ${dish.recipes.length} вариантов · ${formatMealRoleSummary(dish.meal_roles)}`}
-                    />
-                  </ListItemButton>
-                </Box>
-              ))}
+              {dishes.map((dish, index) => {
+                const generatorState = getDishGeneratorState(dish);
+                return (
+                  <Box key={dish.id}>
+                    {index > 0 && <Divider />}
+                    <ListItemButton
+                      selected={dish.id === id}
+                      onClick={() => navigate(`/dishes/${dish.id}`)}
+                    >
+                      <ListItemText
+                        primary={dish.name}
+                        secondaryTypographyProps={{ component: "div" }}
+                        secondary={(
+                          <Stack spacing={0.75} mt={0.5} alignItems="flex-start">
+                            <Typography variant="body2" color="text.secondary">
+                              {dish.recipe.name} · {dish.recipes.length} вариантов ·{" "}
+                              {formatMealRoleSummary(dish.meal_roles)}
+                            </Typography>
+                            <Chip
+                              size="small"
+                              color={generatorState === "ready" ? "success" : "warning"}
+                              variant={generatorState === "ready" ? "filled" : "outlined"}
+                              label={formatDishGeneratorState(generatorState)}
+                            />
+                          </Stack>
+                        )}
+                      />
+                    </ListItemButton>
+                  </Box>
+                );
+              })}
             </List>
           </Paper>
 
           <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, minHeight: 220 }}>
-            {!id && <Typography color="text.secondary">Выберите блюдо для просмотра.</Typography>}
-            {id && dishQuery.isLoading && <Stack alignItems="center" py={5}><CircularProgress /></Stack>}
-            {id && dishQuery.isError && <Alert severity="error">Не удалось загрузить блюдо.</Alert>}
-            {dishQuery.data && (
+            {!id && (
+              <Typography color="text.secondary">Выберите блюдо для просмотра.</Typography>
+            )}
+            {id && dishQuery.isLoading && (
+              <Stack alignItems="center" py={5}>
+                <CircularProgress />
+              </Stack>
+            )}
+            {id && dishQuery.isError && (
+              <Alert severity="error">Не удалось загрузить блюдо.</Alert>
+            )}
+            {dishQuery.data && selectedGeneratorState && (
               <Stack spacing={2}>
                 {roleFeedback && <Alert severity="success">{roleFeedback}</Alert>}
-                <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={2}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  justifyContent="space-between"
+                  spacing={2}
+                >
                   <Box>
-                    <Typography variant="h5">{dishQuery.data.name}</Typography>
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={1} mt={1} alignItems={{ sm: "center" }}>
-                      <Typography color="text.secondary">Рецепт: {dishQuery.data.recipe.name}</Typography>
+                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
+                      <Typography variant="h5">{dishQuery.data.name}</Typography>
+                      <Chip
+                        size="small"
+                        color={selectedGeneratorState === "ready" ? "success" : "warning"}
+                        label={formatDishGeneratorState(selectedGeneratorState)}
+                      />
+                    </Stack>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1}
+                      mt={1}
+                      alignItems={{ sm: "center" }}
+                    >
+                      <Typography color="text.secondary">
+                        Рецепт: {dishQuery.data.recipe.name}
+                      </Typography>
                       <Chip size="small" label="Основной клубный" />
-                      {dishQuery.data.recipe.is_archived && <Chip size="small" color="warning" label="Рецепт в архиве" />}
+                      {dishQuery.data.recipe.is_archived && (
+                        <Chip size="small" color="warning" label="Рецепт в архиве" />
+                      )}
                     </Stack>
                   </Box>
-                  <Button variant="outlined" onClick={openEdit}>Изменить</Button>
+                  <Button variant="outlined" onClick={openEdit}>
+                    Изменить
+                  </Button>
                 </Stack>
-                {dishQuery.data.recipe.is_archived && (
-                  <Alert severity="warning">Чтобы сохранить изменения, выберите активный опубликованный клубный рецепт.</Alert>
+
+                {selectedGeneratorState === "not_configured" && (
+                  <Alert severity="warning">
+                    <Stack spacing={1} alignItems="flex-start">
+                      <Typography variant="body2">
+                        Блюдо уже доступно для ручного выбора, но не участвует в автогенерации,
+                        пока не назначены роли и допустимые приёмы пищи.
+                      </Typography>
+                      <Button
+                        size="small"
+                        color="warning"
+                        variant="outlined"
+                        onClick={openRoleEditor}
+                      >
+                        Настроить генератор
+                      </Button>
+                    </Stack>
+                  </Alert>
                 )}
-                <Button onClick={() => navigate(`/recipes/${dishQuery.data.recipe.id}`)} sx={{ alignSelf: "flex-start" }}>
+
+                {dishQuery.data.recipe.is_archived && (
+                  <Alert severity="warning">
+                    Чтобы сохранить изменения, выберите активный опубликованный клубный рецепт.
+                  </Alert>
+                )}
+                <Button
+                  onClick={() => navigate(`/recipes/${dishQuery.data.recipe.id}`)}
+                  sx={{ alignSelf: "flex-start" }}
+                >
                   Открыть рецепт
                 </Button>
 
@@ -231,7 +337,8 @@ export default function DishesPage() {
                   <Box>
                     <Typography variant="h6">Варианты рецепта</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Генератор выбирает один из этих вариантов по режиму конкретного похода и сохраняет точный выбор в меню.
+                      Генератор выбирает один из этих вариантов по режиму конкретного похода и
+                      сохраняет точный выбор в меню.
                     </Typography>
                   </Box>
                   <Stack spacing={1}>
@@ -248,14 +355,29 @@ export default function DishesPage() {
                             <Typography variant="body2" color="text.secondary">
                               {recipe.scope === "club"
                                 ? "Клубный рецепт"
-                                : `Личный рецепт${recipe.owner_display_name ? ` · ${recipe.owner_display_name}` : ""}`}
+                                : `Личный рецепт${
+                                    recipe.owner_display_name
+                                      ? ` · ${recipe.owner_display_name}`
+                                      : ""
+                                  }`}
                             </Typography>
                           </Box>
                           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                             {recipe.is_default && <Chip size="small" label="Основной" />}
-                            <Chip size="small" variant="outlined" label={recipe.scope === "club" ? "CLUB" : "PERSONAL"} />
-                            {recipe.is_archived && <Chip size="small" color="warning" label="Архив" />}
-                            <Button size="small" onClick={() => navigate(`/recipes/${recipe.id}`)}>Открыть</Button>
+                            <Chip
+                              size="small"
+                              variant="outlined"
+                              label={recipe.scope === "club" ? "CLUB" : "PERSONAL"}
+                            />
+                            {recipe.is_archived && (
+                              <Chip size="small" color="warning" label="Архив" />
+                            )}
+                            <Button
+                              size="small"
+                              onClick={() => navigate(`/recipes/${recipe.id}`)}
+                            >
+                              Открыть
+                            </Button>
                           </Stack>
                         </Stack>
                       </Paper>
@@ -266,26 +388,43 @@ export default function DishesPage() {
                 <Divider />
 
                 <Stack spacing={1.5}>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} justifyContent="space-between" alignItems={{ sm: "center" }}>
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1.5}
+                    justifyContent="space-between"
+                    alignItems={{ sm: "center" }}
+                  >
                     <Box>
                       <Typography variant="h6">Роли в меню</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Роль задаёт назначение блюда, а приёмы пищи — где генератор вправе его использовать.
+                        Роль задаёт назначение блюда, а приёмы пищи — где генератор вправе его
+                        использовать.
                       </Typography>
                     </Box>
-                    <Button variant="outlined" onClick={openRoleEditor}>Настроить роли</Button>
+                    <Button variant="outlined" onClick={openRoleEditor}>
+                      Настроить роли
+                    </Button>
                   </Stack>
 
                   {dishQuery.data.meal_roles.length === 0 ? (
                     <Alert severity="info">
-                      Роли не назначены. Блюдо доступно для ручного выбора, но не будет участвовать в ролевой автогенерации.
+                      Роли не назначены. Блюдо доступно для ручного выбора, но не будет участвовать
+                      в ролевой автогенерации.
                     </Alert>
                   ) : (
-                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ minWidth: 0 }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      useFlexGap
+                      flexWrap="wrap"
+                      sx={{ minWidth: 0 }}
+                    >
                       {dishQuery.data.meal_roles.map((assignment) => (
                         <Chip
                           key={assignment.role}
-                          label={`${getMealRoleOption(assignment.role).shortLabel}: ${formatMealTypeSummary(assignment.allowed_meal_types)}${assignment.is_repeatable ? " · можно повторять" : ""}`}
+                          label={`${getMealRoleOption(assignment.role).shortLabel}: ${formatMealTypeSummary(
+                            assignment.allowed_meal_types,
+                          )}${assignment.is_repeatable ? " · можно повторять" : ""}`}
                           sx={{
                             maxWidth: "100%",
                             height: "auto",
@@ -306,14 +445,29 @@ export default function DishesPage() {
         </Box>
       )}
 
-      <Dialog open={dialogMode !== null} onClose={mutation.isPending ? undefined : () => setDialogMode(null)} fullWidth maxWidth="sm">
-        <DialogTitle>{dialogMode === "create" ? "Новое блюдо" : "Изменить блюдо"}</DialogTitle>
+      <Dialog
+        open={dialogMode !== null}
+        onClose={mutation.isPending ? undefined : () => setDialogMode(null)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          {dialogMode === "create" ? "Новое блюдо" : "Изменить блюдо"}
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
             {(formError || mutation.isError) && (
-              <Alert severity="error">{formError ?? getErrorMessage(mutation.error, "Не удалось сохранить блюдо.")}</Alert>
+              <Alert severity="error">
+                {formError ?? getErrorMessage(mutation.error, "Не удалось сохранить блюдо.")}
+              </Alert>
             )}
-            <TextField label="Название" value={name} onChange={(event) => setName(event.target.value)} autoFocus fullWidth />
+            <TextField
+              label="Название"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoFocus
+              fullWidth
+            />
             <TextField
               select
               label="Основной клубный рецепт"
@@ -326,7 +480,11 @@ export default function DishesPage() {
               helperText="Основной вариант всегда должен быть опубликованным клубным рецептом."
               fullWidth
             >
-              {defaultRecipes.map((recipe) => <MenuItem key={recipe.id} value={recipe.id}>{recipe.name}</MenuItem>)}
+              {defaultRecipes.map((recipe) => (
+                <MenuItem key={recipe.id} value={recipe.id}>
+                  {recipe.name}
+                </MenuItem>
+              ))}
             </TextField>
             <TextField
               select
@@ -355,9 +513,13 @@ export default function DishesPage() {
                   <Checkbox checked={recipeIds.includes(recipe.id)} />
                   <ListItemText
                     primary={recipe.name}
-                    secondary={recipe.scope === "club"
-                      ? "Клубный рецепт"
-                      : `Личный рецепт${recipe.owner_display_name ? ` · ${recipe.owner_display_name}` : ""}`}
+                    secondary={
+                      recipe.scope === "club"
+                        ? "Клубный рецепт"
+                        : `Личный рецепт${
+                            recipe.owner_display_name ? ` · ${recipe.owner_display_name}` : ""
+                          }`
+                    }
                   />
                 </MenuItem>
               ))}
@@ -365,8 +527,16 @@ export default function DishesPage() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogMode(null)} disabled={mutation.isPending}>Отмена</Button>
-          <Button variant="contained" onClick={() => void submit()} disabled={mutation.isPending || !recipeId}>Сохранить</Button>
+          <Button onClick={() => setDialogMode(null)} disabled={mutation.isPending}>
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void submit()}
+            disabled={mutation.isPending || !recipeId}
+          >
+            Сохранить
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -376,23 +546,27 @@ export default function DishesPage() {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Роли блюда{dishQuery.data ? ` «${dishQuery.data.name}»` : ""}</DialogTitle>
+        <DialogTitle>
+          Роли блюда{dishQuery.data ? ` «${dishQuery.data.name}»` : ""}
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
             {(roleError || roleMutation.isError) && (
               <Alert severity="error">
-                {roleError ?? getErrorMessage(roleMutation.error, "Не удалось сохранить роли блюда.")}
+                {roleError ??
+                  getErrorMessage(roleMutation.error, "Не удалось сохранить роли блюда.")}
               </Alert>
             )}
             <Alert severity="info">
-              Для каждой роли обязательно укажите допустимые приёмы пищи. Борщ можно ограничить обедом и ужином, а кашу — завтраком.
+              Для каждой роли обязательно укажите допустимые приёмы пищи. Борщ можно ограничить
+              обедом и ужином, а кашу — завтраком.
             </Alert>
             <FormGroup sx={{ gap: 1.5 }}>
               {MEAL_ROLE_OPTIONS.map((option) => {
                 const item = roleDraft[option.role];
-                const mealTypeOptions = MEAL_TYPE_OPTIONS.filter(({ mealType }) => (
-                  option.allowedMealTypes.includes(mealType)
-                ));
+                const mealTypeOptions = MEAL_TYPE_OPTIONS.filter(({ mealType }) =>
+                  option.allowedMealTypes.includes(mealType),
+                );
                 return (
                   <Paper key={option.role} variant="outlined" sx={{ p: 1.5 }}>
                     <FormControlLabel
@@ -400,16 +574,20 @@ export default function DishesPage() {
                       control={(
                         <Checkbox
                           checked={item.selected}
-                          onChange={(event) => setRoleDraft((current) => (
-                            setMealRoleSelected(current, option.role, event.target.checked)
-                          ))}
+                          onChange={(event) =>
+                            setRoleDraft((current) =>
+                              setMealRoleSelected(current, option.role, event.target.checked),
+                            )
+                          }
                           inputProps={{ "aria-label": `Назначить роль «${option.label}»` }}
                         />
                       )}
                       label={(
                         <Box pt={0.75}>
                           <Typography fontWeight={600}>{option.label}</Typography>
-                          <Typography variant="body2" color="text.secondary">{option.description}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {option.description}
+                          </Typography>
                         </Box>
                       )}
                     />
@@ -427,14 +605,16 @@ export default function DishesPage() {
                                 <Checkbox
                                   size="small"
                                   checked={item.allowedMealTypes[mealTypeOption.mealType]}
-                                  onChange={(event) => setRoleDraft((current) => (
-                                    setMealRoleMealTypeSelected(
-                                      current,
-                                      option.role,
-                                      mealTypeOption.mealType,
-                                      event.target.checked,
+                                  onChange={(event) =>
+                                    setRoleDraft((current) =>
+                                      setMealRoleMealTypeSelected(
+                                        current,
+                                        option.role,
+                                        mealTypeOption.mealType,
+                                        event.target.checked,
+                                      ),
                                     )
-                                  ))}
+                                  }
                                   inputProps={{
                                     "aria-label": `Разрешить роль «${option.label}» для приёма пищи «${mealTypeOption.label}»`,
                                   }}
@@ -453,10 +633,14 @@ export default function DishesPage() {
                           size="small"
                           checked={item.isRepeatable}
                           disabled={!item.selected}
-                          onChange={(event) => setRoleDraft((current) => (
-                            setMealRoleRepeatable(current, option.role, event.target.checked)
-                          ))}
-                          inputProps={{ "aria-label": `Разрешить повторение роли «${option.label}»` }}
+                          onChange={(event) =>
+                            setRoleDraft((current) =>
+                              setMealRoleRepeatable(current, option.role, event.target.checked),
+                            )
+                          }
+                          inputProps={{
+                            "aria-label": `Разрешить повторение роли «${option.label}»`,
+                          }}
                         />
                       )}
                       label="Разрешить повторение при автогенерации"
@@ -468,8 +652,14 @@ export default function DishesPage() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRoleDialogOpen(false)} disabled={roleMutation.isPending}>Отмена</Button>
-          <Button variant="contained" onClick={() => void submitMealRoles()} disabled={roleMutation.isPending}>
+          <Button onClick={() => setRoleDialogOpen(false)} disabled={roleMutation.isPending}>
+            Отмена
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void submitMealRoles()}
+            disabled={roleMutation.isPending}
+          >
             Сохранить роли
           </Button>
         </DialogActions>
