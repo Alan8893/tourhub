@@ -1,6 +1,6 @@
 # ADR-025 — Central Alcohol Prohibition
 
-Status: Proposed
+Status: Accepted
 
 Date: 2026-07-19
 
@@ -8,7 +8,7 @@ Date: 2026-07-19
 
 The approved Product Specification prohibits alcohol without exceptions. Product, Recipe, Dish, API, and import validation must use the same Backend rule, and existing prohibited records must be archived rather than deleted.
 
-The current Product and Dish schemas do not contain a semantic alcohol flag. Existing catalogue data therefore requires deterministic classification from persisted names/categories and Recipe composition. A naive substring search is unsafe because a short term such as `ром` must not match an unrelated word such as `ромашка`.
+Product and Dish did not contain a semantic alcohol flag. Existing catalogue data therefore requires deterministic classification from persisted names/categories and Recipe composition. Naive substring search is unsafe because `ром` must not match `ромашка`, while ordinary Russian cases such as `ромом` must be recognized.
 
 ## Decision
 
@@ -19,7 +19,8 @@ TourHub introduces one versioned Backend `AlcoholPolicy`.
 - text is normalized with Unicode NFKC, case-folding, and `ё → е`;
 - punctuation separates tokens;
 - prohibited terms match complete normalized words only;
-- the first policy vocabulary contains approved common Russian and English alcohol names/categories;
+- the versioned vocabulary contains common Russian nouns/case forms and English alcohol names/categories;
+- broad adjectives are not treated as proof by themselves, so `пивные дрожжи` and `винный уксус` are not false positives;
 - no user exceptions, overrides, or allowlists are supported.
 
 ### Runtime validation
@@ -45,7 +46,7 @@ Alembic `h10021` adds:
 The migration archives:
 
 1. Products matching name/category policy;
-2. Recipes matching their name or containing an archived prohibited Product;
+2. Recipes matching their name or containing a prohibited Product;
 3. Dishes matching their name or using a prohibited Recipe as default.
 
 Policy-archived records are retained for historical foreign keys and exports but excluded from active catalogues and new preparation selection. A valid Dish is not archived merely because one non-default variant becomes archived; that Recipe becomes unavailable for future attachment/generation.
@@ -59,5 +60,5 @@ The marker distinguishes policy archival from ordinary archive state, prevents p
 - historical Project assignments and calculations remain readable;
 - active Product and Dish catalogues require archive filtering;
 - Product/Dish archive-management UI is not added in this slice;
-- the vocabulary is intentionally explicit and versioned in code/migration rather than delegated to a fuzzy external classifier;
+- fuzzy/external classification is not part of the current release;
 - later vocabulary changes require reviewed policy and data-migration updates.
