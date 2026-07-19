@@ -12,6 +12,7 @@ from app.models.recipe_component_type import RecipeComponentType
 from app.models.recipe_lifecycle_status import RecipeLifecycleStatus
 from app.models.recipe_scope import RecipeScope
 from app.models.user import UserORM
+from app.policies.alcohol_policy import AlcoholPolicy, AlcoholPolicyViolation
 from app.services.recipe_access_service import RecipeAccessService
 
 CALCULATION_TYPES = {"per_person", "fixed_group", "package_per_people"}
@@ -23,10 +24,12 @@ class RecipeCommandService:
         self.actor = actor
 
     def create_recipe(self, name: str) -> RecipeORM:
+        normalized_name = name.strip()
+        AlcoholPolicy.require_recipe_name_allowed(normalized_name)
         is_interactive = self.actor is not None
         recipe = RecipeORM(
             id=str(uuid4()),
-            name=name.strip(),
+            name=normalized_name,
             scope=(
                 RecipeScope.PERSONAL.value
                 if is_interactive
@@ -45,8 +48,10 @@ class RecipeCommandService:
         return recipe
 
     def rename_recipe(self, recipe_id: str, name: str) -> RecipeORM:
+        normalized_name = name.strip()
+        AlcoholPolicy.require_recipe_name_allowed(normalized_name)
         recipe = self._get_editable_recipe(recipe_id)
-        recipe.name = name.strip()
+        recipe.name = normalized_name
         self._commit()
         self.session.refresh(recipe)
         return recipe
@@ -62,6 +67,11 @@ class RecipeCommandService:
     def restore_recipe(self, recipe_id: str) -> RecipeORM:
         recipe = self._get_visible_recipe(recipe_id)
         RecipeAccessService.require_restorable(recipe, self.actor)
+        if recipe.archived_by_alcohol_policy:
+            raise AlcoholPolicyViolation(
+                "Рецепт архивирован центральной политикой запрета алкоголя и не может быть восстановлен."
+            )
+        AlcoholPolicy.require_recipe_content_allowed(recipe)
         recipe.is_archived = False
         self._commit()
         self.session.refresh(recipe)
@@ -88,7 +98,8 @@ class RecipeCommandService:
         calculation_type: str,
         people_count: int | None,
     ) -> RecipeComponentORM:
-        self._get_editable_recipe(recipe_id)
+        recipe = self._get_editable_recipe(recipe_id)
+        AlcoholPolicy.require_recipe_name_allowed(recipe.name)
         self._get_product(product_id)
         self._validate_component(component_type, calculation_type, people_count)
         component = RecipeComponentORM(
@@ -117,7 +128,8 @@ class RecipeCommandService:
         calculation_type: str,
         people_count: int | None,
     ) -> RecipeComponentORM:
-        self._get_editable_recipe(recipe_id)
+        recipe = self._get_editable_recipe(recipe_id)
+        AlcoholPolicy.require_recipe_name_allowed(recipe.name)
         component = self._get_component(recipe_id, component_id)
         self._get_product(product_id)
         self._validate_component(component_type, calculation_type, people_count)
@@ -155,6 +167,7 @@ class RecipeCommandService:
         product = self.session.get(ProductORM, product_id)
         if product is None:
             raise LookupError("Product not found")
+        AlcoholPolicy.require_product_record_allowed(product)
         return product
 
     def _get_component(self, recipe_id: str, component_id: str) -> RecipeComponentORM:
