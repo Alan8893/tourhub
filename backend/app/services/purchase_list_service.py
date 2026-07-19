@@ -38,6 +38,8 @@ class PurchaseListService:
         self,
         meal_plan_id: str,
         project_id: int | None = None,
+        *,
+        commit: bool = True,
     ) -> PurchaseListORM:
         if not self.meal_plan_repository:
             raise ValueError("Meal plan repository is required")
@@ -57,6 +59,7 @@ class PurchaseListService:
             meal_plan_id,
             self.shopping_service.calculate_packaged(meal_plan),
             project_id=project_id,
+            commit=commit,
         )
 
     def create_from_packaged_shopping(
@@ -64,6 +67,8 @@ class PurchaseListService:
         meal_plan_id: str,
         shopping_result: PackagedShoppingResult,
         project_id: int | None = None,
+        *,
+        commit: bool = True,
     ) -> PurchaseListORM:
         purchase_list = PurchaseListORM(
             id=str(uuid4()),
@@ -88,8 +93,7 @@ class PurchaseListService:
                 )
             )
 
-        self.repository.commit()
-
+        self._finish_write(commit=commit)
         return purchase_list
 
     def get(self, purchase_list_id: str) -> PurchaseListORM | None:
@@ -132,3 +136,9 @@ class PurchaseListService:
             raise ValueError(f"Product not found: {product_name}")
 
         return product.id
+
+    def _finish_write(self, *, commit: bool) -> None:
+        if commit:
+            self.repository.commit()
+        else:
+            self.repository.flush()
