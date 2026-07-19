@@ -4,63 +4,56 @@ Status date: 2026-07-19
 
 ## Current phase
 
-The approved first local single-club release is feature frozen through TH-0092 / PR #102.
+TourHub v0.1.0 is release-ready at Alembic head `h10021`.
 
-TH-0093 Final Migration and Release Readiness is active. It verifies the PostgreSQL 18 downgrade/re-upgrade cycle, production-like deployment checklist, final exact-head workflow evidence, and release tag without expanding the accepted product scope.
+The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds the final PostgreSQL migration cycle, deployment checklist, machine-readable release contract, exact-head main workflows, release notes, and automated tag gate. No release-blocking product or operational task remains after the merge-triggered workflow creates `v0.1.0`.
 
 ## Verified baseline
 
-- Alembic head: `h10021`.
 - Previous Alembic revision: `h10020`.
+- Accepted and final Alembic head: `h10021`.
 - PR #84 through PR #89 delivered typed System Settings (`h10008`–`h10013`).
-- PR #90 through PR #93 delivered bootstrap, sessions, invitations, users, roles, and preparation authorization (`h10014`–`h10016`).
-- PR #94 delivered working SMTP invitation delivery.
-- PR #95 delivered multi-user operational readiness.
-- PR #96 delivered Recipe CLUB/PERSONAL ownership (`h10017`).
-- PR #97 delivered Recipe publication and moderation (`h10018`).
-- PR #98 delivered Dish Recipe variants, project generation modes, and persisted assignment Recipe snapshots (`h10019`).
+- PR #90 through PR #95 delivered Access, roles, users, preparation authorization, mail, and multi-user readiness (`h10014`–`h10016`).
+- PR #96 through PR #98 delivered Recipe ownership, moderation, Dish variants, generation modes, and assignment Recipe snapshots (`h10017`–`h10019`).
 - PR #99 delivered actor-aware append-only audit events (`h10020`).
-- PR #100 delivered complete consolidated Russian PDF/XLSX exports with no migration.
+- PR #100 delivered complete consolidated Russian PDF/XLSX exports.
 - PR #101 delivered centralized alcohol policy and existing-record archival (`h10021`).
-- TH-0092 / PR #102 accepted and froze the approved first-release scope with a versioned manifest and dedicated acceptance workflow.
+- PR #102 accepted and feature froze the first-release scope.
+- TH-0093 verifies and automates final migration/release readiness for `v0.1.0`.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Accepted first-release baseline
 
-- complete guided preparation through consolidated Russian PDF/XLSX and coordinated ZIP;
-- persisted shopping, packaging, checklist, equipment, overrides, recalculation, and reload-safe readiness;
-- installation, update, backup, restore, recovery, release images, health checks, API proxy, and restart persistence;
+- complete guided Project preparation through shopping, equipment, readiness, consolidated Russian PDF/XLSX, compatibility files, and coordinated ZIP;
+- installation, update, backup, restore, recovery, release images, health checks, same-origin API proxy, LAN access, and restart persistence;
 - responsive typed System Settings through ADR-014;
-- invitation-only Access, roles, user administration, and preparation authorization through ADR-015–ADR-018;
-- working SMTP delivery through ADR-019;
-- Recipe ownership/lifecycle/moderation through ADR-020–ADR-021;
-- ordered Recipe variants, three Project generation modes, persisted assignment Recipe snapshots, and assignment-based shopping/equipment through ADR-022;
-- append-only actor-aware AuditEvent persistence and responsive Administrator history through ADR-023;
-- complete Project PDF/XLSX export contract and compatibility package through ADR-024;
-- one versioned Backend `AlcoholPolicy` with Unicode/case normalization and complete-word matching through ADR-025;
-- Product, Recipe, Dish, Recipe lifecycle, and Product/Recipe CSV paths return one policy-owned HTTP 422 rejection;
-- Product and Dish archive state plus policy markers preserve historical relationships while excluding prohibited records from active catalogues and new preparation selection;
-- `h10021` deterministically archives prohibited Product → Recipe → default Dish records and remains reversible;
-- policy-archived Recipes cannot be restored;
-- machine-readable accepted capability evidence and explicit deferred non-blocking scope;
-- feature-freeze rules permitting only acceptance defect fixes, security fixes, final release-readiness work, and documentation corrections.
+- invitation-only Access, server-owned sessions, users, roles, preparation authorization, SMTP delivery, and multi-user operational behavior through ADR-015–ADR-019;
+- Recipe ownership, lifecycle, moderation, Dish variants, generation modes, and persisted assignment Recipe snapshots through ADR-020–ADR-022;
+- append-only actor-aware audit foundation through ADR-023;
+- complete consolidated Project export contract through ADR-024;
+- one centralized no-exceptions alcohol policy, HTTP 422 boundary, archive markers, historical preservation, and reversible `h10021` migration through ADR-025;
+- machine-readable Product Acceptance and Release Readiness evidence;
+- explicit deferred non-blocking scope and feature-freeze rules.
 
-## Active release-readiness work
+## Final release evidence
 
-1. PostgreSQL 18 `h10020 → h10021 → h10020 → h10021` migration cycle with representative data.
-2. Production-like deployment checklist verification.
-3. Final exact-head release workflow and machine-readable evidence.
-4. Release tag created only from the verified exact head.
+- PostgreSQL 18 passes `h10020 → h10021 → h10020 → h10021` against the real historical schema with allowed, prohibited, manually archived, non-default variant, and historical assignment data.
+- Alembic retains exactly one head and finishes at `h10021`.
+- `docs/DEPLOYMENT_CHECKLIST.md` defines prerequisites, secrets, backup, upgrade, health, LAN, product smoke, rollback, and operator sign-off.
+- Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, and Docker Release Runtime run on both pull requests and pushes to `main`.
+- Final Release Readiness creates lightweight tag `v0.1.0` only after those workflows pass on the exact merged `main` SHA.
+- Production rollback remains backup-based; Alembic downgrade is verification evidence rather than the normal operator rollback mechanism.
 
 ## Deferred non-blocking debt
 
-- explicit audit instrumentation for project/menu, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation write paths;
-- ownership-aware import UX beyond trusted CLUB catalogue imports;
-- Product/Dish archive-management UI and reviewed future policy-vocabulary evolution;
-- moderation notifications;
-- session administration and account recovery;
-- asynchronous delivery queues and bounce handling;
-- per-meal manual Recipe switching and preference weights beyond the approved three modes;
-- audit export, retention UI, SIEM integration, undo, and event replay;
+- explicit audit instrumentation for project/menu, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation writes;
+- ownership-aware import UX, Product/Dish archive-management UI, and reviewed policy-vocabulary evolution;
+- moderation notifications, session administration, account recovery, asynchronous delivery, and bounce handling;
+- richer Recipe metadata, per-meal Recipe switching, and preference weights;
+- audit export, retention UI, SIEM, undo, and replay;
 - participant profiles, routes/GPX, warehouse balances, procurement prices, and external aggregators;
-- encrypted configuration archives.
+- scheduled/emailed documents, signatures, and encrypted configuration archives.
+
+## Next work
+
+No post-release capability is selected automatically. The next task must be chosen explicitly from documented technical debt or a new Product Owner priority without altering the released v0.1.0 baseline.
