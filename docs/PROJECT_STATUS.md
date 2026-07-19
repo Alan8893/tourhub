@@ -6,7 +6,7 @@ Status date: 2026-07-19
 
 TourHub v0.1.0 is release-ready at Alembic head `h10021`.
 
-The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds final migration and release readiness. TH-0095 delivers the routed responsive Project workspace. TH-0097 / PR #107 adds safe shared Product catalogue editing without changing RecipeComponent quantities, persistence boundaries, or the released database head.
+The approved first local single-club release is feature frozen through TH-0092 / PR #102. TH-0093 adds final migration and release readiness. TH-0095 delivers the routed responsive Project workspace. TH-0097 adds safe shared Product catalogue editing. TH-0098 / PR #108 synchronizes every newly published CLUB Recipe into the Dish catalogue while keeping generator classification explicitly human-owned.
 
 ## Verified baseline
 
@@ -21,7 +21,8 @@ The approved first local single-club release is feature frozen through TH-0092 /
 - PR #102 accepted and feature froze the first-release scope.
 - PR #103 verified final migration/release readiness and created `v0.1.0`.
 - PR #105 replaced the long Project landing page with routed Overview, Menu, Shopping, Equipment, and Documents work areas without a migration.
-- PR #107 adds Product catalogue editing from the Recipe component workflow while preserving Product IDs and existing Recipe relationships.
+- PR #107 added Product catalogue editing while preserving Product IDs, Recipe relationships, and RecipeComponent quantities.
+- PR #108 adds transaction-owned published Recipe-to-Dish synchronization and explicit generator readiness states without a migration.
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only.
 
 ## Accepted first-release baseline
@@ -43,36 +44,41 @@ The approved first local single-club release is feature frozen through TH-0092 /
 - Alembic retains exactly one head and finishes at `h10021`.
 - `docs/DEPLOYMENT_CHECKLIST.md` defines prerequisites, secrets, backup, upgrade, health, LAN, product smoke, rollback, and operator sign-off.
 - Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, and Docker Release Runtime run on both pull requests and pushes to `main`.
-- Final Release Readiness creates lightweight tag `v0.1.0` only after those workflows pass on the exact merged `main` SHA.
+- Final Release Readiness preserves immutable tag `v0.1.0` at its recorded release commit.
 - Production rollback remains backup-based; Alembic downgrade is verification evidence rather than the normal operator rollback mechanism.
 
-## Post-release Project workspace UX
+## Delivered post-release improvements
 
-- `/projects/:id` is a compact Overview rather than one long page.
-- Menu, Shopping, Equipment, and Documents have stable section URLs.
-- Project Recipe generation mode is edited in a settings dialog.
-- Shopping uses separate calculation/packing and checklist tabs.
-- The global sidebar becomes a temporary drawer below the desktop breakpoint, including the 831 px viewport reported by the Product Owner.
-- Checklist controls remain readable on tablet/mobile widths.
-- Browser acceptance verifies no horizontal overflow at 360 px, 831 px, and 1280 px.
-- Existing preparation, reload persistence, module visibility, and complete-package download behavior remain intact.
+### Project workspace UX — TH-0095
 
-## Post-release Product catalogue editing
+- compact Overview and routed Menu, Shopping, Equipment, and Documents sections;
+- temporary navigation drawer below desktop width;
+- readable tablet/mobile checklist controls;
+- no horizontal overflow at 360 px, 831 px, and 1280 px.
+
+### Product catalogue editing — TH-0097
 
 - active Products can be updated through `PUT /products/{product_id}`;
-- name, category, catalogue unit, and package size use the same validation and central alcohol policy as creation;
 - Product IDs and Recipe relationships remain unchanged;
-- changing the Product catalogue unit does not convert or rewrite RecipeComponent amount/unit values;
-- the Recipe component dialog exposes `Изменить продукт` next to the selected Product;
-- the edit dialog warns that shared changes affect every referencing Recipe;
-- Product and Recipe queries refresh after save;
-- Backend API and real-Chrome acceptance cover update, duplicate, prohibited, missing, shared-reference, and responsive behavior.
+- changing the Product catalogue unit does not convert RecipeComponent amount/unit values;
+- the Recipe component dialog exposes `Изменить продукт` with a shared-impact warning.
+
+### Published Recipe Dish synchronization — TH-0098
+
+- publication and Dish synchronization share one SQLAlchemy transaction and rollback boundary;
+- a Recipe already attached to any Dish is not duplicated;
+- an active exact-name Dish receives the Recipe as the next variant while keeping its default and roles;
+- otherwise publication creates one active Dish with the Recipe as default and only variant;
+- newly created Dishes have zero roles and show `Не настроено для генератора`;
+- the direct `Настроить генератор` action opens the existing role editor;
+- after explicit role assignment the Dish shows `Готово для генератора` and participates in readiness coverage;
+- no role, meal type, or repeatability value is inferred automatically;
+- Backend transaction tests and focused real-Chrome acceptance cover the workflow.
 
 ## Deferred non-blocking debt
 
 - explicit audit instrumentation for project/menu, settings, mail, invitations, catalogue/import, shopping, equipment, and document-generation writes;
 - ownership-aware import UX, Product/Dish archive-management UI, and reviewed policy-vocabulary evolution;
-- automatic published Recipe-to-Dish synchronization and generator-readiness marking until TH-0098 is delivered;
 - moderation notifications, session administration, account recovery, asynchronous delivery, and bounce handling;
 - richer Recipe metadata, per-meal Recipe switching, and preference weights;
 - audit export, retention UI, SIEM, undo, and replay;
@@ -81,4 +87,4 @@ The approved first local single-club release is feature frozen through TH-0092 /
 
 ## Next work
 
-TH-0098 Published Recipe Dish Synchronization is the next Product Owner-approved task after TH-0097 merges. It must remain a separate transactionally tested PR and must not infer generator roles automatically.
+No additional post-release capability is selected automatically after TH-0098. The next task requires an explicit Product Owner decision and must preserve the released architecture, immutable tag, and Alembic head unless separately approved.
