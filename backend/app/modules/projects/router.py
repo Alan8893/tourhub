@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.database import get_db
+from app.models.user import UserORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.modules.projects.schemas import (
     ProjectCreateRequest,
@@ -52,9 +54,10 @@ def _project_response(project) -> ProjectResponse:
 def create_project(
     request: ProjectCreateRequest,
     db: Session = Depends(get_db),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> ProjectResponse:
     try:
-        project = ProjectService(ProjectRepository(db)).create_project(
+        project = ProjectService(ProjectRepository(db), actor=actor).create_project(
             name=request.name,
             participants=request.participants,
             days=request.days,
@@ -88,10 +91,12 @@ def update_project_participants(
     project_id: int,
     request: ProjectParticipantsUpdateRequest,
     db: Session = Depends(get_db),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> ProjectResponse:
     service = ProjectParticipantRecalculationService(
         db,
         MealPlanShoppingService(ShoppingListService(db)),
+        actor=actor,
     )
     try:
         project = service.update_participants(project_id, request.participants)
@@ -107,9 +112,13 @@ def update_project_recipe_generation_mode(
     project_id: int,
     request: ProjectRecipeGenerationModeUpdateRequest,
     db: Session = Depends(get_db),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> ProjectResponse:
     try:
-        project = ProjectService(ProjectRepository(db)).update_recipe_generation_mode(
+        project = ProjectService(
+            ProjectRepository(db),
+            actor=actor,
+        ).update_recipe_generation_mode(
             project_id,
             request.recipe_generation_mode.value,
         )
@@ -120,7 +129,11 @@ def update_project_recipe_generation_mode(
 
 
 @router.post("/{project_id}/prepare")
-def prepare_project(project_id: int, db: Session = Depends(get_db)):
+def prepare_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    actor: UserORM = Depends(require_preparation_access),
+):
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -143,6 +156,8 @@ def prepare_project(project_id: int, db: Session = Depends(get_db)):
                 EquipmentListRepository(db),
                 meal_plan_repository,
             ),
+            session=db,
+            actor=actor,
         )
         return preparation_service.prepare_project(project)
     except ValueError as error:
