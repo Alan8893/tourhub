@@ -7,9 +7,8 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
-| TH-0098 | Published Recipe Dish Synchronization | IN PROGRESS | ./active/TH-0098-published-recipe-dish-synchronization.md |
 
-TH-0098 is the active Product Owner-approved post-release catalogue workflow. It starts from merged TH-0097 and must not infer generator roles automatically.
+TH-0098 is complete. No additional post-release capability is selected automatically; the next task requires an explicit Product Owner decision.
 
 ## First-release sequence
 
@@ -72,6 +71,7 @@ The complete first-release sequence is delivered through TH-0093. The feature-fr
 | TH-0095 | Project Workspace Navigation and Responsive Layout | DONE |
 | TH-0096 | Immutable Release Tag Lifecycle | DONE |
 | TH-0097 | Product Catalogue Editing | DONE |
+| TH-0098 | Published Recipe Dish Synchronization | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
