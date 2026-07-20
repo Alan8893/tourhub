@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-07-19
+Last updated: 2026-07-20
 
 ## Purpose
 
@@ -47,7 +47,20 @@ AuditEvent
   └─ created_at
 ```
 
-Actor identity fields are snapshots. Safe JSON is recursively bounded and removes credential/session/secret keys. AuditEvent is added to the same transaction as its business mutation. Normal update/delete operations are rejected. Current semantic actions cover user role/activation and Recipe submit/publish/reject transitions; later domain writes require explicit instrumentation.
+Actor identity fields are snapshots. Safe JSON is recursively bounded and removes credential/session/secret keys. AuditEvent is added to the same transaction as its business mutation when the write is database-transactional. Normal update/delete operations are rejected.
+
+Current semantic actions cover:
+
+- user role and active-state administration;
+- Recipe submit, publish, and reject transitions;
+- Project creation, participant recalculation, generation-mode changes, and full preparation;
+- initial/regenerated MealPlan creation and manual MealSlot Dish add/remove/replace;
+- Club, Appearance, Document Appearance, Module, Invitation Policy, and Mail Settings changes;
+- Administrator SMTP connection checks and fixed test-message outcomes.
+
+Settings events use entity type `system_settings` with the typed section as entity ID. They include only changed normalized fields and versions, and no-op saves create no event. Club image changes contain only configured state, MIME type, and byte size. Mail operation events use entity type `mail` and contain bounded status, attempts, optional recipient, and non-secret operation context. SMTP passwords, environment values, protocol transcripts, exception details, invitation values, session values, tokens, and arbitrary request bodies are excluded.
+
+Later domain writes still require explicit instrumentation. Automatic ORM-wide auditing remains rejected.
 
 ## Project and MealPlan
 
@@ -167,7 +180,7 @@ Implemented document behavior:
 - the coordinated ZIP includes complete and compatibility artifacts;
 - missing preparation prevents a partial complete export.
 
-MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with manual fallback. Queues, scheduled retries, delivery history, templates, attachments, and bounce handling are deferred.
+MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with manual fallback. Settings changes and Administrator connection/test outcomes now append safe actor-attributed AuditEvents. Queues, scheduled retries, delivery history, templates, attachments, and bounce handling are deferred.
 
 ## Future domains
 
