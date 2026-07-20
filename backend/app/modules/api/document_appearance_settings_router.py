@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_administrator
 from app.core.database import get_db
 from app.models.document_appearance_settings import DocumentAppearanceSettingsORM
+from app.models.user import UserORM
 from app.schemas.document_appearance_settings import (
     DocumentAppearanceHistoryResponse,
     DocumentAppearanceSettingsResponse,
@@ -14,6 +16,7 @@ from app.services.club_settings_service import SettingsVersionConflictError
 from app.services.document_appearance_settings_service import (
     DocumentAppearanceSettingsService,
 )
+from app.services.settings_audit_service import SettingsAuditService
 
 router = APIRouter(prefix="/settings/documents", tags=["settings"])
 
@@ -51,10 +54,14 @@ def get_document_appearance_settings(
 @router.put("", response_model=DocumentAppearanceSettingsResponse)
 def update_document_appearance_settings(
     request: DocumentAppearanceSettingsUpdateRequest,
+    administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> DocumentAppearanceSettingsResponse:
     service = DocumentAppearanceSettingsService(db)
     try:
+        current = service.get()
+        plan = SettingsAuditService.plan_document_update(current, request)
+        SettingsAuditService(db, administrator).stage(plan)
         settings = service.update(request)
     except SettingsVersionConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
