@@ -4,6 +4,51 @@ export const auditRequests = [];
 
 const events = [
   {
+    id: 10,
+    actor_user_id: 12,
+    actor_display_name: "Ирина Инструктор",
+    actor_email: "irina@club.example",
+    actor_role: "instructor",
+    action: "invitation_accepted",
+    entity_type: "invitation",
+    entity_id: "41",
+    before_data: {
+      recipient_domain: "club.example",
+      role: "instructor",
+      status: "active",
+      accepted_user_id: null,
+    },
+    after_data: {
+      recipient_domain: "club.example",
+      role: "instructor",
+      status: "consumed",
+      accepted_user_id: 12,
+    },
+    context_data: { created_user_id: 12 },
+    created_at: "2026-07-20T09:10:00Z",
+  },
+  {
+    id: 9,
+    actor_user_id: 1,
+    actor_display_name: "Анна Администратор",
+    actor_email: "admin@tourhub.local",
+    actor_role: "administrator",
+    action: "invitation_delivery_result",
+    entity_type: "invitation",
+    entity_id: "41",
+    before_data: null,
+    after_data: {
+      status: "sent",
+      attempts: 1,
+      recipient_domain: "club.example",
+    },
+    context_data: {
+      operation: "create",
+      role: "instructor",
+    },
+    created_at: "2026-07-20T09:09:00Z",
+  },
+  {
     id: 8,
     actor_user_id: 1,
     actor_display_name: "Анна Администратор",
