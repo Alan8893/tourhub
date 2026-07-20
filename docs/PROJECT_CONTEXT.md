@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-20
 
-Status: Post-release invitation lifecycle and delivery-result audit coverage delivered — TH-0102
+Status: Post-release operational write audit coverage delivered — TH-0103
 
 ## 1. Product boundary
 
@@ -41,7 +41,7 @@ Administrator bootstrap and invitations
   → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, TH-0098 closes the publication-to-Dish workflow, TH-0099 adds Project audit coverage, TH-0100 adds transactional audit coverage for menu generation/regeneration and manual MealSlot changes, TH-0101 adds System Settings and Administrator mail-operation audit coverage, and TH-0102 adds invitation lifecycle and automatic delivery-result audit coverage.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, TH-0098 closes the publication-to-Dish workflow, and TH-0099 through TH-0103 extend semantic audit coverage across Project, Menu/MealSlot, System Settings/mail, invitations, catalogue/import, shopping, equipment, and documents.
 
 ## 3. Architecture
 
@@ -69,7 +69,7 @@ Frontend owns presentation, responsive navigation, Project workspace routing, Pr
 - Redis configuration;
 - deterministic calculation, document, audit, and catalogue-policy boundaries.
 
-Backend owns validation, persistence, identity/authorization, invitation lifecycle, Product policy, Recipe ownership/lifecycle, published Recipe-to-Dish synchronization, Dish variant selection, menu generation, manual MealSlot mutation, catalogue import, central alcohol policy, recalculation, mail boundaries, document generation, and semantic audit rules in owning transactions.
+Backend owns validation, persistence, identity/authorization, invitation lifecycle, Product policy, Recipe ownership/lifecycle, published Recipe-to-Dish synchronization, Dish variant selection, menu generation, manual MealSlot mutation, catalogue import, central alcohol policy, shopping/checklist/equipment recalculation, mail boundaries, document generation, and semantic audit rules in owning transactions.
 
 ### Runtime
 
@@ -96,11 +96,11 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 ### Product catalogue, Recipe publication, and Dish catalogue
 
 - active shared Products can be created and edited without changing IDs or Recipe relationships;
+- Product and Recipe CSV preview/apply use the central alcohol policy and atomic writes;
 - Recipe CLUB/PERSONAL ownership, owner-aware visibility, submission/rejection/publication, and row-locked moderation;
 - publication and Dish synchronization occur in one SQLAlchemy transaction;
 - existing attachments are not duplicated and active exact-name Dishes receive ordered variants without changing default or roles;
 - otherwise publication creates one role-less Dish with the Recipe as default and only variant;
-- role-less Dishes display `Не настроено для генератора`; configured Dishes display `Готово для генератора`;
 - no role, meal type, or repeatability value is inferred from Recipe content;
 - exact selected Recipe persists on every meal assignment;
 - shopping, equipment, and exports use assignment Recipe snapshots;
@@ -113,13 +113,17 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - actor snapshots and bounded recursive secret removal;
 - semantic user-access and Recipe moderation events in owning transactions;
 - Project and Menu/MealSlot coverage through TH-0099 and TH-0100;
-- all six typed System Settings owners and Administrator SMTP check/test results through TH-0101;
-- invitation creation, reissue, revocation, and acceptance append AuditEvents in the lifecycle transaction through TH-0102;
-- Administrator actions use the authenticated Administrator snapshot, while acceptance uses the newly created User snapshot;
-- automatic delivery after create/reissue records only status, attempts, recipient domain, operation kind, and invitation role at the existing post-commit result boundary;
-- delivery or delivery-audit failure does not roll back a valid invitation and does not remove its manual link;
-- raw invitation tokens, acceptance paths/URLs, passwords and hashes, raw sessions and hashes, SMTP values, provider messages, protocol transcripts, exception details, and arbitrary request bodies are never audit payloads;
-- Administrator-only Audit UI/API expose Russian User, Recipe, Project, Menu, MealSlot, System Settings, Mail, and Invitation labels and filters.
+- all typed System Settings owners and Administrator SMTP check/test results through TH-0101;
+- invitation lifecycle and safe post-commit delivery-result coverage through TH-0102;
+- Product create/update and successful CSV apply events through TH-0103;
+- purchase-list/checklist generation and manual purchase progress changes through TH-0103;
+- Recipe equipment requirements, EquipmentList generation, and manual overrides/removals through TH-0103;
+- successful Project and purchase-list document generation events through TH-0103;
+- transactional write events share the domain commit and rollback boundary; services called with `commit=False` append to the caller-owned transaction;
+- no-op edits create no AuditEvent;
+- document generation events commit before response delivery and contain only kind, format, content type, and byte-size metadata;
+- CSV contents, import row details, generated document bytes, filenames, credentials, tokens, SMTP values, provider messages, exception details, and arbitrary request bodies are never audit payloads;
+- Administrator-only Audit UI/API expose Russian labels and filters for all covered entities.
 
 ### Projects, preparation, documents, and operations
 
@@ -133,7 +137,7 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 ### Product acceptance and release readiness
 
 - versioned Product Acceptance and Release Readiness manifests;
-- critical Backend and Chrome gates, including published Recipe Dish synchronization and Project/Menu/MealSlot/System Settings/Mail/Invitation audit coverage;
+- critical Backend and Chrome gates, including the full semantic audit coverage delivered through TH-0103;
 - Alembic accepted head fixed at `h10021`;
 - real PostgreSQL 18 migration-cycle verification;
 - exact-head push workflows for required gates;
@@ -145,12 +149,12 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-TH-0102 is complete. Catalogue/import, shopping, equipment, and document-generation audit domains remain deferred until another explicit Product Owner decision.
+TH-0103 is complete. No later post-release capability is selected automatically.
 
 ## 6. Immediate sequence
 
 1. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
-2. Use the Administrator Audit surface to review user, Recipe, Project, Menu, MealSlot, System Settings, Mail, and Invitation events.
+2. Use the Administrator Audit surface to review covered operational events.
 3. Select any later audit or product slice only through another explicit Product Owner decision.
 
 ## 7. Development rules
