@@ -1,3 +1,5 @@
+from typing import Literal
+
 from sqlalchemy.orm import Session
 
 from app.models.invitation import InvitationORM
@@ -5,6 +7,8 @@ from app.models.user import UserORM
 from app.schemas.invitation import InvitationStatus
 from app.services.audit_service import AuditService
 from app.services.mail_delivery_service import MailDeliveryResult
+
+_UNSET = object()
 
 
 class InvitationAuditService:
@@ -66,7 +70,11 @@ class InvitationAuditService:
             action="invitation_accepted",
             entity_type="invitation",
             entity_id=invitation.id,
-            before=self._snapshot(invitation, status=before_status, accepted_user_id=None),
+            before=self._snapshot(
+                invitation,
+                status=before_status,
+                accepted_user_id=None,
+            ),
             after=self._snapshot(invitation, status=InvitationStatus.CONSUMED),
             context={"created_user_id": actor.id},
         )
@@ -76,7 +84,7 @@ class InvitationAuditService:
         *,
         actor: UserORM,
         invitation: InvitationORM,
-        operation: str,
+        operation: Literal["create", "reissue"],
         result: MailDeliveryResult,
     ) -> None:
         AuditService(self.session).record(
@@ -106,11 +114,11 @@ class InvitationAuditService:
         invitation: InvitationORM,
         *,
         status: InvitationStatus,
-        accepted_user_id: int | None | object = ..., 
+        accepted_user_id: int | None | object = _UNSET,
     ) -> dict[str, object]:
         resolved_accepted_user_id = (
             invitation.accepted_user_id
-            if accepted_user_id is ...
+            if accepted_user_id is _UNSET
             else accepted_user_id
         )
         return {
