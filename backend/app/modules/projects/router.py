@@ -26,6 +26,7 @@ from app.services.document_appearance_settings_service import (
 )
 from app.services.equipment_list_service import EquipmentListService
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
+from app.services.operational_audit_service import OperationalAuditService
 from app.services.project_document_package_service import ProjectDocumentPackageService
 from app.services.project_document_service import ProjectDocumentService
 from app.services.project_participant_recalculation_service import (
@@ -152,15 +153,18 @@ def prepare_project(
                 PurchaseListRepository(db),
                 meal_plan_repository,
                 meal_plan_shopping_service,
+                actor=actor,
             ),
             PurchaseChecklistService(
                 PurchaseChecklistRepository(db),
                 meal_plan_repository,
                 meal_plan_shopping_service,
+                actor=actor,
             ),
             EquipmentListService(
                 EquipmentListRepository(db),
                 meal_plan_repository,
+                actor=actor,
             ),
             session=db,
             actor=actor,
@@ -189,6 +193,30 @@ def _download(document: GeneratedDocument) -> Response:
     )
 
 
+def _record_project_document(
+    *,
+    db: Session,
+    actor: UserORM,
+    project_id: int,
+    document_kind: str,
+    document_format: str,
+    document: GeneratedDocument,
+) -> None:
+    OperationalAuditService(db).record_document_generated(
+        actor=actor,
+        source_entity_type="project",
+        source_entity_id=project_id,
+        document_kind=document_kind,
+        document_format=document_format,
+        document=document,
+    )
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+
 def _prepared_document_error(error: ValueError) -> HTTPException | None:
     messages = {
         "Purchase list not found": "Project purchasing is not prepared",
@@ -204,6 +232,7 @@ def generate_purchase_document(
     project_id: int,
     format: str,
     db: Session = Depends(get_db),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
@@ -218,12 +247,21 @@ def generate_purchase_document(
     if generator is None:
         raise HTTPException(status_code=400, detail="Unsupported document format")
     try:
-        return _download(generator(project))
+        document = generator(project)
     except ValueError as error:
         prepared_error = _prepared_document_error(error)
         if prepared_error is not None:
             raise prepared_error from error
         raise
+    _record_project_document(
+        db=db,
+        actor=actor,
+        project_id=project_id,
+        document_kind="purchase",
+        document_format=format,
+        document=document,
+    )
+    return _download(document)
 
 
 @router.get("/{project_id}/documents/equipment/{format}")
@@ -231,6 +269,7 @@ def generate_equipment_document(
     project_id: int,
     format: str,
     db: Session = Depends(get_db),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
@@ -244,12 +283,21 @@ def generate_equipment_document(
     if generator is None:
         raise HTTPException(status_code=400, detail="Unsupported document format")
     try:
-        return _download(generator(project))
+        document = generator(project)
     except ValueError as error:
         prepared_error = _prepared_document_error(error)
         if prepared_error is not None:
             raise prepared_error from error
         raise
+    _record_project_document(
+        db=db,
+        actor=actor,
+        project_id=project_id,
+        document_kind="equipment",
+        document_format=format,
+        document=document,
+    )
+    return _download(document)
 
 
 @router.get("/{project_id}/documents/consolidated/{format}")
@@ -257,6 +305,7 @@ def generate_consolidated_project_document(
     project_id: int,
     format: str,
     db: Session = Depends(get_db),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
@@ -270,18 +319,28 @@ def generate_consolidated_project_document(
     if generator is None:
         raise HTTPException(status_code=400, detail="Unsupported document format")
     try:
-        return _download(generator(project))
+        document = generator(project)
     except ValueError as error:
         prepared_error = _prepared_document_error(error)
         if prepared_error is not None:
             raise prepared_error from error
         raise
+    _record_project_document(
+        db=db,
+        actor=actor,
+        project_id=project_id,
+        document_kind="consolidated",
+        document_format=format,
+        document=document,
+    )
+    return _download(document)
 
 
 @router.get("/{project_id}/documents/package")
 def generate_project_document_package(
     project_id: int,
     db: Session = Depends(get_db),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> Response:
     project = ProjectRepository(db).get_by_id(project_id)
     if project is None:
@@ -295,4 +354,12 @@ def generate_project_document_package(
         if prepared_error is not None:
             raise prepared_error from error
         raise
+    _record_project_document(
+        db=db,
+        actor=actor,
+        project_id=project_id,
+        document_kind="package",
+        document_format="zip",
+        document=document,
+    )
     return _download(document)
