@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_administrator
 from app.core.database import get_db
 from app.models.club_settings import ClubSettingsORM
+from app.models.user import UserORM
 from app.schemas.club_settings import (
     ClubImagesResponse,
     ClubSettingsDetailResponse,
@@ -16,6 +18,7 @@ from app.services.club_settings_service import (
     ClubSettingsService,
     SettingsVersionConflictError,
 )
+from app.services.settings_audit_service import SettingsAuditService
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -83,18 +86,21 @@ def get_club_settings(
 @router.put("/club", response_model=ClubSettingsDetailResponse)
 def update_club_settings(
     request: ClubSettingsDetailUpdateRequest,
+    administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> ClubSettingsDetailResponse:
     service = ClubSettingsService(db)
     try:
-        # Serialize version checks and writes on PostgreSQL. The selected ORM row is
-        # reused by the service through the session identity map, so a concurrent
-        # request observes the committed version before it may update the singleton.
-        db.scalar(
+        service.get()
+        current = db.scalar(
             select(ClubSettingsORM)
             .where(ClubSettingsORM.id == 1)
             .with_for_update()
         )
+        if current is None:
+            raise RuntimeError("Club settings singleton is missing")
+        plan = SettingsAuditService.plan_club_update(service, current, request)
+        SettingsAuditService(db, administrator).stage(plan)
         settings = service.update_details(request)
     except SettingsVersionConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
