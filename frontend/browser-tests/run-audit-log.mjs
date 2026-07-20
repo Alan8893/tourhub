@@ -83,14 +83,17 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
        document.body?.innerText?.includes("Анна Администратор") &&
-       document.body?.innerText?.includes("Найдено записей: 5")`,
+       document.body?.innerText?.includes("Найдено записей: 7")`,
       "loaded audit event collection",
     );
     const loadedText = normalizeText(await client.evaluate("document.body.innerText"));
     for (const label of [
+      "Настройки почты изменены",
+      "Тестовая отправка почты",
+      "Системные настройки",
+      "Почта",
       "Меню сгенерировано",
       "Блюдо заменено в приёме пищи",
-      "Приём пищи",
       "Подготовка проекта выполнена",
       "Рецепт отклонён",
       "Роль пользователя изменена",
@@ -103,10 +106,10 @@ async function run() {
     }
 
     const filtered = await client.evaluate(`(() => {
-      const input = document.querySelector('input[placeholder="Например: meal_plan_generated"]');
+      const input = document.querySelector('input[placeholder="Например: mail_connection_checked"]');
       if (!input) return false;
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-      setter?.call(input, "meal_slot_dish_replaced");
+      setter?.call(input, "mail_test_message_delivery");
       input.dispatchEvent(new Event("input", { bubbles: true }));
       const button = [...document.querySelectorAll("button")].find(
         (item) => item.textContent?.trim() === "Применить фильтры",
@@ -120,11 +123,12 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Найдено записей: 1") &&
        document.body?.innerText?.includes("Анна Администратор")`,
-      "filtered MealSlot audit history",
+      "filtered mail audit history",
     );
     const filteredText = normalizeText(await client.evaluate("document.body.innerText"));
-    assert.ok(filteredText.includes(normalizeText("Блюдо заменено в приёме пищи")));
-    assert.ok(filteredText.includes(normalizeText("Приём пищи")));
+    assert.ok(filteredText.includes(normalizeText("Тестовая отправка почты")));
+    assert.ok(filteredText.includes(normalizeText("Почта")));
+    assert.ok(!filteredText.includes(normalizeText("Настройки почты изменены")));
     assert.ok(!filteredText.includes(normalizeText("Меню сгенерировано")));
     assert.ok(!filteredText.includes(normalizeText("Подготовка проекта выполнена")));
     assert.ok(!filteredText.includes(normalizeText("Рецепт отклонён")));
@@ -132,7 +136,7 @@ async function run() {
       auditRequests.some(
         (request) =>
           request.path === "/api/v1/audit/events" &&
-          request.query.action === "meal_slot_dish_replaced",
+          request.query.action === "mail_test_message_delivery",
       ),
     );
 
