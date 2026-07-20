@@ -18,7 +18,14 @@ import {
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5192/browser-tests/audit-log.html";
-const profileDir = "/tmp/tourhub-audit-log-profile";
+const profileDir = `/tmp/tourhub-audit-log-profile-${process.pid}`;
+const removeProfile = () =>
+  rm(profileDir, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
 const normalizeText = (value) =>
   String(value ?? "")
     .normalize("NFKC")
@@ -27,7 +34,7 @@ const normalizeText = (value) =>
     .trim();
 
 async function run() {
-  await rm(profileDir, { recursive: true, force: true });
+  await removeProfile();
   await mkdir(artifactDir, { recursive: true });
   const api = startAuditLogApi();
   await api.listen();
@@ -188,7 +195,7 @@ async function run() {
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
-    await rm(profileDir, { recursive: true, force: true });
+    await removeProfile();
   }
 }
 
