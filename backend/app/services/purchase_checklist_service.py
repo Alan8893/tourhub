@@ -11,9 +11,11 @@ from app.models.meal_plan import MealPlanORM
 from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
 from app.models.purchase_list import PurchaseListORM
+from app.models.user import UserORM
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
+from app.services.operational_audit_service import OperationalAuditService
 
 
 class PurchaseChecklistProgress(TypedDict):
@@ -32,10 +34,12 @@ class PurchaseChecklistService:
         repository: PurchaseChecklistRepository,
         meal_plan_repository: MealPlanRepository | None = None,
         shopping_service: MealPlanShoppingService | None = None,
+        actor: UserORM | None = None,
     ) -> None:
         self.repository = repository
         self.meal_plan_repository = meal_plan_repository
         self.shopping_service = shopping_service
+        self.actor = actor
 
     def get(self, checklist_id: str) -> PurchaseChecklistORM | None:
         return self.repository.get_by_id(checklist_id)
@@ -79,6 +83,7 @@ class PurchaseChecklistService:
                     is_checked=False,
                 )
             )
+        self._record_generated(checklist)
         self._finish_write(commit=commit)
         return checklist
 
@@ -146,6 +151,7 @@ class PurchaseChecklistService:
                     is_checked=False,
                 )
             )
+        self._record_generated(checklist)
         self._finish_write(commit=commit)
         return checklist
 
@@ -158,11 +164,14 @@ class PurchaseChecklistService:
         item = self.repository.get_item_by_id(item_id)
         if not item:
             raise ValueError("Checklist item not found")
+        audit = OperationalAuditService(self.repository.session)
+        before = audit.purchase_checklist_item_snapshot(item)
+        checklist = item.checklist
+        checklist_status_before = checklist.status
         if checked is not None:
             item.is_checked = checked
         if purchased_quantity is not None:
             item.purchased_quantity = Decimal(str(purchased_quantity))
-        checklist = item.checklist
         current_status = checklist.status
         if all(current.is_checked for current in checklist.items):
             target_status = PurchaseChecklistStatus.COMPLETED.value
@@ -172,11 +181,37 @@ class PurchaseChecklistService:
             target_status = PurchaseChecklistStatus.DRAFT.value
         if current_status != target_status:
             checklist.status = PurchaseChecklistWorkflow.transition(current_status, target_status)
-        self.repository.commit()
+        if (
+            before == audit.purchase_checklist_item_snapshot(item)
+            and checklist_status_before == checklist.status
+        ):
+            return item
+        if self.actor is not None:
+            audit.record_purchase_checklist_item_updated(
+                actor=self.actor,
+                item=item,
+                before=before,
+                checklist_status_before=checklist_status_before,
+            )
+        self._finish_write(commit=True)
         return item
 
+    def _record_generated(self, checklist: PurchaseChecklistORM) -> None:
+        if self.actor is None:
+            return
+        OperationalAuditService(
+            self.repository.session
+        ).record_purchase_checklist_generated(
+            actor=self.actor,
+            checklist=checklist,
+        )
+
     def _finish_write(self, *, commit: bool) -> None:
-        if commit:
-            self.repository.commit()
-        else:
-            self.repository.flush()
+        try:
+            if commit:
+                self.repository.commit()
+            else:
+                self.repository.flush()
+        except Exception:
+            self.repository.session.rollback()
+            raise
