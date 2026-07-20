@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -5,8 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.session import get_session
 from app.models.product import ProductORM
+from app.models.user import UserORM
 from app.policies.alcohol_policy import AlcoholPolicy, AlcoholPolicyViolation
 from app.schemas.recipe import (
     ProductCreateRequest,
@@ -14,6 +17,7 @@ from app.schemas.recipe import (
     ProductUpdateRequest,
     RecipeProductResponse,
 )
+from app.services.operational_audit_service import OperationalAuditService
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -39,12 +43,26 @@ def _normalized_values(request: ProductCreateRequest) -> tuple[str, str | None, 
     return name, category, unit
 
 
-def _commit_product(session: Session, product: ProductORM) -> RecipeProductResponse:
+def _commit_product(
+    session: Session,
+    product: ProductORM,
+    *,
+    actor: UserORM,
+    before: Mapping[str, object] | None = None,
+) -> RecipeProductResponse:
+    audit = OperationalAuditService(session)
+    if before is None:
+        audit.record_product_created(actor=actor, product=product)
+    else:
+        audit.record_product_updated(actor=actor, product=product, before=before)
     try:
         session.commit()
     except IntegrityError as exc:
         session.rollback()
         raise HTTPException(status_code=409, detail="Product name already exists") from exc
+    except Exception:
+        session.rollback()
+        raise
     session.refresh(product)
     return _response(product)
 
@@ -63,6 +81,7 @@ def list_products(session: Session = Depends(get_session)) -> ProductListRespons
 def create_product(
     request: ProductCreateRequest,
     session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> RecipeProductResponse:
     name, category, unit = _normalized_values(request)
     product = ProductORM(
@@ -73,7 +92,7 @@ def create_product(
         package_size=request.package_size,
     )
     session.add(product)
-    return _commit_product(session, product)
+    return _commit_product(session, product, actor=actor)
 
 
 @router.put("/{product_id}", response_model=RecipeProductResponse)
@@ -81,6 +100,7 @@ def update_product(
     product_id: str,
     request: ProductUpdateRequest,
     session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> RecipeProductResponse:
     product = session.scalar(
         select(ProductORM).where(
@@ -92,8 +112,12 @@ def update_product(
         raise HTTPException(status_code=404, detail="Product not found")
 
     name, category, unit = _normalized_values(request)
+    audit = OperationalAuditService(session)
+    before = audit.product_snapshot(product)
     product.name = name
     product.category = category
     product.unit = unit
     product.package_size = request.package_size
-    return _commit_product(session, product)
+    if before == audit.product_snapshot(product):
+        return _response(product)
+    return _commit_product(session, product, actor=actor, before=before)
