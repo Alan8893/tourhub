@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_administrator
 from app.core.database import get_db
 from app.models.module_settings import ModuleSettingsORM
+from app.models.user import UserORM
 from app.schemas.module_settings import (
     ModuleSettingsHistoryResponse,
     ModuleSettingsResponse,
@@ -10,6 +12,7 @@ from app.schemas.module_settings import (
 )
 from app.services.club_settings_service import SettingsVersionConflictError
 from app.services.module_settings_service import ModuleSettingsService
+from app.services.settings_audit_service import SettingsAuditService
 
 router = APIRouter(prefix="/settings/modules", tags=["settings"])
 
@@ -42,10 +45,14 @@ def get_module_settings(
 @router.put("", response_model=ModuleSettingsResponse)
 def update_module_settings(
     request: ModuleSettingsUpdateRequest,
+    administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> ModuleSettingsResponse:
     service = ModuleSettingsService(db)
     try:
+        current = service.get()
+        plan = SettingsAuditService.plan_module_update(current, request)
+        SettingsAuditService(db, administrator).stage(plan)
         settings = service.update(request)
     except SettingsVersionConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
