@@ -88,12 +88,23 @@ None. The approved first-release capability scope is feature frozen and release-
 - strict Ruff/mypy, full Backend regression, real-Chrome acceptance, and release gates verify the behavior;
 - no migration was required and Alembic remains `h10021`.
 
+## Resolved invitation lifecycle and delivery-result audit debt — TH-0102
+
+- invitation creation, reissue, revocation, and acceptance record semantic AuditEvents in their owning transactions;
+- create, reissue, and revoke use the authenticated Administrator snapshot; acceptance uses the newly created User snapshot;
+- failed lifecycle persistence or audit recording rolls back invitation, User, AuthSession, and pending AuditEvent changes together;
+- create/reissue delivery results record only status, attempts, recipient domain, operation kind, and role after the lifecycle commit;
+- delivery or delivery-audit failure preserves invitation validity and the one-time manual link;
+- raw tokens, acceptance links, passwords and hashes, sessions and hashes, SMTP secrets, provider messages, transcripts, exceptions, full recipient addresses, and request bodies are excluded;
+- the Administrator Audit UI/API exposes Russian Invitation labels and filters;
+- strict Ruff/mypy, full Backend regression, Product Acceptance, real-Chrome acceptance, and release gates verify the behavior;
+- no migration was required and Alembic remains `h10021`.
+
 ## Remaining audit debt
 
-1. Invitation creation, revocation, acceptance, and delivery-result actions.
-2. Catalogue/import, shopping, equipment, and document-generation actions.
-3. Audit export, retention UI, external SIEM integration, and operational diagnostics.
-4. Undo and event replay remain outside v0.1.0.
+1. Catalogue/import, shopping, equipment, and document-generation actions.
+2. Audit export, retention UI, external SIEM integration, and operational diagnostics.
+3. Undo and event replay remain outside v0.1.0.
 
 Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and the owning business transaction.
 
@@ -124,7 +135,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - session administration, individual revocation, cleanup, and global sign-out;
 - user profile editing and account-retention policy;
 - invitation retention and cleanup;
-- asynchronous mail delivery, scheduled retries, delivery history, and bounce diagnostics;
+- asynchronous mail delivery, scheduled retries, persisted delivery history, and bounce diagnostics;
 - approved mail templates and attachments;
 - additional same-origin request hardening only if deployment expands beyond trusted LAN.
 
@@ -143,8 +154,8 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Product Owner decisions required for later releases
 
-- which post-release debt slice follows TH-0101;
-- whether invitation lifecycle/delivery-result audit should be selected next;
+- which post-release debt slice follows TH-0102;
+- whether catalogue/import and operational write audit should be selected next;
 - whether preference weighting beyond approved generation modes belongs in a later release;
 - mandatory Recipe metadata for a later release;
 - encrypted settings archive format.
