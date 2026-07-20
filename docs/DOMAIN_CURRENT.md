@@ -56,9 +56,14 @@ Current semantic actions cover:
 - Project creation, participant recalculation, generation-mode changes, and full preparation;
 - initial/regenerated MealPlan creation and manual MealSlot Dish add/remove/replace;
 - Club, Appearance, Document Appearance, Module, Invitation Policy, and Mail Settings changes;
-- Administrator SMTP connection checks and fixed test-message outcomes.
+- Administrator SMTP connection checks and fixed test-message outcomes;
+- invitation creation, reissue, revocation, acceptance, and automatic delivery results.
 
-Settings events use entity type `system_settings` with the typed section as entity ID. They include only changed normalized fields and versions, and no-op saves create no event. Club image changes contain only configured state, MIME type, and byte size. Mail operation events use entity type `mail` and contain bounded status, attempts, optional recipient, and non-secret operation context. SMTP passwords, environment values, protocol transcripts, exception details, invitation values, session values, tokens, and arbitrary request bodies are excluded.
+Invitation lifecycle events use entity type `invitation` and the Invitation ID. Safe snapshots contain recipient domain, role, lifecycle status, expiry, creator User ID, and accepted User ID only. Create, reissue, and revoke use the authenticated Administrator actor snapshot. Acceptance uses the newly created User snapshot after the User is flushed, so the immutable history identifies the person who accepted the invitation.
+
+Create, reissue, revoke, and accept events share the invitation/user/session transaction. Failed audit recording rolls back the pending lifecycle mutation. Automatic delivery remains after create/reissue commit; its separate event contains only status, attempt count, recipient domain, operation kind, and role. Delivery or delivery-audit failure does not invalidate the invitation and does not remove the one-time manual link.
+
+Raw invitation tokens, acceptance paths or URLs, passwords and password hashes, raw sessions and session hashes, SMTP secrets, provider messages, protocol transcripts, exception details, full recipient addresses, and arbitrary request bodies are excluded.
 
 Later domain writes still require explicit instrumentation. Automatic ORM-wide auditing remains rejected.
 
@@ -180,7 +185,7 @@ Implemented document behavior:
 - the coordinated ZIP includes complete and compatibility artifacts;
 - missing preparation prevents a partial complete export.
 
-MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with manual fallback. Settings changes and Administrator connection/test outcomes now append safe actor-attributed AuditEvents. Queues, scheduled retries, delivery history, templates, attachments, and bounce handling are deferred.
+MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with manual fallback. Settings changes, Administrator connection/test outcomes, and safe invitation delivery results append actor-attributed AuditEvents. Queues, scheduled retries, persisted delivery history, templates, attachments, and bounce handling are deferred.
 
 ## Future domains
 
