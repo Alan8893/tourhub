@@ -1,6 +1,6 @@
 # TourHub Technical Debt
 
-Status date: 2026-07-19
+Status date: 2026-07-20
 
 ## Released through TH-0093 / v0.1.0
 
@@ -67,14 +67,33 @@ None. The approved first-release capability scope is feature frozen and release-
 - strict Ruff/mypy, all Backend tests, Product Acceptance, and real-Chrome Audit coverage verify the behavior;
 - no migration was required and Alembic remains `h10021`.
 
+## Resolved Menu and MealSlot audit debt — TH-0100
+
+- initial generation and regeneration record `meal_plan_generated` in the MealPlan/Equipment transaction;
+- manual add/remove/replace record semantic MealSlot events in the existing derived-refresh transaction;
+- bounded snapshots include plan counts, warnings, generation mode, and preserved manual-slot context;
+- failures roll back domain changes and pending AuditEvents together;
+- the Administrator Audit UI/API exposes Russian Menu and MealSlot labels and filters;
+- no migration was required and Alembic remains `h10021`.
+
+## Resolved System Settings and mail audit debt — TH-0101
+
+- Club, Appearance, Document Appearance, Module, Invitation Policy, and Mail Settings changes record real Administrator attribution;
+- normalized before/after snapshots contain only changed fields and versions, and no-op saves create no event;
+- each settings event shares the existing settings/history commit and rollback transaction;
+- Club image changes record only configured state, MIME type, and byte size;
+- SMTP connection-check and fixed test-message operations record safe success/failure/unavailable outcomes at the existing result boundary;
+- SMTP passwords, environment values, protocol transcripts, exception details, invitation/session values, tokens, and arbitrary request bodies are excluded;
+- the Administrator Audit UI/API exposes Russian System Settings and Mail labels and filters;
+- strict Ruff/mypy, full Backend regression, real-Chrome acceptance, and release gates verify the behavior;
+- no migration was required and Alembic remains `h10021`.
+
 ## Remaining audit debt
 
-1. Menu generation and manual MealSlot changes.
-2. System Settings and mail operations with real actor attribution.
-3. Invitation creation, revocation, acceptance, and delivery-result actions.
-4. Catalogue/import, shopping, equipment, and document-generation actions.
-5. Audit export, retention UI, external SIEM integration, and operational diagnostics.
-6. Undo and event replay remain outside v0.1.0.
+1. Invitation creation, revocation, acceptance, and delivery-result actions.
+2. Catalogue/import, shopping, equipment, and document-generation actions.
+3. Audit export, retention UI, external SIEM integration, and operational diagnostics.
+4. Undo and event replay remain outside v0.1.0.
 
 Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and the owning business transaction.
 
@@ -124,8 +143,8 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Product Owner decisions required for later releases
 
-- which post-release debt slice follows TH-0099;
-- whether menu generation/manual MealSlot audit should be selected next;
+- which post-release debt slice follows TH-0101;
+- whether invitation lifecycle/delivery-result audit should be selected next;
 - whether preference weighting beyond approved generation modes belongs in a later release;
 - mandatory Recipe metadata for a later release;
 - encrypted settings archive format.

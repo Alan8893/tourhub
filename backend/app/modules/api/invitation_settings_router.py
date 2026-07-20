@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_administrator
 from app.core.database import get_db
 from app.models.invitation_settings import InvitationSettingsORM
+from app.models.user import UserORM
 from app.schemas.invitation_settings import (
     InvitationDefaultRole,
     InvitationSettingsHistoryResponse,
@@ -11,6 +13,7 @@ from app.schemas.invitation_settings import (
 )
 from app.services.club_settings_service import SettingsVersionConflictError
 from app.services.invitation_settings_service import InvitationSettingsService
+from app.services.settings_audit_service import SettingsAuditService
 
 router = APIRouter(prefix="/settings/invitations", tags=["settings"])
 
@@ -39,10 +42,14 @@ def get_invitation_settings(
 @router.put("", response_model=InvitationSettingsResponse)
 def update_invitation_settings(
     request: InvitationSettingsUpdateRequest,
+    administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> InvitationSettingsResponse:
     service = InvitationSettingsService(db)
     try:
+        current = service.get()
+        plan = SettingsAuditService.plan_invitation_update(current, request)
+        SettingsAuditService(db, administrator).stage(plan)
         settings = service.update(request)
     except SettingsVersionConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error

@@ -33,6 +33,14 @@ const ACTION_LABELS: Record<string, string> = {
   meal_slot_dish_added: "Блюдо добавлено в приём пищи",
   meal_slot_dish_removed: "Блюдо удалено из приёма пищи",
   meal_slot_dish_replaced: "Блюдо заменено в приёме пищи",
+  club_settings_updated: "Настройки клуба изменены",
+  appearance_settings_updated: "Оформление системы изменено",
+  document_appearance_settings_updated: "Оформление документов изменено",
+  module_settings_updated: "Видимость модулей изменена",
+  invitation_settings_updated: "Политика приглашений изменена",
+  mail_settings_updated: "Настройки почты изменены",
+  mail_connection_checked: "SMTP-соединение проверено",
+  mail_test_message_delivery: "Тестовая отправка почты",
 };
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -41,6 +49,8 @@ const ENTITY_LABELS: Record<string, string> = {
   project: "Проект",
   meal_plan: "Меню",
   meal_slot: "Приём пищи",
+  system_settings: "Системные настройки",
+  mail: "Почта",
 };
 
 function formatDate(value: string): string {
@@ -154,7 +164,8 @@ export default function AuditLogPanel() {
           <Box>
             <Typography variant="h5">Аудит действий</Typography>
             <Typography color="text.secondary">
-              Неизменяемая история критичных действий с пользователями, рецептами, проектами и меню.
+              Неизменяемая история критичных действий с пользователями, рецептами,
+              проектами, меню, системными настройками и почтой.
             </Typography>
           </Box>
 
@@ -186,13 +197,15 @@ export default function AuditLogPanel() {
                 <MenuItem value="project">Проект</MenuItem>
                 <MenuItem value="meal_plan">Меню</MenuItem>
                 <MenuItem value="meal_slot">Приём пищи</MenuItem>
+                <MenuItem value="system_settings">Системные настройки</MenuItem>
+                <MenuItem value="mail">Почта</MenuItem>
               </Select>
             </FormControl>
             <TextField
               label="Действие"
               value={action}
               onChange={(event) => setAction(event.target.value)}
-              placeholder="Например: meal_plan_generated"
+              placeholder="Например: mail_connection_checked"
             />
             <TextField
               label="ID сущности"

@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_administrator
 from app.core.database import get_db
 from app.models.mail_settings import MailSettingsORM
+from app.models.user import UserORM
 from app.schemas.mail_settings import (
     MailOperationResponse,
     MailSecurityMode,
@@ -17,6 +19,7 @@ from app.services.mail_delivery_service import (
     MailDeliveryUnavailableError,
 )
 from app.services.mail_settings_service import MAIL_SECRET_ENV_VAR, MailSettingsService
+from app.services.settings_audit_service import SettingsAuditService
 
 router = APIRouter(prefix="/settings/mail", tags=["settings"])
 
@@ -54,6 +57,31 @@ def _operation_error(error: RuntimeError) -> HTTPException:
     return HTTPException(status_code=500, detail="Не удалось выполнить почтовую операцию.")
 
 
+def _record_operation_failure(
+    *,
+    db: Session,
+    administrator: UserORM,
+    settings: MailSettingsORM,
+    action: str,
+    error: RuntimeError,
+) -> None:
+    if isinstance(error, MailDeliveryUnavailableError):
+        status = "unavailable"
+        attempts = 0
+    elif isinstance(error, MailDeliveryFailedError):
+        status = "failed"
+        attempts = error.attempts
+    else:
+        status = "failed"
+        attempts = 0
+    SettingsAuditService(db, administrator).record_mail_operation(
+        action=action,
+        settings=settings,
+        status=status,
+        attempts=attempts,
+    )
+
+
 @router.get("", response_model=MailSettingsResponse)
 def get_mail_settings(
     db: Session = Depends(get_db),
@@ -65,10 +93,14 @@ def get_mail_settings(
 @router.put("", response_model=MailSettingsResponse)
 def update_mail_settings(
     request: MailSettingsUpdateRequest,
+    administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> MailSettingsResponse:
     service = MailSettingsService(db)
     try:
+        current = service.get()
+        plan = SettingsAuditService.plan_mail_update(current, request)
+        SettingsAuditService(db, administrator).stage(plan)
         settings = service.update(request)
     except SettingsVersionConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
@@ -77,12 +109,28 @@ def update_mail_settings(
 
 @router.post("/check", response_model=MailOperationResponse)
 def check_mail_connection(
+    administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> MailOperationResponse:
+    settings = MailSettingsService(db).get()
     try:
         result = MailDeliveryService(db).check_connection()
     except RuntimeError as error:
+        _record_operation_failure(
+            db=db,
+            administrator=administrator,
+            settings=settings,
+            action="mail_connection_checked",
+            error=error,
+        )
         raise _operation_error(error) from error
+    SettingsAuditService(db, administrator).record_mail_operation(
+        action="mail_connection_checked",
+        settings=settings,
+        status=result.status.value,
+        attempts=result.attempts,
+        recipient=result.recipient,
+    )
     return MailOperationResponse(
         status=result.status,
         message=result.message,
@@ -93,12 +141,28 @@ def check_mail_connection(
 
 @router.post("/test", response_model=MailOperationResponse)
 def send_test_mail(
+    administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> MailOperationResponse:
+    settings = MailSettingsService(db).get()
     try:
         result = MailDeliveryService(db).send_test_message()
     except RuntimeError as error:
+        _record_operation_failure(
+            db=db,
+            administrator=administrator,
+            settings=settings,
+            action="mail_test_message_delivery",
+            error=error,
+        )
         raise _operation_error(error) from error
+    SettingsAuditService(db, administrator).record_mail_operation(
+        action="mail_test_message_delivery",
+        settings=settings,
+        status=result.status.value,
+        attempts=result.attempts,
+        recipient=result.recipient,
+    )
     return MailOperationResponse(
         status=result.status,
         message=result.message,

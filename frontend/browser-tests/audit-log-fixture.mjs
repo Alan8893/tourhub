@@ -4,6 +4,53 @@ export const auditRequests = [];
 
 const events = [
   {
+    id: 8,
+    actor_user_id: 1,
+    actor_display_name: "Анна Администратор",
+    actor_email: "admin@tourhub.local",
+    actor_role: "administrator",
+    action: "mail_test_message_delivery",
+    entity_type: "mail",
+    entity_id: "smtp",
+    before_data: null,
+    after_data: {
+      status: "sent",
+      attempts: 1,
+      recipient: "operator@tourhub.local",
+    },
+    context_data: {
+      settings_version: 4,
+      security_mode: "starttls",
+      authentication_configured: true,
+    },
+    created_at: "2026-07-20T08:58:00Z",
+  },
+  {
+    id: 7,
+    actor_user_id: 1,
+    actor_display_name: "Анна Администратор",
+    actor_email: "admin@tourhub.local",
+    actor_role: "administrator",
+    action: "mail_settings_updated",
+    entity_type: "system_settings",
+    entity_id: "mail",
+    before_data: {
+      version: 3,
+      smtp_port: 587,
+    },
+    after_data: {
+      version: 4,
+      smtp_port: 2525,
+    },
+    context_data: {
+      section: "mail",
+      changed_fields: ["smtp_port"],
+      previous_version: 3,
+      settings_version: 4,
+    },
+    created_at: "2026-07-20T08:57:00Z",
+  },
+  {
     id: 6,
     actor_user_id: 1,
     actor_display_name: "Анна Администратор",

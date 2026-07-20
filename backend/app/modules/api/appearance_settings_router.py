@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_administrator
 from app.core.database import get_db
 from app.models.appearance_settings import AppearanceSettingsORM
+from app.models.user import UserORM
 from app.schemas.appearance_settings import (
     AppearanceColorTokens,
     AppearanceHistoryResponse,
@@ -13,6 +15,7 @@ from app.schemas.appearance_settings import (
 )
 from app.services.appearance_settings_service import AppearanceSettingsService
 from app.services.club_settings_service import SettingsVersionConflictError
+from app.services.settings_audit_service import SettingsAuditService
 
 router = APIRouter(prefix="/settings/appearance", tags=["settings"])
 
@@ -43,10 +46,14 @@ def get_appearance_settings(
 @router.put("", response_model=AppearanceSettingsResponse)
 def update_appearance_settings(
     request: AppearanceSettingsUpdateRequest,
+    administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> AppearanceSettingsResponse:
     service = AppearanceSettingsService(db)
     try:
+        current = service.get()
+        plan = SettingsAuditService.plan_appearance_update(current, request)
+        SettingsAuditService(db, administrator).stage(plan)
         settings = service.update(request)
     except SettingsVersionConflictError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
