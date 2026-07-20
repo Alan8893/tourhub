@@ -57,15 +57,26 @@ Current semantic actions cover:
 - initial/regenerated MealPlan creation and manual MealSlot Dish add/remove/replace;
 - Club, Appearance, Document Appearance, Module, Invitation Policy, and Mail Settings changes;
 - Administrator SMTP connection checks and fixed test-message outcomes;
-- invitation creation, reissue, revocation, acceptance, and automatic delivery results.
+- invitation creation, reissue, revocation, acceptance, and automatic delivery results;
+- Product creation/update and successful Product/Recipe catalogue import apply;
+- PurchaseList and PurchaseChecklist generation, responsible-person updates, and checklist item progress;
+- RecipeEquipmentRequirement create/update/delete;
+- EquipmentList generation and manual item add/update/delete;
+- successful Project and purchase-list document generation.
 
-Invitation lifecycle events use entity type `invitation` and the Invitation ID. Safe snapshots contain recipient domain, role, lifecycle status, expiry, creator User ID, and accepted User ID only. Create, reissue, and revoke use the authenticated Administrator actor snapshot. Acceptance uses the newly created User snapshot after the User is flushed, so the immutable history identifies the person who accepted the invitation.
+Product events use entity type `product` and bounded catalogue fields. Successful CSV apply uses `catalog_import` and stores only import kind plus row/create/skip/component/note counts. CSV content, row values, and validation details are excluded.
 
-Create, reissue, revoke, and accept events share the invitation/user/session transaction. Failed audit recording rolls back the pending lifecycle mutation. Automatic delivery remains after create/reissue commit; its separate event contains only status, attempt count, recipient domain, operation kind, and role. Delivery or delivery-audit failure does not invalidate the invitation and does not remove the one-time manual link.
+Purchase generation events snapshot Project/MealPlan IDs, workflow status, and bounded counts. Manual changes record semantic before/after state. Calls made with `commit=False` append events to the Project preparation transaction. Audit failure rolls back pending purchase/checklist/equipment writes, and unchanged values do not create events.
 
-Raw invitation tokens, acceptance paths or URLs, passwords and password hashes, raw sessions and session hashes, SMTP secrets, provider messages, protocol transcripts, exception details, full recipient addresses, and arbitrary request bodies are excluded.
+Recipe equipment events use `recipe_equipment_requirement`; project equipment uses `equipment_list` and `equipment_list_item`. Snapshots contain names, quantities, calculated/manual/removed state, and parent IDs only. Recalculation and AuditEvent persistence share the existing write transaction.
 
-Later domain writes still require explicit instrumentation. Automatic ORM-wide auditing remains rejected.
+Document generation events use `project_document` or `purchase_list_document`. They are committed after successful generation and before response delivery. Payloads contain document kind, format, content type, and size only; generated content and filenames are not persisted.
+
+Invitation lifecycle events use entity type `invitation` and the Invitation ID. Create, reissue, revoke, and accept events share the invitation/user/session transaction. Automatic delivery remains after create/reissue commit; its separate event contains only status, attempt count, recipient domain, operation kind, and role. Delivery or delivery-audit failure does not invalidate the invitation or remove the one-time manual link.
+
+Raw tokens, acceptance URLs, passwords and hashes, sessions and hashes, SMTP secrets, provider messages, protocol transcripts, exception details, full recipient addresses, CSV bodies, generated document bytes/text, filenames, and arbitrary request bodies are excluded.
+
+Automatic ORM-wide auditing remains rejected.
 
 ## Project and MealPlan
 
@@ -125,7 +136,7 @@ Recipe rules:
 - submit and publish revalidate current content before state transition;
 - restore rejects policy-archived Recipes and revalidates ordinary archived content;
 - policy-archived Recipes remain readable historically but cannot return to active selection;
-- every submit, publish, and reject transition also appends immutable AuditEvent history.
+- lifecycle and equipment-requirement writes append immutable semantic AuditEvents.
 
 Preparation technology, dietary/season metadata, richer categories, preference weights, per-meal manual Recipe switching, and moderation notifications remain incomplete.
 
@@ -147,7 +158,7 @@ The central no-exceptions alcohol policy is implemented through ADR-025:
 
 - Unicode NFKC, case-folding, `ё → е`, punctuation tokenization, and complete-word matching;
 - one explicit versioned Russian/English vocabulary;
-- Product creation validates name/category;
+- Product creation/update validates name/category;
 - Recipe creation/rename and Product component writes validate the same rule;
 - Dish creation/update validates its name and every Recipe variant;
 - Recipe submit/publish/restore activation paths revalidate content;
@@ -156,15 +167,7 @@ The central no-exceptions alcohol policy is implemented through ADR-025:
 - active Product lists exclude archived Products;
 - fuzzy/external classification, exceptions, and allowlists are not implemented.
 
-Alembic `h10021` handles existing data in order:
-
-1. archive prohibited Products by name/category;
-2. archive Recipes by name or prohibited Product component;
-3. archive Dishes by name or prohibited default Recipe.
-
-Policy markers distinguish automatic archival. A valid Dish with only an archived non-default variant is not archived as a whole; that variant becomes unavailable for future writes/generation. Historical relationships and exports remain readable.
-
-Products, Recipes, components, and notes can otherwise be loaded through CSV preview/apply. Invalid input does not create partial catalogue data.
+Alembic `h10021` archives prohibited Product/Recipe/Dish records in dependency order while preserving historical relationships. Products, Recipes, components, and notes can otherwise be loaded through CSV preview/apply. Invalid input does not create partial catalogue data.
 
 ## Shopping and equipment
 
@@ -183,9 +186,10 @@ Implemented document behavior:
 - one immutable club/document appearance snapshot per package request;
 - focused purchase/equipment files remain compatible;
 - the coordinated ZIP includes complete and compatibility artifacts;
-- missing preparation prevents a partial complete export.
+- missing preparation prevents a partial complete export;
+- successful generation/download requests append safe actor-attributed metadata without persisting files.
 
-MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with manual fallback. Settings changes, Administrator connection/test outcomes, and safe invitation delivery results append actor-attributed AuditEvents. Queues, scheduled retries, persisted delivery history, templates, attachments, and bounce handling are deferred.
+MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with manual fallback. Queues, scheduled retries, persisted delivery history, templates, attachments, and bounce handling are deferred.
 
 ## Future domains
 

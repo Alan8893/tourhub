@@ -18,7 +18,14 @@ import {
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5192/browser-tests/audit-log.html";
-const profileDir = "/tmp/tourhub-audit-log-profile";
+const profileDir = `/tmp/tourhub-audit-log-profile-${process.pid}`;
+const removeProfile = () =>
+  rm(profileDir, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
 const normalizeText = (value) =>
   String(value ?? "")
     .normalize("NFKC")
@@ -27,7 +34,7 @@ const normalizeText = (value) =>
     .trim();
 
 async function run() {
-  await rm(profileDir, { recursive: true, force: true });
+  await removeProfile();
   await mkdir(artifactDir, { recursive: true });
   const api = startAuditLogApi();
   await api.listen();
@@ -83,11 +90,21 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
        document.body?.innerText?.includes("Анна Администратор") &&
-       document.body?.innerText?.includes("Найдено записей: 9")`,
+       document.body?.innerText?.includes("Найдено записей: 14")`,
       "loaded audit event collection",
     );
     const loadedText = normalizeText(await client.evaluate("document.body.innerText"));
     for (const label of [
+      "Документ сформирован",
+      "Документ проекта",
+      "Позиция снаряжения изменена",
+      "Позиция снаряжения",
+      "Позиция чек-листа закупок изменена",
+      "Позиция чек-листа",
+      "Импорт каталога применён",
+      "Импорт каталога",
+      "Продукт изменён",
+      "Продукт",
       "Приглашение принято",
       "Результат доставки приглашения",
       "Приглашение",
@@ -101,6 +118,7 @@ async function run() {
       "Рецепт отклонён",
       "Роль пользователя изменена",
       "Журнал не содержит пароли",
+      "CSV-файлы",
     ]) {
       assert.ok(
         loadedText.includes(normalizeText(label)),
@@ -109,10 +127,10 @@ async function run() {
     }
 
     const filtered = await client.evaluate(`(() => {
-      const input = document.querySelector('input[placeholder="Например: invitation_delivery_result"]');
+      const input = document.querySelector('input[placeholder="Например: document_generated"]');
       if (!input) return false;
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-      setter?.call(input, "invitation_delivery_result");
+      setter?.call(input, "document_generated");
       input.dispatchEvent(new Event("input", { bubbles: true }));
       const button = [...document.querySelectorAll("button")].find(
         (item) => item.textContent?.trim() === "Применить фильтры",
@@ -126,11 +144,13 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Найдено записей: 1") &&
        document.body?.innerText?.includes("Анна Администратор")`,
-      "filtered invitation delivery audit history",
+      "filtered document generation audit history",
     );
     const filteredText = normalizeText(await client.evaluate("document.body.innerText"));
-    assert.ok(filteredText.includes(normalizeText("Результат доставки приглашения")));
-    assert.ok(filteredText.includes(normalizeText("Приглашение")));
+    assert.ok(filteredText.includes(normalizeText("Документ сформирован")));
+    assert.ok(filteredText.includes(normalizeText("Документ проекта")));
+    assert.ok(!filteredText.includes(normalizeText("Продукт изменён")));
+    assert.ok(!filteredText.includes(normalizeText("Импорт каталога применён")));
     assert.ok(!filteredText.includes(normalizeText("Приглашение принято")));
     assert.ok(!filteredText.includes(normalizeText("Настройки почты изменены")));
     assert.ok(!filteredText.includes(normalizeText("Меню сгенерировано")));
@@ -140,7 +160,7 @@ async function run() {
       auditRequests.some(
         (request) =>
           request.path === "/api/v1/audit/events" &&
-          request.query.action === "invitation_delivery_result",
+          request.query.action === "document_generated",
       ),
     );
 
@@ -175,7 +195,7 @@ async function run() {
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
-    await rm(profileDir, { recursive: true, force: true });
+    await removeProfile();
   }
 }
 

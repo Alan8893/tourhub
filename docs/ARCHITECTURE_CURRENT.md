@@ -71,14 +71,15 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - business mutation and AuditEvent commit or roll back together when the business write is transactional;
 - ORM update/delete attempts fail and the application exposes no mutation endpoint;
 - Administrator may query bounded filtered history through `/api/v1/audit/events`;
-- current explicit coverage includes user access, Recipe moderation, Project preparation, Menu/MealSlot changes, all six typed System Settings owners, Administrator mail checks/tests, and the invitation lifecycle;
-- invitation create, reissue, revoke, and accept stage semantic AuditEvents in the same SQLAlchemy Session before the lifecycle commit;
-- create, reissue, and revoke use the authenticated Administrator actor snapshot; accept uses the newly created User after flush as the actor snapshot;
-- create/reissue persistence commits before best-effort SMTP delivery, preserving ADR-019 operation order;
-- automatic invitation delivery records one separate post-commit result event with status, attempts, recipient domain, operation kind, and role only;
-- delivery-result audit persistence is isolated from the already committed invitation so a logging failure cannot invalidate the invitation or hide its one-time manual link;
-- raw invitation values, acceptance paths/URLs, passwords, password hashes, raw sessions, session hashes, SMTP secrets, provider messages, protocol transcripts, exception details, and arbitrary request bodies are not audit payloads;
-- later domains still require explicit semantic instrumentation; automatic ORM-wide auditing remains rejected.
+- explicit coverage includes user access, Recipe moderation, Project preparation, Menu/MealSlot changes, all typed System Settings owners, Administrator mail checks/tests, invitation lifecycle/delivery results, Product writes, successful catalogue imports, shopping/checklist writes, Recipe/project equipment writes, and successful document generation;
+- Product, purchase, checklist, Recipe-equipment, and EquipmentList events are staged before the owning commit; audit failure rolls back the pending mutation;
+- preparation services invoked with `commit=False` append their events to the caller-owned Project preparation transaction;
+- no-op Product, responsible-person, checklist, Recipe-equipment, and equipment-quantity edits create no event;
+- catalogue import events contain aggregate kind/row/create/skip/component/note counts only and never CSV content or row details;
+- document generation remains a non-persisted byte/string boundary, while its audit event commits before the response and contains only document kind, format, content type, and size metadata;
+- invitation delivery-result persistence remains isolated from the already committed invitation so logging failure cannot invalidate it or hide the manual link;
+- generated document content, filenames, raw CSV, arbitrary request bodies, raw invitation/session values, passwords/hashes, SMTP secrets, provider messages, transcripts, and exception details are not audit payloads;
+- automatic ORM-wide auditing remains rejected.
 
 ## Consolidated export boundary
 
@@ -88,7 +89,8 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - the complete PDF contains Project parameters, menu, loadout, shopping, equipment, warnings, and comments;
 - the complete workbook contains `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование` in order;
 - focused purchase/equipment endpoints remain compatible;
-- incomplete preparation returns HTTP 409 rather than a partial complete export.
+- incomplete preparation returns HTTP 409 rather than a partial complete export;
+- successful focused, consolidated, package, and legacy purchase-list generation now append bounded actor-attributed audit metadata without persisting generated files.
 
 ## Central alcohol policy boundary
 
@@ -99,10 +101,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Product and Dish active queries filter `is_archived`;
 - Recipe/Dish writes reject archived or policy-prohibited Product/Recipe dependencies;
 - `h10021` adds Product/Dish archive state and policy markers on Product, Recipe, and Dish;
-- migration order is Product classification → Recipe name/component classification → Dish name/default-Recipe classification;
-- policy-archived records are retained for historical foreign keys, calculations, and exports;
-- a policy marker prevents Recipe restore and makes downgrade distinguish policy archival from unrelated manual Recipe archival;
-- a valid Dish is not archived solely because a non-default variant is archived; that variant becomes unavailable for future selection.
+- policy-archived records are retained for historical foreign keys, calculations, and exports.
 
 ## Mail boundary
 

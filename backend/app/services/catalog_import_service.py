@@ -12,7 +12,9 @@ from app.models.recipe_component import RecipeComponentORM
 from app.models.recipe_component_type import RecipeComponentType
 from app.models.recipe_note import RecipeNoteORM
 from app.models.recipe_note_type import RecipeNoteType
+from app.models.user import UserORM
 from app.schemas.catalog_import import CatalogImportError, CatalogImportResult
+from app.services.operational_audit_service import OperationalAuditService
 from app.services.recipe_command_service import CALCULATION_TYPES
 
 PRODUCT_HEADERS = {"name", "category", "unit", "package_size"}
@@ -55,8 +57,9 @@ class RecipeRow:
 
 
 class CatalogImportService:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, *, actor: UserORM | None = None):
         self.session = session
+        self.actor = actor
 
     def preview(self, kind: str, content: str) -> CatalogImportResult:
         if kind == "products":
@@ -127,6 +130,8 @@ class CatalogImportService:
 
         try:
             if kind == "products":
+                if preview.create_count == 0:
+                    return preview
                 product_rows, _ = self._parse_products(content)
                 existing = self._existing_product_names()
                 for product_row in product_rows:
@@ -141,6 +146,7 @@ class CatalogImportService:
                             package_size=product_row.package_size,
                         )
                     )
+                self._record_import(preview)
                 self.session.commit()
                 return preview
 
@@ -194,11 +200,20 @@ class CatalogImportService:
                                 priority=recipe_row.note_priority,
                             )
                         )
+            self._record_import(preview)
             self.session.commit()
             return preview
         except Exception:
             self.session.rollback()
             raise
+
+    def _record_import(self, result: CatalogImportResult) -> None:
+        if self.actor is None:
+            return
+        OperationalAuditService(self.session).record_catalog_import(
+            actor=self.actor,
+            result=result,
+        )
 
     def _parse_products(
         self,

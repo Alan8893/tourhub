@@ -1,3 +1,5 @@
+from collections.abc import Callable, Mapping
+from functools import partial
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -6,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.models.recipe import RecipeORM
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
 from app.models.user import UserORM
+from app.services.operational_audit_service import OperationalAuditService
 from app.services.recipe_access_service import RecipeAccessService
 from app.services.recipe_equipment_recalculation_service import (
     RecipeEquipmentRecalculationService,
@@ -50,7 +53,10 @@ class RecipeEquipmentService:
             quantity=quantity,
         )
         self.session.add(requirement)
-        self._commit(recipe_id)
+        self._commit(
+            recipe_id,
+            audit_action=partial(self._record_created, requirement),
+        )
         self.session.refresh(requirement)
         return requirement
 
@@ -63,19 +69,69 @@ class RecipeEquipmentService:
     ) -> RecipeEquipmentRequirementORM:
         self._get_editable_recipe(recipe_id)
         requirement = self._get_requirement(recipe_id, requirement_id)
+        audit = OperationalAuditService(self.session)
+        before = audit.recipe_equipment_snapshot(requirement)
         normalized = self._normalize_name(equipment_name)
         self._ensure_unique(recipe_id, normalized, exclude_id=requirement_id)
         requirement.equipment_name = normalized
         requirement.quantity = quantity
-        self._commit(recipe_id)
+        if before == audit.recipe_equipment_snapshot(requirement):
+            return requirement
+        self._commit(
+            recipe_id,
+            audit_action=partial(self._record_updated, requirement, before),
+        )
         self.session.refresh(requirement)
         return requirement
 
     def delete(self, recipe_id: str, requirement_id: str) -> None:
         self._get_editable_recipe(recipe_id)
         requirement = self._get_requirement(recipe_id, requirement_id)
+        before = OperationalAuditService(self.session).recipe_equipment_snapshot(
+            requirement
+        )
         self.session.delete(requirement)
-        self._commit(recipe_id)
+        self._commit(
+            recipe_id,
+            audit_action=partial(self._record_deleted, requirement_id, before),
+        )
+
+    def _record_created(self, requirement: RecipeEquipmentRequirementORM) -> None:
+        actor = self.actor
+        if actor is None:
+            return
+        OperationalAuditService(self.session).record_recipe_equipment_created(
+            actor=actor,
+            requirement=requirement,
+        )
+
+    def _record_updated(
+        self,
+        requirement: RecipeEquipmentRequirementORM,
+        before: Mapping[str, object],
+    ) -> None:
+        actor = self.actor
+        if actor is None:
+            return
+        OperationalAuditService(self.session).record_recipe_equipment_updated(
+            actor=actor,
+            requirement=requirement,
+            before=before,
+        )
+
+    def _record_deleted(
+        self,
+        requirement_id: str,
+        before: Mapping[str, object],
+    ) -> None:
+        actor = self.actor
+        if actor is None:
+            return
+        OperationalAuditService(self.session).record_recipe_equipment_deleted(
+            actor=actor,
+            requirement_id=requirement_id,
+            before=before,
+        )
 
     def _get_recipe(self, recipe_id: str) -> RecipeORM:
         recipe = self.session.get(RecipeORM, recipe_id)
@@ -117,8 +173,15 @@ class RecipeEquipmentService:
             raise ValueError("Equipment name must not be empty")
         return normalized
 
-    def _commit(self, recipe_id: str) -> None:
+    def _commit(
+        self,
+        recipe_id: str,
+        *,
+        audit_action: Callable[[], object] | None = None,
+    ) -> None:
         try:
+            if audit_action is not None:
+                audit_action()
             self.session.flush()
             self.recalculation_service.refresh_affected_meal_plans(recipe_id)
             self.session.commit()

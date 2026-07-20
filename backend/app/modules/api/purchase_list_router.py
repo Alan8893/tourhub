@@ -2,9 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.session import get_session
+from app.engines.documents.dto import GeneratedDocument
 from app.engines.documents.excel import ExcelDocumentGenerator
 from app.engines.documents.pdf import PDFDocumentGenerator
+from app.models.user import UserORM
 from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
@@ -15,6 +18,7 @@ from app.schemas.purchase_list import (
     PurchaseListUpdate,
 )
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
+from app.services.operational_audit_service import OperationalAuditService
 from app.services.purchase_list_service import PurchaseListService
 from app.services.shopping_list_service import ShoppingListService
 
@@ -27,6 +31,7 @@ router = APIRouter(
 
 def get_purchase_list_service(
     session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> PurchaseListService:
     return PurchaseListService(
         repository=PurchaseListRepository(session),
@@ -34,7 +39,33 @@ def get_purchase_list_service(
         shopping_service=MealPlanShoppingService(
             shopping_list_service=ShoppingListService(session)
         ),
+        actor=actor,
     )
+
+
+def _record_document(
+    *,
+    service: PurchaseListService,
+    purchase_list_id: str,
+    document_format: str,
+    document: GeneratedDocument,
+) -> None:
+    if service.actor is None:
+        return
+    session = service.repository.session
+    OperationalAuditService(session).record_document_generated(
+        actor=service.actor,
+        source_entity_type="purchase_list",
+        source_entity_id=purchase_list_id,
+        document_kind="purchase_list",
+        document_format=document_format,
+        document=document,
+    )
+    try:
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
 
 
 @router.post("/from-meal-plan/{meal_plan_id}", response_model=PurchaseListResponse)
@@ -140,6 +171,12 @@ def export_purchase_list_pdf(
         raise HTTPException(status_code=404, detail="Purchase list not found")
     document = service.create_document_dto(purchase_list)
     generated = PDFDocumentGenerator().generate(document)
+    _record_document(
+        service=service,
+        purchase_list_id=purchase_list_id,
+        document_format="pdf",
+        document=generated,
+    )
     return Response(
         content=generated.content,
         media_type=generated.content_type,
@@ -157,6 +194,12 @@ def export_purchase_list_excel(
         raise HTTPException(status_code=404, detail="Purchase list not found")
     document = service.create_document_dto(purchase_list)
     generated = ExcelDocumentGenerator().generate(document)
+    _record_document(
+        service=service,
+        purchase_list_id=purchase_list_id,
+        document_format="excel",
+        document=generated,
+    )
     return Response(
         content=generated.content,
         media_type=generated.content_type,

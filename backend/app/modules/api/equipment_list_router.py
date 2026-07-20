@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.session import get_session
 from app.models.equipment_list import EquipmentListORM
 from app.models.equipment_list_item import EquipmentListItemORM
+from app.models.user import UserORM
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.schemas.equipment import (
@@ -17,10 +19,14 @@ from app.services.equipment_list_service import EquipmentListService
 router = APIRouter(prefix="/equipment-lists", tags=["Equipment"])
 
 
-def get_service(session: Session = Depends(get_session)) -> EquipmentListService:
+def get_service(
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> EquipmentListService:
     return EquipmentListService(
         EquipmentListRepository(session),
         MealPlanRepository(session),
+        actor=actor,
     )
 
 
@@ -63,16 +69,11 @@ def get_project_equipment_list(
 @router.post("/project/{project_id}/generate", response_model=EquipmentListResponse)
 def generate_project_equipment_list(
     project_id: int,
-    session: Session = Depends(get_session),
+    service: EquipmentListService = Depends(get_service),
 ) -> EquipmentListResponse:
-    meal_plan_repository = MealPlanRepository(session)
-    meal_plan = meal_plan_repository.get_by_project_id(project_id)
+    meal_plan = service.meal_plan_repository.get_by_project_id(project_id)
     if meal_plan is None:
         raise HTTPException(status_code=404, detail="Meal plan not found")
-    service = EquipmentListService(
-        EquipmentListRepository(session),
-        meal_plan_repository,
-    )
     equipment_list = service.create_from_meal_plan_id(
         str(meal_plan.id),
         project_id=project_id,

@@ -20,6 +20,7 @@ First-release preparation and operations
   → Menu generation and MealSlot audit coverage (TH-0100)
   → System Settings and mail audit coverage (TH-0101)
   → Invitation lifecycle and delivery-result audit coverage (TH-0102)
+  → Catalogue/import, shopping, equipment, and document audit coverage (TH-0103)
 ```
 
 ## Released first-release sequence
@@ -54,45 +55,38 @@ Project creation, participant recalculation, generation-mode changes, and full p
 
 ### TH-0100 — Menu generation and MealSlot audit coverage
 
-- initial generation and regeneration record `meal_plan_generated` in the MealPlan/Equipment transaction;
-- bounded snapshots record plan/day/slot/dish/manual-slot counts and warnings;
-- regeneration records Recipe generation mode and preserved manual-slot context;
-- manual add/remove/replace record semantic events inside the existing purchasing/checklist/equipment recalculation transaction;
-- failures roll back domain changes and pending AuditEvents together;
-- Administrator Audit UI/API expose Russian Menu and MealSlot labels and filters;
-- Alembic remains `h10021` and `v0.1.0` remains immutable.
+Initial generation/regeneration and manual MealSlot Dish add/remove/replace record bounded semantic events in the owning recalculation transaction. Administrator UI/API expose Russian Menu and MealSlot labels.
 
 ### TH-0101 — System Settings and mail audit coverage
 
-- all typed settings owners record semantic actor-attributed events only for persisted changes;
-- settings events share the existing settings/history commit and rollback boundary;
-- SMTP connection-check and fixed test-message operations record safe outcomes at the existing result boundary;
-- credentials, tokens, transcripts, exception details, and arbitrary request bodies are excluded;
-- Administrator Audit UI/API expose Russian System Settings and Mail labels and filters;
-- Alembic remains `h10021` and `v0.1.0` remains immutable.
+All typed settings owners and Administrator SMTP connection/test operations record safe actor-attributed events. Credentials, transcripts, exceptions, and request bodies are excluded.
 
 ### TH-0102 — Invitation lifecycle and delivery-result audit coverage
 
-- invitation create, reissue, revoke, and accept record semantic events in their owning transactions;
-- create/reissue/revoke use the authenticated Administrator snapshot, while acceptance uses the newly created User snapshot;
-- failed lifecycle persistence or audit recording rolls back invitation, User, and session mutations together;
-- automatic create/reissue delivery records only status, attempts, recipient domain, operation kind, and role after the invitation commit;
-- delivery or delivery-audit failure preserves the valid invitation and one-time manual link;
-- raw tokens, acceptance links, passwords and hashes, sessions and hashes, SMTP secrets, provider messages, transcripts, exceptions, full recipient addresses, and request bodies are excluded;
-- Administrator Audit UI/API expose Russian Invitation labels and filtering without mobile overflow;
-- strict Ruff/mypy, full Backend and Frontend/browser acceptance, Product Acceptance, backup/restore, Alembic, Docker, documentation, guided-release, operator, and final-readiness gates passed on the implementation candidate;
+Invitation create/reissue/revoke/accept record in lifecycle transactions. Safe post-commit delivery outcomes preserve invitation validity and the manual link even when delivery or delivery-audit fails.
+
+### TH-0103 — Operational write audit coverage
+
+- Product create/update and successful Product/Recipe CSV apply record semantic events;
+- catalogue import payloads contain aggregate counts only, never CSV content or row details;
+- PurchaseList/PurchaseChecklist generation and manual responsible/progress updates record in their owning transaction;
+- Recipe equipment requirements, EquipmentList generation, and manual equipment overrides/removals record bounded before/after state;
+- preparation subservices called with `commit=False` append events to the caller-owned Project preparation transaction;
+- no-op writes create no event and audit failure rolls back pending domain mutations;
+- successful Project and legacy purchase-list document generation records kind/format/content type/size before response delivery without storing content or filenames;
+- Administrator Audit UI/API expose Russian catalogue, shopping, equipment, and document labels and filters without mobile overflow;
 - Alembic remains `h10021` and `v0.1.0` remains immutable.
 
 ## Next post-release selection
 
-No task after TH-0102 is selected automatically. Catalogue/import, shopping, equipment, and document-generation write audit are the first listed unresolved coverage cluster, but work requires a separate Product Owner decision.
+No task after TH-0103 is selected automatically. Further work requires a separate Product Owner decision.
 
 ## Deferred non-blocking priorities
 
-### Audit coverage
+### Audit and operations
 
-- catalogue/import, shopping, equipment, and document-generation writes;
-- audit export, retention UI, SIEM, undo, and replay.
+- audit export, retention UI, external SIEM integration, and operational diagnostics;
+- undo and event replay remain outside v0.1.0.
 
 ### Product and operations
 
@@ -100,6 +94,6 @@ No task after TH-0102 is selected automatically. Catalogue/import, shopping, equ
 - richer Recipe metadata, per-meal switching, and preference weights;
 - Product/Dish archive-management UI and ownership-aware import UX;
 - participant profiles, routes/GPX, warehouse, procurement, and external aggregation domains;
-- scheduled/emailed documents, signatures, and encrypted configuration archives.
+- scheduled/emailed documents, persisted versions, signatures, and encrypted configuration archives.
 
 Multi-tenant support and microservices remain prohibited.
