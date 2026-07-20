@@ -8,7 +8,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
 
-TH-0101 is complete. No later post-release capability is selected automatically; invitation lifecycle/delivery-result audit remains deferred until a separate Product Owner decision.
+TH-0102 is complete. No later post-release capability is selected automatically; catalogue/import, shopping, equipment, and document-generation write audit remain deferred until a separate Product Owner decision.
 
 ## First-release sequence
 
@@ -75,6 +75,7 @@ The complete first-release sequence is delivered through TH-0093. The feature-fr
 | TH-0099 | Project Audit Coverage | DONE |
 | TH-0100 | Menu Generation and MealSlot Audit Coverage | DONE |
 | TH-0101 | System Settings and Mail Audit Coverage | DONE |
+| TH-0102 | Invitation Lifecycle and Delivery-Result Audit Coverage | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 
