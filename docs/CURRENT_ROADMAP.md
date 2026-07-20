@@ -19,6 +19,7 @@ First-release preparation and operations
   → Project audit coverage (TH-0099)
   → Menu generation and MealSlot audit coverage (TH-0100)
   → System Settings and mail audit coverage (TH-0101)
+  → Invitation lifecycle and delivery-result audit coverage (TH-0102)
 ```
 
 ## Released first-release sequence
@@ -63,24 +64,33 @@ Project creation, participant recalculation, generation-mode changes, and full p
 
 ### TH-0101 — System Settings and mail audit coverage
 
-- Club, Appearance, Document Appearance, Module, Invitation Policy, and Mail Settings owners record semantic actor-attributed events only for persisted changes;
-- each settings event shares the existing settings/history commit and rollback boundary;
-- Club image changes record only configured state, MIME type, and byte size;
+- all typed settings owners record semantic actor-attributed events only for persisted changes;
+- settings events share the existing settings/history commit and rollback boundary;
 - SMTP connection-check and fixed test-message operations record safe outcomes at the existing result boundary;
-- SMTP passwords, environment values, protocol transcripts, exception details, invitation/session values, tokens, and arbitrary request bodies are excluded;
-- Administrator Audit UI/API expose Russian System Settings and Mail labels and filters without mobile overflow;
+- credentials, tokens, transcripts, exception details, and arbitrary request bodies are excluded;
+- Administrator Audit UI/API expose Russian System Settings and Mail labels and filters;
+- Alembic remains `h10021` and `v0.1.0` remains immutable.
+
+### TH-0102 — Invitation lifecycle and delivery-result audit coverage
+
+- invitation create, reissue, revoke, and accept record semantic events in their owning transactions;
+- create/reissue/revoke use the authenticated Administrator snapshot, while acceptance uses the newly created User snapshot;
+- failed lifecycle persistence or audit recording rolls back invitation, User, and session mutations together;
+- automatic create/reissue delivery records only status, attempts, recipient domain, operation kind, and role after the invitation commit;
+- delivery or delivery-audit failure preserves the valid invitation and one-time manual link;
+- raw tokens, acceptance links, passwords and hashes, sessions and hashes, SMTP secrets, provider messages, transcripts, exceptions, full recipient addresses, and request bodies are excluded;
+- Administrator Audit UI/API expose Russian Invitation labels and filtering without mobile overflow;
 - strict Ruff/mypy, full Backend and Frontend/browser acceptance, Product Acceptance, backup/restore, Alembic, Docker, documentation, guided-release, operator, and final-readiness gates passed on the implementation candidate;
 - Alembic remains `h10021` and `v0.1.0` remains immutable.
 
 ## Next post-release selection
 
-No task after TH-0101 is selected automatically. Invitation lifecycle and delivery-result audit are the first listed unresolved audit slice, but work requires a separate Product Owner decision.
+No task after TH-0102 is selected automatically. Catalogue/import, shopping, equipment, and document-generation write audit are the first listed unresolved coverage cluster, but work requires a separate Product Owner decision.
 
 ## Deferred non-blocking priorities
 
 ### Audit coverage
 
-- invitation creation, revocation, acceptance, and delivery results;
 - catalogue/import, shopping, equipment, and document-generation writes;
 - audit export, retention UI, SIEM, undo, and replay.
 
