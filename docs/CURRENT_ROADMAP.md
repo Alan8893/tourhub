@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-19
+Status date: 2026-07-20
 
 ## Product goal
 
@@ -18,6 +18,7 @@ First-release preparation and operations
   → Published Recipe Dish synchronization (TH-0098)
   → Project audit coverage (TH-0099)
   → Menu generation and MealSlot audit coverage (TH-0100)
+  → System Settings and mail audit coverage (TH-0101)
 ```
 
 ## Released first-release sequence
@@ -58,18 +59,27 @@ Project creation, participant recalculation, generation-mode changes, and full p
 - manual add/remove/replace record semantic events inside the existing purchasing/checklist/equipment recalculation transaction;
 - failures roll back domain changes and pending AuditEvents together;
 - Administrator Audit UI/API expose Russian Menu and MealSlot labels and filters;
-- candidate exact head passed strict Ruff/mypy, all 327 Backend tests, complete Frontend/browser acceptance, Product Acceptance, backup/restore, Alembic, Docker, documentation, guided-release, operator, and final-readiness gates;
+- Alembic remains `h10021` and `v0.1.0` remains immutable.
+
+### TH-0101 — System Settings and mail audit coverage
+
+- Club, Appearance, Document Appearance, Module, Invitation Policy, and Mail Settings owners record semantic actor-attributed events only for persisted changes;
+- each settings event shares the existing settings/history commit and rollback boundary;
+- Club image changes record only configured state, MIME type, and byte size;
+- SMTP connection-check and fixed test-message operations record safe outcomes at the existing result boundary;
+- SMTP passwords, environment values, protocol transcripts, exception details, invitation/session values, tokens, and arbitrary request bodies are excluded;
+- Administrator Audit UI/API expose Russian System Settings and Mail labels and filters without mobile overflow;
+- strict Ruff/mypy, full Backend and Frontend/browser acceptance, Product Acceptance, backup/restore, Alembic, Docker, documentation, guided-release, operator, and final-readiness gates passed on the implementation candidate;
 - Alembic remains `h10021` and `v0.1.0` remains immutable.
 
 ## Next post-release selection
 
-No task after TH-0100 is selected automatically. System Settings and mail-operation audit are the first listed unresolved audit slice, but work requires a separate Product Owner decision.
+No task after TH-0101 is selected automatically. Invitation lifecycle and delivery-result audit are the first listed unresolved audit slice, but work requires a separate Product Owner decision.
 
 ## Deferred non-blocking priorities
 
 ### Audit coverage
 
-- System Settings and mail operations;
 - invitation creation, revocation, acceptance, and delivery results;
 - catalogue/import, shopping, equipment, and document-generation writes;
 - audit export, retention UI, SIEM, undo, and replay.
