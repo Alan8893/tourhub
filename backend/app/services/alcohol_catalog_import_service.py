@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.product import ProductORM
+from app.models.user import UserORM
 from app.policies.alcohol_policy import AlcoholPolicy, AlcoholPolicyViolation
 from app.schemas.catalog_import import CatalogImportError, CatalogImportResult
 from app.services.catalog_import_service import CatalogImportService
@@ -13,9 +14,9 @@ from app.services.catalog_import_service import CatalogImportService
 class AlcoholAwareCatalogImportService:
     """Apply the central alcohol policy around the existing CSV import workflow."""
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, *, actor: UserORM | None = None):
         self.session = session
-        self.base_service = CatalogImportService(session)
+        self.base_service = CatalogImportService(session, actor=actor)
 
     def preview(self, kind: str, content: str) -> CatalogImportResult:
         result = self.base_service.preview(kind, content)
