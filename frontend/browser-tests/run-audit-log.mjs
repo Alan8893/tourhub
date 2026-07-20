@@ -83,17 +83,20 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
        document.body?.innerText?.includes("Анна Администратор") &&
-       document.body?.innerText?.includes("Найдено записей: 7")`,
+       document.body?.innerText?.includes("Найдено записей: 9")`,
       "loaded audit event collection",
     );
     const loadedText = normalizeText(await client.evaluate("document.body.innerText"));
     for (const label of [
+      "Приглашение принято",
+      "Результат доставки приглашения",
+      "Приглашение",
       "Настройки почты изменены",
       "Тестовая отправка почты",
       "Системные настройки",
       "Почта",
       "Меню сгенерировано",
-      "Блюдо заменено в приёме пищи",
+      "Блюдо заменено в приём пищи",
       "Подготовка проекта выполнена",
       "Рецепт отклонён",
       "Роль пользователя изменена",
@@ -106,10 +109,10 @@ async function run() {
     }
 
     const filtered = await client.evaluate(`(() => {
-      const input = document.querySelector('input[placeholder="Например: mail_connection_checked"]');
+      const input = document.querySelector('input[placeholder="Например: invitation_delivery_result"]');
       if (!input) return false;
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-      setter?.call(input, "mail_test_message_delivery");
+      setter?.call(input, "invitation_delivery_result");
       input.dispatchEvent(new Event("input", { bubbles: true }));
       const button = [...document.querySelectorAll("button")].find(
         (item) => item.textContent?.trim() === "Применить фильтры",
@@ -123,11 +126,12 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Найдено записей: 1") &&
        document.body?.innerText?.includes("Анна Администратор")`,
-      "filtered mail audit history",
+      "filtered invitation delivery audit history",
     );
     const filteredText = normalizeText(await client.evaluate("document.body.innerText"));
-    assert.ok(filteredText.includes(normalizeText("Тестовая отправка почты")));
-    assert.ok(filteredText.includes(normalizeText("Почта")));
+    assert.ok(filteredText.includes(normalizeText("Результат доставки приглашения")));
+    assert.ok(filteredText.includes(normalizeText("Приглашение")));
+    assert.ok(!filteredText.includes(normalizeText("Приглашение принято")));
     assert.ok(!filteredText.includes(normalizeText("Настройки почты изменены")));
     assert.ok(!filteredText.includes(normalizeText("Меню сгенерировано")));
     assert.ok(!filteredText.includes(normalizeText("Подготовка проекта выполнена")));
@@ -136,7 +140,7 @@ async function run() {
       auditRequests.some(
         (request) =>
           request.path === "/api/v1/audit/events" &&
-          request.query.action === "mail_test_message_delivery",
+          request.query.action === "invitation_delivery_result",
       ),
     );
 
