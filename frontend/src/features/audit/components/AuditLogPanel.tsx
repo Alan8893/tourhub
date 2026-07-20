@@ -46,6 +46,21 @@ const ACTION_LABELS: Record<string, string> = {
   invitation_revoked: "Приглашение отозвано",
   invitation_accepted: "Приглашение принято",
   invitation_delivery_result: "Результат доставки приглашения",
+  product_created: "Продукт создан",
+  product_updated: "Продукт изменён",
+  catalog_import_applied: "Импорт каталога применён",
+  purchase_list_generated: "Список закупок сформирован",
+  purchase_list_updated: "Ответственный за закупки изменён",
+  purchase_checklist_generated: "Чек-лист закупок сформирован",
+  purchase_checklist_item_updated: "Позиция чек-листа закупок изменена",
+  recipe_equipment_created: "Требование к снаряжению добавлено",
+  recipe_equipment_updated: "Требование к снаряжению изменено",
+  recipe_equipment_deleted: "Требование к снаряжению удалено",
+  equipment_list_generated: "Список снаряжения сформирован",
+  equipment_list_item_added: "Позиция снаряжения добавлена",
+  equipment_list_item_updated: "Позиция снаряжения изменена",
+  equipment_list_item_deleted: "Позиция снаряжения удалена",
+  document_generated: "Документ сформирован",
 };
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -57,6 +72,16 @@ const ENTITY_LABELS: Record<string, string> = {
   system_settings: "Системные настройки",
   mail: "Почта",
   invitation: "Приглашение",
+  product: "Продукт",
+  catalog_import: "Импорт каталога",
+  purchase_list: "Список закупок",
+  purchase_checklist: "Чек-лист закупок",
+  purchase_checklist_item: "Позиция чек-листа",
+  recipe_equipment_requirement: "Требование к снаряжению",
+  equipment_list: "Список снаряжения",
+  equipment_list_item: "Позиция снаряжения",
+  project_document: "Документ проекта",
+  purchase_list_document: "Документ закупок",
 };
 
 function formatDate(value: string): string {
@@ -171,12 +196,14 @@ export default function AuditLogPanel() {
             <Typography variant="h5">Аудит действий</Typography>
             <Typography color="text.secondary">
               Неизменяемая история критичных действий с пользователями, рецептами,
-              проектами, меню, системными настройками, почтой и приглашениями.
+              проектами, меню, каталогом, закупками, снаряжением, документами,
+              системными настройками, почтой и приглашениями.
             </Typography>
           </Box>
 
           <Alert severity="info">
-            Журнал не содержит пароли, токены сессий, приглашений или SMTP-секреты.
+            Журнал не содержит пароли, токены, SMTP-секреты, CSV-файлы или содержимое
+            сформированных документов.
           </Alert>
 
           <Box
@@ -203,6 +230,18 @@ export default function AuditLogPanel() {
                 <MenuItem value="project">Проект</MenuItem>
                 <MenuItem value="meal_plan">Меню</MenuItem>
                 <MenuItem value="meal_slot">Приём пищи</MenuItem>
+                <MenuItem value="product">Продукт</MenuItem>
+                <MenuItem value="catalog_import">Импорт каталога</MenuItem>
+                <MenuItem value="purchase_list">Список закупок</MenuItem>
+                <MenuItem value="purchase_checklist">Чек-лист закупок</MenuItem>
+                <MenuItem value="purchase_checklist_item">Позиция чек-листа</MenuItem>
+                <MenuItem value="recipe_equipment_requirement">
+                  Требование к снаряжению
+                </MenuItem>
+                <MenuItem value="equipment_list">Список снаряжения</MenuItem>
+                <MenuItem value="equipment_list_item">Позиция снаряжения</MenuItem>
+                <MenuItem value="project_document">Документ проекта</MenuItem>
+                <MenuItem value="purchase_list_document">Документ закупок</MenuItem>
                 <MenuItem value="system_settings">Системные настройки</MenuItem>
                 <MenuItem value="mail">Почта</MenuItem>
                 <MenuItem value="invitation">Приглашение</MenuItem>
@@ -212,7 +251,7 @@ export default function AuditLogPanel() {
               label="Действие"
               value={action}
               onChange={(event) => setAction(event.target.value)}
-              placeholder="Например: invitation_delivery_result"
+              placeholder="Например: document_generated"
             />
             <TextField
               label="ID сущности"
