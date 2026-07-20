@@ -1,4 +1,5 @@
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from functools import partial
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -52,17 +53,9 @@ class RecipeEquipmentService:
             quantity=quantity,
         )
         self.session.add(requirement)
-        audit = OperationalAuditService(self.session)
         self._commit(
             recipe_id,
-            audit_action=(
-                lambda: audit.record_recipe_equipment_created(
-                    actor=self.actor,
-                    requirement=requirement,
-                )
-                if self.actor is not None
-                else None
-            ),
+            audit_action=partial(self._record_created, requirement),
         )
         self.session.refresh(requirement)
         return requirement
@@ -86,15 +79,7 @@ class RecipeEquipmentService:
             return requirement
         self._commit(
             recipe_id,
-            audit_action=(
-                lambda: audit.record_recipe_equipment_updated(
-                    actor=self.actor,
-                    requirement=requirement,
-                    before=before,
-                )
-                if self.actor is not None
-                else None
-            ),
+            audit_action=partial(self._record_updated, requirement, before),
         )
         self.session.refresh(requirement)
         return requirement
@@ -102,20 +87,50 @@ class RecipeEquipmentService:
     def delete(self, recipe_id: str, requirement_id: str) -> None:
         self._get_editable_recipe(recipe_id)
         requirement = self._get_requirement(recipe_id, requirement_id)
-        audit = OperationalAuditService(self.session)
-        before = audit.recipe_equipment_snapshot(requirement)
+        before = OperationalAuditService(self.session).recipe_equipment_snapshot(
+            requirement
+        )
         self.session.delete(requirement)
         self._commit(
             recipe_id,
-            audit_action=(
-                lambda: audit.record_recipe_equipment_deleted(
-                    actor=self.actor,
-                    requirement_id=requirement_id,
-                    before=before,
-                )
-                if self.actor is not None
-                else None
-            ),
+            audit_action=partial(self._record_deleted, requirement_id, before),
+        )
+
+    def _record_created(self, requirement: RecipeEquipmentRequirementORM) -> None:
+        actor = self.actor
+        if actor is None:
+            return
+        OperationalAuditService(self.session).record_recipe_equipment_created(
+            actor=actor,
+            requirement=requirement,
+        )
+
+    def _record_updated(
+        self,
+        requirement: RecipeEquipmentRequirementORM,
+        before: Mapping[str, object],
+    ) -> None:
+        actor = self.actor
+        if actor is None:
+            return
+        OperationalAuditService(self.session).record_recipe_equipment_updated(
+            actor=actor,
+            requirement=requirement,
+            before=before,
+        )
+
+    def _record_deleted(
+        self,
+        requirement_id: str,
+        before: Mapping[str, object],
+    ) -> None:
+        actor = self.actor
+        if actor is None:
+            return
+        OperationalAuditService(self.session).record_recipe_equipment_deleted(
+            actor=actor,
+            requirement_id=requirement_id,
+            before=before,
         )
 
     def _get_recipe(self, recipe_id: str) -> RecipeORM:
