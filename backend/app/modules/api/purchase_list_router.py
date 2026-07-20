@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import require_preparation_access
 from app.core.session import get_session
+from app.engines.documents.dto import GeneratedDocument
 from app.engines.documents.excel import ExcelDocumentGenerator
 from app.engines.documents.pdf import PDFDocumentGenerator
 from app.models.user import UserORM
@@ -47,7 +48,7 @@ def _record_document(
     service: PurchaseListService,
     purchase_list_id: str,
     document_format: str,
-    document,
+    document: GeneratedDocument,
 ) -> None:
     if service.actor is None:
         return
