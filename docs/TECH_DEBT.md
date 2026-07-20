@@ -23,90 +23,56 @@ Status date: 2026-07-20
 
 None. The approved first-release capability scope is feature frozen and release-ready. Any new blocking classification requires reproducible regression, security, migration, or operator evidence.
 
-## Resolved post-release UX debt — TH-0095
+## Resolved post-release improvements
 
-- the Project page no longer renders every preparation area as one long landing page;
-- compact Overview and stable section URLs replace extensive vertical scrolling;
-- Shopping calculation and checklist no longer compete in a narrow two-column layout;
-- the sidebar becomes a drawer below desktop width;
-- responsive browser acceptance covers 360 px, 831 px, and 1280 px.
+### TH-0095 — Project workspace UX
 
-## Resolved Product catalogue editing debt — TH-0097
+Compact routed work areas, responsive navigation, and accepted 360/831/1280 px layouts replaced the long Project landing page.
 
-- active shared Products can be edited without recreation;
-- Product identifiers and every Recipe relationship remain intact;
-- duplicate names and prohibited content preserve established API boundaries;
-- changing the catalogue unit does not convert RecipeComponent amount/unit values;
-- the Recipe component workflow exposes a responsive edit action and shared-impact warning;
-- no migration was required and Alembic remains `h10021`.
+### TH-0097 — Product catalogue editing
 
-## Resolved published Recipe Dish synchronization debt — TH-0098
+Active shared Products can be edited without recreation or relationship changes. Duplicate names, alcohol policy, and unit semantics preserve established boundaries.
 
-- every newly published CLUB Recipe is synchronized into Dishes in the publication transaction;
-- synchronization and the publication AuditEvent share the same rollback boundary;
-- Recipes already attached as a default or variant are not duplicated;
-- active exact-name Dishes receive the Recipe as the next variant without changing default Recipe or roles;
-- otherwise one active role-less Dish is created with the Recipe as default and only variant;
-- role-less Dishes show `Не настроено для генератора` and remain available for manual choice;
-- `Настроить генератор` opens the existing explicit role editor;
-- after role assignment the Dish shows `Готово для генератора` and updates readiness coverage;
-- no role, meal type, or repeatability value is inferred;
-- strict Ruff/mypy, transaction rollback tests, full Backend regression, and focused real-Chrome acceptance cover the workflow;
-- no migration was required and Alembic remains `h10021`.
+### TH-0098 — Published Recipe Dish synchronization
 
-## Resolved Project audit debt — TH-0099
+Publication and Dish synchronization share one transaction. Exact-name Dishes receive variants; otherwise one role-less Dish is created. Generator roles remain explicitly human-owned.
 
-- Project creation records `project_created` with the authenticated actor in the creation commit;
-- participant changes record `project_participants_updated` in the same transaction as derived purchasing, checklist, and equipment recalculation;
-- generation-mode changes record `project_generation_mode_updated` in the Project update commit;
-- full preparation records `project_prepared` in one transaction with purchase list, checklist, and equipment writes;
-- no-op participant and generation-mode updates create no event;
-- failed creation, recalculation, audit recording, or preparation rolls back both domain changes and pending events;
-- existing standalone preparation services retain commit-by-default behavior while supporting caller-owned transactions;
-- the Administrator Audit UI/API exposes Russian Project labels and filters;
-- strict Ruff/mypy, all Backend tests, Product Acceptance, and real-Chrome Audit coverage verify the behavior;
-- no migration was required and Alembic remains `h10021`.
+### TH-0099 — Project audit coverage
 
-## Resolved Menu and MealSlot audit debt — TH-0100
+Project creation, participant recalculation, generation-mode changes, and full preparation record semantic events in their owning transactions with no-op suppression and rollback safety.
 
-- initial generation and regeneration record `meal_plan_generated` in the MealPlan/Equipment transaction;
-- manual add/remove/replace record semantic MealSlot events in the existing derived-refresh transaction;
-- bounded snapshots include plan counts, warnings, generation mode, and preserved manual-slot context;
-- failures roll back domain changes and pending AuditEvents together;
-- the Administrator Audit UI/API exposes Russian Menu and MealSlot labels and filters;
-- no migration was required and Alembic remains `h10021`.
+### TH-0100 — Menu and MealSlot audit coverage
 
-## Resolved System Settings and mail audit debt — TH-0101
+Generation/regeneration and manual MealSlot Dish add/remove/replace record bounded events in the existing recalculation transaction.
 
-- Club, Appearance, Document Appearance, Module, Invitation Policy, and Mail Settings changes record real Administrator attribution;
-- normalized before/after snapshots contain only changed fields and versions, and no-op saves create no event;
-- each settings event shares the existing settings/history commit and rollback transaction;
-- Club image changes record only configured state, MIME type, and byte size;
-- SMTP connection-check and fixed test-message operations record safe success/failure/unavailable outcomes at the existing result boundary;
-- SMTP passwords, environment values, protocol transcripts, exception details, invitation/session values, tokens, and arbitrary request bodies are excluded;
-- the Administrator Audit UI/API exposes Russian System Settings and Mail labels and filters;
-- strict Ruff/mypy, full Backend regression, real-Chrome acceptance, and release gates verify the behavior;
-- no migration was required and Alembic remains `h10021`.
+### TH-0101 — System Settings and mail audit coverage
 
-## Resolved invitation lifecycle and delivery-result audit debt — TH-0102
+All typed settings owners and Administrator SMTP check/test operations record safe actor-attributed events. Credentials, transcripts, exception details, and request bodies are excluded.
 
-- invitation creation, reissue, revocation, and acceptance record semantic AuditEvents in their owning transactions;
-- create, reissue, and revoke use the authenticated Administrator snapshot; acceptance uses the newly created User snapshot;
-- failed lifecycle persistence or audit recording rolls back invitation, User, AuthSession, and pending AuditEvent changes together;
-- create/reissue delivery results record only status, attempts, recipient domain, operation kind, and role after the lifecycle commit;
-- delivery or delivery-audit failure preserves invitation validity and the one-time manual link;
-- raw tokens, acceptance links, passwords and hashes, sessions and hashes, SMTP secrets, provider messages, transcripts, exceptions, full recipient addresses, and request bodies are excluded;
-- the Administrator Audit UI/API exposes Russian Invitation labels and filters;
-- strict Ruff/mypy, full Backend regression, Product Acceptance, real-Chrome acceptance, and release gates verify the behavior;
+### TH-0102 — Invitation lifecycle and delivery-result audit coverage
+
+Lifecycle events share invitation/user/session transactions. Safe delivery outcomes remain post-commit and never invalidate the invitation or manual link.
+
+### TH-0103 — Operational write audit coverage
+
+- Product create/update records bounded before/after state and skips unchanged updates;
+- successful Product/Recipe CSV apply records only kind and aggregate row/create/skip/component/note counts;
+- PurchaseList/PurchaseChecklist generation, responsible-person updates, and checklist progress record in owning transactions;
+- RecipeEquipmentRequirement create/update/delete and EquipmentList generation/manual item operations record semantic snapshots;
+- preparation services called with `commit=False` append pending events to the Project preparation transaction;
+- audit persistence failure rolls back pending catalogue, shopping, checklist, and equipment mutations;
+- successful Project and legacy purchase-list document generation records only kind, format, content type, and size before response delivery;
+- CSV content, row values, generated bytes/text, filenames, request bodies, credentials, tokens, SMTP internals, and exceptions are excluded;
+- Administrator Audit UI/API exposes Russian labels and filters with mobile overflow acceptance;
+- strict Ruff/mypy, full Backend regression, Product Acceptance, browser acceptance, backup/restore, Alembic, Docker, documentation, guided-release, operator, and final-readiness gates verify the implementation;
 - no migration was required and Alembic remains `h10021`.
 
 ## Remaining audit debt
 
-1. Catalogue/import, shopping, equipment, and document-generation actions.
-2. Audit export, retention UI, external SIEM integration, and operational diagnostics.
-3. Undo and event replay remain outside v0.1.0.
+1. Audit export, retention UI, external SIEM integration, and operational diagnostics.
+2. Undo and event replay remain outside v0.1.0.
 
-Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and the owning business transaction.
+Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and explicit transaction ownership.
 
 ## Remaining Recipe, menu, and catalogue debt
 
@@ -126,7 +92,6 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - scheduled or asynchronous generation;
 - email delivery of generated packages;
 - persisted document versions or signatures;
-- document-download audit events;
 - optional formats beyond approved PDF/XLSX/print/ZIP.
 
 ## Remaining Access and mail debt
@@ -154,8 +119,8 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Product Owner decisions required for later releases
 
-- which post-release debt slice follows TH-0102;
-- whether catalogue/import and operational write audit should be selected next;
+- which post-release debt slice follows TH-0103;
+- whether audit export/retention/diagnostics belongs in the next release;
 - whether preference weighting beyond approved generation modes belongs in a later release;
 - mandatory Recipe metadata for a later release;
 - encrypted settings archive format.
