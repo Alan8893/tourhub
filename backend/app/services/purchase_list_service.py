@@ -6,10 +6,12 @@ from app.engines.documents.dto import PurchaseDocumentDTO
 from app.engines.packaging import PackagedShoppingResult
 from app.models.purchase_list import PurchaseListORM
 from app.models.purchase_list_item import PurchaseListItemORM
+from app.models.user import UserORM
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_list_repository import PurchaseListRepository
 from app.services.document_mapper import PurchaseDocumentMapper
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
+from app.services.operational_audit_service import OperationalAuditService
 
 
 class PurchaseListSummary(TypedDict):
@@ -28,11 +30,13 @@ class PurchaseListService:
         meal_plan_repository: MealPlanRepository | None = None,
         shopping_service: MealPlanShoppingService | None = None,
         document_mapper: PurchaseDocumentMapper | None = None,
+        actor: UserORM | None = None,
     ) -> None:
         self.repository = repository
         self.meal_plan_repository = meal_plan_repository
         self.shopping_service = shopping_service
         self.document_mapper = document_mapper or PurchaseDocumentMapper()
+        self.actor = actor
 
     def create_from_meal_plan_id(
         self,
@@ -93,6 +97,13 @@ class PurchaseListService:
                 )
             )
 
+        if self.actor is not None:
+            OperationalAuditService(
+                self.repository.session
+            ).record_purchase_list_generated(
+                actor=self.actor,
+                purchase_list=purchase_list,
+            )
         self._finish_write(commit=commit)
         return purchase_list
 
@@ -108,9 +119,19 @@ class PurchaseListService:
         if not purchase_list:
             raise ValueError("Purchase list not found")
 
+        audit = OperationalAuditService(self.repository.session)
+        before = audit.purchase_list_snapshot(purchase_list)
         normalized = responsible_person.strip() if responsible_person else None
         purchase_list.responsible_person = normalized or None
-        self.repository.commit()
+        if before == audit.purchase_list_snapshot(purchase_list):
+            return purchase_list
+        if self.actor is not None:
+            audit.record_purchase_list_updated(
+                actor=self.actor,
+                purchase_list=purchase_list,
+                before=before,
+            )
+        self._finish_write(commit=True)
         return purchase_list
 
     def get_summary(self, purchase_list_id: str) -> PurchaseListSummary:
@@ -138,7 +159,11 @@ class PurchaseListService:
         return product.id
 
     def _finish_write(self, *, commit: bool) -> None:
-        if commit:
-            self.repository.commit()
-        else:
-            self.repository.flush()
+        try:
+            if commit:
+                self.repository.commit()
+            else:
+                self.repository.flush()
+        except Exception:
+            self.repository.session.rollback()
+            raise
