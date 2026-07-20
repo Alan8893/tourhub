@@ -1,5 +1,5 @@
-from collections.abc import Sequence
 import secrets
+from collections.abc import Sequence
 from datetime import timedelta
 
 from sqlalchemy import func, select
@@ -18,6 +18,7 @@ from app.schemas.invitation import (
     InvitationStatus,
 )
 from app.services.auth_service import hash_password, token_hash, utc_now
+from app.services.invitation_audit_service import InvitationAuditService
 from app.services.invitation_settings_service import DEFAULT_VALUES
 
 
@@ -163,16 +164,24 @@ class InvitationService:
         *,
         actor: UserORM,
     ) -> tuple[InvitationORM, str]:
-        policy = self._settings_locked()
-        role = request.role.value if request.role is not None else policy.default_role
-        invitation, raw_token = self._create_record(
-            email=request.email,
-            role=role,
-            actor_id=actor.id,
-            policy=policy,
-            reject_existing_active=True,
-        )
-        self.session.commit()
+        try:
+            policy = self._settings_locked()
+            role = request.role.value if request.role is not None else policy.default_role
+            invitation, raw_token = self._create_record(
+                email=request.email,
+                role=role,
+                actor_id=actor.id,
+                policy=policy,
+                reject_existing_active=True,
+            )
+            InvitationAuditService(self.session).record_created(
+                actor=actor,
+                invitation=invitation,
+            )
+            self.session.commit()
+        except Exception:
+            self.session.rollback()
+            raise
         self.session.refresh(invitation)
         return invitation, raw_token
 
@@ -197,40 +206,59 @@ class InvitationService:
         *,
         actor: UserORM,
     ) -> tuple[InvitationORM, str]:
-        policy = self._settings_locked()
-        if not policy.allow_resend:
-            raise InvitationPolicyError(
-                "Повторный выпуск приглашений отключён политикой клуба."
-            )
-        invitation = self._locked_by_id(invitation_id)
-        current_status = self.status_of(invitation)
-        if current_status in {
-            InvitationStatus.CONSUMED,
-            InvitationStatus.REVOKED,
-            InvitationStatus.SUPERSEDED,
-        }:
-            raise InvitationStateError(_STATE_MESSAGES[current_status])
+        try:
+            policy = self._settings_locked()
+            if not policy.allow_resend:
+                raise InvitationPolicyError(
+                    "Повторный выпуск приглашений отключён политикой клуба."
+                )
+            invitation = self._locked_by_id(invitation_id)
+            current_status = self.status_of(invitation)
+            if current_status in {
+                InvitationStatus.CONSUMED,
+                InvitationStatus.REVOKED,
+                InvitationStatus.SUPERSEDED,
+            }:
+                raise InvitationStateError(_STATE_MESSAGES[current_status])
 
-        invitation.superseded_at = utc_now()
-        self.session.flush()
-        replacement, raw_token = self._create_record(
-            email=invitation.email,
-            role=invitation.role,
-            actor_id=actor.id,
-            policy=policy,
-            reject_existing_active=False,
-        )
-        self.session.commit()
+            invitation.superseded_at = utc_now()
+            self.session.flush()
+            replacement, raw_token = self._create_record(
+                email=invitation.email,
+                role=invitation.role,
+                actor_id=actor.id,
+                policy=policy,
+                reject_existing_active=False,
+            )
+            InvitationAuditService(self.session).record_reissued(
+                actor=actor,
+                previous=invitation,
+                previous_status=current_status,
+                replacement=replacement,
+            )
+            self.session.commit()
+        except Exception:
+            self.session.rollback()
+            raise
         self.session.refresh(replacement)
         return replacement, raw_token
 
-    def revoke(self, invitation_id: int) -> InvitationORM:
-        invitation = self._locked_by_id(invitation_id)
-        current_status = self.status_of(invitation)
-        if current_status is not InvitationStatus.ACTIVE:
-            raise InvitationStateError(_STATE_MESSAGES[current_status])
-        invitation.revoked_at = utc_now()
-        self.session.commit()
+    def revoke(self, invitation_id: int, *, actor: UserORM) -> InvitationORM:
+        try:
+            invitation = self._locked_by_id(invitation_id)
+            current_status = self.status_of(invitation)
+            if current_status is not InvitationStatus.ACTIVE:
+                raise InvitationStateError(_STATE_MESSAGES[current_status])
+            invitation.revoked_at = utc_now()
+            InvitationAuditService(self.session).record_revoked(
+                actor=actor,
+                invitation=invitation,
+                before_status=current_status,
+            )
+            self.session.commit()
+        except Exception:
+            self.session.rollback()
+            raise
         self.session.refresh(invitation)
         return invitation
 
@@ -259,21 +287,21 @@ class InvitationService:
         self,
         request: InvitationAcceptRequest,
     ) -> tuple[UserORM, str]:
-        invitation = self._by_raw_token(request.token, lock=True)
-        policy = self.session.get(InvitationSettingsORM, 1)
-        if policy is not None:
-            self._validate_domain(invitation.email, policy)
-        self._ensure_user_absent(invitation.email)
-
-        user = UserORM(
-            email=invitation.email,
-            display_name=request.display_name,
-            role=UserRole(invitation.role).value,
-            password_hash=hash_password(request.password),
-            is_active=True,
-        )
-        self.session.add(user)
         try:
+            invitation = self._by_raw_token(request.token, lock=True)
+            policy = self.session.get(InvitationSettingsORM, 1)
+            if policy is not None:
+                self._validate_domain(invitation.email, policy)
+            self._ensure_user_absent(invitation.email)
+
+            user = UserORM(
+                email=invitation.email,
+                display_name=request.display_name,
+                role=UserRole(invitation.role).value,
+                password_hash=hash_password(request.password),
+                is_active=True,
+            )
+            self.session.add(user)
             self.session.flush()
             invitation.consumed_at = utc_now()
             invitation.accepted_user_id = user.id
@@ -287,11 +315,19 @@ class InvitationService:
                     last_seen_at=now,
                 )
             )
+            InvitationAuditService(self.session).record_accepted(
+                actor=user,
+                invitation=invitation,
+                before_status=InvitationStatus.ACTIVE,
+            )
             self.session.commit()
         except IntegrityError as error:
             self.session.rollback()
             raise InvitationConflictError(
                 "Пользователь с этим email уже существует в TourHub."
             ) from error
+        except Exception:
+            self.session.rollback()
+            raise
         self.session.refresh(user)
         return user, raw_session

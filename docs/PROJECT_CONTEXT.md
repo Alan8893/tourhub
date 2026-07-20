@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-20
 
-Status: Post-release System Settings and mail audit coverage delivered — TH-0101
+Status: Post-release invitation lifecycle and delivery-result audit coverage delivered — TH-0102
 
 ## 1. Product boundary
 
@@ -41,7 +41,7 @@ Administrator bootstrap and invitations
   → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, TH-0098 closes the publication-to-Dish workflow, TH-0099 adds Project audit coverage, TH-0100 adds transactional audit coverage for menu generation/regeneration and manual MealSlot changes, and TH-0101 adds System Settings and Administrator mail-operation audit coverage.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, TH-0098 closes the publication-to-Dish workflow, TH-0099 adds Project audit coverage, TH-0100 adds transactional audit coverage for menu generation/regeneration and manual MealSlot changes, TH-0101 adds System Settings and Administrator mail-operation audit coverage, and TH-0102 adds invitation lifecycle and automatic delivery-result audit coverage.
 
 ## 3. Architecture
 
@@ -69,7 +69,7 @@ Frontend owns presentation, responsive navigation, Project workspace routing, Pr
 - Redis configuration;
 - deterministic calculation, document, audit, and catalogue-policy boundaries.
 
-Backend owns validation, persistence, identity/authorization, Product policy, Recipe ownership/lifecycle, published Recipe-to-Dish synchronization, Dish variant selection, menu generation, manual MealSlot mutation, catalogue import, central alcohol policy, recalculation, mail boundaries, document generation, and semantic audit rules in owning transactions.
+Backend owns validation, persistence, identity/authorization, invitation lifecycle, Product policy, Recipe ownership/lifecycle, published Recipe-to-Dish synchronization, Dish variant selection, menu generation, manual MealSlot mutation, catalogue import, central alcohol policy, recalculation, mail boundaries, document generation, and semantic audit rules in owning transactions.
 
 ### Runtime
 
@@ -112,14 +112,14 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - append-only AuditEvent persistence through `h10020`;
 - actor snapshots and bounded recursive secret removal;
 - semantic user-access and Recipe moderation events in owning transactions;
-- Project creation, participant recalculation, generation-mode updates, and full preparation orchestration events through TH-0099;
-- menu generation/regeneration and manual MealSlot add/remove/replace events through TH-0100;
-- all six typed System Settings owners record semantic before/after diffs with real Administrator attribution and no-op suppression through TH-0101;
-- settings mutation, focused settings history, and AuditEvent share the existing settings service commit/rollback boundary;
-- Club image changes record only configured state, MIME type, and byte size;
-- SMTP connection checks and fixed test-message operations record safe result status, attempts, optional recipient, and bounded non-secret context;
-- SMTP passwords, deployment environment values, protocol transcripts, exception details, invitation/session values, tokens, and arbitrary request bodies are never audit payloads;
-- Administrator-only Audit UI/API expose Russian User, Recipe, Project, Menu, MealSlot, System Settings, and Mail labels and filters.
+- Project and Menu/MealSlot coverage through TH-0099 and TH-0100;
+- all six typed System Settings owners and Administrator SMTP check/test results through TH-0101;
+- invitation creation, reissue, revocation, and acceptance append AuditEvents in the lifecycle transaction through TH-0102;
+- Administrator actions use the authenticated Administrator snapshot, while acceptance uses the newly created User snapshot;
+- automatic delivery after create/reissue records only status, attempts, recipient domain, operation kind, and invitation role at the existing post-commit result boundary;
+- delivery or delivery-audit failure does not roll back a valid invitation and does not remove its manual link;
+- raw invitation tokens, acceptance paths/URLs, passwords and hashes, raw sessions and hashes, SMTP values, provider messages, protocol transcripts, exception details, and arbitrary request bodies are never audit payloads;
+- Administrator-only Audit UI/API expose Russian User, Recipe, Project, Menu, MealSlot, System Settings, Mail, and Invitation labels and filters.
 
 ### Projects, preparation, documents, and operations
 
@@ -133,7 +133,7 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 ### Product acceptance and release readiness
 
 - versioned Product Acceptance and Release Readiness manifests;
-- critical Backend and Chrome gates, including published Recipe Dish synchronization and Project/Menu/MealSlot/System Settings/Mail audit coverage;
+- critical Backend and Chrome gates, including published Recipe Dish synchronization and Project/Menu/MealSlot/System Settings/Mail/Invitation audit coverage;
 - Alembic accepted head fixed at `h10021`;
 - real PostgreSQL 18 migration-cycle verification;
 - exact-head push workflows for required gates;
@@ -145,12 +145,12 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-TH-0101 is complete. Invitation lifecycle/delivery results, catalogue/import, shopping, equipment, and document-generation audit domains remain deferred until another explicit Product Owner decision.
+TH-0102 is complete. Catalogue/import, shopping, equipment, and document-generation audit domains remain deferred until another explicit Product Owner decision.
 
 ## 6. Immediate sequence
 
 1. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
-2. Use the Administrator Audit surface to review user, Recipe, Project, Menu, MealSlot, System Settings, and Mail events.
+2. Use the Administrator Audit surface to review user, Recipe, Project, Menu, MealSlot, System Settings, Mail, and Invitation events.
 3. Select any later audit or product slice only through another explicit Product Owner decision.
 
 ## 7. Development rules
