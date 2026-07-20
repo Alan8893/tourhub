@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import cast
 from uuid import uuid4
 
@@ -5,8 +6,10 @@ from app.models.equipment_list import EquipmentListORM
 from app.models.equipment_list_item import EquipmentListItemORM
 from app.models.meal_plan import MealPlanORM
 from app.models.recipe_equipment_requirement import RecipeEquipmentRequirementORM
+from app.models.user import UserORM
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
+from app.services.operational_audit_service import OperationalAuditService
 
 
 class EquipmentListService:
@@ -14,9 +17,11 @@ class EquipmentListService:
         self,
         repository: EquipmentListRepository,
         meal_plan_repository: MealPlanRepository,
+        actor: UserORM | None = None,
     ) -> None:
         self.repository = repository
         self.meal_plan_repository = meal_plan_repository
+        self.actor = actor
 
     def create_from_meal_plan_id(
         self,
@@ -32,7 +37,13 @@ class EquipmentListService:
         if resolved_project_id is None:
             raise ValueError("Project is required")
 
+        audit = OperationalAuditService(self.repository.session)
         equipment_list = self.repository.get_by_project_id(resolved_project_id)
+        before = (
+            audit.equipment_list_snapshot(equipment_list)
+            if equipment_list is not None
+            else None
+        )
         if equipment_list is None:
             equipment_list = EquipmentListORM(
                 id=str(uuid4()),
@@ -46,10 +57,13 @@ class EquipmentListService:
             equipment_list.status = "prepared"
 
         self._synchronize(equipment_list, meal_plan)
-        if commit:
-            self.repository.commit()
-        else:
-            self.repository.flush()
+        if self.actor is not None:
+            audit.record_equipment_list_generated(
+                actor=self.actor,
+                equipment_list=equipment_list,
+                before=before,
+            )
+        self._finish_write(commit=commit)
         return equipment_list
 
     def refresh_existing(self, meal_plan: MealPlanORM) -> EquipmentListORM | None:
@@ -76,24 +90,32 @@ class EquipmentListService:
         equipment_list = self._require_list(project_id)
         normalized_name = self._normalize_name(equipment_name)
         existing = self._find_by_name(equipment_list, normalized_name)
+        audit = OperationalAuditService(self.repository.session)
+        before: Mapping[str, object] | None = None
         if existing is not None:
             if not existing.is_removed:
                 raise ValueError("Equipment item already exists")
+            before = audit.equipment_item_snapshot(existing)
             existing.is_removed = False
             existing.required_quantity = required_quantity
-            self.repository.commit()
-            return existing
-
-        item = EquipmentListItemORM(
-            id=str(uuid4()),
-            equipment_name=normalized_name,
-            required_quantity=required_quantity,
-            calculated_quantity=None,
-            is_manual=True,
-            is_removed=False,
-        )
-        equipment_list.items.append(item)
-        self.repository.commit()
+            item = existing
+        else:
+            item = EquipmentListItemORM(
+                id=str(uuid4()),
+                equipment_name=normalized_name,
+                required_quantity=required_quantity,
+                calculated_quantity=None,
+                is_manual=True,
+                is_removed=False,
+            )
+            equipment_list.items.append(item)
+        if self.actor is not None:
+            audit.record_equipment_item_added(
+                actor=self.actor,
+                item=item,
+                before=before,
+            )
+        self._finish_write(commit=True)
         return item
 
     def update_item_quantity(
@@ -105,19 +127,41 @@ class EquipmentListService:
         item = self._require_item(project_id, item_id)
         if item.is_removed:
             raise LookupError("Equipment item not found")
+        audit = OperationalAuditService(self.repository.session)
+        before = audit.equipment_item_snapshot(item)
         item.required_quantity = required_quantity
-        self.repository.commit()
+        if before == audit.equipment_item_snapshot(item):
+            return item
+        if self.actor is not None:
+            audit.record_equipment_item_updated(
+                actor=self.actor,
+                item=item,
+                before=before,
+            )
+        self._finish_write(commit=True)
         return item
 
     def delete_item(self, project_id: int, item_id: str) -> None:
         item = self._require_item(project_id, item_id)
         if item.is_removed:
             raise LookupError("Equipment item not found")
-        if item.is_manual or item.calculated_quantity is None:
+        audit = OperationalAuditService(self.repository.session)
+        before = audit.equipment_item_snapshot(item)
+        hard_delete = item.is_manual or item.calculated_quantity is None
+        if hard_delete:
             self.repository.delete_item(item)
+            after = None
         else:
             item.is_removed = True
-        self.repository.commit()
+            after = audit.equipment_item_snapshot(item)
+        if self.actor is not None:
+            audit.record_equipment_item_deleted(
+                actor=self.actor,
+                item_id=item_id,
+                before=before,
+                after=after,
+            )
+        self._finish_write(commit=True)
 
     def visible_items(
         self,
@@ -269,3 +313,13 @@ class EquipmentListService:
     @staticmethod
     def _key(value: str) -> str:
         return " ".join(value.split()).casefold()
+
+    def _finish_write(self, *, commit: bool) -> None:
+        try:
+            if commit:
+                self.repository.commit()
+            else:
+                self.repository.flush()
+        except Exception:
+            self.repository.session.rollback()
+            raise
