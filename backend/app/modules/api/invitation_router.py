@@ -1,3 +1,6 @@
+import logging
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
@@ -16,6 +19,7 @@ from app.schemas.invitation import (
     InvitationPublicResponse,
     InvitationTokenRequest,
 )
+from app.services.invitation_audit_service import InvitationAuditService
 from app.services.invitation_service import (
     InvitationConflictError,
     InvitationNotFoundError,
@@ -26,6 +30,7 @@ from app.services.invitation_service import (
 from app.services.mail_delivery_service import MailDeliveryResult, MailDeliveryService
 
 router = APIRouter(prefix="/invitations", tags=["invitations"])
+logger = logging.getLogger(__name__)
 
 
 def _item_response(invitation: InvitationORM) -> InvitationListItemResponse:
@@ -116,6 +121,32 @@ def _deliver(
     )
 
 
+def _record_delivery_result(
+    *,
+    db: Session,
+    administrator: UserORM,
+    invitation: InvitationORM,
+    operation: Literal["create", "reissue"],
+    delivery: MailDeliveryResult,
+) -> None:
+    try:
+        InvitationAuditService(db).record_delivery_result(
+            actor=administrator,
+            invitation=invitation,
+            operation=operation,
+            result=delivery,
+        )
+    except Exception:
+        db.rollback()
+        logger.exception(
+            "Invitation delivery audit write failed",
+            extra={
+                "invitation_id": invitation.id,
+                "operation": operation,
+            },
+        )
+
+
 @router.get("", response_model=list[InvitationListItemResponse])
 def list_invitations(
     limit: int = Query(default=100, ge=1, le=200),
@@ -147,6 +178,13 @@ def create_invitation(
     except RuntimeError as error:
         raise _translate_error(error) from error
     delivery = _deliver(invitation, raw_token, http_request=http_request, db=db)
+    _record_delivery_result(
+        db=db,
+        administrator=administrator,
+        invitation=invitation,
+        operation="create",
+        delivery=delivery,
+    )
     return _created_response(invitation, raw_token, delivery)
 
 
@@ -165,17 +203,27 @@ def reissue_invitation(
     except RuntimeError as error:
         raise _translate_error(error) from error
     delivery = _deliver(invitation, raw_token, http_request=http_request, db=db)
+    _record_delivery_result(
+        db=db,
+        administrator=administrator,
+        invitation=invitation,
+        operation="reissue",
+        delivery=delivery,
+    )
     return _created_response(invitation, raw_token, delivery)
 
 
 @router.post("/{invitation_id}/revoke", response_model=InvitationListItemResponse)
 def revoke_invitation(
     invitation_id: int,
-    _: UserORM = Depends(require_administrator),
+    administrator: UserORM = Depends(require_administrator),
     db: Session = Depends(get_db),
 ) -> InvitationListItemResponse:
     try:
-        invitation = InvitationService(db).revoke(invitation_id)
+        invitation = InvitationService(db).revoke(
+            invitation_id,
+            actor=administrator,
+        )
     except RuntimeError as error:
         raise _translate_error(error) from error
     return _item_response(invitation)
