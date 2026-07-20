@@ -41,6 +41,11 @@ const ACTION_LABELS: Record<string, string> = {
   mail_settings_updated: "Настройки почты изменены",
   mail_connection_checked: "SMTP-соединение проверено",
   mail_test_message_delivery: "Тестовая отправка почты",
+  invitation_created: "Приглашение создано",
+  invitation_reissued: "Приглашение перевыпущено",
+  invitation_revoked: "Приглашение отозвано",
+  invitation_accepted: "Приглашение принято",
+  invitation_delivery_result: "Результат доставки приглашения",
 };
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -51,6 +56,7 @@ const ENTITY_LABELS: Record<string, string> = {
   meal_slot: "Приём пищи",
   system_settings: "Системные настройки",
   mail: "Почта",
+  invitation: "Приглашение",
 };
 
 function formatDate(value: string): string {
@@ -165,7 +171,7 @@ export default function AuditLogPanel() {
             <Typography variant="h5">Аудит действий</Typography>
             <Typography color="text.secondary">
               Неизменяемая история критичных действий с пользователями, рецептами,
-              проектами, меню, системными настройками и почтой.
+              проектами, меню, системными настройками, почтой и приглашениями.
             </Typography>
           </Box>
 
@@ -199,13 +205,14 @@ export default function AuditLogPanel() {
                 <MenuItem value="meal_slot">Приём пищи</MenuItem>
                 <MenuItem value="system_settings">Системные настройки</MenuItem>
                 <MenuItem value="mail">Почта</MenuItem>
+                <MenuItem value="invitation">Приглашение</MenuItem>
               </Select>
             </FormControl>
             <TextField
               label="Действие"
               value={action}
               onChange={(event) => setAction(event.target.value)}
-              placeholder="Например: mail_connection_checked"
+              placeholder="Например: invitation_delivery_result"
             />
             <TextField
               label="ID сущности"
