@@ -71,12 +71,13 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - business mutation and AuditEvent commit or roll back together when the business write is transactional;
 - ORM update/delete attempts fail and the application exposes no mutation endpoint;
 - Administrator may query bounded filtered history through `/api/v1/audit/events`;
-- current explicit coverage includes user access, Recipe moderation, Project preparation, Menu/MealSlot changes, and all six typed System Settings owners;
-- each settings owner computes a semantic normalized diff, suppresses no-op events, stages AuditEvent in the current Session, and leaves the existing settings service commit as transaction owner;
-- Club image changes expose only configured state, MIME type, and byte size, never binary data or data URLs;
-- SMTP connection checks and fixed test-message operations record only safe result status, attempt count, optional recipient, settings version, connection mode, and whether authentication metadata is configured;
-- SMTP passwords, environment values, protocol transcripts, exception details, invitation values, and arbitrary request bodies are not audit payloads;
-- external SMTP effects are not database-transactional, so the audit row is committed at the existing operation-result boundary after success or translated failure;
+- current explicit coverage includes user access, Recipe moderation, Project preparation, Menu/MealSlot changes, all six typed System Settings owners, Administrator mail checks/tests, and the invitation lifecycle;
+- invitation create, reissue, revoke, and accept stage semantic AuditEvents in the same SQLAlchemy Session before the lifecycle commit;
+- create, reissue, and revoke use the authenticated Administrator actor snapshot; accept uses the newly created User after flush as the actor snapshot;
+- create/reissue persistence commits before best-effort SMTP delivery, preserving ADR-019 operation order;
+- automatic invitation delivery records one separate post-commit result event with status, attempts, recipient domain, operation kind, and role only;
+- delivery-result audit persistence is isolated from the already committed invitation so a logging failure cannot invalidate the invitation or hide its one-time manual link;
+- raw invitation values, acceptance paths/URLs, passwords, password hashes, raw sessions, session hashes, SMTP secrets, provider messages, protocol transcripts, exception details, and arbitrary request bodies are not audit payloads;
 - later domains still require explicit semantic instrumentation; automatic ORM-wide auditing remains rejected.
 
 ## Consolidated export boundary
@@ -110,7 +111,8 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - `MailDeliveryService` owns plain, STARTTLS, implicit TLS, optional authentication, bounded retries, and safe results;
 - invitation persistence commits before automatic delivery;
 - delivery failure never invalidates the invitation or removes its manual link;
-- TH-0101 audits MailSettings changes and Administrator connection/test operations without changing delivery behavior or invitation ownership.
+- TH-0101 audits MailSettings changes and Administrator connection/test operations;
+- TH-0102 audits safe create/reissue delivery outcomes without changing invitation ownership, delivery behavior, or the manual fallback.
 
 The current Alembic head is `h10021`.
 
