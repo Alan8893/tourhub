@@ -2,13 +2,13 @@
 
 Status: Active
 
-Last updated: 2026-07-20
+Last updated: 2026-07-21
 
 ## Purpose
 
 This document describes the implemented domain baseline. `PRODUCT_SPEC.md` describes approved target scope. Deferred capabilities are not current implementation.
 
-## Club, identity, and access
+## Club, identity, access, and contacts
 
 One installation represents one tourist club. Multi-tenant support is prohibited.
 
@@ -22,11 +22,38 @@ Implemented identity model:
 - Backend resolves the current User, role, and active state for every authorized request;
 - deactivation revokes every active session for the affected User;
 - at least one active Administrator must always remain;
-- user updates use optimistic versions and stale writes return HTTP 409.
+- User writes use optimistic versions and stale profile writes return HTTP 409.
 
-Active users with any approved role may use preparation workflows. System Settings, invitation management, user administration, SMTP operations, and audit reads are Administrator-only.
+Active users with any approved role may use preparation workflows, maintain their own personal account, and view contacts of other active users. System Settings, invitation management, user administration, SMTP operations, and audit reads are Administrator-only.
 
-Per-project ownership, private projects, user profiles, account recovery, and session administration remain future capabilities.
+```text
+User
+  ├─ email: immutable login identifier
+  ├─ display_name: one required FIO value
+  ├─ phone: optional normalized phone
+  ├─ telegram_url: optional canonical HTTPS URL
+  ├─ max_url: optional canonical HTTPS URL
+  ├─ vk_url: optional canonical HTTPS URL
+  ├─ role
+  ├─ password_hash
+  ├─ is_active
+  ├─ version
+  └─ AuthSession[]
+```
+
+Personal-account rules:
+
+- email is visible but not editable through `/account`;
+- phone accepts a human-friendly representation and is normalized for `tel:` and vCard use;
+- Telegram, MAX, and VK accept either a handle or an approved HTTPS profile URL and persist one canonical URL;
+- empty contact values persist as `NULL`;
+- active contacts are visible only to authenticated active users;
+- inactive users are excluded from contact listing and vCard download;
+- vCard is generated on demand from bounded contact fields and is not persisted;
+- profile changes lock the current User, require the current version, and suppress no-op saves;
+- password change verifies the current password, preserves the current login, and revokes all other active logins in the same transaction.
+
+Public profiles, avatars, verified email/phone changes, account deletion, recovery, project ownership, row-level ACLs, and general session-administration UI remain future capabilities. Trip-participant profiles remain separate from User contact profiles; Project calculations continue to use participant count.
 
 ## AuditEvent
 
@@ -52,6 +79,7 @@ Actor identity fields are snapshots. Safe JSON is recursively bounded and remove
 Current semantic actions cover:
 
 - user role and active-state administration;
+- personal profile updates and password changes;
 - Recipe submit, publish, and reject transitions;
 - Project creation, participant recalculation, generation-mode changes, and full preparation;
 - initial/regenerated MealPlan creation and manual MealSlot Dish add/remove/replace;
@@ -64,6 +92,10 @@ Current semantic actions cover:
 - EquipmentList generation and manual item add/update/delete;
 - successful Project and purchase-list document generation.
 
+`account_profile_updated` uses entity type `user`, records previous/new version, and stores only the ordered names of changed fields. Contact values are excluded. No-op profile saves create no event.
+
+`account_password_changed` uses entity type `user`, records previous/new version, whether the current login was preserved, and how many other logins were revoked. Passwords, password hashes, cookies, raw session values, and session hashes are excluded. Audit failure rolls back the pending password/hash/login-revocation changes.
+
 Product events use entity type `product` and bounded catalogue fields. Successful CSV apply uses `catalog_import` and stores only import kind plus row/create/skip/component/note counts. CSV content, row values, and validation details are excluded.
 
 Purchase generation events snapshot Project/MealPlan IDs, workflow status, and bounded counts. Manual changes record semantic before/after state. Calls made with `commit=False` append events to the Project preparation transaction. Audit failure rolls back pending purchase/checklist/equipment writes, and unchanged values do not create events.
@@ -72,9 +104,9 @@ Recipe equipment events use `recipe_equipment_requirement`; project equipment us
 
 Document generation events use `project_document` or `purchase_list_document`. They are committed after successful generation and before response delivery. Payloads contain document kind, format, content type, and size only; generated content and filenames are not persisted.
 
-Invitation lifecycle events use entity type `invitation` and the Invitation ID. Create, reissue, revoke, and accept events share the invitation/user/session transaction. Automatic delivery remains after create/reissue commit; its separate event contains only status, attempt count, recipient domain, operation kind, and role. Delivery or delivery-audit failure does not invalidate the invitation or remove the one-time manual link.
+Invitation lifecycle events use entity type `invitation` and the Invitation ID. Create, reissue, revoke, and accept events share the invitation/User/AuthSession transaction. Automatic delivery remains after create/reissue commit; its separate event contains only status, attempt count, recipient domain, operation kind, and role. Delivery or delivery-audit failure does not invalidate the invitation or remove the one-time manual link.
 
-Raw tokens, acceptance URLs, passwords and hashes, sessions and hashes, SMTP secrets, provider messages, protocol transcripts, exception details, full recipient addresses, CSV bodies, generated document bytes/text, filenames, and arbitrary request bodies are excluded.
+Raw tokens, acceptance URLs, passwords and hashes, raw sessions and hashes, cookies, phone numbers, social URLs, SMTP secrets, provider messages, protocol transcripts, exception details, full recipient addresses, CSV bodies, generated document bytes/text, filenames, and arbitrary request bodies are excluded.
 
 Automatic ORM-wide auditing remains rejected.
 
@@ -167,7 +199,9 @@ The central no-exceptions alcohol policy is implemented through ADR-025:
 - active Product lists exclude archived Products;
 - fuzzy/external classification, exceptions, and allowlists are not implemented.
 
-Alembic `h10021` archives prohibited Product/Recipe/Dish records in dependency order while preserving historical relationships. Products, Recipes, components, and notes can otherwise be loaded through CSV preview/apply. Invalid input does not create partial catalogue data.
+Alembic `h10021` archives prohibited Product/Recipe/Dish records in dependency order while preserving historical relationships. Alembic `h10022` adds nullable User contact fields without changing existing users. The current post-release head is `h10022`; immutable release tag `v0.1.0` remains at `h10021`.
+
+Products, Recipes, components, and notes can otherwise be loaded through CSV preview/apply. Invalid input does not create partial catalogue data.
 
 ## Shopping and equipment
 
@@ -193,10 +227,9 @@ MailSettings owns non-secret SMTP metadata. The deployment-managed value remains
 
 ## Future domains
 
-- participant profiles;
+- trip-participant profiles and logistics/load distribution;
 - routes and GPX;
-- logistics and load distribution;
-- warehouse balances;
+- warehouse balances and issue workflow;
 - procurement prices and aggregator integration.
 
 Multi-tenant support remains prohibited.
