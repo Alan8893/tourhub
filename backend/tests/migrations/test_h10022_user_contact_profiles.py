@@ -4,7 +4,7 @@ from types import ModuleType
 
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
-import sqlalchemy as sa
+from sqlalchemy import Column, Integer, MetaData, String, create_engine, inspect, text
 
 
 def _migration_module() -> ModuleType:
@@ -22,21 +22,21 @@ def _migration_module() -> ModuleType:
 
 
 def test_h10022_adds_nullable_contact_columns_and_is_reversible() -> None:
-    engine = sa.create_engine("sqlite:///:memory:")
+    engine = create_engine("sqlite:///:memory:")
     migration = _migration_module()
 
     with engine.begin() as connection:
-        metadata = sa.MetaData()
-        sa.Table(
+        metadata = MetaData()
+        __import__("sqlalchemy").Table(
             "users",
             metadata,
-            sa.Column("id", sa.Integer(), primary_key=True),
-            sa.Column("email", sa.String(320), nullable=False),
-            sa.Column("display_name", sa.String(120), nullable=False),
+            Column("id", Integer(), primary_key=True),
+            Column("email", String(320), nullable=False),
+            Column("display_name", String(120), nullable=False),
         )
         metadata.create_all(connection)
         connection.execute(
-            sa.text(
+            text(
                 "INSERT INTO users (id, email, display_name) "
                 "VALUES (1, 'member@example.org', 'Участник клуба')"
             )
@@ -45,17 +45,17 @@ def test_h10022_adds_nullable_contact_columns_and_is_reversible() -> None:
         migration.op = Operations(MigrationContext.configure(connection))
         migration.upgrade()
 
-        columns = {item["name"]: item for item in sa.inspect(connection).get_columns("users")}
+        columns = {item["name"]: item for item in inspect(connection).get_columns("users")}
         for column_name in ("phone", "telegram_url", "max_url", "vk_url"):
             assert column_name in columns
             assert columns[column_name]["nullable"] is True
         row = connection.execute(
-            sa.text(
+            text(
                 "SELECT phone, telegram_url, max_url, vk_url FROM users WHERE id = 1"
             )
         ).one()
         assert tuple(row) == (None, None, None, None)
 
         migration.downgrade()
-        remaining = {item["name"] for item in sa.inspect(connection).get_columns("users")}
+        remaining = {item["name"] for item in inspect(connection).get_columns("users")}
         assert not {"phone", "telegram_url", "max_url", "vk_url"} & remaining
