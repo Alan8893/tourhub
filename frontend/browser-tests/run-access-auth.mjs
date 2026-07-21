@@ -178,10 +178,17 @@ async function run() {
     assert.equal(await clickButton(client, "Войти"), true);
     await waitForExpression(
       client,
-      `document.body?.innerText?.includes("Настройки доступны") &&
+      `document.body?.innerText?.includes("Личный кабинет доступен") &&
        document.body?.innerText?.includes("Иван Администратор") &&
        document.querySelector('[aria-label="Открыть личный кабинет. Иван Администратор. Роль: Администратор."]')`,
-      "requested settings after login",
+      "requested account after login",
+    );
+    assert.equal(await clickButton(client, "Открыть настройки"), true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Настройки доступны") &&
+       document.body?.innerText?.includes("Иван Администратор")`,
+      "settings after restored account route",
     );
 
     await client.send("Emulation.setDeviceMetricsOverride", {
@@ -235,7 +242,9 @@ async function run() {
     );
 
     client.close();
-    console.log("Access role, account navigation, route return, and revoked-session browser acceptance passed.");
+    console.log(
+      "Access role, account navigation, route return, and revoked-session browser acceptance passed.",
+    );
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
