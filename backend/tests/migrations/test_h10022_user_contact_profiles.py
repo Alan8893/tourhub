@@ -4,7 +4,7 @@ from types import ModuleType
 
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
-from sqlalchemy import Column, Integer, MetaData, String, create_engine, inspect, text
+from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, inspect, text
 
 
 def _migration_module() -> ModuleType:
@@ -27,7 +27,7 @@ def test_h10022_adds_nullable_contact_columns_and_is_reversible() -> None:
 
     with engine.begin() as connection:
         metadata = MetaData()
-        __import__("sqlalchemy").Table(
+        Table(
             "users",
             metadata,
             Column("id", Integer(), primary_key=True),
