@@ -23,6 +23,28 @@ const profileDir = `/tmp/tourhub-account-profile-${process.pid}`;
 const currentPassword = "current-account-password";
 const newPassword = "new-account-password-12345";
 
+async function writeDiagnostics(client, name) {
+  const page = await client.evaluate(`(() => ({
+    href: location.href,
+    bodyText: document.body?.innerText ?? "",
+    bodyHtml: document.body?.innerHTML?.slice(0, 30000) ?? "",
+    accountLabels: [...document.querySelectorAll('[aria-label^="Открыть личный кабинет"]')]
+      .map((item) => item.getAttribute("aria-label")),
+  }))()`);
+  await writeFile(
+    path.join(artifactDir, `${name}.json`),
+    JSON.stringify({ page, accountRequests }, null, 2),
+  );
+  const screenshot = await client.send("Page.captureScreenshot", {
+    format: "png",
+    captureBeyondViewport: false,
+  });
+  await writeFile(
+    path.join(artifactDir, `${name}.png`),
+    Buffer.from(screenshot.data, "base64"),
+  );
+}
+
 async function run() {
   await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   await mkdir(artifactDir, { recursive: true });
@@ -76,16 +98,34 @@ async function run() {
       mobile: false,
     });
 
-    await waitForExpression(
-      client,
-      `document.body?.innerText?.includes("Личный кабинет") &&
-       document.body?.innerText?.includes("Ирина Инструктор") &&
-       document.body?.innerText?.includes("Борис Инструктор") &&
-       document.body?.innerText?.includes("Смена пароля") &&
-       document.body?.innerText?.includes("Сохранить контакт") &&
-       document.querySelector('[aria-label="Открыть личный кабинет. Ирина Инструктор. Роль: Инструктор."]')`,
-      "loaded personal account",
-    );
+    try {
+      await waitForExpression(
+        client,
+        `document.body?.innerText?.includes("Личный кабинет") &&
+         document.body?.innerText?.includes("Мой профиль") &&
+         !document.body?.innerText?.includes("Загрузка личного кабинета")`,
+        "loaded personal account shell",
+      );
+      const loadedText = await client.evaluate("document.body.innerText");
+      for (const label of [
+        "Ирина Инструктор",
+        "Борис Инструктор",
+        "Смена пароля",
+        "Сохранить контакт",
+      ]) {
+        assert.ok(loadedText.includes(label), `Missing account label: ${label}\n${loadedText}`);
+      }
+      const accountLabel = await client.evaluate(`document
+        .querySelector('[aria-label^="Открыть личный кабинет"]')
+        ?.getAttribute("aria-label") ?? null`);
+      assert.equal(
+        accountLabel,
+        "Открыть личный кабинет. Ирина Инструктор. Роль: Инструктор.",
+      );
+    } catch (error) {
+      await writeDiagnostics(client, "account-profile-load-diagnostic");
+      throw error;
+    }
 
     const emailReadOnly = await client.evaluate(`(() => {
       const label = [...document.querySelectorAll("label")].find((item) => item.textContent?.includes("Почта"));
@@ -135,11 +175,6 @@ async function run() {
       return Boolean(button);
     })()`);
     assert.equal(contactClicked, true);
-    await waitForExpression(
-      client,
-      `globalThis.fetch && document.body?.innerText?.includes("Борис Инструктор")`,
-      "contact download completed",
-    );
     await sleep(250);
     assert.ok(
       accountRequests.some(
