@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-07-20
+Last updated: 2026-07-21
 
 TourHub is a single-club modular monolith with PostgreSQL in production.
 
@@ -18,7 +18,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Actor-aware audit foundation follows ADR-023.
 - Consolidated Project exports follow ADR-024.
 - Central alcohol prohibition follows ADR-025.
-- Active Administrator, Instructor, and Verified Instructor users may use preparation workflows.
+- Active Administrator, Instructor, and Verified Instructor users may use preparation workflows and authenticated club contacts.
 - Settings, invitation management, user management, mail operations, and audit reads remain Administrator-only.
 - Module visibility is presentation only and never grants access.
 - Frontend route guidance and capability projection never replace Backend permission or policy checks.
@@ -31,8 +31,25 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - deactivation revokes every active session for the affected User in the same transaction;
 - protected HTTP 401 responses clear stale frontend identity centrally;
 - route guards preserve exact path, query, and hash through sign-in and logout;
-- the application header exposes current display name and role;
-- session administration, account recovery, project ownership, and row-level ACLs remain separate future capabilities.
+- the application header opens the personal account and exposes current display name/role;
+- logout is owned by `/account`, not the global header;
+- general session administration, account recovery, project ownership, and row-level ACLs remain future capabilities.
+
+## Personal account and contact boundary
+
+- `User.display_name` remains one required FIO value; no separate first/middle/last-name columns are introduced;
+- email remains the unique immutable login identifier for this task;
+- `h10022` adds nullable phone, Telegram URL, MAX URL, and VK URL columns;
+- Backend normalizes phone values and limits social links to approved HTTPS hosts;
+- handle input and full URL input resolve to one canonical persisted profile URL per platform;
+- every authenticated active user may read active users' bounded contact projections;
+- inactive users are omitted from the club contact list and vCard endpoint;
+- phone and social data are never exposed to unauthenticated clients;
+- vCard is generated on demand and is not persisted;
+- profile update locks the current User, checks optimistic `version`, suppresses no-op saves, and commits profile plus AuditEvent together;
+- password change verifies the current password, locks the current User, replaces the password hash, preserves the current login token, revokes other non-revoked logins, and commits one AuditEvent in the same transaction;
+- contact values, passwords, hashes, cookies, and tokens are excluded from AuditEvent JSON;
+- avatars, public profiles, verification, deletion, recovery, and session-management UI remain outside TH-0104.
 
 ## Recipe ownership and lifecycle boundary
 
@@ -71,14 +88,11 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - business mutation and AuditEvent commit or roll back together when the business write is transactional;
 - ORM update/delete attempts fail and the application exposes no mutation endpoint;
 - Administrator may query bounded filtered history through `/api/v1/audit/events`;
-- explicit coverage includes user access, Recipe moderation, Project preparation, Menu/MealSlot changes, all typed System Settings owners, Administrator mail checks/tests, invitation lifecycle/delivery results, Product writes, successful catalogue imports, shopping/checklist writes, Recipe/project equipment writes, and successful document generation;
-- Product, purchase, checklist, Recipe-equipment, and EquipmentList events are staged before the owning commit; audit failure rolls back the pending mutation;
-- preparation services invoked with `commit=False` append their events to the caller-owned Project preparation transaction;
-- no-op Product, responsible-person, checklist, Recipe-equipment, and equipment-quantity edits create no event;
-- catalogue import events contain aggregate kind/row/create/skip/component/note counts only and never CSV content or row details;
-- document generation remains a non-persisted byte/string boundary, while its audit event commits before the response and contains only document kind, format, content type, and size metadata;
-- invitation delivery-result persistence remains isolated from the already committed invitation so logging failure cannot invalidate it or hide the manual link;
-- generated document content, filenames, raw CSV, arbitrary request bodies, raw invitation/session values, passwords/hashes, SMTP secrets, provider messages, transcripts, and exception details are not audit payloads;
+- explicit operational coverage through TH-0103 remains unchanged;
+- `account_profile_updated` stores previous/new version and changed field names only;
+- `account_password_changed` stores previous/new version, current-login preservation, and revoked-other-login count only;
+- profile/password audit failure rolls back the pending profile/hash/login-revocation mutation;
+- phone values, social URLs, generated document content, filenames, raw CSV, arbitrary request bodies, invitation/session values, passwords/hashes, SMTP secrets, provider messages, transcripts, and exception details are not audit payloads;
 - automatic ORM-wide auditing remains rejected.
 
 ## Consolidated export boundary
@@ -90,7 +104,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - the complete workbook contains `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование` in order;
 - focused purchase/equipment endpoints remain compatible;
 - incomplete preparation returns HTTP 409 rather than a partial complete export;
-- successful focused, consolidated, package, and legacy purchase-list generation now append bounded actor-attributed audit metadata without persisting generated files.
+- successful focused, consolidated, package, and legacy purchase-list generation append bounded actor-attributed audit metadata without persisting generated files.
 
 ## Central alcohol policy boundary
 
@@ -113,7 +127,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - TH-0101 audits MailSettings changes and Administrator connection/test operations;
 - TH-0102 audits safe create/reissue delivery outcomes without changing invitation ownership, delivery behavior, or the manual fallback.
 
-The current Alembic head is `h10021`.
+The current post-release Alembic head is `h10022`. The immutable `v0.1.0` tag remains at released head `h10021`; Final Release Readiness checks that migration cycle from the tag while Quality and Docker validate current head.
 
 MealSlot and MealSlotDish remain primary. MealPlanItem remains compatibility-only.
 
