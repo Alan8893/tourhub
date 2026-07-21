@@ -69,6 +69,7 @@ jobs:
           set -o pipefail
           python -m pytest -q \
             tests/api/test_user_administration_api.py \
+            tests/api/test_account_profile_api.py \
             tests/api/test_recipe_publication_api.py \
             tests/api/test_catalog_import_api.py \
             tests/api/test_project_preparation_status_api.py \
@@ -80,6 +81,7 @@ jobs:
             tests/api/test_project_document_package_api.py \
             tests/api/test_alcohol_prohibition_api.py \
             tests/migrations/test_h10021_alcohol_prohibition.py \
+            tests/migrations/test_h10022_user_contact_profiles.py \
             2>&1 | tee product-acceptance-backend.txt
 
       - name: Upload Backend diagnostics
@@ -116,6 +118,9 @@ jobs:
 
       - name: Run access acceptance
         run: node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-access-auth.mjs
+
+      - name: Run personal account acceptance
+        run: node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-account-profile.mjs
 
       - name: Run user administration acceptance
         run: node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-account-admin.mjs
