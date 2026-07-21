@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.auth_session import AuthSessionORM
@@ -87,30 +85,27 @@ class AccountProfileService:
                 raise InvalidCurrentPasswordError("Текущий пароль указан неверно.")
 
             current_token_hash = token_hash(current_raw_token)
-            current_session = self.session.scalar(
-                select(AuthSessionORM).where(
-                    AuthSessionORM.user_id == user.id,
-                    AuthSessionORM.token_hash == current_token_hash,
-                    AuthSessionORM.revoked_at.is_(None),
-                )
+            sessions = list(
+                self.session.scalars(
+                    select(AuthSessionORM).where(
+                        AuthSessionORM.user_id == user.id,
+                        AuthSessionORM.revoked_at.is_(None),
+                    )
+                ).all()
             )
-            if current_session is None:
+            if not any(item.token_hash == current_token_hash for item in sessions):
                 raise CurrentSessionNotFoundError("Текущая сессия больше не активна.")
 
             previous_version = user.version
             user.password_hash = hash_password(request.new_password)
             user.version += 1
             revoked_at = utc_now()
-            result = self.session.execute(
-                update(AuthSessionORM)
-                .where(
-                    AuthSessionORM.user_id == user.id,
-                    AuthSessionORM.token_hash != current_token_hash,
-                    AuthSessionORM.revoked_at.is_(None),
-                )
-                .values(revoked_at=revoked_at)
-            )
-            revoked_count = int(result.rowcount or 0)
+            revoked_count = 0
+            for auth_session in sessions:
+                if auth_session.token_hash == current_token_hash:
+                    continue
+                auth_session.revoked_at = revoked_at
+                revoked_count += 1
 
             AuditService(self.session).record(
                 actor=user,
