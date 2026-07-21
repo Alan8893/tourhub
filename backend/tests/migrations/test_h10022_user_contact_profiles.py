@@ -1,19 +1,7 @@
+import importlib
 import importlib.util
 from pathlib import Path
 from types import ModuleType
-
-from alembic.migration import MigrationContext
-from alembic.operations import Operations
-from sqlalchemy import (
-    Column,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    create_engine,
-    inspect,
-    text,
-)
 
 
 def _migration_module() -> ModuleType:
@@ -31,40 +19,50 @@ def _migration_module() -> ModuleType:
 
 
 def test_h10022_adds_nullable_contact_columns_and_is_reversible() -> None:
-    engine = create_engine("sqlite:///:memory:")
+    sqlalchemy = importlib.import_module("sqlalchemy")
+    migration_api = importlib.import_module("alembic.migration")
+    operations_api = importlib.import_module("alembic.operations")
+    engine = sqlalchemy.create_engine("sqlite:///:memory:")
     migration = _migration_module()
 
     with engine.begin() as connection:
-        metadata = MetaData()
-        Table(
+        metadata = sqlalchemy.MetaData()
+        sqlalchemy.Table(
             "users",
             metadata,
-            Column("id", Integer(), primary_key=True),
-            Column("email", String(320), nullable=False),
-            Column("display_name", String(120), nullable=False),
+            sqlalchemy.Column("id", sqlalchemy.Integer(), primary_key=True),
+            sqlalchemy.Column("email", sqlalchemy.String(320), nullable=False),
+            sqlalchemy.Column("display_name", sqlalchemy.String(120), nullable=False),
         )
         metadata.create_all(connection)
         connection.execute(
-            text(
+            sqlalchemy.text(
                 "INSERT INTO users (id, email, display_name) "
                 "VALUES (1, 'member@example.org', 'Участник клуба')"
             )
         )
 
-        migration.op = Operations(MigrationContext.configure(connection))
+        context = migration_api.MigrationContext.configure(connection)
+        migration.op = operations_api.Operations(context)
         migration.upgrade()
 
-        columns = {item["name"]: item for item in inspect(connection).get_columns("users")}
+        columns = {
+            item["name"]: item
+            for item in sqlalchemy.inspect(connection).get_columns("users")
+        }
         for column_name in ("phone", "telegram_url", "max_url", "vk_url"):
             assert column_name in columns
             assert columns[column_name]["nullable"] is True
         row = connection.execute(
-            text(
+            sqlalchemy.text(
                 "SELECT phone, telegram_url, max_url, vk_url FROM users WHERE id = 1"
             )
         ).one()
         assert tuple(row) == (None, None, None, None)
 
         migration.downgrade()
-        remaining = {item["name"] for item in inspect(connection).get_columns("users")}
+        remaining = {
+            item["name"]
+            for item in sqlalchemy.inspect(connection).get_columns("users")
+        }
         assert not {"phone", "telegram_url", "max_url", "vk_url"} & remaining
