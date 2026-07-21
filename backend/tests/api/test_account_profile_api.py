@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
@@ -246,8 +248,8 @@ def test_password_change_preserves_current_session_and_revokes_other_sessions(
     assert event.before_data == {"version": 1}
     assert event.after_data == {"version": 2}
     assert event.context_data == {
-        "current_session_preserved": True,
-        "revoked_other_session_count": 1,
+        "current_login_preserved": True,
+        "revoked_other_login_count": 1,
     }
     serialized = _event_text(event)
     assert ADMIN_SECRET not in serialized
@@ -325,18 +327,19 @@ def test_password_change_rolls_back_hash_sessions_and_audit_on_failure(
     current_session = AuthSessionORM(
         user=actor,
         token_hash=token_hash(raw_current_token),
-        expires_at=__import__("datetime").datetime(2099, 1, 1),
-        last_seen_at=__import__("datetime").datetime(2026, 1, 1),
+        expires_at=datetime(2099, 1, 1),
+        last_seen_at=datetime(2026, 1, 1),
     )
     other_session = AuthSessionORM(
         user=actor,
         token_hash=token_hash("other-account-session"),
-        expires_at=__import__("datetime").datetime(2099, 1, 1),
-        last_seen_at=__import__("datetime").datetime(2026, 1, 1),
+        expires_at=datetime(2099, 1, 1),
+        last_seen_at=datetime(2026, 1, 1),
     )
     db_session.add_all([actor, current_session, other_session])
     db_session.commit()
     original_hash = actor.password_hash
+    other_session_id = other_session.id
 
     def fail_record(*args, **kwargs):
         raise RuntimeError("audit failure")
@@ -355,7 +358,7 @@ def test_password_change_rolls_back_hash_sessions_and_audit_on_failure(
 
     db_session.expire_all()
     stored = db_session.get(UserORM, actor.id)
-    stored_other_session = db_session.get(AuthSessionORM, other_session.id)
+    stored_other_session = db_session.get(AuthSessionORM, other_session_id)
     assert stored is not None
     assert stored.password_hash == original_hash
     assert verify_password(MEMBER_SECRET, stored.password_hash)
