@@ -19,6 +19,7 @@ from app.modules.api.meal_plan_router import router as meal_plan_router
 from app.modules.api.meal_slot_router import router as meal_slot_router
 from app.modules.api.meta_router import router as meta_router
 from app.modules.api.module_settings_router import router as module_settings_router
+from app.modules.api.personal_account_router import router as personal_account_router
 from app.modules.api.product_router import router as product_router
 from app.modules.api.project_preparation_status_router import router as preparation_status_router
 from app.modules.api.purchase_checklist_router import router as purchase_checklist_router
@@ -35,6 +36,7 @@ _preparation = [Depends(require_preparation_access)]
 
 router.include_router(auth_router)
 router.include_router(account_router)
+router.include_router(personal_account_router)
 router.include_router(appearance_settings_router, dependencies=_admin)
 router.include_router(audit_router, dependencies=_admin)
 router.include_router(catalog_import_router, dependencies=_preparation)

@@ -22,6 +22,8 @@ const ACTION_LABELS: Record<string, string> = {
   user_role_changed: "Роль пользователя изменена",
   user_reactivated: "Пользователь включён",
   user_deactivated: "Пользователь отключён",
+  account_profile_updated: "Личный профиль изменён",
+  account_password_changed: "Пароль пользователя изменён",
   recipe_submitted: "Рецепт отправлен на проверку",
   recipe_published: "Рецепт опубликован",
   recipe_rejected: "Рецепт отклонён",

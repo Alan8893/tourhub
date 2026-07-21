@@ -19,6 +19,7 @@ function NavigationList({ onNavigate }: { onNavigate?: () => void }) {
     { label: "Блюда", path: "/dishes", visible: settings.catalogue_visible },
     { label: "Рецепты", path: "/recipes", visible: settings.catalogue_visible },
     { label: "Импорт", path: "/catalog-import", visible: settings.catalog_import_visible },
+    { label: "Личный кабинет", path: "/account", visible: Boolean(user) },
     { label: "Настройки", path: "/settings", visible: user?.role === "administrator" },
   ].filter((item) => item.visible);
 

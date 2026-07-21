@@ -83,8 +83,10 @@ jobs:
       FINAL_MIGRATION_EVIDENCE_PATH: ${{ github.workspace }}/final-migration-evidence.json
 
     steps:
-      - name: Checkout
+      - name: Checkout immutable release source
         uses: actions/checkout@v4
+        with:
+          ref: v0.1.0
 
       - name: Set up Python
         uses: actions/setup-python@v5

@@ -23,6 +23,10 @@ class UserORM(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    telegram_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    max_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    vk_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     role: Mapped[str] = mapped_column(
         String(32), nullable=False, default="instructor", server_default="instructor"
     )

@@ -2,9 +2,9 @@
 
 Version: 0.1.0
 
-Last update: 2026-07-20
+Last update: 2026-07-21
 
-Status: Post-release operational write audit coverage delivered — TH-0103
+Status: Post-release personal account and club contacts delivered — TH-0104
 
 ## 1. Product boundary
 
@@ -15,7 +15,8 @@ TourHub is a local ERP application for one tourist club.
 - The runtime supports multiple invited users inside the same club.
 - Registration is invitation-only after one-time Administrator bootstrap.
 - Approved roles are Administrator, Instructor, and Verified Instructor.
-- Participant profiles are outside the released workflow; calculations use participant count.
+- Authenticated users may maintain contact profiles and view active club contacts.
+- Trip calculations still use participant count; separate trip-participant profiles are not implemented.
 - Alcohol is prohibited without exceptions through one Backend policy.
 - Paid or externally hosted runtime services are not used.
 
@@ -25,6 +26,7 @@ The approved target scope is defined in `PRODUCT_SPEC.md`. The current state is 
 
 ```text
 Administrator bootstrap and invitations
+  → Personal account and active club contacts
   → Project
   → Menu generation and manual MealSlot editing
   → Club and personal Recipes
@@ -41,7 +43,7 @@ Administrator bootstrap and invitations
   → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 improves Project workspace navigation, TH-0097 adds shared Product editing, TH-0098 closes the publication-to-Dish workflow, and TH-0099 through TH-0103 extend semantic audit coverage across Project, Menu/MealSlot, System Settings/mail, invitations, catalogue/import, shopping, equipment, and documents.
+The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 through TH-0103 deliver workspace, catalogue, synchronization, and semantic audit improvements. TH-0104 adds authenticated personal profiles, active-club contact sharing, vCard download, safe password change, and account-owned logout.
 
 ## 3. Architecture
 
@@ -56,7 +58,7 @@ TourHub remains a modular monolith.
 - TanStack Query;
 - React Router.
 
-Frontend owns presentation, responsive navigation, Project workspace routing, Product create/edit state, Dish generator-readiness presentation, query invalidation, safe AuditEvent rendering/filtering, and download controls. It does not own business validation, generation rules, Recipe publication synchronization, role inference, calculations, authorization, unit conversion, or audit sanitization.
+Frontend owns presentation, responsive navigation, personal-account forms, contact actions, Project workspace routing, Product create/edit state, Dish generator-readiness presentation, query invalidation, safe AuditEvent rendering/filtering, and download controls. It does not own profile normalization, password verification, session revocation, business validation, generation rules, authorization, calculations, or audit sanitization.
 
 ### Backend
 
@@ -67,9 +69,9 @@ Frontend owns presentation, responsive navigation, Project workspace routing, Pr
 - Pydantic v2;
 - PostgreSQL 18 in the release runtime;
 - Redis configuration;
-- deterministic calculation, document, audit, and catalogue-policy boundaries.
+- deterministic identity, calculation, document, audit, and catalogue-policy boundaries.
 
-Backend owns validation, persistence, identity/authorization, invitation lifecycle, Product policy, Recipe ownership/lifecycle, published Recipe-to-Dish synchronization, Dish variant selection, menu generation, manual MealSlot mutation, catalogue import, central alcohol policy, shopping/checklist/equipment recalculation, mail boundaries, document generation, and semantic audit rules in owning transactions.
+Backend owns validation, profile normalization, persistence, identity/authorization, invitation lifecycle, password hashing, session revocation, contact visibility, Product policy, Recipe ownership/lifecycle, published Recipe-to-Dish synchronization, Dish variant selection, menu generation, manual MealSlot mutation, catalogue import, central alcohol policy, shopping/checklist/equipment recalculation, mail boundaries, document generation, and semantic audit rules in owning transactions.
 
 ### Runtime
 
@@ -81,17 +83,26 @@ docker compose up -d --build
 
 The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally. PostgreSQL and Redis remain internal to the release network. Redis is available but no released business workflow depends on it.
 
-## 4. Released baseline
+## 4. Current baseline
 
-### Access and users
+### Access, users, and personal accounts
 
 - one-time Administrator bootstrap and invitation-only registration;
 - password hashing and server-owned HttpOnly sessions;
 - working SMTP invitation delivery with manual fallback;
 - roles, activation controls, optimistic user versions, and last-active-Administrator protection;
 - preparation access for all approved active roles;
-- Administrator-only settings, invitations, users, mail operations, and audit reads;
-- multiple sessions, current-role resolution, deactivation revocation, protected-401 handling, exact route return, and visible role.
+- Administrator-only settings, invitations, user administration, mail operations, and audit reads;
+- multiple logins, current-role resolution, deactivation revocation, protected-401 handling, exact route return, and visible role;
+- `/account` is available to every authenticated active user;
+- existing `display_name` is the single FIO field and email remains the immutable login identifier;
+- optional phone, Telegram, MAX, and VK values are normalized by Backend;
+- social profile values accept a handle or an approved HTTPS profile URL;
+- all authenticated active users may list active club contacts;
+- `mailto:`, `tel:`, approved social links, and vCard download support contact use on phones;
+- password change requires the current password, preserves the current login, and revokes all other active logins;
+- logout moved from the global header into the personal account page;
+- avatars, public profiles, email/phone verification, account deletion, recovery, and general session administration UI remain deferred.
 
 ### Product catalogue, Recipe publication, and Dish catalogue
 
@@ -105,25 +116,17 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 - exact selected Recipe persists on every meal assignment;
 - shopping, equipment, and exports use assignment Recipe snapshots;
 - central alcohol policy and archive markers preserve historical data while preventing prohibited active use;
-- `h10021` remains the single Alembic head.
+- current Alembic head is `h10022`; immutable release tag `v0.1.0` remains at released head `h10021`.
 
 ### Actor-aware audit
 
 - append-only AuditEvent persistence through `h10020`;
 - actor snapshots and bounded recursive secret removal;
-- semantic user-access and Recipe moderation events in owning transactions;
-- Project and Menu/MealSlot coverage through TH-0099 and TH-0100;
-- all typed System Settings owners and Administrator SMTP check/test results through TH-0101;
-- invitation lifecycle and safe post-commit delivery-result coverage through TH-0102;
-- Product create/update and successful CSV apply events through TH-0103;
-- purchase-list/checklist generation and manual purchase progress changes through TH-0103;
-- Recipe equipment requirements, EquipmentList generation, and manual overrides/removals through TH-0103;
-- successful Project and purchase-list document generation events through TH-0103;
-- transactional write events share the domain commit and rollback boundary; services called with `commit=False` append to the caller-owned transaction;
-- no-op edits create no AuditEvent;
-- document generation events commit before response delivery and contain only kind, format, content type, and byte-size metadata;
-- CSV contents, import row details, generated document bytes, filenames, credentials, tokens, SMTP values, provider messages, exception details, and arbitrary request bodies are never audit payloads;
-- Administrator-only Audit UI/API expose Russian labels and filters for all covered entities.
+- semantic operational coverage through TH-0103;
+- `account_profile_updated` shares the profile transaction, uses optimistic versions, suppresses no-op writes, and stores changed field names rather than contact values;
+- `account_password_changed` shares the password/session transaction and stores versions, whether the current login was preserved, and the number of other logins revoked;
+- phone numbers, social URLs, passwords, password hashes, cookies, raw session values, session hashes, tokens, exception details, and arbitrary request bodies are never account audit payloads;
+- Administrator Audit UI exposes Russian labels for personal profile and password actions.
 
 ### Projects, preparation, documents, and operations
 
@@ -136,36 +139,37 @@ The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreS
 
 ### Product acceptance and release readiness
 
-- versioned Product Acceptance and Release Readiness manifests;
-- critical Backend and Chrome gates, including the full semantic audit coverage delivered through TH-0103;
-- Alembic accepted head fixed at `h10021`;
-- real PostgreSQL 18 migration-cycle verification;
-- exact-head push workflows for required gates;
-- immutable lightweight tag `v0.1.0` at the recorded release SHA;
-- backup-based production rollback boundary;
+- versioned first-release Product Acceptance and Release Readiness manifests remain tied to immutable `v0.1.0` and `h10021`;
+- current Quality and Docker gates migrate and validate post-release head `h10022`;
+- Final Release Readiness verifies the released migration cycle by checking out immutable tag `v0.1.0`;
+- TH-0104 critical Backend and Chrome scenarios cover profiles, contacts, vCard, password changes, account navigation, mobile layout, and logout;
+- exact-head workflows, PostgreSQL backup/restore, and immutable tag verification remain required;
 - no active release-blocking debt.
 
 ## 5. Current active work
 
 - TH-0061.5 — operational maintenance of the completed menu rules engine.
 
-TH-0103 is complete. No later post-release capability is selected automatically.
+TH-0104 is complete after exact-head verification. No later post-release capability is selected automatically.
 
 ## 6. Immediate sequence
 
-1. Operate the released local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
-2. Use the Administrator Audit surface to review covered operational events.
-3. Select any later audit or product slice only through another explicit Product Owner decision.
+1. Operate the local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
+2. Use `/account` to maintain personal contact details and access active club contacts.
+3. Use the Administrator Audit surface to review covered operational and account events.
+4. Select later product work only through another explicit Product Owner decision.
 
 ## 7. Development rules
 
 - Do not invent missing business requirements.
 - Do not add microservices or multi-tenant infrastructure.
 - Do not put business rules or permission decisions only in React.
+- Do not expose account contact data outside authenticated active-user boundaries.
+- Do not record account contact values, passwords, hashes, cookies, or session tokens in audit payloads.
 - Do not infer Dish generator roles from Recipe content without a separate approved design.
 - Do not implement ORM-wide automatic auditing; record semantic actions in owning transactions.
 - Do not describe a feature as implemented unless code and tests confirm it.
 - Architecture or stack changes require Product Owner approval and an ADR.
 - One logical task is squash-merged to `main`.
-- Released v0.1.0 scope may change only through an explicit post-release task.
+- The released `v0.1.0` tag and its migration contract remain immutable.
 - Documentation, task state, roadmap, and technical debt are updated with code.

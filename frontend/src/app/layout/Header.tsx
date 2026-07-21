@@ -1,5 +1,5 @@
 import { AppBar, Box, Button, IconButton, Stack, Toolbar, Typography } from "@mui/material";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { userRoleLabel } from "@/features/auth/model/roleLabels";
 import { useAuth } from "@/features/auth/providers/AuthProvider";
@@ -9,18 +9,8 @@ interface HeaderProps {
 }
 
 export default function Header({ onMenuClick }: HeaderProps) {
-  const { user, logout } = useAuth();
-  const location = useLocation();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  async function signOut() {
-    const destination = `${location.pathname}${location.search}${location.hash}`;
-    try {
-      await logout();
-    } finally {
-      navigate("/login", { replace: true, state: { from: destination } });
-    }
-  }
 
   return (
     <AppBar position="static">
@@ -40,23 +30,39 @@ export default function Header({ onMenuClick }: HeaderProps) {
           TourHub
         </Typography>
         {user ? (
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-            <Stack
-              spacing={0}
-              sx={{ display: { xs: "none", sm: "flex" }, minWidth: 0, maxWidth: 240 }}
-              aria-label={`Текущий пользователь: ${user.display_name}. Роль: ${userRoleLabel(user.role)}.`}
-            >
-              <Typography variant="body2" noWrap>
-                {user.display_name}
-              </Typography>
-              <Typography variant="caption" noWrap sx={{ opacity: 0.82 }}>
-                {userRoleLabel(user.role)}
-              </Typography>
+          <Button
+            color="inherit"
+            onClick={() => navigate("/account")}
+            aria-label={`Открыть личный кабинет. ${user.display_name}. Роль: ${userRoleLabel(user.role)}.`}
+            sx={{ minWidth: 0, maxWidth: { xs: 112, sm: 280 }, textTransform: "none" }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+              <Box
+                aria-hidden
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: "50%",
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: "rgba(255,255,255,0.18)",
+                  flexShrink: 0,
+                  fontWeight: 700,
+                }}
+              >
+                {user.display_name.trim().slice(0, 1).toUpperCase() || "Л"}
+              </Box>
+              <Typography sx={{ display: { xs: "block", sm: "none" } }}>ЛК</Typography>
+              <Stack spacing={0} sx={{ display: { xs: "none", sm: "flex" }, minWidth: 0 }}>
+                <Typography variant="body2" noWrap>
+                  {user.display_name}
+                </Typography>
+                <Typography variant="caption" noWrap sx={{ opacity: 0.82 }}>
+                  {userRoleLabel(user.role)}
+                </Typography>
+              </Stack>
             </Stack>
-            <Button color="inherit" size="small" onClick={() => void signOut()}>
-              Выйти
-            </Button>
-          </Stack>
+          </Button>
         ) : (
           <Button color="inherit" size="small" onClick={() => navigate("/login")}>
             Войти

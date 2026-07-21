@@ -66,6 +66,42 @@ function ProtectedSettings() {
   );
 }
 
+function ProtectedAccount() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  async function signOut() {
+    const destination = `${location.pathname}${location.search}${location.hash}`;
+    try {
+      await logout();
+    } finally {
+      navigate("/login", { replace: true, state: { from: destination } });
+    }
+  }
+
+  return (
+    <Stack spacing={2}>
+      <Header onMenuClick={() => undefined} />
+      <Container maxWidth="md">
+        <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
+          <Stack spacing={2}>
+            <Typography variant="h4">Личный кабинет доступен</Typography>
+            <Typography>{user?.display_name}</Typography>
+            <Typography>{user?.email}</Typography>
+            <Button variant="contained" onClick={() => navigate("/settings?section=users#accounts")}>
+              Открыть настройки
+            </Button>
+            <Button variant="outlined" color="error" onClick={() => void signOut()}>
+              Выйти
+            </Button>
+          </Stack>
+        </Paper>
+      </Container>
+    </Stack>
+  );
+}
+
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing root element");
 
@@ -91,6 +127,14 @@ createRoot(root).render(
                 <RequireAdministrator>
                   <ProtectedSettings />
                 </RequireAdministrator>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <RequireAuthenticated>
+                  <ProtectedAccount />
+                </RequireAuthenticated>
               }
             />
             <Route path="*" element={<Navigate to="/projects/42" replace />} />

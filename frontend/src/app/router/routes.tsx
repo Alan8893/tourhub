@@ -3,6 +3,7 @@ import { Navigate, RouteObject } from "react-router-dom";
 import RequireAdministrator from "@/features/auth/components/RequireAdministrator";
 import RequireAuthenticated from "@/features/auth/components/RequireAuthenticated";
 import AcceptInvitationPage from "../../pages/AcceptInvitationPage";
+import AccountPage from "../../pages/AccountPage";
 import CatalogImportPage from "../../pages/CatalogImportPage";
 import CreateProjectPage from "../../pages/CreateProjectPage";
 import DishesWorkspacePage from "../../pages/DishesWorkspacePage";
@@ -33,6 +34,7 @@ export const routes: RouteObject[] = [
       { path: "/dishes", element: <DishesWorkspacePage /> },
       { path: "/dishes/:id", element: <DishesWorkspacePage /> },
       { path: "/catalog-import", element: <CatalogImportPage /> },
+      { path: "/account", element: <AccountPage /> },
       {
         path: "/settings",
         element: (
