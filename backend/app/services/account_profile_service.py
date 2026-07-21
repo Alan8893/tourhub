@@ -115,8 +115,8 @@ class AccountProfileService:
                 before={"version": previous_version},
                 after={"version": user.version},
                 context={
-                    "current_session_preserved": True,
-                    "revoked_other_session_count": revoked_count,
+                    "current_login_preserved": True,
+                    "revoked_other_login_count": revoked_count,
                 },
             )
             self.session.commit()
