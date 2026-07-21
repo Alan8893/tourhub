@@ -132,7 +132,7 @@ async function run() {
       `document.body?.innerText?.includes("Подготовка доступна") &&
        document.body?.innerText?.includes("Маршрут: /projects/42?tab=menu#day-2") &&
        document.body?.innerText?.includes("Иван Администратор") &&
-       document.querySelector('[aria-label="Текущий пользователь: Иван Администратор. Роль: Администратор."]') &&
+       document.querySelector('[aria-label="Открыть личный кабинет. Иван Администратор. Роль: Администратор."]') &&
        [...document.querySelectorAll("button")].some(
          (item) => item.textContent?.trim() === "Открыть настройки",
        )`,
@@ -154,6 +154,18 @@ async function run() {
       "administrator settings after preparation",
     );
 
+    const accountClicked = await client.evaluate(`(() => {
+      const button = document.querySelector('[aria-label^="Открыть личный кабинет."]');
+      button?.click();
+      return Boolean(button);
+    })()`);
+    assert.equal(accountClicked, true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Личный кабинет доступен") &&
+       document.body?.innerText?.includes("admin@tourhub.local")`,
+      "personal account after header navigation",
+    );
     assert.equal(await clickButton(client, "Выйти"), true);
     await waitForExpression(
       client,
@@ -168,7 +180,7 @@ async function run() {
       client,
       `document.body?.innerText?.includes("Настройки доступны") &&
        document.body?.innerText?.includes("Иван Администратор") &&
-       document.querySelector('[aria-label="Текущий пользователь: Иван Администратор. Роль: Администратор."]')`,
+       document.querySelector('[aria-label="Открыть личный кабинет. Иван Администратор. Роль: Администратор."]')`,
       "requested settings after login",
     );
 
@@ -223,7 +235,7 @@ async function run() {
     );
 
     client.close();
-    console.log("Access role, route return, and revoked-session browser acceptance passed.");
+    console.log("Access role, account navigation, route return, and revoked-session browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
