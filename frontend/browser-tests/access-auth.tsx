@@ -69,12 +69,14 @@ function ProtectedSettings() {
 function ProtectedAccount() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   async function signOut() {
+    const destination = `${location.pathname}${location.search}${location.hash}`;
     try {
       await logout();
     } finally {
-      navigate("/login", { replace: true });
+      navigate("/login", { replace: true, state: { from: destination } });
     }
   }
 
@@ -87,6 +89,9 @@ function ProtectedAccount() {
             <Typography variant="h4">Личный кабинет доступен</Typography>
             <Typography>{user?.display_name}</Typography>
             <Typography>{user?.email}</Typography>
+            <Button variant="contained" onClick={() => navigate("/settings?section=users#accounts")}>
+              Открыть настройки
+            </Button>
             <Button variant="outlined" color="error" onClick={() => void signOut()}>
               Выйти
             </Button>
