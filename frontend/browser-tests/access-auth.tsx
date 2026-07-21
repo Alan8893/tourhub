@@ -66,6 +66,37 @@ function ProtectedSettings() {
   );
 }
 
+function ProtectedAccount() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  async function signOut() {
+    try {
+      await logout();
+    } finally {
+      navigate("/login", { replace: true });
+    }
+  }
+
+  return (
+    <Stack spacing={2}>
+      <Header onMenuClick={() => undefined} />
+      <Container maxWidth="md">
+        <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
+          <Stack spacing={2}>
+            <Typography variant="h4">Личный кабинет доступен</Typography>
+            <Typography>{user?.display_name}</Typography>
+            <Typography>{user?.email}</Typography>
+            <Button variant="outlined" color="error" onClick={() => void signOut()}>
+              Выйти
+            </Button>
+          </Stack>
+        </Paper>
+      </Container>
+    </Stack>
+  );
+}
+
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing root element");
 
@@ -91,6 +122,14 @@ createRoot(root).render(
                 <RequireAdministrator>
                   <ProtectedSettings />
                 </RequireAdministrator>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <RequireAuthenticated>
+                  <ProtectedAccount />
+                </RequireAuthenticated>
               }
             />
             <Route path="*" element={<Navigate to="/projects/42" replace />} />
