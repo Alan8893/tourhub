@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
@@ -5,10 +6,13 @@ from app.main import app
 from app.models.audit_event import AuditEventORM
 from app.models.auth_session import AuthSessionORM
 from app.models.user import UserORM
-from app.schemas.account_profile import AccountProfileUpdateRequest
+from app.schemas.account_profile import (
+    AccountProfileUpdateRequest,
+    PasswordChangeRequest,
+)
 from app.services.account_profile_service import AccountProfileService
 from app.services.audit_service import AuditService
-from app.services.auth_service import hash_password
+from app.services.auth_service import hash_password, token_hash, verify_password
 
 PASSWORD_FIELD = "pass" + "word"
 ADMIN_SECRET = "-".join(("account", "admin", "phrase", "12345"))
@@ -61,10 +65,10 @@ def test_profile_update_normalizes_contacts_and_audits_only_changed_fields(
     auth_client,
     db_session,
 ):
-    user = _bootstrap(auth_client)
+    _bootstrap(auth_client)
     response = auth_client.patch(
         "/api/v1/account",
-        json=_profile_payload(version=int(user["version"] if "version" in user else 1)),
+        json=_profile_payload(version=1),
     )
     assert response.status_code == 200, response.text
     payload = response.json()
@@ -105,11 +109,16 @@ def test_profile_update_normalizes_contacts_and_audits_only_changed_fields(
     no_op = auth_client.patch(
         "/api/v1/account",
         json={
-            **payload,
+            "display_name": payload["display_name"],
+            "phone": payload["phone"],
+            "telegram_url": payload["telegram_url"],
+            "max_url": payload["max_url"],
+            "vk_url": payload["vk_url"],
             "version": payload["version"],
         },
     )
-    assert no_op.status_code == 200
+    assert no_op.status_code == 200, no_op.text
+    assert no_op.json()["version"] == 2
     assert db_session.scalar(
         select(func.count()).select_from(AuditEventORM).where(
             AuditEventORM.action == "account_profile_updated"
@@ -288,12 +297,8 @@ def test_profile_update_rolls_back_when_audit_fails(db_session, monkeypatch):
         vk_url=None,
         version=1,
     )
-    try:
+    with pytest.raises(RuntimeError, match="audit failure"):
         AccountProfileService(db_session, actor=actor).update_profile(request)
-    except RuntimeError as error:
-        assert str(error) == "audit failure"
-    else:
-        raise AssertionError("audit failure was not propagated")
 
     db_session.expire_all()
     stored = db_session.get(UserORM, actor.id)
@@ -301,4 +306,60 @@ def test_profile_update_rolls_back_when_audit_fails(db_session, monkeypatch):
     assert stored.display_name == "Исходное Имя"
     assert stored.phone is None
     assert stored.version == 1
+    assert db_session.scalar(select(func.count()).select_from(AuditEventORM)) == 0
+
+
+def test_password_change_rolls_back_hash_sessions_and_audit_on_failure(
+    db_session,
+    monkeypatch,
+):
+    raw_current_token = "current-account-session"
+    actor = UserORM(
+        id=1,
+        email="member@example.org",
+        display_name="Участник",
+        role="instructor",
+        password_hash=hash_password(MEMBER_SECRET),
+        is_active=True,
+    )
+    current_session = AuthSessionORM(
+        user=actor,
+        token_hash=token_hash(raw_current_token),
+        expires_at=__import__("datetime").datetime(2099, 1, 1),
+        last_seen_at=__import__("datetime").datetime(2026, 1, 1),
+    )
+    other_session = AuthSessionORM(
+        user=actor,
+        token_hash=token_hash("other-account-session"),
+        expires_at=__import__("datetime").datetime(2099, 1, 1),
+        last_seen_at=__import__("datetime").datetime(2026, 1, 1),
+    )
+    db_session.add_all([actor, current_session, other_session])
+    db_session.commit()
+    original_hash = actor.password_hash
+
+    def fail_record(*args, **kwargs):
+        raise RuntimeError("audit failure")
+
+    monkeypatch.setattr(AuditService, "record", fail_record)
+    request = PasswordChangeRequest(
+        current_password=MEMBER_SECRET,
+        new_password=NEW_SECRET,
+        new_password_confirm=NEW_SECRET,
+    )
+    with pytest.raises(RuntimeError, match="audit failure"):
+        AccountProfileService(db_session, actor=actor).change_password(
+            request,
+            current_raw_token=raw_current_token,
+        )
+
+    db_session.expire_all()
+    stored = db_session.get(UserORM, actor.id)
+    stored_other_session = db_session.get(AuthSessionORM, other_session.id)
+    assert stored is not None
+    assert stored.password_hash == original_hash
+    assert verify_password(MEMBER_SECRET, stored.password_hash)
+    assert stored.version == 1
+    assert stored_other_session is not None
+    assert stored_other_session.revoked_at is None
     assert db_session.scalar(select(func.count()).select_from(AuditEventORM)) == 0
