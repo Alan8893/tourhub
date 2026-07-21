@@ -2,9 +2,9 @@ import importlib.util
 from pathlib import Path
 from types import ModuleType
 
-import sqlalchemy as sa
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
+import sqlalchemy as sa
 
 
 def _migration_module() -> ModuleType:
