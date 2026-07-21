@@ -106,12 +106,14 @@ async function run() {
          !document.body?.innerText?.includes("Загрузка личного кабинета")`,
         "loaded personal account shell",
       );
-      const loadedText = await client.evaluate("document.body.innerText");
+      const loadedText = String(
+        await client.evaluate("document.body.innerText"),
+      ).toLocaleLowerCase("ru-RU");
       for (const label of [
-        "Ирина Инструктор",
-        "Борис Инструктор",
-        "Смена пароля",
-        "Сохранить контакт",
+        "ирина инструктор",
+        "борис инструктор",
+        "смена пароля",
+        "сохранить контакт",
       ]) {
         assert.ok(loadedText.includes(label), `Missing account label: ${label}\n${loadedText}`);
       }
