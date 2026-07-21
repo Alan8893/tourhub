@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-20
+Status date: 2026-07-21
 
 ## Product goal
 
@@ -21,6 +21,7 @@ First-release preparation and operations
   → System Settings and mail audit coverage (TH-0101)
   → Invitation lifecycle and delivery-result audit coverage (TH-0102)
   → Catalogue/import, shopping, equipment, and document audit coverage (TH-0103)
+  → Personal accounts and active club contacts (TH-0104)
 ```
 
 ## Released first-release sequence
@@ -31,7 +32,7 @@ First-release preparation and operations
 - CLUB/PERSONAL Recipe ownership, moderation, ordered Dish variants, generation modes, and persisted assignment Recipe snapshots;
 - append-only actor-aware AuditEvent foundation through `h10020`;
 - complete consolidated Project exports;
-- centralized no-exceptions alcohol policy and final Alembic head `h10021`;
+- centralized no-exceptions alcohol policy and released Alembic head `h10021`;
 - machine-readable Product Acceptance and Release Readiness evidence;
 - immutable `v0.1.0` release tag and backup-based production rollback boundary.
 
@@ -49,37 +50,28 @@ Shared Product fields can be corrected without changing Product IDs, Recipe rela
 
 Publication synchronizes the Recipe into Dishes in the publication transaction. Exact-name matches become variants; otherwise one role-less Dish is created. Generator roles remain explicitly human-owned.
 
-### TH-0099 — Project audit coverage
+### TH-0099 through TH-0103 — Semantic audit coverage
 
-Project creation, participant recalculation, generation-mode changes, and full preparation orchestration create semantic actor-attributed events in owning transactions with no-op suppression and rollback safety.
+Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, catalogue/import, shopping, equipment, and document-generation writes record bounded actor-attributed events at explicit transaction/result boundaries. No-op writes are suppressed and protected values are excluded.
 
-### TH-0100 — Menu generation and MealSlot audit coverage
+### TH-0104 — Personal account and club contacts
 
-Initial generation/regeneration and manual MealSlot Dish add/remove/replace record bounded semantic events in the owning recalculation transaction. Administrator UI/API expose Russian Menu and MealSlot labels.
-
-### TH-0101 — System Settings and mail audit coverage
-
-All typed settings owners and Administrator SMTP connection/test operations record safe actor-attributed events. Credentials, transcripts, exceptions, and request bodies are excluded.
-
-### TH-0102 — Invitation lifecycle and delivery-result audit coverage
-
-Invitation create/reissue/revoke/accept record in lifecycle transactions. Safe post-commit delivery outcomes preserve invitation validity and the manual link even when delivery or delivery-audit fails.
-
-### TH-0103 — Operational write audit coverage
-
-- Product create/update and successful Product/Recipe CSV apply record semantic events;
-- catalogue import payloads contain aggregate counts only, never CSV content or row details;
-- PurchaseList/PurchaseChecklist generation and manual responsible/progress updates record in their owning transaction;
-- Recipe equipment requirements, EquipmentList generation, and manual equipment overrides/removals record bounded before/after state;
-- preparation subservices called with `commit=False` append events to the caller-owned Project preparation transaction;
-- no-op writes create no event and audit failure rolls back pending domain mutations;
-- successful Project and legacy purchase-list document generation records kind/format/content type/size before response delivery without storing content or filenames;
-- Administrator Audit UI/API expose Russian catalogue, shopping, equipment, and document labels and filters without mobile overflow;
-- Alembic remains `h10021` and `v0.1.0` remains immutable.
+- the header logout button is replaced by a responsive current-user control opening `/account`;
+- `Личный кабинет` is available in the sidebar to every authenticated active user;
+- existing `display_name` remains one FIO field and email remains read-only;
+- optional phone, Telegram, MAX, and VK fields persist through new Alembic head `h10022`;
+- phone and social values are normalized by Backend, with platform hosts restricted to approved HTTPS URLs;
+- all authenticated active users may view active club contacts;
+- contact cards expose email, `tel:`, Telegram/MAX/VK links, and downloadable vCard;
+- password change verifies the current password, preserves the current login, and revokes all other active logins;
+- logout is available from the personal account page;
+- profile and password actions append safe semantic audit events without contact values, passwords, hashes, cookies, or tokens;
+- real-Chrome acceptance covers desktop/mobile layout, profile update, contacts, vCard, password change, navigation, and logout;
+- current post-release head is `h10022`; immutable `v0.1.0` remains at released head `h10021`.
 
 ## Next post-release selection
 
-No task after TH-0103 is selected automatically. Further work requires a separate Product Owner decision.
+No task after TH-0104 is selected automatically. Further work requires a separate Product Owner decision.
 
 ## Deferred non-blocking priorities
 
@@ -88,12 +80,18 @@ No task after TH-0103 is selected automatically. Further work requires a separat
 - audit export, retention UI, external SIEM integration, and operational diagnostics;
 - undo and event replay remain outside v0.1.0.
 
+### Access and identity
+
+- verified email change and phone/email verification;
+- account recovery, deletion, retention policy, and avatars;
+- public member profiles and general session-administration UI;
+- invitation cleanup, asynchronous mail, bounce handling, and advanced templates.
+
 ### Product and operations
 
-- account recovery, session administration, user profiles, asynchronous mail, bounce handling, and advanced templates;
 - richer Recipe metadata, per-meal switching, and preference weights;
 - Product/Dish archive-management UI and ownership-aware import UX;
-- participant profiles, routes/GPX, warehouse, procurement, and external aggregation domains;
+- trip-participant profiles, routes/GPX, warehouse, procurement, and external aggregation domains;
 - scheduled/emailed documents, persisted versions, signatures, and encrypted configuration archives.
 
 Multi-tenant support and microservices remain prohibited.
