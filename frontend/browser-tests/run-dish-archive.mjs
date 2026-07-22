@@ -215,17 +215,19 @@ async function run() {
     console.log("Dish archive browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
-    await api.close();
+    await Promise.race([api.close(), sleep(2_000)]);
     await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }
 
-run().catch(async (error) => {
-  console.error(error);
-  await mkdir(artifactDir, { recursive: true });
-  await writeFile(
-    path.join(artifactDir, "dish-archive-error.txt"),
-    `${error?.stack ?? error}\n`,
-  );
-  process.exitCode = 1;
-});
+run()
+  .then(() => process.exit(0))
+  .catch(async (error) => {
+    console.error(error);
+    await mkdir(artifactDir, { recursive: true });
+    await writeFile(
+      path.join(artifactDir, "dish-archive-error.txt"),
+      `${error?.stack ?? error}\n`,
+    );
+    process.exit(1);
+  });
