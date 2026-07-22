@@ -21,7 +21,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Owner and additional instructor are Project-scoped responsibilities.
 - Module visibility remains presentation-only and never grants access.
 - Audit CSV export is a Backend-owned read projection over sanitized AuditEvent persistence.
-- Own-session listing and individual revocation extend the existing server-session boundary without adding device tracking or Administrator access to another user's sessions.
+- Own-session listing and individual revocation extend the existing server-session boundary without device tracking or cross-user administration.
 
 ## Access runtime
 
@@ -29,10 +29,10 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - PostgreSQL stores only session-token hashes and session metadata;
 - Backend resolves the current persisted User on every authorized request;
 - deactivation revokes sessions and removes runtime Project access without deleting historical membership;
-- protected HTTP 401 responses clear stale frontend identity centrally;
+- protected HTTP 401 responses clear stale Frontend identity centrally;
 - the header exposes the current user and opens `/account`;
-- `/account` may project only the current User's active sessions;
-- account recovery, global sign-out, Administrator session administration, and session cleanup remain future capabilities.
+- `/account` projects only the current User's active sessions;
+- account recovery, global sign-out, Administrator session administration, session cleanup, and retention remain future capabilities.
 
 ## Session administration boundary — TH-0107
 
@@ -41,19 +41,19 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 ### Projection
 
 - routes remain under authenticated `/api/v1/account`;
-- the current session is matched by hashing the existing HttpOnly cookie server-side;
+- the current login is matched by hashing the existing HttpOnly cookie server-side;
 - only rows with matching `user_id`, `revoked_at IS NULL`, and future `expires_at` are returned;
 - response fields are session ID, created-at, last-seen-at, expires-at, and current marker;
 - raw tokens, token hashes, cookies, authorization headers, IP addresses, user agents, device names, fingerprints, and locations are never serialized;
-- Frontend renders the Backend projection and makes no ownership/current-session decision.
+- Frontend renders the Backend projection and makes no ownership/current-login decision.
 
 ### Individual revocation
 
 - target selection is constrained by current `user_id`, active state, and non-expiry before row locking;
 - unrelated, revoked, expired, and unknown IDs share the same HTTP 404 result;
-- current-session revocation returns HTTP 409 and ordinary logout remains its termination path;
+- current-login revocation returns HTTP 409 and ordinary logout remains its termination path;
 - the target row's `revoked_at` and semantic `account_session_revoked` AuditEvent commit or roll back together;
-- the event contains only target session ID, active/revoked state, and `current_session_preserved`;
+- the event contains target session ID, active/revoked state, and sanitizer-safe `current_login_preserved` only;
 - no cleanup, deletion, background task, device inference, global revoke-all, or cross-user administration is introduced.
 
 ## Project ownership and access boundary
@@ -84,32 +84,18 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - completed Project: terminal read-only history; owner/Administrator may delete it;
 - inactive owner/member: membership retained, access denied until reactivation.
 
-### Ownership transfer
-
 Ownership transfer locks the Project and involved users, removes the new owner from additional membership, adds the previous owner as an additional instructor, changes `owner_user_id`, appends `project_owner_transferred`, and commits or rolls back as one unit.
 
-## Project contact boundary
+## Project contact and completion boundaries
 
-- `/account` owns only the current user's profile, sessions, password change, and logout;
+- `/account` owns only the current user's profile, own sessions, password change, and logout;
 - the club-wide contact API is removed;
 - Project team reads expose owner and additional instructors only after Project visibility is established;
 - Project-scoped vCard download repeats the same access and membership checks;
-- active members expose mail, phone, Telegram, MAX, and VK actions;
-- inactive historical members expose identity but no contact actions;
-- Project audit payloads never contain phone numbers or social URLs.
-
-## Completed Project boundary
-
-- `completed` is terminal in the current model;
-- completed Projects are hidden from the catalogue by default;
-- reads and document downloads remain available to authorized users;
-- all operational, Menu, settings, team, transfer, and status writes are rejected;
-- no reopen endpoint exists;
+- active members expose approved contact actions; inactive historical members expose identity but no actions;
+- Project audit payloads never contain phone numbers or social URLs;
+- `completed` is terminal, hidden from catalogue by default, and read-only except owner/Administrator deletion;
 - future `Копировать проект` creates a new identity from a completed template and remains a separate task.
-
-## Project-team notification boundary
-
-`ProjectTeamNotificationService` defines add/remove/ownership-transfer callbacks. TH-0105 uses `NoOpProjectTeamNotificationService`; no email, Telegram, MAX, queue, retry, delivery history, or provider call occurs. Future delivery must implement this boundary explicitly.
 
 ## Actor-aware audit boundary
 
@@ -117,7 +103,7 @@ Ownership transfer locks the Project and involved users, removes the new owner f
 - business mutation and AuditEvent share the owning transaction for audited writes;
 - no-op writes create no event;
 - audit failure rolls back pending domain mutations, including individual session revocation;
-- passwords, hashes, credentials, cookies, sessions tokens, authorization data, phone/social contacts, request bodies, source CSV bodies, generated document contents, provider secrets, and device/network metadata are excluded;
+- passwords, hashes, credentials, cookies, session tokens, authorization data, phone/social contacts, request bodies, source CSV bodies, generated document contents, provider secrets, and device/network metadata are excluded;
 - automatic ORM-wide auditing remains rejected.
 
 ## Audit CSV export boundary — TH-0106
@@ -126,29 +112,20 @@ Ownership transfer locks the Project and involved users, removes the new owner f
 
 - supported filters: actor user ID, entity type, entity ID, semantic action, created-from, and created-to;
 - `/api/v1/audit/events/export.csv` returns a read-only UTF-8 CSV projection;
-- export rows are ordered by descending AuditEvent ID, matching list chronology;
 - columns contain only persisted actor snapshots, semantic identity, timestamp, and sanitized before/after/context JSON;
-- JSON cells use deterministic key ordering and compact UTF-8 serialization;
-- formula-like spreadsheet cells are prefixed with an apostrophe;
+- JSON cells use deterministic key ordering and formula-like spreadsheet cells are neutralized;
 - exports above 10,000 matching events return HTTP 422 and require narrower filters;
 - export creates no AuditEvent and therefore cannot recursively mutate the journal;
-- retention deletion/cleanup, SIEM delivery, scheduling, diagnostics, undo, and replay remain separate future boundaries;
-- TH-0106 adds no migration.
-
-## Recipe, catalogue, documents, and mail boundaries
-
-Existing Recipe ownership, Dish variants, exact assignment snapshots, alcohol policy, catalogue import, shopping/equipment recalculation, consolidated exports, and mail-delivery boundaries remain unchanged except that Project-scoped routes require `ProjectAccessPolicy` authorization.
-
-Document generation remains non-persisted. Authorized Project members may download approved documents, including from a completed Project, while generation audit stores only safe document metadata.
+- retention deletion/cleanup, SIEM delivery, scheduling, diagnostics, undo, and replay remain separate future boundaries.
 
 ## Runtime and release boundary
 
 Development starts with `docker compose up -d --build`; operators use `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally.
 
 - current post-release Alembic head: `h10023`;
-- TH-0107 adds no migration;
+- TH-0106 and TH-0107 added no migrations;
 - immutable `v0.1.0` tag remains at release SHA `8bcc2d2d9414d812d81634330034b15121c8442f` and released head `h10021`;
 - PostgreSQL backup/restore, clean release-stack startup, restart persistence, and exact-head gates verify the current candidate;
 - multi-tenancy and microservices remain prohibited.
 
-See `PRODUCT_SPEC.md` and ADR-012 through ADR-026.
+No post-release product task is active after TH-0107. See `PRODUCT_SPEC.md` and ADR-012 through ADR-026.
