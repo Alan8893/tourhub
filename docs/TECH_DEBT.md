@@ -24,53 +24,35 @@ None. The approved first-release scope remains feature frozen and release-ready.
 
 Project workspace navigation, Product editing, published Recipe-to-Dish synchronization, and semantic audit coverage across Project, Menu/MealSlot, System Settings/mail, invitations, catalogue/import, Shopping/Checklist, Equipment, and Documents are delivered.
 
-### TH-0104 — Personal account
+### TH-0104 through TH-0107
 
-Editable profile/contact fields, read-only login email, password change preserving the current login, Project-scoped contacts, safe account audit, and migration `h10022` are delivered.
-
-### TH-0105 — Project ownership and team access
-
-Project ownership/team persistence through `h10023`, central access masking, terminal completion, transactional team/ownership audit, Project-scoped contacts, and the future notification boundary are delivered.
-
-### TH-0106 — Audit CSV export
-
-Administrator-only filtered deterministic CSV export with shared Backend filters, UTF-8 BOM, formula neutralization, 10,000-row bound, date-filter UX, and Backend/Frontend/Chrome coverage is delivered without a migration or recursive event.
-
-### TH-0107 — Session administration
-
-Own active-session projection, server-side current-login matching, individual revocation, 404 ownership masking, 409 current-login protection, transactional safe audit, responsive `/account` UX, and real-Chrome coverage are delivered without tracking metadata, cleanup, or migration.
+Personal account/contact profiles, Project ownership/team access, safe filtered Audit CSV export, and own-session administration with individual revocation are delivered through current head `h10023`.
 
 ### TH-0108 — Product archive management
 
-- active Product selection remains the stable default contract;
-- a protected archive projection exposes Product archive and policy-lock state;
-- preparation users can soft-archive and restore one Product;
-- archive preserves all historical Recipe, shopping, checklist, and document references;
-- restore re-runs the central alcohol policy;
-- policy-archived Products are permanently non-restorable through this capability;
-- archive/restore use row locks, idempotency, and transactional `product_archived` / `product_restored` events;
-- existing Recipe/Product response contracts remain stable through dedicated archive DTOs;
-- responsive active/archive UI, policy-lock explanation, tests, and real-Chrome acceptance are delivered;
-- existing Product archive columns were reused, so Alembic remains `h10023`.
+Active Product selection remains stable; explicit protected archive management preserves history, re-runs central alcohol policy, respects permanent policy lock, and uses row locks, idempotency, responsive UI, real-Chrome acceptance, and transaction-owned semantic audit without a migration.
 
 ### TH-0109 — Dish archive management
 
-- active Dish selection and catalogue readiness remain the stable default contract;
-- a protected archive projection exposes Dish archive and policy-lock state;
-- preparation users can soft-archive and restore one Dish;
-- archive preserves Recipe variants, meal roles, and historical MealSlot/project references;
-- restore re-runs the central Dish-name alcohol policy;
-- policy-archived Dishes are permanently non-restorable through this capability;
-- archive/restore use row locks, idempotency, and transactional `dish_archived` / `dish_restored` events;
-- existing Dish/Recipe response contracts remain stable through dedicated archive DTOs;
-- responsive active/archive UI, policy-lock explanation, tests, and real-Chrome acceptance are delivered;
-- existing Dish archive columns were reused, so Alembic remains `h10023`.
+Active Dish selection/readiness remains stable; explicit protected archive management preserves variants, roles, and historical MealSlot/project links while enforcing central policy, row locks, idempotency, responsive UI, real-Chrome acceptance, and transaction-owned semantic audit without a migration.
+
+### TH-0110 — Ownership-aware CSV import
+
+- Product CSV import remains club-wide with unchanged CSV/API behavior;
+- Recipe import supports one operation-level CLUB or PERSONAL target;
+- PERSONAL creates current-user-owned drafts; CLUB creates published ownerless club Recipes;
+- ownership-aware preview/apply is bound by an actor/content/scope fingerprint;
+- stale content/scope/token is rejected before writes or audit;
+- legacy Recipe apply without new fields remains compatible as validated CLUB import;
+- existing parser, duplicate/reference checks, central alcohol policy, components, notes, and all-or-nothing transaction are reused;
+- responsive ownership selector, preview invalidation, frontend tests, backend policy tests, and real-Chrome acceptance are delivered;
+- existing Recipe ownership columns were reused, so Alembic remains `h10023`.
 
 ## Explicit future product debt — Copy Project
 
 `Копировать проект` is a required future Product Owner-selected task.
 
-Expected product intent:
+Expected intent:
 
 - source is a completed Project and remains unchanged;
 - action creates a new Project identity;
@@ -112,7 +94,6 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Remaining Recipe, menu, and catalogue debt
 
-- ownership-aware CSV import UX;
 - optional moderation notifications;
 - preparation technology, dietary/season metadata, and richer categories;
 - Recipe-level optimistic-version decision;
@@ -145,8 +126,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - when to start `Копировать проект` and its exact copy matrix;
 - Project-team notification channels and preferences;
 - global-sign-out, cross-user session administration, cleanup, and tracking policy;
-- ownership-aware import semantics;
 - preference weighting and mandatory Recipe metadata;
 - encrypted settings archive format.
 
-No post-release product task is active after TH-0109. No deferred item becomes active merely because it appears here.
+No post-release product task is active after TH-0110. No deferred item becomes active merely because it appears here.

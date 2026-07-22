@@ -27,6 +27,7 @@ First-release preparation and operations
   → Own session administration and individual revocation (TH-0107)
   → Product archive management (TH-0108)
   → Dish archive management (TH-0109)
+  → Ownership-aware Recipe CSV import (TH-0110)
   → next post-release task requires explicit selection
   → Copy Project from completed template remains required future work
 ```
@@ -49,65 +50,42 @@ First-release preparation and operations
 
 Responsive Project workspace navigation, Product editing, published Recipe-to-Dish synchronization, and semantic audit coverage across Project, Menu/MealSlot, System Settings/mail, invitations, catalogue/import, Shopping/Checklist, Equipment, and Documents are delivered.
 
-### TH-0104 — Personal account and club contacts
+### TH-0104 through TH-0107
 
-- `/account` contains editable profile fields, read-only email, password change, and logout;
-- optional phone, Telegram, MAX, and VK fields persist through `h10022`;
-- Project-scoped contact cards expose approved actions and vCard;
-- password change preserves the current login and revokes all other active logins;
-- profile and password actions append safe semantic audit events.
-
-### TH-0105 — Project ownership, team access, and project contacts
-
-- every Project has one owner and may have multiple additional instructors;
-- Project visibility and direct routes are controlled by centralized `ProjectAccessPolicy`;
-- completed Projects are hidden by default and remain terminal read-only history;
-- team contacts are Project-scoped and ownership transfer is audited transactionally;
-- current post-release Alembic head is `h10023`.
-
-### TH-0106 — Audit CSV export
-
-- one Administrator-only CSV export endpoint sits beside the existing Audit list;
-- list and export reuse the same Backend-owned filters;
-- only persisted sanitized AuditEvent snapshots are exported with deterministic UTF-8 JSON columns;
-- spreadsheet formula cells are neutralized and exports are capped at 10,000 rows;
-- no migration was added, so current Alembic head remains `h10023`.
-
-### TH-0107 — Session administration and individual revocation
-
-- every active authenticated user can list only their own active non-expired sessions;
-- Backend identifies the current login from the existing HttpOnly cookie without returning token material;
-- one other owned active session can be revoked individually;
-- current-session revocation is blocked and ordinary logout remains its termination path;
-- revocation and `account_session_revoked` share one transaction;
-- no migration was required, so Alembic remains `h10023`.
+Personal account/contact profiles, Project ownership and team-scoped access, safe filtered Audit CSV export, and own-session administration with individual revocation are delivered. Current post-release Alembic head is `h10023`.
 
 ### TH-0108 — Product archive management
 
-- preparation users can soft-archive an active Product and restore a manually archived Product;
-- the normal Product list and Recipe component selector remain active-only;
-- archived Products are visible only through an explicit protected archive-management read;
-- Product rows and historical Recipe, purchase, checklist, and document references are preserved;
-- policy-locked Products cannot be restored, and restore re-runs the central alcohol policy;
-- archive/restore are row-locked, idempotent, and audited transactionally;
-- existing Recipe/Product contracts remain stable through separate archive DTOs;
-- responsive Frontend and real-Chrome acceptance cover the lifecycle;
-- no migration was required, so Alembic remains `h10023`.
+- normal Product selection remains active-only;
+- preparation users can soft-archive and restore manually archived Products;
+- policy-locked Products remain non-restorable;
+- history is preserved and state plus semantic audit share one transaction;
+- no migration was required.
 
 ### TH-0109 — Dish archive management
 
-- the normal Dish catalogue and new Dish selection remain active-only with the stable `DishResponse` contract;
-- an explicit protected archive projection exposes archived Dish identity, recipe display data, and policy-lock state;
-- preparation users can soft-archive one Dish and restore a manually archived Dish;
-- Dish rows, Recipe variants, meal-role assignments, and historical MealSlot/project references are preserved;
-- restore re-runs the central Dish-name alcohol policy and policy-locked Dishes remain non-restorable;
-- archive/restore use row locks, idempotency, and transactional `dish_archived` / `dish_restored` events;
-- responsive active/archive UI and real-Chrome acceptance cover state transitions, policy lock, and mobile overflow;
-- existing Dish archive columns were reused, so Alembic remains `h10023`.
+- normal Dish selection and catalogue readiness remain active-only;
+- preparation users can soft-archive and restore manually archived Dishes;
+- Recipe variants, meal roles, and historical MealSlot/project links are preserved;
+- policy-locked Dishes remain non-restorable;
+- no migration was required.
+
+### TH-0110 — Ownership-aware Recipe CSV import
+
+- Product CSV import remains club-wide and keeps its established CSV/API contract;
+- Recipe import UI requires one CLUB or PERSONAL target for the whole operation;
+- PERSONAL imports create current-user-owned drafts;
+- CLUB imports create published club Recipes;
+- preview issues an actor/content/scope-bound token and ownership-aware apply must return the matching token;
+- changing CSV or scope invalidates preview and mismatch is rejected atomically;
+- legacy Recipe apply without new fields remains compatible as fully validated CLUB import;
+- existing duplicate/reference/alcohol validation, components, notes, transaction-owned audit, and rollback remain intact;
+- responsive UI and real-Chrome acceptance cover token propagation, preview invalidation, and mobile layout;
+- existing Recipe ownership columns were reused, so Alembic remains `h10023`.
 
 ## Current post-release selection
 
-No product task is active after TH-0109. Deferred items do not become active merely because they appear below.
+No product task is active after TH-0110. Deferred items do not become active merely because they appear below.
 
 ## Explicit future task — Copy Project
 
@@ -132,7 +110,6 @@ No product task is active after TH-0109. Deferred items do not become active mer
 
 ### Product and operations
 
-- ownership-aware CSV import UX;
 - richer Recipe metadata, per-meal switching, and preference weights;
 - trip-participant profiles, routes/GPX, warehouse, procurement, and external aggregation domains;
 - scheduled/emailed documents, persisted versions, signatures, and encrypted configuration archives.
