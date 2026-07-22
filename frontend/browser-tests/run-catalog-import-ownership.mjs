@@ -28,6 +28,7 @@ const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5215/browser-tests/catalog-import-ownership.html";
 const chromeDebugUrl = "http://127.0.0.1:9267";
 const profileDir = `/tmp/tourhub-catalog-import-ownership-${process.pid}`;
+const scenarioTimeoutMs = 90_000;
 const recipesCsv = `recipe_name;product_name;component_type;amount;unit;calculation_type;people_count;note_type;note_text;note_priority
 Походная гречка;Гречка;base;80;gram;per_person;;cooking_tip;Промыть крупу;10
 `;
@@ -225,7 +226,7 @@ async function run() {
   } finally {
     client?.close();
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
-    await api.close();
+    await Promise.race([api.close(), sleep(2_000)]);
     await rm(profileDir, {
       recursive: true,
       force: true,
@@ -235,7 +236,18 @@ async function run() {
   }
 }
 
-run().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+const watchdog = setTimeout(() => {
+  console.error("Ownership-aware catalog import browser acceptance timed out.");
+  process.exit(1);
+}, scenarioTimeoutMs);
+
+run()
+  .then(() => {
+    clearTimeout(watchdog);
+    process.exit(0);
+  })
+  .catch((error) => {
+    clearTimeout(watchdog);
+    console.error(error);
+    process.exit(1);
+  });
