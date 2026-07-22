@@ -53,19 +53,24 @@ class ProjectTeamService:
     ) -> ProjectORM:
         added_users: list[UserORM] = []
         removed_users: list[UserORM] = []
+        no_change = False
         try:
             project = self._locked_project(project_id)
             requested_ids = set(instructor_user_ids)
             if project.owner_user_id in requested_ids:
                 raise ValueError("Владелец уже входит в команду проекта.")
 
-            users = list(
-                self.session.scalars(
-                    select(UserORM)
-                    .where(UserORM.id.in_(requested_ids))
-                    .with_for_update()
-                ).all()
-            ) if requested_ids else []
+            users = (
+                list(
+                    self.session.scalars(
+                        select(UserORM)
+                        .where(UserORM.id.in_(requested_ids))
+                        .with_for_update()
+                    ).all()
+                )
+                if requested_ids
+                else []
+            )
             users_by_id = {user.id: user for user in users}
             if set(users_by_id) != requested_ids:
                 raise ValueError("Один или несколько пользователей не найдены.")
@@ -89,53 +94,58 @@ class ProjectTeamService:
             removed_ids = current_ids - requested_ids
 
             if not added_ids and not removed_ids:
-                return ProjectRepository(self.session).get_by_id(project.id) or project
+                no_change = True
+                self.session.rollback()
+            else:
+                removed_users_by_id = (
+                    {
+                        user.id: user
+                        for user in self.session.scalars(
+                            select(UserORM).where(UserORM.id.in_(removed_ids))
+                        ).all()
+                    }
+                    if removed_ids
+                    else {}
+                )
 
-            removed_users_by_id = {
-                user.id: user
-                for user in self.session.scalars(
-                    select(UserORM).where(UserORM.id.in_(removed_ids))
-                ).all()
-            } if removed_ids else {}
+                for link in current_links:
+                    if link.user_id not in removed_ids:
+                        continue
+                    removed_user = removed_users_by_id.get(link.user_id)
+                    self.session.delete(link)
+                    if removed_user is not None:
+                        removed_users.append(removed_user)
+                        AuditService(self.session).record(
+                            actor=self.actor,
+                            action="project_instructor_removed",
+                            entity_type="project",
+                            entity_id=project.id,
+                            before={"instructor": self._user_snapshot(removed_user)},
+                            after=None,
+                            context={"project_name": project.name},
+                        )
 
-            for link in current_links:
-                if link.user_id not in removed_ids:
-                    continue
-                removed_user = removed_users_by_id.get(link.user_id)
-                self.session.delete(link)
-                if removed_user is not None:
-                    removed_users.append(removed_user)
+                for user_id in sorted(added_ids):
+                    user = users_by_id[user_id]
+                    self.session.add(
+                        ProjectInstructorORM(
+                            project_id=project.id,
+                            user_id=user.id,
+                            added_by_user_id=self.actor.id,
+                        )
+                    )
+                    added_users.append(user)
                     AuditService(self.session).record(
                         actor=self.actor,
-                        action="project_instructor_removed",
+                        action="project_instructor_added",
                         entity_type="project",
                         entity_id=project.id,
-                        before={"instructor": self._user_snapshot(removed_user)},
-                        after=None,
+                        before=None,
+                        after={"instructor": self._user_snapshot(user)},
                         context={"project_name": project.name},
                     )
 
-            for user_id in sorted(added_ids):
-                user = users_by_id[user_id]
-                self.session.add(
-                    ProjectInstructorORM(
-                        project_id=project.id,
-                        user_id=user.id,
-                        added_by_user_id=self.actor.id,
-                    )
-                )
-                added_users.append(user)
-                AuditService(self.session).record(
-                    actor=self.actor,
-                    action="project_instructor_added",
-                    entity_type="project",
-                    entity_id=project.id,
-                    before=None,
-                    after={"instructor": self._user_snapshot(user)},
-                    context={"project_name": project.name},
-                )
-
-            self.session.commit()
+                self.session.commit()
         except Exception:
             self.session.rollback()
             raise
@@ -143,6 +153,8 @@ class ProjectTeamService:
         updated = ProjectRepository(self.session).get_by_id(project_id)
         if updated is None:
             raise LookupError("Project not found")
+        if no_change:
+            return updated
         for user in added_users:
             self.notifications.instructor_added(updated, user)
         for user in removed_users:
@@ -150,70 +162,76 @@ class ProjectTeamService:
         return updated
 
     def transfer_ownership(self, project_id: int, new_owner_user_id: int) -> ProjectORM:
+        previous_owner: UserORM | None = None
+        new_owner: UserORM | None = None
+        no_change = False
         try:
             project = self._locked_project(project_id)
             if project.owner_user_id == new_owner_user_id:
-                return ProjectRepository(self.session).get_by_id(project.id) or project
-
-            previous_owner = self.session.scalar(
-                select(UserORM)
-                .where(UserORM.id == project.owner_user_id)
-                .with_for_update()
-            )
-            new_owner = self.session.scalar(
-                select(UserORM)
-                .where(UserORM.id == new_owner_user_id)
-                .with_for_update()
-            )
-            if previous_owner is None:
-                raise ValueError("Текущий владелец проекта не найден.")
-            if (
-                new_owner is None
-                or not new_owner.is_active
-                or new_owner.role not in _SUPPORTED_ROLES
-            ):
-                raise ValueError("Новым владельцем может быть только активный пользователь.")
-
-            new_owner_link = self.session.scalar(
-                select(ProjectInstructorORM).where(
-                    ProjectInstructorORM.project_id == project.id,
-                    ProjectInstructorORM.user_id == new_owner.id,
+                no_change = True
+                self.session.rollback()
+            else:
+                previous_owner = self.session.scalar(
+                    select(UserORM)
+                    .where(UserORM.id == project.owner_user_id)
+                    .with_for_update()
                 )
-            )
-            if new_owner_link is not None:
-                self.session.delete(new_owner_link)
-
-            previous_owner_link = self.session.scalar(
-                select(ProjectInstructorORM).where(
-                    ProjectInstructorORM.project_id == project.id,
-                    ProjectInstructorORM.user_id == previous_owner.id,
+                new_owner = self.session.scalar(
+                    select(UserORM)
+                    .where(UserORM.id == new_owner_user_id)
+                    .with_for_update()
                 )
-            )
-            if previous_owner_link is None:
-                self.session.add(
-                    ProjectInstructorORM(
-                        project_id=project.id,
-                        user_id=previous_owner.id,
-                        added_by_user_id=self.actor.id,
+                if previous_owner is None:
+                    raise ValueError("Текущий владелец проекта не найден.")
+                if (
+                    new_owner is None
+                    or not new_owner.is_active
+                    or new_owner.role not in _SUPPORTED_ROLES
+                ):
+                    raise ValueError(
+                        "Новым владельцем может быть только активный пользователь."
+                    )
+
+                new_owner_link = self.session.scalar(
+                    select(ProjectInstructorORM).where(
+                        ProjectInstructorORM.project_id == project.id,
+                        ProjectInstructorORM.user_id == new_owner.id,
                     )
                 )
+                if new_owner_link is not None:
+                    self.session.delete(new_owner_link)
 
-            before = self._user_snapshot(previous_owner)
-            after = self._user_snapshot(new_owner)
-            project.owner_user_id = new_owner.id
-            AuditService(self.session).record(
-                actor=self.actor,
-                action="project_owner_transferred",
-                entity_type="project",
-                entity_id=project.id,
-                before={"owner": before},
-                after={"owner": after},
-                context={
-                    "project_name": project.name,
-                    "previous_owner_kept_as_instructor": True,
-                },
-            )
-            self.session.commit()
+                previous_owner_link = self.session.scalar(
+                    select(ProjectInstructorORM).where(
+                        ProjectInstructorORM.project_id == project.id,
+                        ProjectInstructorORM.user_id == previous_owner.id,
+                    )
+                )
+                if previous_owner_link is None:
+                    self.session.add(
+                        ProjectInstructorORM(
+                            project_id=project.id,
+                            user_id=previous_owner.id,
+                            added_by_user_id=self.actor.id,
+                        )
+                    )
+
+                before = self._user_snapshot(previous_owner)
+                after = self._user_snapshot(new_owner)
+                project.owner_user_id = new_owner.id
+                AuditService(self.session).record(
+                    actor=self.actor,
+                    action="project_owner_transferred",
+                    entity_type="project",
+                    entity_id=project.id,
+                    before={"owner": before},
+                    after={"owner": after},
+                    context={
+                        "project_name": project.name,
+                        "previous_owner_kept_as_instructor": True,
+                    },
+                )
+                self.session.commit()
         except Exception:
             self.session.rollback()
             raise
@@ -221,6 +239,10 @@ class ProjectTeamService:
         updated = ProjectRepository(self.session).get_by_id(project_id)
         if updated is None:
             raise LookupError("Project not found")
+        if no_change:
+            return updated
+        if previous_owner is None or new_owner is None:
+            raise RuntimeError("Ownership transfer completed without both owners")
         self.notifications.owner_transferred(updated, previous_owner, new_owner)
         return updated
 
