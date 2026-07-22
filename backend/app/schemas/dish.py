@@ -32,6 +32,18 @@ class DishListResponse(BaseModel):
     items: list[DishResponse]
 
 
+class DishArchiveResponse(BaseModel):
+    id: str
+    name: str
+    recipe_name: str
+    is_archived: bool
+    archived_by_alcohol_policy: bool
+
+
+class DishArchiveListResponse(BaseModel):
+    items: list[DishArchiveResponse]
+
+
 class DishCatalogueCoverageResponse(BaseModel):
     meal_type: MealType
     role: MealRole
