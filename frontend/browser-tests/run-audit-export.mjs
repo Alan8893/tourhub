@@ -31,15 +31,35 @@ const removeProfile = () =>
     retryDelay: 100,
   });
 
-async function waitForExportRequest() {
-  for (let attempt = 0; attempt < 50; attempt += 1) {
-    const request = auditExportRequests.find(
-      (item) => item.path === "/api/v1/audit/events/export.csv",
-    );
+async function waitForRequest(pathname, description) {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const request = auditExportRequests.find((item) => item.path === pathname);
     if (request) return request;
     await sleep(100);
   }
-  throw new Error("Audit CSV export request was not observed");
+  throw new Error(`Timed out waiting for ${description}`);
+}
+
+async function writeDiagnostics(client, error) {
+  const page = client
+    ? await client.evaluate(`(() => ({
+        href: location.href,
+        bodyText: document.body?.innerText ?? "",
+        bodyHtml: document.body?.innerHTML?.slice(0, 30000) ?? "",
+      }))()`)
+    : null;
+  await writeFile(
+    path.join(artifactDir, "audit-export-error.txt"),
+    JSON.stringify(
+      {
+        error: error?.stack ?? String(error),
+        page,
+        requests: auditExportRequests,
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 async function run() {
@@ -77,6 +97,7 @@ async function run() {
     ],
     { stdio: "ignore" },
   );
+  let client;
 
   try {
     await waitForHttp(`${chromeDebugUrl}/json/version`);
@@ -85,7 +106,7 @@ async function run() {
     );
     const target = targets.find((item) => item.url.includes("audit-log.html"));
     assert.ok(target?.webSocketDebuggerUrl);
-    const client = await CdpClient.connect(target.webSocketDebuggerUrl);
+    client = await CdpClient.connect(target.webSocketDebuggerUrl);
     await client.send("Runtime.enable");
     await client.send("Page.enable");
     await client.send("Emulation.setDeviceMetricsOverride", {
@@ -95,6 +116,7 @@ async function run() {
       mobile: false,
     });
 
+    await waitForRequest("/api/v1/audit/events", "initial audit list request");
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
@@ -123,7 +145,10 @@ async function run() {
     })()`);
     assert.equal(clicked, true);
 
-    const request = await waitForExportRequest();
+    const request = await waitForRequest(
+      "/api/v1/audit/events/export.csv",
+      "audit CSV export request",
+    );
     assert.equal(request.method, "GET");
     assert.equal(request.query.action, "document_generated");
 
@@ -162,20 +187,20 @@ async function run() {
       Buffer.from(screenshot.data, "base64"),
     );
     client.close();
+    client = undefined;
     console.log("Audit CSV export browser acceptance passed.");
+  } catch (error) {
+    await writeDiagnostics(client, error);
+    throw error;
   } finally {
+    client?.close();
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
     await api.close();
     await removeProfile();
   }
 }
 
-run().catch(async (error) => {
+run().catch((error) => {
   console.error(error);
-  await mkdir(artifactDir, { recursive: true });
-  await writeFile(
-    path.join(artifactDir, "audit-export-error.txt"),
-    `${error?.stack ?? error}\n`,
-  );
   process.exitCode = 1;
 });
