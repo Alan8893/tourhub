@@ -20,6 +20,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Global User roles remain singular.
 - Owner and additional instructor are Project-scoped responsibilities.
 - Module visibility remains presentation-only and never grants access.
+- Audit CSV export is a Backend-owned read projection over sanitized AuditEvent persistence.
 
 ## Access runtime
 
@@ -80,7 +81,7 @@ Ownership transfer locks the Project and involved users, removes the new owner f
 - reads and document downloads remain available to authorized users;
 - all operational, Menu, settings, team, transfer, and status writes are rejected;
 - no reopen endpoint exists;
-- future `Копировать проект` creates a new identity from a completed template and is intentionally outside TH-0105.
+- future `Копировать проект` creates a new identity from a completed template and remains a separate task.
 
 ## Project-team notification boundary
 
@@ -89,16 +90,30 @@ Ownership transfer locks the Project and involved users, removes the new owner f
 ## Actor-aware audit boundary
 
 - `AuditEvent` remains append-only with actor snapshots and bounded safe JSON;
-- business mutation and AuditEvent share the owning transaction for Project/team writes;
-- Project-team actions cover instructor add/remove, ownership transfer, completion, and deletion;
-- no-op membership/ownership writes create no event;
-- audit failure rolls back pending team/ownership/status mutations;
-- passwords, hashes, credentials, cookies, sessions, tokens, authorization data, phone/social contacts, request bodies, and provider details are excluded;
+- business mutation and AuditEvent share the owning transaction for audited writes;
+- no-op writes create no event;
+- audit failure rolls back pending domain mutations;
+- passwords, hashes, credentials, cookies, sessions, tokens, authorization data, phone/social contacts, request bodies, source CSV bodies, generated document contents, and provider secrets are excluded;
 - automatic ORM-wide auditing remains rejected.
+
+## Audit CSV export boundary — TH-0106
+
+`AuditService` owns one filter builder used by paginated Audit list queries and bounded export queries. The Audit router remains included under the centralized Administrator dependency.
+
+- supported filters: actor user ID, entity type, entity ID, semantic action, created-from, and created-to;
+- `/api/v1/audit/events/export.csv` returns a read-only UTF-8 CSV projection;
+- export rows are ordered by descending AuditEvent ID, matching list chronology;
+- columns contain only persisted actor snapshots, semantic identity, timestamp, and sanitized before/after/context JSON;
+- JSON cells use deterministic key ordering and compact UTF-8 serialization;
+- formula-like spreadsheet cells are prefixed with an apostrophe;
+- exports above 10,000 matching events return HTTP 422 and require narrower filters;
+- export creates no AuditEvent and therefore cannot recursively mutate the journal;
+- retention deletion/cleanup, SIEM delivery, scheduling, diagnostics, undo, and replay remain separate future boundaries;
+- TH-0106 adds no migration.
 
 ## Recipe, catalogue, documents, and mail boundaries
 
-Existing Recipe ownership, Dish variants, exact assignment snapshots, alcohol policy, catalogue import, shopping/equipment recalculation, consolidated exports, and mail-delivery boundaries remain unchanged except that Project-scoped routes now require `ProjectAccessPolicy` authorization.
+Existing Recipe ownership, Dish variants, exact assignment snapshots, alcohol policy, catalogue import, shopping/equipment recalculation, consolidated exports, and mail-delivery boundaries remain unchanged except that Project-scoped routes require `ProjectAccessPolicy` authorization.
 
 Document generation remains non-persisted. Authorized Project members may download approved documents, including from a completed Project, while generation audit stores only safe document metadata.
 
@@ -107,7 +122,7 @@ Document generation remains non-persisted. Authorized Project members may downlo
 Development starts with `docker compose up -d --build`; operators use `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally.
 
 - current post-release Alembic head: `h10023`;
-- immutable `v0.1.0` tag remains at released head `h10021`;
+- immutable `v0.1.0` tag remains at release SHA `8bcc2d2d9414d812d81634330034b15121c8442f` and released head `h10021`;
 - PostgreSQL backup/restore, clean release-stack startup, restart persistence, and exact-head gates verify the current candidate;
 - multi-tenancy and microservices remain prohibited.
 
