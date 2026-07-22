@@ -14,7 +14,6 @@ import {
   findChromeExecutable,
   sleep,
   stopProcess,
-  waitForExpression,
   waitForHttp,
 } from "./club-settings-cdp.mjs";
 
@@ -22,7 +21,8 @@ const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5213/browser-tests/product-archive.html";
 const profileDir = `/tmp/tourhub-product-archive-${process.pid}`;
-const scenarioTimeoutMs = 90_000;
+const scenarioTimeoutMs = 75_000;
+const cdpTimeoutMs = 20_000;
 
 let activeApi;
 let activeVite;
@@ -30,51 +30,13 @@ let activeChrome;
 let activeClient;
 let cleanupStarted = false;
 
-async function clickTextButton(client, text) {
-  return client.evaluate(`(() => {
-    const text = ${JSON.stringify(text)};
-    const button = [...document.querySelectorAll("button")]
-      .find((item) => item.textContent?.trim() === text && !item.disabled);
-    if (!button) return false;
-    button.click();
-    return true;
-  })()`);
-}
-
-async function clickProductAction(client, productName, actionText) {
-  return client.evaluate(`(() => {
-    const productName = ${JSON.stringify(productName)};
-    const actionText = ${JSON.stringify(actionText)};
-    const candidates = [...document.querySelectorAll(".MuiPaper-root")];
-    const card = candidates.find((item) => {
-      const hasProduct = item.textContent?.includes(productName);
-      const hasAction = [...item.querySelectorAll("button")]
-        .some((button) => button.textContent?.trim() === actionText && !button.disabled);
-      return hasProduct && hasAction;
-    });
-    const button = card
-      ? [...card.querySelectorAll("button")]
-          .find((item) => item.textContent?.trim() === actionText && !item.disabled)
-      : null;
-    if (!button) return false;
-    button.click();
-    return true;
-  })()`);
-}
-
-async function writeDiagnostics(client, name) {
-  const page = await Promise.race([
-    client.evaluate(`({
-      href: location.href,
-      bodyText: document.body?.innerText ?? "",
-      bodyHtml: document.body?.innerHTML?.slice(0, 30000) ?? "",
-    })`),
-    sleep(5_000).then(() => ({ unavailable: "CDP diagnostic timeout" })),
+async function bounded(promise, description, timeoutMs = cdpTimeoutMs) {
+  return Promise.race([
+    promise,
+    sleep(timeoutMs).then(() => {
+      throw new Error(`Timed out during ${description}`);
+    }),
   ]);
-  await writeFile(
-    path.join(artifactDir, `${name}.json`),
-    JSON.stringify({ page, productArchiveRequests }, null, 2),
-  );
 }
 
 async function cleanup() {
@@ -142,101 +104,171 @@ async function run() {
   );
 
   try {
+    console.log("Product archive acceptance: connecting to Chrome.");
     await waitForHttp("http://127.0.0.1:9265/json/version");
     const targets = await fetch("http://127.0.0.1:9265/json/list").then((response) =>
       response.json(),
     );
     const target = targets.find((item) => item.url.includes("product-archive.html"));
     assert.ok(target?.webSocketDebuggerUrl);
-    activeClient = await CdpClient.connect(target.webSocketDebuggerUrl);
-    await activeClient.send("Runtime.enable");
-    await activeClient.send("Page.enable");
-    await activeClient.send("Emulation.setDeviceMetricsOverride", {
-      width: 1280,
-      height: 900,
-      deviceScaleFactor: 1,
-      mobile: false,
-    });
-    await activeClient.evaluate("window.confirm = () => true");
+    activeClient = await bounded(
+      CdpClient.connect(target.webSocketDebuggerUrl),
+      "CDP connection",
+    );
+    await bounded(activeClient.send("Runtime.enable"), "Runtime.enable");
+    await bounded(activeClient.send("Page.enable"), "Page.enable");
+    await bounded(
+      activeClient.send("Emulation.setDeviceMetricsOverride", {
+        width: 1280,
+        height: 900,
+        deviceScaleFactor: 1,
+        mobile: false,
+      }),
+      "desktop metrics",
+    );
 
-    try {
-      await waitForExpression(
-        activeClient,
-        `document.body?.innerText?.includes("Архив продуктов") &&
-         document.body?.innerText?.includes("Гречка") &&
-         document.body?.innerText?.includes("Рис") &&
-         !document.body?.innerText?.includes("Загрузка каталога продуктов")`,
-        "loaded active product catalogue",
-      );
-      assert.equal(await clickProductAction(activeClient, "Гречка", "Архивировать"), true);
-      await waitForExpression(
-        activeClient,
-        `document.body?.innerText?.includes("Продукт «Гречка» перемещён в архив.")`,
-        "product archived",
-      );
-      assert.ok(
-        productArchiveRequests.some(
-          (item) => item.method === "POST" && item.path === "/api/v1/products/buckwheat/archive",
-        ),
-      );
+    console.log("Product archive acceptance: running browser workflow.");
+    const workflow = await bounded(
+      activeClient.evaluate(`(async () => {
+        const sleep = (milliseconds) =>
+          new Promise((resolve) => setTimeout(resolve, milliseconds));
+        const waitFor = async (predicate, description) => {
+          const deadline = Date.now() + 15000;
+          while (Date.now() < deadline) {
+            if (predicate()) return;
+            await sleep(100);
+          }
+          throw new Error("Timed out waiting for " + description);
+        };
+        const clickButton = (text) => {
+          const button = [...document.querySelectorAll("button")]
+            .find((item) => item.textContent?.trim() === text && !item.disabled);
+          if (!button) throw new Error("Button not found: " + text);
+          button.click();
+        };
+        const clickProductAction = (productName, actionText) => {
+          const card = [...document.querySelectorAll(".MuiPaper-root")]
+            .find((item) => {
+              const hasProduct = item.textContent?.includes(productName);
+              const hasAction = [...item.querySelectorAll("button")]
+                .some((button) =>
+                  button.textContent?.trim() === actionText && !button.disabled
+                );
+              return hasProduct && hasAction;
+            });
+          const button = card
+            ? [...card.querySelectorAll("button")]
+                .find((item) =>
+                  item.textContent?.trim() === actionText && !item.disabled
+                )
+            : null;
+          if (!button) {
+            throw new Error("Product action not found: " + productName + " / " + actionText);
+          }
+          button.click();
+        };
 
-      assert.equal(await clickTextButton(activeClient, "Архив"), true);
-      await waitForExpression(
-        activeClient,
-        `document.body?.innerText?.includes("Заблокирован политикой") &&
-         document.body?.innerText?.includes("алкогольные позиции") &&
-         document.body?.innerText?.includes("Гречка")`,
-        "loaded archived products",
-      );
-      const lockedState = await activeClient.evaluate(`(() => {
-        const card = [...document.querySelectorAll(".MuiPaper-root")]
-          .find((item) => item.textContent?.includes("Вино") && item.textContent?.includes("Заблокирован политикой"));
-        const restore = card
-          ? [...card.querySelectorAll("button")].find((button) => button.textContent?.trim() === "Восстановить")
+        window.confirm = () => true;
+        await waitFor(
+          () => document.body?.innerText?.includes("Архив продуктов") &&
+            document.body?.innerText?.includes("Гречка") &&
+            document.body?.innerText?.includes("Рис") &&
+            !document.body?.innerText?.includes("Загрузка каталога продуктов"),
+          "active product catalogue",
+        );
+
+        clickProductAction("Гречка", "Архивировать");
+        await waitFor(
+          () => document.body?.innerText?.includes("Продукт «Гречка» перемещён в архив."),
+          "archive success",
+        );
+
+        clickButton("Архив");
+        await waitFor(
+          () => document.body?.innerText?.includes("Заблокирован политикой") &&
+            document.body?.innerText?.includes("алкогольные позиции") &&
+            document.body?.innerText?.includes("Гречка"),
+          "archived product catalogue",
+        );
+
+        const policyCard = [...document.querySelectorAll(".MuiPaper-root")]
+          .find((item) =>
+            item.textContent?.includes("Вино") &&
+            item.textContent?.includes("Заблокирован политикой")
+          );
+        const policyRestore = policyCard
+          ? [...policyCard.querySelectorAll("button")]
+              .find((button) => button.textContent?.trim() === "Восстановить")
           : null;
-        return Boolean(card && restore?.disabled);
-      })()`);
-      assert.equal(lockedState, true);
+        if (!policyCard || !policyRestore?.disabled) {
+          throw new Error("Policy-locked Product restore is not disabled");
+        }
 
-      assert.equal(await clickProductAction(activeClient, "Гречка", "Восстановить"), true);
-      await waitForExpression(
-        activeClient,
-        `document.body?.innerText?.includes("Продукт «Гречка» восстановлен.")`,
-        "product restored",
-      );
-      assert.ok(
-        productArchiveRequests.some(
-          (item) => item.method === "POST" && item.path === "/api/v1/products/buckwheat/restore",
-        ),
-      );
+        clickProductAction("Гречка", "Восстановить");
+        await waitFor(
+          () => document.body?.innerText?.includes("Продукт «Гречка» восстановлен."),
+          "restore success",
+        );
 
-      await activeClient.send("Emulation.setDeviceMetricsOverride", {
+        return {
+          policyLocked: true,
+          bodyText: document.body?.innerText ?? "",
+        };
+      })()`),
+      "Product archive browser workflow",
+      55_000,
+    );
+    assert.equal(workflow.policyLocked, true);
+    assert.ok(
+      productArchiveRequests.some(
+        (item) => item.method === "POST" && item.path === "/api/v1/products/buckwheat/archive",
+      ),
+    );
+    assert.ok(
+      productArchiveRequests.some(
+        (item) => item.method === "POST" && item.path === "/api/v1/products/buckwheat/restore",
+      ),
+    );
+
+    await bounded(
+      activeClient.send("Emulation.setDeviceMetricsOverride", {
         width: 360,
         height: 900,
         deviceScaleFactor: 1,
         mobile: true,
-      });
-      await sleep(350);
-      const layout = await activeClient.evaluate(`({
+      }),
+      "mobile metrics",
+    );
+    await sleep(350);
+    const layout = await bounded(
+      activeClient.evaluate(`({
         clientWidth: document.documentElement.clientWidth,
         scrollWidth: document.documentElement.scrollWidth,
         bodyScrollWidth: document.body.scrollWidth,
-      })`);
-      assert.ok(
-        layout.scrollWidth <= layout.clientWidth + 1 &&
-          layout.bodyScrollWidth <= layout.clientWidth + 1,
-        `Horizontal overflow: ${JSON.stringify(layout)}`,
-      );
-      await writeFile(
-        path.join(artifactDir, "product-archive.json"),
-        JSON.stringify({ requests: productArchiveRequests, layout }, null, 2),
-      );
-    } catch (error) {
-      await writeDiagnostics(activeClient, "product-archive-diagnostic");
-      throw error;
-    }
+      })`),
+      "mobile layout",
+    );
+    assert.ok(
+      layout.scrollWidth <= layout.clientWidth + 1 &&
+        layout.bodyScrollWidth <= layout.clientWidth + 1,
+      `Horizontal overflow: ${JSON.stringify(layout)}`,
+    );
 
+    await writeFile(
+      path.join(artifactDir, "product-archive.json"),
+      JSON.stringify(
+        { workflow, requests: productArchiveRequests, layout },
+        null,
+        2,
+      ),
+    );
     console.log("Product archive browser acceptance passed.");
+  } catch (error) {
+    await writeFile(
+      path.join(artifactDir, "product-archive-error.txt"),
+      `${error?.stack ?? error}\n`,
+    );
+    throw error;
   } finally {
     await cleanup();
   }
@@ -261,11 +293,6 @@ run()
   .catch(async (error) => {
     clearTimeout(watchdog);
     console.error(error);
-    await mkdir(artifactDir, { recursive: true });
-    await writeFile(
-      path.join(artifactDir, "product-archive-error.txt"),
-      `${error?.stack ?? error}\n`,
-    );
     await cleanup();
     process.exit(1);
   });
