@@ -5,13 +5,36 @@ import { useGenerateMealPlan } from "@/features/meal-plan/hooks/useGenerateMealP
 import { usePrepareProject } from "@/features/project";
 import { useProjectWorkflow } from "@/features/project-workflow";
 
-export default function NextWorkflowAction() {
+interface Props {
+  canEditMenu: boolean;
+  canManageProject: boolean;
+  completed: boolean;
+}
+
+export default function NextWorkflowAction({
+  canEditMenu,
+  canManageProject,
+  completed,
+}: Props) {
   const { projectId, preparationResult, setPreparationResult } = useProjectWorkflow();
   const { data: mealPlan, isLoading: isMealPlanLoading } = useProjectMealPlan(projectId);
   const generateMealPlan = useGenerateMealPlan();
   const prepareProject = usePrepareProject();
 
   const hasMealPlan = Boolean(mealPlan ?? preparationResult?.meal_plan_id);
+
+  if (completed) {
+    return (
+      <Card variant="outlined">
+        <CardContent>
+          <Typography variant="h6">Проект завершён</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+            Проект сохранён как история похода и доступен только для чтения.
+          </Typography>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isMealPlanLoading && !preparationResult?.meal_plan_id) {
     return (
@@ -29,30 +52,36 @@ export default function NextWorkflowAction() {
         <CardContent>
           <Stack spacing={1.25} alignItems="flex-start">
             <Typography variant="h6">Следующее действие</Typography>
-            <Typography>Сформируйте меню для этого похода.</Typography>
-            {generateMealPlan.isError && (
+            <Typography>
+              {canEditMenu
+                ? "Сформируйте меню для этого похода."
+                : "Владелец проекта ещё не сформировал меню."}
+            </Typography>
+            {canEditMenu && generateMealPlan.isError && (
               <Alert severity="error">
                 Не удалось сформировать меню. Проверьте данные проекта и повторите попытку.
               </Alert>
             )}
-            <Button
-              variant="contained"
-              onClick={() =>
-                generateMealPlan.mutate(projectId, {
-                  onSuccess: (result) =>
-                    setPreparationResult({
-                      project_id: projectId,
-                      meal_plan_id: result.id,
-                      purchase_list_id: "",
-                      purchase_checklist_id: "",
-                      equipment_list_id: "",
-                    }),
-                })
-              }
-              disabled={generateMealPlan.isPending}
-            >
-              {generateMealPlan.isPending ? "Формирование…" : "Сформировать меню"}
-            </Button>
+            {canEditMenu && (
+              <Button
+                variant="contained"
+                onClick={() =>
+                  generateMealPlan.mutate(projectId, {
+                    onSuccess: (result) =>
+                      setPreparationResult({
+                        project_id: projectId,
+                        meal_plan_id: result.id,
+                        purchase_list_id: "",
+                        purchase_checklist_id: "",
+                        equipment_list_id: "",
+                      }),
+                  })
+                }
+                disabled={generateMealPlan.isPending}
+              >
+                {generateMealPlan.isPending ? "Формирование…" : "Сформировать меню"}
+              </Button>
+            )}
           </Stack>
         </CardContent>
       </Card>
@@ -70,24 +99,28 @@ export default function NextWorkflowAction() {
           <Stack spacing={1.25} alignItems="flex-start">
             <Typography variant="h6">Следующее действие</Typography>
             <Typography>
-              Рассчитайте закупку, создайте чек-лист и список оборудования.
+              {canManageProject
+                ? "Рассчитайте закупку, создайте чек-лист и список оборудования."
+                : "Владелец проекта ещё не выполнил полную подготовку."}
             </Typography>
-            {prepareProject.isError && (
+            {canManageProject && prepareProject.isError && (
               <Alert severity="error">
                 Не удалось подготовить проект. Проверьте состав меню и повторите попытку.
               </Alert>
             )}
-            <Button
-              variant="contained"
-              onClick={() =>
-                prepareProject.mutate(projectId, {
-                  onSuccess: (result) => setPreparationResult(result),
-                })
-              }
-              disabled={prepareProject.isPending}
-            >
-              {prepareProject.isPending ? "Подготовка…" : "Подготовить проект"}
-            </Button>
+            {canManageProject && (
+              <Button
+                variant="contained"
+                onClick={() =>
+                  prepareProject.mutate(projectId, {
+                    onSuccess: (result) => setPreparationResult(result),
+                  })
+                }
+                disabled={prepareProject.isPending}
+              >
+                {prepareProject.isPending ? "Подготовка…" : "Подготовить проект"}
+              </Button>
+            )}
           </Stack>
         </CardContent>
       </Card>
