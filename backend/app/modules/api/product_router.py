@@ -83,7 +83,11 @@ def _archive_service_response(
 ) -> RecipeProductResponse:
     service = ProductArchiveService(session, actor=actor)
     try:
-        product = service.archive(product_id) if operation == "archive" else service.restore(product_id)
+        product = (
+            service.archive(product_id)
+            if operation == "archive"
+            else service.restore(product_id)
+        )
     except ProductArchiveNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except ProductRestoreBlockedError as error:
