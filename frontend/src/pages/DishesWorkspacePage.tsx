@@ -1,4 +1,6 @@
-import { Alert, AlertTitle, Box, Stack, Typography } from "@mui/material";
+import { Alert, AlertTitle, Box, Button, Stack, Typography } from "@mui/material";
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { useDishCatalogueReadiness } from "@/features/dish/hooks/useDishes";
 import {
@@ -8,10 +10,14 @@ import {
   getMissingRecommendedCoverage,
   getMissingRequiredCoverage,
 } from "@/features/dish/model/dishCatalogueReadiness";
+import DishArchiveDialog from "@/features/dish/ui/DishArchiveDialog";
 
 import DishesPage from "./DishesPage";
 
 export default function DishesWorkspacePage() {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const readinessQuery = useDishCatalogueReadiness();
   const readiness = readinessQuery.data;
   const missingRequired = readiness ? getMissingRequiredCoverage(readiness) : [];
@@ -19,6 +25,12 @@ export default function DishesWorkspacePage() {
 
   return (
     <Stack spacing={3}>
+      <Stack direction="row" justifyContent="flex-end">
+        <Button variant="outlined" onClick={() => setArchiveOpen(true)}>
+          Архив блюд
+        </Button>
+      </Stack>
+
       {readinessQuery.isError && (
         <Alert severity="error">Не удалось проверить готовность каталога к автогенерации.</Alert>
       )}
@@ -57,6 +69,14 @@ export default function DishesWorkspacePage() {
       )}
 
       <DishesPage />
+
+      <DishArchiveDialog
+        open={archiveOpen}
+        onClose={() => setArchiveOpen(false)}
+        onArchived={(dishId) => {
+          if (dishId === id) navigate("/dishes");
+        }}
+      />
     </Stack>
   );
 }
