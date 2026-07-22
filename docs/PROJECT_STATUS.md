@@ -4,7 +4,7 @@ Status date: 2026-07-22
 
 ## Current phase
 
-TourHub v0.1.0 remains release-ready at released Alembic head `h10021`. Post-release development is complete through TH-0106 at current Alembic head `h10023`. No next post-release capability is selected automatically.
+TourHub v0.1.0 remains release-ready at released Alembic head `h10021`. Post-release development is complete through TH-0106 at current Alembic head `h10023`. TH-0107 is the single active implementation candidate.
 
 The feature-frozen first release is complete through TH-0093. Post-release work delivered routed Project UX (TH-0095), Product editing (TH-0097), published Recipe-to-Dish synchronization (TH-0098), semantic audit expansion (TH-0099 through TH-0103), personal accounts/contact profiles (TH-0104), Project ownership/team-scoped access (TH-0105), and safe filtered Audit CSV export (TH-0106).
 
@@ -12,7 +12,7 @@ The feature-frozen first release is complete through TH-0093. Post-release work 
 
 - PostgreSQL 18 migration cycle and one current Alembic head ending at `h10023`;
 - immutable release tag `v0.1.0` at recorded release SHA `8bcc2d2d9414d812d81634330034b15121c8442f` and released migration head `h10021`;
-- Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, Docker Release Runtime, and Final Release Readiness on the exact TH-0105 head;
+- Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, Docker Release Runtime, and Final Release Readiness on the exact TH-0106 head;
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only;
 - the modular-monolith and single-club boundaries remain unchanged.
 
@@ -54,9 +54,22 @@ The feature-frozen first release is complete through TH-0093. Post-release work 
 - export is read-only, creates no recursive AuditEvent, and introduces no migration;
 - Backend, Frontend helper, and dedicated real-Chrome acceptance cover authorization, safe payloads, bounded export, filter propagation, UTF-8 content, and mobile layout.
 
-## TH-0106 non-goals retained
+## Active TH-0107 candidate — Session administration
 
-Retention deletion/cleanup, retention-policy UI, external SIEM delivery, operational diagnostics, scheduled exports, background processing, undo, replay, session administration, Product/Dish archive-management UI, ownership-aware import UX, and Project copy remain separate work.
+- `/api/v1/account/sessions` returns only the current user's active non-expired server sessions;
+- response fields are limited to session ID, creation, last-seen, expiry, and current marker;
+- raw tokens, token hashes, cookies, IP addresses, user agents, device fingerprints, and location are excluded;
+- `DELETE /api/v1/account/sessions/{id}` revokes only another owned active session;
+- unrelated, revoked, expired, and unknown IDs return 404 without ownership disclosure;
+- the current session returns 409 and remains available through ordinary logout;
+- individual revocation and `account_session_revoked` AuditEvent commit or roll back together;
+- `/account` exposes responsive list, current marker, revoke progress, success, and failure states;
+- Backend, Frontend helper, and real-Chrome acceptance are included;
+- no migration is introduced and current Alembic head remains `h10023`.
+
+## TH-0107 non-goals
+
+Administrator access to other users' sessions, global sign-out/revoke-all, current-session revocation from the list, IP/device tracking, background cleanup, physical deletion, account recovery/deletion/retention, audit retention UI, archive management, ownership-aware import UX, and Project copy remain separate work.
 
 ## Explicit future product item
 
@@ -66,7 +79,7 @@ Retention deletion/cleanup, retention-policy UI, external SIEM delivery, operati
 
 - Project-copy implementation and future Project-team notifications through email, Telegram, and MAX;
 - audit retention UI, external SIEM integration, operational diagnostics, scheduled delivery, undo, and event replay;
-- account recovery, verified contact changes, session administration, avatars, public profiles, asynchronous mail, and bounce handling;
+- account recovery, verified contact changes, global sign-out, Administrator session administration, session cleanup, avatars, public profiles, asynchronous mail, and bounce handling;
 - richer Recipe metadata, per-meal switching, preference weights, and ownership-aware import UX;
 - Product/Dish archive-management UI;
 - participant profiles, routes/GPX, warehouse, procurement, and external aggregation domains;
@@ -74,4 +87,4 @@ Retention deletion/cleanup, retention-policy UI, external SIEM delivery, operati
 
 ## Next work
 
-No next post-release product task is selected. Any later slice must be explicitly chosen, scoped as one logical task, implemented from current `main`, and squash-merged independently.
+TH-0107 is the only active task. It is complete only after all exact-head gates pass, review threads are clear, the branch matches current `main`, task state moves to `closed`, and the PR is squash-merged.
