@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.auth import require_preparation_access
 from app.core.session import get_session
@@ -10,6 +11,8 @@ from app.models.user import UserORM
 from app.modules.domain.meal_role import MEAL_ROLE_ORDER, MealRole
 from app.modules.domain.meal_type import MEAL_TYPE_ORDER, MealType
 from app.schemas.dish import (
+    DishArchiveListResponse,
+    DishArchiveResponse,
     DishCatalogueCoverageResponse,
     DishCatalogueReadinessResponse,
     DishCreateRequest,
@@ -19,6 +22,11 @@ from app.schemas.dish import (
     DishRecipeResponse,
     DishResponse,
     DishUpdateRequest,
+)
+from app.services.dish_archive_service import (
+    DishArchiveNotFoundError,
+    DishArchiveService,
+    DishRestoreBlockedError,
 )
 from app.services.dish_catalogue_readiness_service import (
     DishCatalogueReadinessService,
@@ -93,11 +101,53 @@ def _dish_response(dish: DishORM, service: DishService) -> DishResponse:
     )
 
 
+def _archive_response(dish: DishORM) -> DishArchiveResponse:
+    return DishArchiveResponse(
+        id=dish.id,
+        name=dish.name,
+        recipe_name=dish.recipe.name,
+        is_archived=dish.is_archived,
+        archived_by_alcohol_policy=dish.archived_by_alcohol_policy,
+    )
+
+
+def _archive_service_response(
+    operation: str,
+    dish_id: str,
+    *,
+    session: Session,
+    actor: UserORM,
+) -> DishArchiveResponse:
+    service = DishArchiveService(session, actor=actor)
+    try:
+        dish = service.archive(dish_id) if operation == "archive" else service.restore(dish_id)
+    except DishArchiveNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except DishRestoreBlockedError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return _archive_response(dish)
+
+
 @router.get("", response_model=DishListResponse)
 def list_dishes(service: DishService = Depends(get_dish_service)) -> DishListResponse:
     return DishListResponse(
         items=[_dish_response(dish, service) for dish in service.list_dishes()]
     )
+
+
+@router.get("/archive", response_model=DishArchiveListResponse)
+def list_archived_dishes(
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> DishArchiveListResponse:
+    del actor
+    dishes = session.scalars(
+        select(DishORM)
+        .options(joinedload(DishORM.recipe))
+        .where(DishORM.is_archived.is_(True))
+        .order_by(DishORM.name)
+    ).all()
+    return DishArchiveListResponse(items=[_archive_response(dish) for dish in dishes])
 
 
 @router.get(
@@ -203,3 +253,31 @@ def replace_dish_meal_roles(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return _dish_response(dish, service)
+
+
+@router.post("/{dish_id}/archive", response_model=DishArchiveResponse)
+def archive_dish(
+    dish_id: str,
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> DishArchiveResponse:
+    return _archive_service_response(
+        "archive",
+        dish_id,
+        session=session,
+        actor=actor,
+    )
+
+
+@router.post("/{dish_id}/restore", response_model=DishArchiveResponse)
+def restore_dish(
+    dish_id: str,
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> DishArchiveResponse:
+    return _archive_service_response(
+        "restore",
+        dish_id,
+        session=session,
+        actor=actor,
+    )
