@@ -22,6 +22,13 @@ const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5213/browser-tests/product-archive.html";
 const profileDir = `/tmp/tourhub-product-archive-${process.pid}`;
+const scenarioTimeoutMs = 90_000;
+
+let activeApi;
+let activeVite;
+let activeChrome;
+let activeClient;
+let cleanupStarted = false;
 
 async function clickTextButton(client, text) {
   return client.evaluate(`(() => {
@@ -56,28 +63,54 @@ async function clickProductAction(client, productName, actionText) {
 }
 
 async function writeDiagnostics(client, name) {
-  const page = await client.evaluate(`({
-    href: location.href,
-    bodyText: document.body?.innerText ?? "",
-    bodyHtml: document.body?.innerHTML?.slice(0, 30000) ?? "",
-  })`);
+  const page = await Promise.race([
+    client.evaluate(`({
+      href: location.href,
+      bodyText: document.body?.innerText ?? "",
+      bodyHtml: document.body?.innerHTML?.slice(0, 30000) ?? "",
+    })`),
+    sleep(5_000).then(() => ({ unavailable: "CDP diagnostic timeout" })),
+  ]);
   await writeFile(
     path.join(artifactDir, `${name}.json`),
     JSON.stringify({ page, productArchiveRequests }, null, 2),
   );
-  const screenshot = await client.send("Page.captureScreenshot", {
-    format: "png",
-    captureBeyondViewport: false,
+}
+
+async function cleanup() {
+  if (cleanupStarted) return;
+  cleanupStarted = true;
+  activeClient?.close();
+  activeClient = undefined;
+  await Promise.allSettled([
+    activeChrome ? stopProcess(activeChrome) : Promise.resolve(),
+    activeVite ? stopProcess(activeVite) : Promise.resolve(),
+  ]);
+  if (activeApi) {
+    await Promise.race([activeApi.close(), sleep(2_000)]);
+  }
+  await rm(profileDir, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
   });
-  await writeFile(path.join(artifactDir, `${name}.png`), Buffer.from(screenshot.data, "base64"));
+  activeApi = undefined;
+  activeVite = undefined;
+  activeChrome = undefined;
 }
 
 async function run() {
-  await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  await rm(profileDir, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
   await mkdir(artifactDir, { recursive: true });
-  const api = startProductArchiveApi();
-  await api.listen();
-  const vite = spawn(
+  activeApi = startProductArchiveApi();
+  await activeApi.listen();
+  activeVite = spawn(
     process.execPath,
     [
       path.join(frontendRoot, "node_modules", "vite", "bin", "vite.js"),
@@ -94,7 +127,7 @@ async function run() {
     },
   );
   await waitForHttp(pageUrl);
-  const chrome = spawn(
+  activeChrome = spawn(
     findChromeExecutable(),
     [
       "--headless=new",
@@ -115,31 +148,30 @@ async function run() {
     );
     const target = targets.find((item) => item.url.includes("product-archive.html"));
     assert.ok(target?.webSocketDebuggerUrl);
-    const client = await CdpClient.connect(target.webSocketDebuggerUrl);
-    await client.send("Runtime.enable");
-    await client.send("Page.enable");
-    await client.send("Emulation.setDeviceMetricsOverride", {
+    activeClient = await CdpClient.connect(target.webSocketDebuggerUrl);
+    await activeClient.send("Runtime.enable");
+    await activeClient.send("Page.enable");
+    await activeClient.send("Emulation.setDeviceMetricsOverride", {
       width: 1280,
       height: 900,
       deviceScaleFactor: 1,
       mobile: false,
     });
-    await client.evaluate("window.confirm = () => true");
+    await activeClient.evaluate("window.confirm = () => true");
 
     try {
       await waitForExpression(
-        client,
+        activeClient,
         `document.body?.innerText?.includes("Архив продуктов") &&
          document.body?.innerText?.includes("Гречка") &&
          document.body?.innerText?.includes("Рис") &&
          !document.body?.innerText?.includes("Загрузка каталога продуктов")`,
         "loaded active product catalogue",
       );
-      assert.equal(await clickProductAction(client, "Гречка", "Архивировать"), true);
+      assert.equal(await clickProductAction(activeClient, "Гречка", "Архивировать"), true);
       await waitForExpression(
-        client,
-        `document.body?.innerText?.includes("Продукт «Гречка» перемещён в архив.") &&
-         ${JSON.stringify(productArchiveRequests)} !== null`,
+        activeClient,
+        `document.body?.innerText?.includes("Продукт «Гречка» перемещён в архив.")`,
         "product archived",
       );
       assert.ok(
@@ -148,15 +180,15 @@ async function run() {
         ),
       );
 
-      assert.equal(await clickTextButton(client, "Архив"), true);
+      assert.equal(await clickTextButton(activeClient, "Архив"), true);
       await waitForExpression(
-        client,
+        activeClient,
         `document.body?.innerText?.includes("Заблокирован политикой") &&
          document.body?.innerText?.includes("алкогольные позиции") &&
          document.body?.innerText?.includes("Гречка")`,
         "loaded archived products",
       );
-      const lockedState = await client.evaluate(`(() => {
+      const lockedState = await activeClient.evaluate(`(() => {
         const card = [...document.querySelectorAll(".MuiPaper-root")]
           .find((item) => item.textContent?.includes("Вино") && item.textContent?.includes("Заблокирован политикой"));
         const restore = card
@@ -166,9 +198,9 @@ async function run() {
       })()`);
       assert.equal(lockedState, true);
 
-      assert.equal(await clickProductAction(client, "Гречка", "Восстановить"), true);
+      assert.equal(await clickProductAction(activeClient, "Гречка", "Восстановить"), true);
       await waitForExpression(
-        client,
+        activeClient,
         `document.body?.innerText?.includes("Продукт «Гречка» восстановлен.")`,
         "product restored",
       );
@@ -178,14 +210,14 @@ async function run() {
         ),
       );
 
-      await client.send("Emulation.setDeviceMetricsOverride", {
+      await activeClient.send("Emulation.setDeviceMetricsOverride", {
         width: 360,
         height: 900,
         deviceScaleFactor: 1,
         mobile: true,
       });
       await sleep(350);
-      const layout = await client.evaluate(`({
+      const layout = await activeClient.evaluate(`({
         clientWidth: document.documentElement.clientWidth,
         scrollWidth: document.documentElement.scrollWidth,
         bodyScrollWidth: document.body.scrollWidth,
@@ -195,34 +227,45 @@ async function run() {
           layout.bodyScrollWidth <= layout.clientWidth + 1,
         `Horizontal overflow: ${JSON.stringify(layout)}`,
       );
-      const screenshot = await client.send("Page.captureScreenshot", {
-        format: "png",
-        captureBeyondViewport: false,
-      });
       await writeFile(
-        path.join(artifactDir, "product-archive-mobile.png"),
-        Buffer.from(screenshot.data, "base64"),
+        path.join(artifactDir, "product-archive.json"),
+        JSON.stringify({ requests: productArchiveRequests, layout }, null, 2),
       );
     } catch (error) {
-      await writeDiagnostics(client, "product-archive-diagnostic");
+      await writeDiagnostics(activeClient, "product-archive-diagnostic");
       throw error;
     }
 
-    client.close();
     console.log("Product archive browser acceptance passed.");
   } finally {
-    await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
-    await api.close();
-    await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    await cleanup();
   }
 }
 
-run().catch(async (error) => {
-  console.error(error);
+const watchdog = setTimeout(async () => {
+  console.error("Product archive browser acceptance timed out.");
   await mkdir(artifactDir, { recursive: true });
   await writeFile(
     path.join(artifactDir, "product-archive-error.txt"),
-    `${error?.stack ?? error}\n`,
+    "Product archive browser acceptance timed out before completion.\n",
   );
-  process.exitCode = 1;
-});
+  await cleanup();
+  process.exit(1);
+}, scenarioTimeoutMs);
+
+run()
+  .then(() => {
+    clearTimeout(watchdog);
+    process.exit(0);
+  })
+  .catch(async (error) => {
+    clearTimeout(watchdog);
+    console.error(error);
+    await mkdir(artifactDir, { recursive: true });
+    await writeFile(
+      path.join(artifactDir, "product-archive-error.txt"),
+      `${error?.stack ?? error}\n`,
+    );
+    await cleanup();
+    process.exit(1);
+  });
