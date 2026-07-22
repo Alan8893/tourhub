@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-22
 
-Status: Safe filtered audit CSV export selected — TH-0106
+Status: Safe filtered audit CSV export delivered — TH-0106
 
 ## 1. Product boundary
 
@@ -36,7 +36,7 @@ Administrator bootstrap and invitations
   → Administrator filtered CSV audit review
 ```
 
-The first release remains tagged `v0.1.0` at released Alembic head `h10021`. Current post-release persistence is complete through TH-0105 at one Alembic head `h10023`; TH-0106 adds no migration.
+The first release remains tagged `v0.1.0` at released Alembic head `h10021`. Current post-release development is complete through TH-0106 at one Alembic head `h10023`; TH-0106 adds no migration.
 
 ## 3. Architecture
 
@@ -97,7 +97,7 @@ The Project overview returns only the owner and additional instructors after Pro
 
 `AuditEvent` remains append-only and stores bounded actor snapshots plus sanitized semantic before/after/context JSON. `/api/v1/audit/*` is Administrator-only.
 
-TH-0106 adds a read-only CSV projection:
+TH-0106 delivers a read-only CSV projection:
 
 - list and export share actor, entity type, entity ID, action, created-from, and created-to filters in `AuditService`;
 - the CSV contains only persisted AuditEvent fields and does not rehydrate protected domain values;
@@ -122,13 +122,14 @@ Semantic Project-team actions include instructor add/remove, ownership transfer,
 
 `ProjectTeamNotificationService` exists as a no-op boundary for future email, Telegram, and MAX notifications. No message, queue item, retry record, or delivery attempt is created today.
 
-## 9. Current active work and immediate sequence
+## 9. Current work and immediate sequence
 
 - TH-0061.5 remains operational maintenance for the completed menu rules engine.
-- TH-0105 is complete.
-- TH-0106 is the only active post-release product task.
+- TH-0105 and TH-0106 are complete.
 - Audit retention UI is explicitly deferred from TH-0106.
-- `Копировать проект` remains a required future Product Owner-selected task.
+- session administration, Product/Dish archive management, and ownership-aware import UX remain separate future tasks;
+- `Копировать проект` remains a required future Product Owner-selected task;
+- no new post-release product task is selected automatically.
 
 ## 10. Development rules
 
