@@ -43,41 +43,25 @@ export class CdpClient {
       const pending = this.pending.get(message.id);
       if (!pending) return;
       this.pending.delete(message.id);
-      clearTimeout(pending.timer);
       if (message.error) pending.reject(new Error(message.error.message));
       else pending.resolve(message.result ?? {});
     });
   }
 
-  static async connect(url, timeoutMs = 10_000) {
+  static async connect(url) {
     const socket = new WebSocket(url);
-    await Promise.race([
-      new Promise((resolve, reject) => {
-        socket.addEventListener("open", resolve, { once: true });
-        socket.addEventListener("error", reject, { once: true });
-      }),
-      sleep(timeoutMs).then(() => {
-        throw new Error(`Timed out connecting to Chrome DevTools at ${url}`);
-      }),
-    ]);
+    await new Promise((resolve, reject) => {
+      socket.addEventListener("open", resolve, { once: true });
+      socket.addEventListener("error", reject, { once: true });
+    });
     return new CdpClient(socket);
   }
 
-  send(method, params = {}, timeoutMs = 10_000) {
+  send(method, params = {}) {
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new Error(`Timed out waiting for Chrome DevTools method ${method}`));
-      }, timeoutMs);
-      this.pending.set(id, { resolve, reject, timer });
-      try {
-        this.socket.send(JSON.stringify({ id, method, params }));
-      } catch (error) {
-        clearTimeout(timer);
-        this.pending.delete(id);
-        reject(error);
-      }
+      this.pending.set(id, { resolve, reject });
+      this.socket.send(JSON.stringify({ id, method, params }));
     });
   }
 
@@ -98,11 +82,6 @@ export class CdpClient {
   }
 
   close() {
-    for (const pending of this.pending.values()) {
-      clearTimeout(pending.timer);
-      pending.reject(new Error("Chrome DevTools connection closed"));
-    }
-    this.pending.clear();
     this.socket.close();
   }
 }
