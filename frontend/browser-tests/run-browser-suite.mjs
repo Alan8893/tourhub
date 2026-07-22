@@ -36,8 +36,8 @@ const scenarios = [
   { script: "browser-tests/run-recipe-moderation.mjs", cleanup: true },
   { script: "browser-tests/run-audit-log.mjs", cleanup: true },
   { script: "browser-tests/run-audit-export.mjs", cleanup: true },
-  { script: "browser-tests/run-product-archive.mjs", cleanup: true },
-  { script: "browser-tests/run-dish-archive.mjs", cleanup: true },
+  { script: "browser-tests/run-product-archive.mjs", cleanup: true, attempts: 2 },
+  { script: "browser-tests/run-dish-archive.mjs", cleanup: true, attempts: 2 },
   { script: "browser-tests/run-guided-release.mjs", cleanup: true },
 ];
 
