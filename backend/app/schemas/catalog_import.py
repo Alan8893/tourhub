@@ -13,8 +13,6 @@ class CatalogImportRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_ownership_scope(self) -> "CatalogImportRequest":
-        if self.kind == "recipes" and self.ownership_scope is None:
-            raise ValueError("Для импорта рецептов выберите область владения.")
         if self.kind == "products" and self.ownership_scope is not None:
             raise ValueError("Область владения применяется только к рецептам.")
         return self
@@ -22,12 +20,6 @@ class CatalogImportRequest(BaseModel):
 
 class CatalogImportApplyRequest(CatalogImportRequest):
     preview_token: str | None = Field(default=None, min_length=64, max_length=64)
-
-    @model_validator(mode="after")
-    def validate_preview_token(self) -> "CatalogImportApplyRequest":
-        if self.kind == "recipes" and self.preview_token is None:
-            raise ValueError("Сначала выполните проверку файла рецептов.")
-        return self
 
 
 class CatalogImportError(BaseModel):

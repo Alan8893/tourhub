@@ -44,15 +44,14 @@ class OwnershipAwareCatalogImportService:
         result = self.alcohol_service.preview(kind, content)
         if kind == "products":
             return result
-        if ownership_scope is None:
-            raise ValueError("Recipe ownership scope is required")
+        resolved_scope = ownership_scope or RecipeScope.CLUB.value
         return result.model_copy(
             update={
-                "ownership_scope": ownership_scope,
+                "ownership_scope": resolved_scope,
                 "preview_token": self._preview_token(
                     kind=kind,
                     content=content,
-                    ownership_scope=ownership_scope,
+                    ownership_scope=resolved_scope,
                 ),
             }
         )
@@ -68,13 +67,17 @@ class OwnershipAwareCatalogImportService:
         if kind == "products":
             return self.alcohol_service.apply(kind, content)
 
+        resolved_scope = ownership_scope or RecipeScope.CLUB.value
         preview = self.preview(
             kind,
             content,
-            ownership_scope=ownership_scope,
+            ownership_scope=resolved_scope,
         )
+        legacy_club_apply = ownership_scope is None and preview_token is None
         expected_token = preview.preview_token or ""
-        if not preview_token or not compare_digest(preview_token, expected_token):
+        if not legacy_club_apply and (
+            not preview_token or not compare_digest(preview_token, expected_token)
+        ):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=(
@@ -84,11 +87,9 @@ class OwnershipAwareCatalogImportService:
             )
         if not preview.valid:
             return preview
-        if ownership_scope is None:
-            raise ValueError("Recipe ownership scope is required")
         return self._apply_recipes(
             content,
-            ownership_scope=ownership_scope,
+            ownership_scope=resolved_scope,
             result=preview,
         )
 
