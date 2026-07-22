@@ -9,6 +9,7 @@ import {
 import { Link } from "react-router-dom";
 
 import DocumentsDownloadCard from "@/features/documents/components/DocumentsDownloadCard";
+import type { Project } from "@/features/project/api/projectApi";
 import { useProjectWorkflow } from "@/features/project-workflow";
 import { useModuleVisibility } from "@/features/system-settings/providers/ModuleVisibilityProvider";
 
@@ -44,7 +45,7 @@ function SummaryCard({ title, detail, actionLabel, to }: SummaryCardProps) {
   );
 }
 
-export default function ProjectOverview() {
+export default function ProjectOverview({ project }: { project: Project }) {
   const { projectId, preparationResult } = useProjectWorkflow();
   const { settings } = useModuleVisibility();
   const hasMenu = Boolean(preparationResult?.meal_plan_id);
@@ -67,7 +68,7 @@ export default function ProjectOverview() {
                 detail={
                   hasMenu
                     ? "Меню сформировано и доступно для просмотра."
-                    : "Сформируйте меню похода."
+                    : "Меню пока не сформировано."
                 }
                 actionLabel="Открыть меню"
                 to={buildProjectWorkspacePath(projectId, "menu")}
@@ -115,7 +116,11 @@ export default function ProjectOverview() {
       </Grid>
 
       <ProjectTeamPanel projectId={projectId} />
-      <NextWorkflowAction />
+      <NextWorkflowAction
+        canEditMenu={Boolean(project.capabilities?.can_edit_menu)}
+        canManageProject={Boolean(project.capabilities?.can_manage_project)}
+        completed={project.status === "completed"}
+      />
     </Stack>
   );
 }
