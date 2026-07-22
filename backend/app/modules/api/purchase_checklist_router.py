@@ -18,7 +18,10 @@ from app.schemas.purchase_checklist import (
     PurchaseChecklistResponse,
 )
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
-from app.services.purchase_checklist_service import PurchaseChecklistService
+from app.services.purchase_checklist_service import (
+    PurchaseChecklistProgress,
+    PurchaseChecklistService,
+)
 from app.services.shopping_list_service import ShoppingListService
 
 router = APIRouter(prefix="/purchase-checklists", tags=["Purchase Checklists"])
@@ -64,7 +67,7 @@ def create_purchase_checklist(
     service: PurchaseChecklistService = Depends(get_purchase_checklist_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseChecklistORM:
     meal_plan = session.get(MealPlanORM, meal_plan_id)
     if meal_plan is None or meal_plan.project_id is None:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -81,7 +84,7 @@ def create_project_purchase_checklist(
     service: PurchaseChecklistService = Depends(get_purchase_checklist_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseChecklistORM:
     project = ProjectAccessPolicy.require_operational_write(session, project_id, actor)
     if not project.meal_plans:
         raise HTTPException(status_code=404, detail="Meal plan not found")
@@ -99,7 +102,7 @@ def get_project_purchase_checklist(
     project_id: int,
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseChecklistORM:
     ProjectAccessPolicy.require_visible(session, project_id, actor)
     checklist = PurchaseChecklistRepository(session).get_by_project_id(project_id)
     if not checklist:
@@ -121,7 +124,7 @@ def get_purchase_checklist(
     service: PurchaseChecklistService = Depends(get_purchase_checklist_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseChecklistORM:
     checklist = service.get(checklist_id)
     if not checklist:
         raise HTTPException(status_code=404, detail="Purchase checklist not found")
@@ -147,7 +150,7 @@ def get_purchase_checklist_progress(
     service: PurchaseChecklistService = Depends(get_purchase_checklist_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseChecklistProgress:
     checklist = service.get(checklist_id)
     if checklist is None:
         raise HTTPException(status_code=404, detail="Purchase checklist not found")
@@ -177,7 +180,7 @@ def update_purchase_checklist_item(
     service: PurchaseChecklistService = Depends(get_purchase_checklist_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseChecklistItemORM:
     item = session.get(PurchaseChecklistItemORM, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Purchase checklist item not found")
