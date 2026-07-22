@@ -1,5 +1,7 @@
 import { apiClient } from "@/shared/api/client";
 
+import { getAuditExportFilename } from "../model/auditExport";
+
 export interface AuditEvent {
   id: number;
   actor_user_id: number | null;
@@ -33,6 +35,11 @@ export interface AuditEventFilters {
   offset?: number;
 }
 
+export interface AuditCsvExport {
+  blob: Blob;
+  filename: string;
+}
+
 export async function getAuditEvents(
   filters: AuditEventFilters = {},
 ): Promise<AuditEventListResponse> {
@@ -40,4 +47,18 @@ export async function getAuditEvents(
     params: filters,
   });
   return response.data;
+}
+
+export async function getAuditEventsCsv(
+  filters: AuditEventFilters = {},
+): Promise<AuditCsvExport> {
+  const { limit: _limit, offset: _offset, ...exportFilters } = filters;
+  const response = await apiClient.get<Blob>("/audit/events/export.csv", {
+    params: exportFilters,
+    responseType: "blob",
+  });
+  return {
+    blob: response.data,
+    filename: getAuditExportFilename(response.headers["content-disposition"]),
+  };
 }
