@@ -4,14 +4,14 @@ Status date: 2026-07-22
 
 ## Current phase
 
-TourHub v0.1.0 remains release-ready at released Alembic head `h10021`. Post-release development is complete through TH-0105 at current head `h10023`.
+TourHub v0.1.0 remains release-ready at released Alembic head `h10021`. Post-release development is complete through TH-0105 at current head `h10023`. TH-0106 is the single active implementation candidate.
 
 The feature-frozen first release is complete through TH-0093. Post-release work delivered routed Project UX (TH-0095), Product editing (TH-0097), published Recipe-to-Dish synchronization (TH-0098), semantic audit expansion (TH-0099 through TH-0103), personal accounts/contact profiles (TH-0104), and Project ownership/team-scoped access (TH-0105).
 
 ## Verified baseline
 
 - PostgreSQL 18 migration cycle and one current Alembic head ending at `h10023`;
-- immutable release tag `v0.1.0` at its recorded release SHA and released migration head `h10021`;
+- immutable release tag `v0.1.0` at recorded release SHA `8bcc2d2d9414d812d81634330034b15121c8442f` and released migration head `h10021`;
 - Product Acceptance, Quality, Document Quality, Guided Release Acceptance, Operator Docs, Docker Release Runtime, and Final Release Readiness on the exact TH-0105 head;
 - MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only;
 - the modular-monolith and single-club boundaries remain unchanged.
@@ -43,18 +43,29 @@ The feature-frozen first release is complete through TH-0093. Post-release work 
 - a no-op notification boundary is ready for later email, Telegram, and MAX integration without sending messages now;
 - Russian Audit UI labels cover instructor add/remove, ownership transfer, status change, and deletion.
 
-## TH-0105 evidence
+## Active TH-0106 candidate — Audit CSV export
 
-The implementation candidate passed strict Ruff/mypy, the full Backend test suite, Frontend tests/build, Product Acceptance with dedicated real-Chrome Project-team coverage, PostgreSQL backup/restore, Alembic single-head validation, Document Quality, Guided Release Acceptance, Operator Docs, Docker Release Runtime, and Final Release Readiness. The final documentation head is verified through the complete exact-head workflow set before merge.
+- `/api/v1/audit/events/export.csv` remains Administrator-only through the existing centralized router dependency;
+- list and export share Backend-owned filters for actor, entity type, entity ID, action, and created-at boundaries;
+- exports contain deterministic columns for actor snapshots, semantic action, entity identity, timestamp, and already-sanitized before/after/context JSON;
+- UTF-8 BOM supports Russian spreadsheet review, while formula-like cells are neutralized;
+- exports above 10,000 matching rows are rejected with a clear bounded error;
+- the Audit UI adds date filters and a filtered `Скачать CSV` action;
+- export is read-only, creates no recursive AuditEvent, and introduces no migration;
+- Backend, Frontend helper, and dedicated real-Chrome acceptance are included in the candidate.
 
-## Explicit next product item
+## TH-0106 non-goals
 
-`Копировать проект` is recorded in the roadmap as a required future task. It will create a new Project from a completed Project template, reuse the ordinary new-Project parameter form, and copy approved menu/preparation settings without reopening or mutating the source. Exact copy semantics require a separate Product Owner-approved task.
+Retention deletion/cleanup, retention-policy UI, external SIEM delivery, operational diagnostics, scheduled exports, background processing, undo, replay, session administration, Product/Dish archive-management UI, ownership-aware import UX, and Project copy remain separate work.
+
+## Explicit future product item
+
+`Копировать проект` remains recorded in the roadmap as a required future task. It will create a new Project from a completed Project template, reuse the ordinary new-Project parameter form, and copy approved menu/preparation settings without reopening or mutating the source. Exact copy semantics require a separate Product Owner-approved task.
 
 ## Deferred non-blocking debt
 
 - Project-copy implementation and future Project-team notifications through email, Telegram, and MAX;
-- audit export, retention UI, external SIEM integration, operational diagnostics, undo, and event replay;
+- audit retention UI, external SIEM integration, operational diagnostics, undo, and event replay;
 - account recovery, verified contact changes, session administration, avatars, public profiles, asynchronous mail, and bounce handling;
 - richer Recipe metadata, per-meal switching, preference weights, and ownership-aware import UX;
 - Product/Dish archive-management UI;
@@ -63,4 +74,4 @@ The implementation candidate passed strict Ruff/mypy, the full Backend test suit
 
 ## Next work
 
-TH-0105 is complete. No later task is active automatically. The roadmap preserves `Копировать проект` as the next explicitly remembered product capability, but implementation begins only after a separate Product Owner decision.
+TH-0106 is the only active task. It is complete only after all exact-head gates pass, review threads are clear, the branch matches current `main`, task state moves to `closed`, and the PR is squash-merged.
