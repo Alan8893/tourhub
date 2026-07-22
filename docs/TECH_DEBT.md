@@ -28,31 +28,23 @@ Project workspace navigation, Product editing, published Recipe-to-Dish synchron
 
 - editable FIO and optional normalized phone/Telegram/MAX/VK;
 - read-only login email;
-- password change preserving the current session and revoking other sessions;
+- password change preserving the current login and revoking other sessions;
 - header/sidebar access to `/account` and logout inside the account;
 - safe profile/password audit;
-- current contact-profile migration `h10022`.
+- contact-profile migration `h10022`.
 
 ### TH-0105 — Project ownership and team access
 
 - new Projects persist the creator as owner;
 - `h10023` backfills existing ownership from trustworthy audit history with first-Administrator fallback;
-- multiple additional instructors are supported, including explicitly participating Administrators;
-- global User roles remain singular while owner/instructor responsibilities are Project-scoped;
-- active Administrators see all Projects; owners and additional instructors see assigned Projects only;
-- direct Project and nested API paths enforce one central access policy and hide unrelated Projects as 404;
-- additional instructors receive read-only Menu/settings plus writable Shopping/Checklist/Equipment and document access while open;
-- owners/Administrators manage team, ownership, completion, and deletion;
-- ownership transfer retains the previous owner as an additional instructor in one audited transaction;
-- inactive historical members lose access and regain it after reactivation;
+- multiple additional instructors are supported while global User roles remain singular;
+- central Project access hides unrelated Projects as 404 and enforces capability/completion boundaries;
+- ownership transfer, team changes, completion, and deletion are audited transactionally;
 - completed Projects are terminal read-only records hidden by default;
-- Project overview owns team contacts and Project-scoped vCard; club-wide account contact listing is removed;
-- a no-op notification boundary is ready for future email, Telegram, and MAX integration;
-- dedicated Backend, migration, Frontend, and real-Chrome tests verify the capability matrix and mobile layout.
+- Project overview owns team contacts and Project-scoped vCard;
+- a no-op notification boundary remains ready for future provider implementations.
 
 ### TH-0106 — Audit CSV export
-
-TH-0106 resolves the bounded audit-export portion of operational debt:
 
 - Administrator-only filtered CSV projection beside the existing Audit list;
 - one Backend filter implementation for list and export;
@@ -63,20 +55,17 @@ TH-0106 resolves the bounded audit-export portion of operational debt:
 - Backend, Frontend, and real-Chrome acceptance;
 - no persistence change, retention mutation, or recursive export AuditEvent.
 
-## Active debt repayment — TH-0107 Session administration
-
-TH-0107 repays only the own-session visibility and individual-revocation portion of Access debt:
+### TH-0107 — Session administration
 
 - authenticated list of the current User's active non-expired sessions;
-- server-side current-session matching through the existing HttpOnly cookie hash;
-- safe response fields limited to ID and timestamps/current marker;
+- server-side current-login matching through the existing HttpOnly cookie hash;
+- safe response fields limited to ID, timestamps, and current marker;
 - individual revocation of another owned active session;
-- 404 masking for unrelated/revoked/expired/unknown IDs and 409 protection for the current session;
-- transactional `account_session_revoked` audit without token, hash, cookie, IP, device, or user-agent data;
-- responsive `/account` UX plus Backend, Frontend helper, and real-Chrome acceptance;
+- 404 masking for unrelated/revoked/expired/unknown IDs and 409 protection for the current login;
+- transactional `account_session_revoked` audit using sanitizer-safe `current_login_preserved`;
+- no token, hash, cookie, IP, device, user-agent, fingerprint, or location data in API or audit;
+- responsive `/account` UX plus Backend, Frontend helper, Product Acceptance, and full real-Chrome coverage;
 - no migration, cleanup, global sign-out, cross-user administration, or new tracking data.
-
-TH-0107 is not complete until exact-head gates pass and the PR is squash-merged.
 
 ## Explicit future product debt — Copy Project
 
@@ -90,41 +79,23 @@ Expected product intent:
 - approved Menu and preparation/settings structure is copied from the source;
 - copied data must be recalculated for the new parameters rather than reusing historical calculated quantities blindly.
 
-Open design decisions for that future task:
-
-- exactly which Menu manual edits, Recipes, Shopping overrides, Checklist progress, Equipment overrides, responsible-person values, comments, and generation mode are copied;
-- whether the team and owner are copied or selected anew;
-- audit actions and source-template attribution;
-- handling of archived/prohibited catalogue dependencies;
-- notifications for the newly created team;
-- behavior when source snapshots are no longer valid under current policies.
-
-No placeholder button or endpoint is implemented in TH-0107.
-
-## Remaining Project collaboration debt
-
-- real Project-team notifications through email, Telegram, and MAX;
-- optional notification preferences and delivery history;
-- richer Project search/sorting beyond completed visibility;
-- participant profiles and participant-to-Project membership remain separate from instructor collaboration;
-- Project retention/archive policy beyond terminal completion and explicit deletion;
-- bulk team changes or reusable team templates.
+Open design decisions include the exact copy matrix, team/owner handling, audit attribution, archived/prohibited dependencies, notifications, and policy-invalid historical snapshots. No placeholder button or endpoint is implemented.
 
 ## Remaining audit and operations debt
 
-1. Audit retention policy and retention-management UI.
+1. Audit retention policy and retention-management UI require approved duration, deletion eligibility, legal/operational safeguards, preview, rollback, and audit behavior.
 2. External SIEM integration and operational diagnostics.
-3. Scheduled/background exports and delivery are not implemented.
+3. Scheduled/background exports and delivery.
 4. Undo and event replay remain outside v0.1.0.
 
-Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and explicit transaction ownership. Retention work must define legal/product policy before any deletion path is introduced.
+Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and explicit transaction ownership.
 
-## Remaining Access and mail debt after TH-0107
+## Remaining Access and mail debt
 
 - account recovery and verified email/phone change;
 - global sign-out/revoke-all;
 - Administrator access to other users' sessions;
-- expired/revoked session cleanup and retention policy;
+- expired/revoked session cleanup, physical deletion, and retention policy;
 - IP/device/user-agent/location tracking remains unapproved and unimplemented;
 - avatars, public profiles, and account deletion;
 - invitation retention and cleanup;
@@ -132,25 +103,36 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - approved mail templates and attachments;
 - Project-team notification provider implementations.
 
+## Remaining Project collaboration debt
+
+- real Project-team notifications through email, Telegram, and MAX;
+- optional notification preferences and delivery history;
+- richer Project search/sorting beyond completed visibility;
+- participant profiles and participant-to-Project membership;
+- Project retention/archive policy beyond terminal completion and explicit deletion;
+- bulk team changes or reusable team templates.
+
 ## Remaining Recipe, menu, and catalogue debt
 
-- optional moderation notifications;
+- Product/Dish archive-management UI;
 - ownership-aware CSV import UX;
+- optional moderation notifications;
 - preparation technology, dietary/season metadata, and richer categories;
 - Recipe-level optimistic-version decision;
 - per-meal manual Recipe switching without replacing Dish;
 - preference weights beyond approved generation modes;
-- Product/Dish archive-management UI;
 - optional deterministic role suggestions only after separate approval;
 - reviewed alcohol-policy vocabulary updates when evidence requires them;
 - fuzzy/external alcohol classification and user exceptions remain out of scope.
 
-## Remaining document debt
+## Remaining document and configuration debt
 
-- scheduled/asynchronous generation;
-- email delivery of generated packages;
+- scheduled/asynchronous generation and email delivery;
 - persisted document versions or signatures;
-- optional formats beyond approved PDF/XLSX/print/ZIP.
+- optional formats beyond approved PDF/XLSX/print/ZIP;
+- versioned validated configuration archive;
+- protected-value exclusion from unencrypted exports;
+- approved encryption, integrity, preview, and rollback design.
 
 ## Deferred product domains
 
@@ -159,20 +141,15 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - warehouse balances, issue workflow, and participant distribution;
 - procurement prices, shops, stock balances, and external aggregators.
 
-## Configuration export/import debt
-
-- versioned validated archive;
-- protected-value exclusion from unencrypted exports;
-- approved encryption, integrity, preview, and rollback design.
-
 ## Product Owner decisions required for later work
 
-- audit retention duration, deletion eligibility, legal/operational safeguards, and UI;
+- audit retention duration, deletion eligibility, safeguards, and UI;
 - external SIEM/diagnostics scope;
 - when to start `Копировать проект` and its exact copy matrix;
 - Project-team notification channels and preferences;
 - global-sign-out, cross-user session administration, cleanup, and tracking policy;
+- Product/Dish archive behavior and ownership-aware import semantics;
 - preference weighting and mandatory Recipe metadata;
 - encrypted settings archive format.
 
-No deferred item becomes active merely because it appears here. Work starts only through an explicitly selected task.
+No post-release product task is active after TH-0107. No deferred item becomes active merely because it appears here.
