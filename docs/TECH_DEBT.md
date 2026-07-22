@@ -50,9 +50,9 @@ Project workspace navigation, Product editing, published Recipe-to-Dish synchron
 - a no-op notification boundary is ready for future email, Telegram, and MAX integration;
 - dedicated Backend, migration, Frontend, and real-Chrome tests verify the capability matrix and mobile layout.
 
-## Active debt repayment — TH-0106 Audit CSV export
+### TH-0106 — Audit CSV export
 
-TH-0106 repays only the bounded audit-export portion of operational debt:
+TH-0106 resolves the bounded audit-export portion of operational debt:
 
 - Administrator-only filtered CSV projection beside the existing Audit list;
 - one Backend filter implementation for list and export;
@@ -62,8 +62,6 @@ TH-0106 repays only the bounded audit-export portion of operational debt:
 - Audit UI date filters and download action;
 - Backend, Frontend, and real-Chrome acceptance;
 - no persistence change, retention mutation, or recursive export AuditEvent.
-
-TH-0106 is not complete until exact-head gates pass and the PR is squash-merged.
 
 ## Explicit future product debt — Copy Project
 
