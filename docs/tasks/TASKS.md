@@ -7,8 +7,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0105 | Project Ownership, Team Access and Project Contacts | IN PROGRESS | ./active/TH-0105-project-team-access.md |
 
-TH-0104 is complete. No later post-release capability is selected automatically; further work requires a separate Product Owner decision.
+TH-0105 is the explicitly selected post-release capability. `Копировать проект` is recorded as a separate future roadmap task and is not implemented in this slice.
 
 ## First-release sequence
 
