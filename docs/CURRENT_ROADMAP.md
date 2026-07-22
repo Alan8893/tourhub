@@ -24,6 +24,7 @@ First-release preparation and operations
   → Personal accounts and active club contacts (TH-0104)
   → Project ownership, team access, and project contacts (TH-0105)
   → Safe filtered audit CSV export (TH-0106)
+  → Own session administration and individual revocation (TH-0107)
   → Copy Project from completed template (future explicit task)
 ```
 
@@ -90,7 +91,18 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 
 ## Current post-release selection
 
-No new post-release capability is selected automatically after TH-0106. The next task requires an explicit Product Owner decision and must remain one cohesive branch/squash-merge unit.
+### TH-0107 — Session administration and individual revocation
+
+- every active authenticated user may list only their own active non-expired sessions;
+- Backend identifies the current session from the existing HttpOnly cookie and never returns raw tokens or token hashes;
+- one other owned session may be revoked individually;
+- the current session remains protected and is terminated only through ordinary logout;
+- revocation and safe `account_session_revoked` audit append share one transaction;
+- `/account` shows session timestamps, current marker, revoke progress, success, and error feedback;
+- Backend, Frontend, and real-Chrome acceptance cover ownership, immediate invalidation, rollback, and mobile layout;
+- no migration is expected, so Alembic remains `h10023`.
+
+Global sign-out, Administrator access to other users' sessions, device/IP tracking, physical cleanup, and account retention policy remain separate future work.
 
 ## Explicit future task — Copy Project
 
@@ -108,7 +120,7 @@ No new post-release capability is selected automatically after TH-0106. The next
 
 - verified email change and phone/email verification;
 - account recovery, deletion, retention policy, and avatars;
-- public member profiles and general session-administration UI;
+- public member profiles, global sign-out, Administrator session administration, and session cleanup;
 - invitation cleanup, asynchronous mail, bounce handling, and advanced templates.
 
 ### Product and operations
