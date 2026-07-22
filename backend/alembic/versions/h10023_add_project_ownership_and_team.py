@@ -5,6 +5,7 @@ Revises: h10022
 Create Date: 2026-07-22
 """
 
+# ruff: noqa: I001
 import sqlalchemy as sa
 
 from alembic import op
