@@ -4,7 +4,7 @@ Version: 0.1.0
 
 Last update: 2026-07-22
 
-Status: Safe filtered audit CSV export delivered — TH-0106
+Status: Own session administration selected — TH-0107
 
 ## 1. Product boundary
 
@@ -25,6 +25,7 @@ The approved target scope is defined in `PRODUCT_SPEC.md`. Current behavior is d
 ```text
 Administrator bootstrap and invitations
   → Personal account/contact profile
+  → own active-session review and individual revocation
   → Project creation with creator ownership
   → Optional additional Project instructors
   → Project-scoped visibility and contacts
@@ -36,7 +37,7 @@ Administrator bootstrap and invitations
   → Administrator filtered CSV audit review
 ```
 
-The first release remains tagged `v0.1.0` at released Alembic head `h10021`. Current post-release development is complete through TH-0106 at one Alembic head `h10023`; TH-0106 adds no migration.
+The first release remains tagged `v0.1.0` at released Alembic head `h10021`. Current post-release persistence is complete through TH-0106 at one Alembic head `h10023`; TH-0107 adds no migration.
 
 ## 3. Architecture
 
@@ -50,27 +51,41 @@ TourHub remains a modular monolith using React/TypeScript/Vite/Material UI/TanSt
 - present Menu and operational modules in read-only or writable mode;
 - display Project-scoped team contact actions;
 - collect Audit filters and start a browser CSV download;
-- never make authorization, audit-selection, sanitization, or export-limit decisions independently of Backend policy.
+- display the current user's Backend-projected active sessions and invoke individual revocation;
+- never make authorization, session ownership/current-session, audit-selection, sanitization, or export-limit decisions independently of Backend policy.
 
 ### Backend responsibilities
 
-- persist identity, Project owner/team membership, catalogue, preparation, documents, and audit state;
+- persist identity, server sessions, Project owner/team membership, catalogue, preparation, documents, and audit state;
+- resolve the current persisted User and session token hash boundary on every authorized request;
+- enforce session ownership and current-session protection for account session administration;
 - enforce `ProjectAccessPolicy` on every Project-scoped route;
 - mask unrelated Projects as 404;
 - reject role-forbidden actions as 403 and completed-Project writes as 409;
-- transact team changes, ownership transfer, status changes, deletion, and semantic AuditEvents together;
+- transact team changes, ownership transfer, status changes, deletion, session revocation, and semantic AuditEvents together;
 - normalize contact profiles and expose contacts only through a visible Project team;
 - own Audit list/export authorization, filter semantics, bounded row limits, deterministic CSV shape, and formula neutralization;
 - preserve the immutable release-tag contract separately from current post-release migrations.
 
-## 4. Identity and Project access
+## 4. Identity, sessions, and Project access
 
 ### Global identity
 
-- one User may own multiple server sessions;
+- one User may own multiple independent server sessions;
 - one User has one global role;
 - active Administrators retain site-wide Project visibility and exclusive Audit access;
 - deactivation revokes sessions and also removes runtime Project access without deleting historical Project membership.
+
+### Session administration — TH-0107
+
+- every active authenticated user may list only their own active non-expired sessions;
+- the current session is identified from the existing HttpOnly cookie and marked server-side;
+- responses contain only session ID, created-at, last-seen-at, expires-at, and current marker;
+- raw tokens, token hashes, cookies, IP, device, user-agent, fingerprint, and location are never returned;
+- one other owned active session may be revoked by ID;
+- unrelated/revoked/expired/unknown IDs return 404 and current-session revocation returns 409;
+- current logout remains the only current-session termination path;
+- revocation and safe semantic audit share one transaction and rollback boundary.
 
 ### Project responsibilities
 
@@ -89,7 +104,7 @@ TourHub remains a modular monolith using React/TypeScript/Vite/Material UI/TanSt
 
 ## 5. Project contacts and personal account
 
-`/account` contains the current user's editable FIO/contact profile, read-only email, password change, and logout. It no longer exposes a club-wide contact directory.
+`/account` contains the current user's editable FIO/contact profile, read-only email, active-session list, password change, and logout. It no longer exposes a club-wide contact directory.
 
 The Project overview returns only the owner and additional instructors after Project visibility is established. Active members expose mail, `tel:`, Telegram, MAX, VK, and Project-scoped vCard actions. Inactive historical members remain identifiable but contact actions are unavailable.
 
@@ -107,35 +122,38 @@ TH-0106 delivers a read-only CSV projection:
 - export creates no `audit_exported` event and cannot recursively mutate the journal;
 - retention deletion/cleanup, SIEM, diagnostics, scheduling, undo, and replay remain out of scope.
 
+TH-0107 adds `account_session_revoked` with bounded active/revoked state and `current_session_preserved`; session tokens, hashes, cookies, authorization headers, and device/network metadata are excluded.
+
 ## 7. Data and migrations
 
 - `h10022` adds optional User phone/Telegram/MAX/VK fields;
 - `h10023` adds `projects.owner_user_id` and `project_instructors`;
 - existing Project owners are backfilled from the earliest trustworthy `project_created` AuditEvent, with first-Administrator fallback;
 - current post-release Alembic has one head at `h10023`;
-- TH-0106 requires no persistence change;
+- TH-0106 and TH-0107 require no persistence change;
 - immutable `v0.1.0` remains fixed at released head `h10021` and release SHA `8bcc2d2d9414d812d81634330034b15121c8442f`.
 
 ## 8. Audit and notification boundary
 
-Semantic Project-team actions include instructor add/remove, ownership transfer, status change, and deletion. Events contain bounded IDs, names, roles, and state metadata only; contact values, credentials, tokens, arbitrary request bodies, and provider details are excluded.
+Semantic Project-team actions include instructor add/remove, ownership transfer, status change, and deletion. Account actions include profile update, password change, and individual session revocation. Events contain bounded IDs, names, roles, and state metadata only; contact values, credentials, tokens, arbitrary request bodies, provider details, and device/network metadata are excluded.
 
 `ProjectTeamNotificationService` exists as a no-op boundary for future email, Telegram, and MAX notifications. No message, queue item, retry record, or delivery attempt is created today.
 
-## 9. Current work and immediate sequence
+## 9. Current active work and immediate sequence
 
 - TH-0061.5 remains operational maintenance for the completed menu rules engine.
 - TH-0105 and TH-0106 are complete.
-- Audit retention UI is explicitly deferred from TH-0106.
-- session administration, Product/Dish archive management, and ownership-aware import UX remain separate future tasks;
-- `Копировать проект` remains a required future Product Owner-selected task;
-- no new post-release product task is selected automatically.
+- TH-0107 is the only active post-release product task.
+- Audit retention UI is explicitly deferred because duration and deletion policy are not approved.
+- global sign-out, Administrator session administration, session cleanup, Product/Dish archive management, and ownership-aware import UX remain separate future tasks;
+- `Копировать проект` remains a required future Product Owner-selected task.
 
 ## 10. Development rules
 
 - Do not invent missing business requirements.
 - Do not add multi-tenancy or microservices.
 - Do not move authorization or business decisions into React.
+- Keep session ownership, current-session detection, and revocation policy in Backend.
 - Apply Project access to every direct and nested route, not only catalogue filtering.
 - Keep Audit list/export selection and limits in Backend.
 - Do not implement ORM-wide automatic auditing.
