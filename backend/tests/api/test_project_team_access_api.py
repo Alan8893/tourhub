@@ -296,8 +296,9 @@ def test_completed_project_is_read_only_but_remains_visible_and_deletable(
 
     deleted = client.delete(f"/api/v1/projects/{project.id}")
     assert deleted.status_code == 204
+    actions = _actions(db_session)
     assert db_session.get(ProjectORM, project.id) is None
-    assert _actions(db_session)[-2:] == ["project_status_updated", "project_deleted"]
+    assert actions[-2:] == ["project_status_updated", "project_deleted"]
 
 
 def test_inactive_team_member_loses_and_regains_access(client, db_session):
