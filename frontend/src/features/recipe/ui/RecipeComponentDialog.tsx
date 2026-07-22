@@ -26,6 +26,7 @@ import {
   validateRecipeComponentDraft,
   type RecipeComponentDraft,
 } from "../model/recipeEditor";
+import ProductArchiveDialog from "./ProductArchiveDialog";
 import ProductDialog from "./ProductDialog";
 
 const initialDraft: RecipeComponentDraft = {
@@ -39,7 +40,11 @@ const initialDraft: RecipeComponentDraft = {
 
 function getProductErrorMessage(error: unknown): string {
   if (isAxiosError<{ error?: string; detail?: string }>(error)) {
-    return error.response?.data?.error ?? error.response?.data?.detail ?? "Не удалось изменить продукт.";
+    return (
+      error.response?.data?.error ??
+      error.response?.data?.detail ??
+      "Не удалось изменить продукт."
+    );
   }
   return error instanceof Error ? error.message : "Не удалось изменить продукт.";
 }
@@ -69,6 +74,7 @@ export default function RecipeComponentDialog({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<RecipeProduct | null>(null);
   const [productError, setProductError] = useState<string | null>(null);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const updateProductMutation = useUpdateProduct();
   const selectedProduct = products.find((product) => product.id === draft.productId) ?? null;
 
@@ -143,7 +149,8 @@ export default function RecipeComponentDialog({
                 >
                   {products.map((product) => (
                     <MenuItem key={product.id} value={product.id}>
-                      {product.name}{product.category ? ` · ${product.category}` : ""}
+                      {product.name}
+                      {product.category ? ` · ${product.category}` : ""}
                     </MenuItem>
                   ))}
                 </Select>
@@ -164,6 +171,14 @@ export default function RecipeComponentDialog({
                   sx={{ whiteSpace: "nowrap" }}
                 >
                   Изменить продукт
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  onClick={() => setArchiveDialogOpen(true)}
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  Архив продуктов
                 </Button>
               </Stack>
             </Stack>
@@ -260,6 +275,11 @@ export default function RecipeComponentDialog({
         errorMessage={productError}
         onClose={() => setEditingProduct(null)}
         onSubmit={(input) => void submitProduct(input)}
+      />
+
+      <ProductArchiveDialog
+        open={archiveDialogOpen}
+        onClose={() => setArchiveDialogOpen(false)}
       />
     </>
   );
