@@ -21,7 +21,7 @@ from app.schemas.purchase_list import (
 )
 from app.services.meal_plan_shopping_service import MealPlanShoppingService
 from app.services.operational_audit_service import OperationalAuditService
-from app.services.purchase_list_service import PurchaseListService
+from app.services.purchase_list_service import PurchaseListService, PurchaseListSummary
 from app.services.shopping_list_service import ShoppingListService
 
 router = APIRouter(
@@ -87,7 +87,7 @@ def create_purchase_list(
     service: PurchaseListService = Depends(get_purchase_list_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseListORM:
     meal_plan = session.get(MealPlanORM, meal_plan_id)
     if meal_plan is None or meal_plan.project_id is None:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -104,7 +104,7 @@ def create_project_purchase_list(
     service: PurchaseListService = Depends(get_purchase_list_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseListORM:
     project = ProjectAccessPolicy.require_operational_write(session, project_id, actor)
     if not project.meal_plans:
         raise HTTPException(status_code=404, detail="Meal plan not found")
@@ -123,7 +123,7 @@ def get_project_purchase_list(
     project_id: int,
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseListORM:
     ProjectAccessPolicy.require_visible(session, project_id, actor)
     purchase_list = PurchaseListRepository(session).get_by_project_id(project_id)
     if not purchase_list:
@@ -137,7 +137,7 @@ def get_purchase_list(
     service: PurchaseListService = Depends(get_purchase_list_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseListORM:
     purchase_list = service.get(purchase_list_id)
     if not purchase_list:
         raise HTTPException(status_code=404, detail="Purchase list not found")
@@ -163,7 +163,7 @@ def update_purchase_list(
     service: PurchaseListService = Depends(get_purchase_list_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseListORM:
     purchase_list = service.get(purchase_list_id)
     if purchase_list is None:
         raise HTTPException(status_code=404, detail="Purchase list not found")
@@ -187,7 +187,7 @@ def get_purchase_list_summary(
     service: PurchaseListService = Depends(get_purchase_list_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> PurchaseListSummary:
     purchase_list = service.get(purchase_list_id)
     if purchase_list is None:
         raise HTTPException(status_code=404, detail="Purchase list not found")
@@ -208,7 +208,7 @@ def export_purchase_list_pdf(
     service: PurchaseListService = Depends(get_purchase_list_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> Response:
     purchase_list = service.get(purchase_list_id)
     if not purchase_list:
         raise HTTPException(status_code=404, detail="Purchase list not found")
@@ -238,7 +238,7 @@ def export_purchase_list_excel(
     service: PurchaseListService = Depends(get_purchase_list_service),
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
-):
+) -> Response:
     purchase_list = service.get(purchase_list_id)
     if not purchase_list:
         raise HTTPException(status_code=404, detail="Purchase list not found")
