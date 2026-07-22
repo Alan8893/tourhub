@@ -2,174 +2,122 @@
 
 Version: 0.1.0
 
-Last update: 2026-07-21
+Last update: 2026-07-22
 
-Status: Post-release personal account and club contacts delivered — TH-0104
+Status: Project ownership, team-scoped access, and Project contacts delivered — TH-0105
 
 ## 1. Product boundary
 
 TourHub is a local ERP application for one tourist club.
 
 - One installation represents one club.
-- Multi-tenant support is prohibited.
-- The runtime supports multiple invited users inside the same club.
+- Multi-tenant support and microservices are prohibited.
 - Registration is invitation-only after one-time Administrator bootstrap.
-- Approved roles are Administrator, Instructor, and Verified Instructor.
-- Authenticated users may maintain contact profiles and view active club contacts.
-- Trip calculations still use participant count; separate trip-participant profiles are not implemented.
+- Global User roles remain singular: Administrator, Instructor, or Verified Instructor.
+- Project owner and additional instructor are Project-scoped responsibilities, not additional global roles.
 - Alcohol is prohibited without exceptions through one Backend policy.
 - Paid or externally hosted runtime services are not used.
 
-The approved target scope is defined in `PRODUCT_SPEC.md`. The current state is defined by code, tests, Product Acceptance/Release Readiness evidence, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, and `DOMAIN_CURRENT.md`.
+The approved target scope is defined in `PRODUCT_SPEC.md`. Current behavior is defined by code, tests, Product Acceptance/Release Readiness evidence, `PROJECT_STATUS.md`, `ARCHITECTURE_CURRENT.md`, `DOMAIN_CURRENT.md`, and ADR-026.
 
-## 2. Released product workflow
+## 2. Current product workflow
 
 ```text
 Administrator bootstrap and invitations
-  → Personal account and active club contacts
-  → Project
-  → Menu generation and manual MealSlot editing
-  → Club and personal Recipes
-  → Recipe publication and moderation
-  → automatic published Recipe synchronization into Dishes
-  → explicit Dish generator-role setup
-  → Dish Recipe variants and project generation modes
-  → Shopping and packaging
-  → Equipment
-  → Complete PDF, Excel, compatibility files, and ZIP
+  → Personal account/contact profile
+  → Project creation with creator ownership
+  → Optional additional Project instructors
+  → Project-scoped visibility and contacts
+  → Menu generation and manual editing by owner/Administrator
+  → read-only Menu for additional instructors
+  → Shopping, Checklist, Equipment, and Documents collaboration
+  → terminal completed Project history
   → Actor-aware operational accountability
-  → Central alcohol prohibition
-  → Product acceptance and feature freeze
-  → Final migration and release readiness
 ```
 
-The complete first-release sequence is delivered through TH-0093 and tagged `v0.1.0`. TH-0095 through TH-0103 deliver workspace, catalogue, synchronization, and semantic audit improvements. TH-0104 adds authenticated personal profiles, active-club contact sharing, vCard download, safe password change, and account-owned logout.
+The first release remains tagged `v0.1.0` at released Alembic head `h10021`. Current post-release development is complete through TH-0105 at `h10023`.
 
 ## 3. Architecture
 
-TourHub remains a modular monolith.
+TourHub remains a modular monolith using React/TypeScript/Vite/Material UI/TanStack Query on the Frontend and Python 3.13/FastAPI/SQLAlchemy/Alembic/PostgreSQL on the Backend.
 
-### Frontend
+### Frontend responsibilities
 
-- React;
-- TypeScript;
-- Vite;
-- Material UI;
-- TanStack Query;
-- React Router.
+- present responsive Project catalogue/workspace/account/settings surfaces;
+- render Backend-projected Project capabilities;
+- hide completed Projects by default while allowing an explicit completed filter;
+- present Menu and operational modules in read-only or writable mode;
+- display Project-scoped team contact actions;
+- never make authorization decisions independently of Backend policy.
 
-Frontend owns presentation, responsive navigation, personal-account forms, contact actions, Project workspace routing, Product create/edit state, Dish generator-readiness presentation, query invalidation, safe AuditEvent rendering/filtering, and download controls. It does not own profile normalization, password verification, session revocation, business validation, generation rules, authorization, calculations, or audit sanitization.
+### Backend responsibilities
 
-### Backend
+- persist identity, Project owner/team membership, catalogue, preparation, documents, and audit state;
+- enforce `ProjectAccessPolicy` on every Project-scoped route;
+- mask unrelated Projects as 404;
+- reject role-forbidden actions as 403 and completed-Project writes as 409;
+- transact team changes, ownership transfer, status changes, deletion, and semantic AuditEvents together;
+- normalize contact profiles and expose contacts only through a visible Project team;
+- preserve the immutable release-tag contract separately from current post-release migrations.
 
-- Python 3.13;
-- FastAPI;
-- SQLAlchemy 2.x;
-- Alembic;
-- Pydantic v2;
-- PostgreSQL 18 in the release runtime;
-- Redis configuration;
-- deterministic identity, calculation, document, audit, and catalogue-policy boundaries.
+## 4. Identity and Project access
 
-Backend owns validation, profile normalization, persistence, identity/authorization, invitation lifecycle, password hashing, session revocation, contact visibility, Product policy, Recipe ownership/lifecycle, published Recipe-to-Dish synchronization, Dish variant selection, menu generation, manual MealSlot mutation, catalogue import, central alcohol policy, shopping/checklist/equipment recalculation, mail boundaries, document generation, and semantic audit rules in owning transactions.
+### Global identity
 
-### Runtime
+- one User may own multiple server sessions;
+- one User has one global role;
+- active Administrators retain site-wide Project visibility;
+- deactivation revokes sessions and also removes runtime Project access without deleting historical Project membership.
 
-Development starts with:
+### Project responsibilities
 
-```bash
-docker compose up -d --build
-```
+- every Project has one owner through `owner_user_id`;
+- a Project may have any number of `ProjectInstructor` rows;
+- owner and additional-instructor membership are mutually exclusive;
+- Administrators may be explicitly added to the team when participating as instructors;
+- ownership transfer makes the previous owner an additional instructor and removes the new owner from that set.
 
-The operator path uses `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally. PostgreSQL and Redis remain internal to the release network. Redis is available but no released business workflow depends on it.
+### Capability matrix
 
-## 4. Current baseline
+- owner/Administrator: manage Project parameters, Menu, preparation, team, ownership, completion, and deletion; operate all modules;
+- additional instructor: view Project/Menu and operate Shopping, Checklist, Equipment, Documents, and Project contacts; no Menu or Project/team-setting writes;
+- completed Project: readable/downloadable only; owner/Administrator may delete it;
+- outsider: no list result and 404 on direct Project-scoped access.
 
-### Access, users, and personal accounts
+## 5. Project contacts and personal account
 
-- one-time Administrator bootstrap and invitation-only registration;
-- password hashing and server-owned HttpOnly sessions;
-- working SMTP invitation delivery with manual fallback;
-- roles, activation controls, optimistic user versions, and last-active-Administrator protection;
-- preparation access for all approved active roles;
-- Administrator-only settings, invitations, user administration, mail operations, and audit reads;
-- multiple logins, current-role resolution, deactivation revocation, protected-401 handling, exact route return, and visible role;
-- `/account` is available to every authenticated active user;
-- existing `display_name` is the single FIO field and email remains the immutable login identifier;
-- optional phone, Telegram, MAX, and VK values are normalized by Backend;
-- social profile values accept a handle or an approved HTTPS profile URL;
-- all authenticated active users may list active club contacts;
-- `mailto:`, `tel:`, approved social links, and vCard download support contact use on phones;
-- password change requires the current password, preserves the current login, and revokes all other active logins;
-- logout moved from the global header into the personal account page;
-- avatars, public profiles, email/phone verification, account deletion, recovery, and general session administration UI remain deferred.
+`/account` contains the current user's editable FIO/contact profile, read-only email, password change, and logout. It no longer exposes a club-wide contact directory.
 
-### Product catalogue, Recipe publication, and Dish catalogue
+The Project overview returns only the owner and additional instructors after Project visibility is established. Active members expose mail, `tel:`, Telegram, MAX, VK, and Project-scoped vCard actions. Inactive historical members remain identifiable but contact actions are unavailable.
 
-- active shared Products can be created and edited without changing IDs or Recipe relationships;
-- Product and Recipe CSV preview/apply use the central alcohol policy and atomic writes;
-- Recipe CLUB/PERSONAL ownership, owner-aware visibility, submission/rejection/publication, and row-locked moderation;
-- publication and Dish synchronization occur in one SQLAlchemy transaction;
-- existing attachments are not duplicated and active exact-name Dishes receive ordered variants without changing default or roles;
-- otherwise publication creates one role-less Dish with the Recipe as default and only variant;
-- no role, meal type, or repeatability value is inferred from Recipe content;
-- exact selected Recipe persists on every meal assignment;
-- shopping, equipment, and exports use assignment Recipe snapshots;
-- central alcohol policy and archive markers preserve historical data while preventing prohibited active use;
-- current Alembic head is `h10022`; immutable release tag `v0.1.0` remains at released head `h10021`.
+## 6. Data and migrations
 
-### Actor-aware audit
+- `h10022` adds optional User phone/Telegram/MAX/VK fields;
+- `h10023` adds `projects.owner_user_id` and `project_instructors`;
+- existing Project owners are backfilled from the earliest trustworthy `project_created` AuditEvent, with first-Administrator fallback;
+- current post-release Alembic has one head at `h10023`;
+- immutable `v0.1.0` remains fixed at released head `h10021`.
 
-- append-only AuditEvent persistence through `h10020`;
-- actor snapshots and bounded recursive secret removal;
-- semantic operational coverage through TH-0103;
-- `account_profile_updated` shares the profile transaction, uses optimistic versions, suppresses no-op writes, and stores changed field names rather than contact values;
-- `account_password_changed` shares the password/session transaction and stores versions, whether the current login was preserved, and the number of other logins revoked;
-- phone numbers, social URLs, passwords, password hashes, cookies, raw session values, session hashes, tokens, exception details, and arbitrary request bodies are never account audit payloads;
-- Administrator Audit UI exposes Russian labels for personal profile and password actions.
+## 7. Audit and notification boundary
 
-### Projects, preparation, documents, and operations
+Semantic Project-team actions include instructor add/remove, ownership transfer, status change, and deletion. Events contain bounded IDs, names, roles, and state metadata only; contact values, credentials, tokens, arbitrary request bodies, and provider details are excluded.
 
-- Project catalogue, participant count, dates, meal boundaries, generation mode, persisted MealPlan/MealSlotDish, shopping, checklist, equipment, readiness, and recalculation;
-- compact Project Overview and routed Menu, Shopping, Equipment, and Documents work areas;
-- temporary global navigation drawer below desktop width;
-- complete Russian Project PDF/workbook, compatibility files, and coordinated ZIP;
-- one immutable club/document settings snapshot per package request;
-- installation, update, backup, restore, health, LAN, recovery, and production-like Docker acceptance.
+`ProjectTeamNotificationService` exists as a no-op boundary for future email, Telegram, and MAX notifications. No message, queue item, retry record, or delivery attempt is created today.
 
-### Product acceptance and release readiness
+## 8. Current active work and immediate sequence
 
-- versioned first-release Product Acceptance and Release Readiness manifests remain tied to immutable `v0.1.0` and `h10021`;
-- current Quality and Docker gates migrate and validate post-release head `h10022`;
-- Final Release Readiness verifies the released migration cycle by checking out immutable tag `v0.1.0`;
-- TH-0104 critical Backend and Chrome scenarios cover profiles, contacts, vCard, password changes, account navigation, mobile layout, and logout;
-- exact-head workflows, PostgreSQL backup/restore, and immutable tag verification remain required;
-- no active release-blocking debt.
+- TH-0061.5 remains operational maintenance for the completed menu rules engine.
+- TH-0105 is complete.
+- No later product task is active automatically.
+- `Копировать проект` is explicitly preserved in the roadmap as a required future Product Owner-selected task.
 
-## 5. Current active work
-
-- TH-0061.5 — operational maintenance of the completed menu rules engine.
-
-TH-0104 is complete after exact-head verification. No later post-release capability is selected automatically.
-
-## 6. Immediate sequence
-
-1. Operate the local stack using `docs/DEPLOYMENT_CHECKLIST.md`.
-2. Use `/account` to maintain personal contact details and access active club contacts.
-3. Use the Administrator Audit surface to review covered operational and account events.
-4. Select later product work only through another explicit Product Owner decision.
-
-## 7. Development rules
+## 9. Development rules
 
 - Do not invent missing business requirements.
-- Do not add microservices or multi-tenant infrastructure.
-- Do not put business rules or permission decisions only in React.
-- Do not expose account contact data outside authenticated active-user boundaries.
-- Do not record account contact values, passwords, hashes, cookies, or session tokens in audit payloads.
-- Do not infer Dish generator roles from Recipe content without a separate approved design.
-- Do not implement ORM-wide automatic auditing; record semantic actions in owning transactions.
-- Do not describe a feature as implemented unless code and tests confirm it.
-- Architecture or stack changes require Product Owner approval and an ADR.
+- Do not add multi-tenancy or microservices.
+- Do not move authorization or business decisions into React.
+- Apply Project access to every direct and nested route, not only catalogue filtering.
+- Do not implement ORM-wide automatic auditing.
+- Do not reopen completed Projects; future copying creates a new Project identity.
 - One logical task is squash-merged to `main`.
-- The released `v0.1.0` tag and its migration contract remain immutable.
 - Documentation, task state, roadmap, and technical debt are updated with code.
