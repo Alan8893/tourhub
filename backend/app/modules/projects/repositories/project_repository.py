@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import builtins
+from typing import Any
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Load, Session, selectinload
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.user import UserORM
 from app.modules.projects.models.project import ProjectORM
@@ -15,7 +16,7 @@ class ProjectRepository:
         self.session = session
 
     @staticmethod
-    def _options() -> tuple[Load, ...]:
+    def _options() -> tuple[Any, ...]:
         return (
             selectinload(ProjectORM.owner),
             selectinload(ProjectORM.instructor_links).selectinload(
