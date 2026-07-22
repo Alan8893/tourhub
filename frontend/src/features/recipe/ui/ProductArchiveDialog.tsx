@@ -17,10 +17,18 @@ import {
 import { isAxiosError } from "axios";
 import { useEffect, useState } from "react";
 
+import type { ArchivedProduct } from "../api/productArchiveApi";
 import type { RecipeProduct } from "../api/recipeApi";
-import { useArchiveProduct, useArchivedProducts, useRestoreProduct } from "../hooks/useProductArchive";
+import {
+  useArchiveProduct,
+  useArchivedProducts,
+  useRestoreProduct,
+} from "../hooks/useProductArchive";
 import { useRecipeProducts } from "../hooks/useRecipes";
-import { canRestoreArchivedProduct, productArchiveNotice } from "../model/productArchive";
+import {
+  canRestoreArchivedProduct,
+  productArchiveNotice,
+} from "../model/productArchive";
 
 interface ProductArchiveDialogProps {
   open: boolean;
@@ -47,6 +55,12 @@ function productMeta(product: RecipeProduct): string {
   const parts = [product.category ?? "Без категории", product.unit];
   if (product.package_size) parts.push(`упаковка ${product.package_size}`);
   return parts.join(" · ");
+}
+
+function isArchivedProduct(
+  product: RecipeProduct | ArchivedProduct,
+): product is ArchivedProduct {
+  return "archived_by_alcohol_policy" in product;
 }
 
 export default function ProductArchiveDialog({ open, onClose }: ProductArchiveDialogProps) {
@@ -142,7 +156,7 @@ export default function ProductArchiveDialog({ open, onClose }: ProductArchiveDi
           {!query.isLoading && !query.isError && products.length > 0 && (
             <Stack spacing={1.5}>
               {products.map((product) => {
-                const archivedProduct = "is_archived" in product ? product : null;
+                const archivedProduct = isArchivedProduct(product) ? product : null;
                 const notice = archivedProduct ? productArchiveNotice(archivedProduct) : null;
                 const canRestore = archivedProduct
                   ? canRestoreArchivedProduct(archivedProduct)
@@ -156,10 +170,20 @@ export default function ProductArchiveDialog({ open, onClose }: ProductArchiveDi
                       alignItems={{ xs: "stretch", sm: "center" }}
                     >
                       <Stack spacing={0.5} sx={{ minWidth: 0 }}>
-                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          alignItems="center"
+                          flexWrap="wrap"
+                          useFlexGap
+                        >
                           <Typography fontWeight={600}>{product.name}</Typography>
                           {archivedProduct?.archived_by_alcohol_policy && (
-                            <Chip size="small" color="warning" label="Заблокирован политикой" />
+                            <Chip
+                              size="small"
+                              color="warning"
+                              label="Заблокирован политикой"
+                            />
                           )}
                         </Stack>
                         <Typography variant="body2" color="text.secondary">
