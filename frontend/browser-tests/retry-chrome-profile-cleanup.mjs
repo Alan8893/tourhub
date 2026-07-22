@@ -10,6 +10,7 @@ const chromeProfileSuffixes = [
   "tourhub-equipment-list-profile",
   "tourhub-documents-profile",
   "tourhub-club-settings-profile",
+  "tourhub-mail-settings-profile",
   "tourhub-access-auth-profile",
   "tourhub-guided-release-profile",
 ];
