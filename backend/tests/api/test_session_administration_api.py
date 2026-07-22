@@ -76,7 +76,7 @@ def test_user_lists_only_safe_active_sessions_and_revokes_one(auth_client, db_se
     assert event.entity_id == str(other["id"])
     assert event.before_data == {"status": "active"}
     assert event.after_data == {"status": "revoked"}
-    assert event.context_data == {"current_session_preserved": True}
+    assert event.context_data == {"current_login_preserved": True}
     serialized = str(
         {
             "before": event.before_data,
@@ -86,6 +86,7 @@ def test_user_lists_only_safe_active_sessions_and_revokes_one(auth_client, db_se
     )
     assert "token" not in serialized.casefold()
     assert "cookie" not in serialized.casefold()
+    assert "session" not in serialized.casefold()
 
 
 def test_session_revocation_hides_unrelated_revoked_expired_and_unknown_ids(
