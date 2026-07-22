@@ -63,6 +63,21 @@ TH-0106 resolves the bounded audit-export portion of operational debt:
 - Backend, Frontend, and real-Chrome acceptance;
 - no persistence change, retention mutation, or recursive export AuditEvent.
 
+## Active debt repayment — TH-0107 Session administration
+
+TH-0107 repays only the own-session visibility and individual-revocation portion of Access debt:
+
+- authenticated list of the current User's active non-expired sessions;
+- server-side current-session matching through the existing HttpOnly cookie hash;
+- safe response fields limited to ID and timestamps/current marker;
+- individual revocation of another owned active session;
+- 404 masking for unrelated/revoked/expired/unknown IDs and 409 protection for the current session;
+- transactional `account_session_revoked` audit without token, hash, cookie, IP, device, or user-agent data;
+- responsive `/account` UX plus Backend, Frontend helper, and real-Chrome acceptance;
+- no migration, cleanup, global sign-out, cross-user administration, or new tracking data.
+
+TH-0107 is not complete until exact-head gates pass and the PR is squash-merged.
+
 ## Explicit future product debt — Copy Project
 
 `Копировать проект` is a required future Product Owner-selected task.
@@ -84,7 +99,7 @@ Open design decisions for that future task:
 - notifications for the newly created team;
 - behavior when source snapshots are no longer valid under current policies.
 
-No placeholder button or endpoint is implemented in TH-0106.
+No placeholder button or endpoint is implemented in TH-0107.
 
 ## Remaining Project collaboration debt
 
@@ -95,7 +110,7 @@ No placeholder button or endpoint is implemented in TH-0106.
 - Project retention/archive policy beyond terminal completion and explicit deletion;
 - bulk team changes or reusable team templates.
 
-## Remaining audit and operations debt after TH-0106
+## Remaining audit and operations debt
 
 1. Audit retention policy and retention-management UI.
 2. External SIEM integration and operational diagnostics.
@@ -104,11 +119,14 @@ No placeholder button or endpoint is implemented in TH-0106.
 
 Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and explicit transaction ownership. Retention work must define legal/product policy before any deletion path is introduced.
 
-## Remaining Access and mail debt
+## Remaining Access and mail debt after TH-0107
 
 - account recovery and verified email/phone change;
-- general session administration, individual revocation, cleanup, and global sign-out;
-- avatars, public profiles, account deletion, and retention policy;
+- global sign-out/revoke-all;
+- Administrator access to other users' sessions;
+- expired/revoked session cleanup and retention policy;
+- IP/device/user-agent/location tracking remains unapproved and unimplemented;
+- avatars, public profiles, and account deletion;
 - invitation retention and cleanup;
 - asynchronous mail, scheduled retries, persisted delivery history, and bounce diagnostics;
 - approved mail templates and attachments;
@@ -153,7 +171,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - external SIEM/diagnostics scope;
 - when to start `Копировать проект` and its exact copy matrix;
 - Project-team notification channels and preferences;
-- session-administration and global-sign-out policy;
+- global-sign-out, cross-user session administration, cleanup, and tracking policy;
 - preference weighting and mandatory Recipe metadata;
 - encrypted settings archive format.
 
