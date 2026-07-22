@@ -24,6 +24,22 @@ export function startAccountProfileApi() {
     created_at: "2026-07-01T10:00:00Z",
     updated_at: "2026-07-01T10:00:00Z",
   };
+  let sessions = [
+    {
+      id: 101,
+      created_at: "2026-07-22T08:00:00Z",
+      last_seen_at: "2026-07-22T10:00:00Z",
+      expires_at: "2026-08-21T08:00:00Z",
+      is_current: true,
+    },
+    {
+      id: 202,
+      created_at: "2026-07-20T07:30:00Z",
+      last_seen_at: "2026-07-21T18:45:00Z",
+      expires_at: "2026-08-19T07:30:00Z",
+      is_current: false,
+    },
+  ];
   let loggedOut = false;
   accountRequests.length = 0;
 
@@ -56,6 +72,34 @@ export function startAccountProfileApi() {
       return;
     }
 
+    if (url.pathname === "/api/v1/account/sessions" && request.method === "GET") {
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify(sessions));
+      return;
+    }
+
+    const sessionMatch = url.pathname.match(/^\/api\/v1\/account\/sessions\/(\d+)$/);
+    if (sessionMatch && request.method === "DELETE") {
+      const sessionId = Number(sessionMatch[1]);
+      const target = sessions.find((session) => session.id === sessionId);
+      if (!target || target.is_current) {
+        response.statusCode = target ? 409 : 404;
+        response.setHeader("content-type", "application/json");
+        response.end(
+          JSON.stringify({
+            error: target
+              ? "Текущую сессию можно завершить только обычным выходом."
+              : "Активная сессия не найдена.",
+          }),
+        );
+        return;
+      }
+      sessions = sessions.filter((session) => session.id !== sessionId);
+      response.statusCode = 204;
+      response.end();
+      return;
+    }
+
     if (url.pathname === "/api/v1/account/password" && request.method === "POST") {
       if (body.current_password !== "current-account-password") {
         response.statusCode = 400;
@@ -64,6 +108,7 @@ export function startAccountProfileApi() {
         return;
       }
       profile = { ...profile, version: profile.version + 1 };
+      sessions = sessions.filter((session) => session.is_current);
       response.setHeader("content-type", "application/json");
       response.end(JSON.stringify(profile));
       return;
