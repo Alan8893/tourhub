@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.auth import require_preparation_access
+from app.core.project_access import ProjectAccessPolicy
 from app.core.session import get_session
 from app.models.meal_plan import MealPlanORM
 from app.models.meal_plan_day import MealPlanDayORM
 from app.models.meal_slot import MealSlotORM
 from app.models.meal_slot_dish import MealSlotDishORM
 from app.models.user import UserORM
-from app.modules.projects.repositories.project_repository import ProjectRepository
 from app.repositories.dish_repository import DishRepository
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
@@ -56,7 +56,9 @@ def _meal_plan_snapshot(meal_plan: MealPlanORM) -> dict[str, object]:
 def get_project_meal_plan(
     project_id: int,
     session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> MealPlanResponse:
+    ProjectAccessPolicy.require_visible(session, project_id, actor)
     meal_plan = MealPlanRepository(session).get_by_project_id(project_id)
     if meal_plan is None:
         raise HTTPException(status_code=404, detail="Meal plan not found for project")
@@ -70,9 +72,7 @@ def generate_project_meal_plan(
     session: Session = Depends(get_session),
     actor: UserORM = Depends(require_preparation_access),
 ) -> MealPlanResponse:
-    project = ProjectRepository(session).get_by_id(project_id)
-    if project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
+    project = ProjectAccessPolicy.require_menu_write(session, project_id, actor)
 
     meal_plan_repository = MealPlanRepository(session)
     current_plan = meal_plan_repository.get_by_project_id(project_id)
