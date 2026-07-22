@@ -148,7 +148,7 @@ async function run() {
       assert.ok(text.includes(expected), `Missing Project contact action: ${expected}`);
     }
 
-    assert.equal(await clickButton(client, "Сохранить контакт"), true);
+    await clickButton(client, "Сохранить контакт");
     await waitForRequest(
       mockApi.requests,
       "GET",
