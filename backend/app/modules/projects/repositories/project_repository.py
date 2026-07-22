@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import builtins
+
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Load, Session, selectinload
 
 from app.models.user import UserORM
 from app.modules.projects.models.project import ProjectORM
@@ -13,7 +15,7 @@ class ProjectRepository:
         self.session = session
 
     @staticmethod
-    def _options():
+    def _options() -> tuple[Load, ...]:
         return (
             selectinload(ProjectORM.owner),
             selectinload(ProjectORM.instructor_links).selectinload(
@@ -31,8 +33,8 @@ class ProjectRepository:
             .where(ProjectORM.id == project_id)
         )
 
-    def list(self) -> list[ProjectORM]:
-        return list(
+    def list(self) -> builtins.list[ProjectORM]:
+        return builtins.list(
             self.session.scalars(
                 select(ProjectORM)
                 .options(*self._options())
@@ -40,7 +42,7 @@ class ProjectRepository:
             ).all()
         )
 
-    def list_visible_to(self, actor: UserORM) -> list[ProjectORM]:
+    def list_visible_to(self, actor: UserORM) -> builtins.list[ProjectORM]:
         statement = select(ProjectORM).options(*self._options())
         if actor.role != "administrator":
             statement = statement.where(
@@ -51,7 +53,7 @@ class ProjectRepository:
                     ),
                 )
             )
-        return list(
+        return builtins.list(
             self.session.scalars(statement.order_by(ProjectORM.id.desc())).all()
         )
 
