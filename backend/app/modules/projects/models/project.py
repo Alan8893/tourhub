@@ -1,10 +1,15 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, Integer, String, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 from app.models.recipe_generation_mode import RecipeGenerationMode
+
+if TYPE_CHECKING:
+    from app.models.user import UserORM
+    from app.modules.projects.models.project_instructor import ProjectInstructorORM
 
 
 class ProjectORM(Base):
@@ -31,6 +36,14 @@ class ProjectORM(Base):
         server_default=RecipeGenerationMode.CLUB_ONLY.value,
     )
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="draft")
+    # Nullable in metadata-created test databases for backwards-compatible fixtures.
+    # Production migration h10023 backfills every row and applies NOT NULL.
+    owner_user_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),
@@ -43,6 +56,12 @@ class ProjectORM(Base):
         nullable=False,
     )
 
+    owner: Mapped["UserORM | None"] = relationship(foreign_keys=[owner_user_id])
+    instructor_links: Mapped[list["ProjectInstructorORM"]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
     meal_plans = relationship(
         "MealPlanORM",
         back_populates="project",
