@@ -39,9 +39,46 @@ User
   └─ version
 ```
 
-Profile contact values are private from unauthenticated users and are exposed to another user only through shared access to a Project team. Account recovery, verified contact changes, deletion, avatars, public profiles, and general session administration remain future capabilities.
+Profile contact values are private from unauthenticated users and are exposed to another user only through shared access to a Project team. Account recovery, verified contact changes, deletion, avatars, and public profiles remain future capabilities.
 
 Only an active Administrator may read or export the club-wide AuditEvent journal.
+
+### AuthSession and own-session projection — TH-0107
+
+`AuthSession` remains the persisted authentication boundary:
+
+```text
+AuthSession
+  ├─ id
+  ├─ user_id → User
+  ├─ token_hash
+  ├─ created_at
+  ├─ last_seen_at
+  ├─ expires_at
+  └─ revoked_at?
+```
+
+The personal-account projection exposes only:
+
+```text
+AccountSession
+  ├─ id
+  ├─ created_at
+  ├─ last_seen_at
+  ├─ expires_at
+  └─ is_current
+```
+
+Rules:
+
+- an active authenticated User receives only their own rows with no revocation timestamp and future expiry;
+- the current row is matched by hashing the existing HttpOnly cookie in Backend;
+- raw tokens, token hashes, cookies, authorization headers, IP, user-agent, device, fingerprint, and location are not projection fields;
+- another owned active session may be revoked by ID;
+- unrelated, revoked, expired, and unknown session IDs are indistinguishable as not found;
+- the current session cannot be revoked through this operation and remains controlled by logout;
+- individual revocation updates `revoked_at` and appends `account_session_revoked` in one transaction;
+- global sign-out, cross-user Administrator session management, cleanup, and physical deletion remain future capabilities.
 
 ## Project ownership and team
 
@@ -148,9 +185,17 @@ Current Project-team actions include:
 - `project_status_updated`;
 - `project_deleted`.
 
-Team, ownership, completion, deletion, and their AuditEvents share owning transactions. No-op membership/ownership writes create no event. Audit failure rolls back pending domain mutation.
+Current personal-account actions include:
 
-Audit payloads may include bounded entity/User IDs, display names, roles, state metadata, calculated counts, and document metadata. Phone numbers, social URLs, passwords, hashes, sessions, tokens, credentials, authorization data, arbitrary request bodies, source CSV content, generated document content, and provider secrets are excluded.
+- `account_profile_updated`;
+- `account_password_changed`;
+- `account_session_revoked`.
+
+For individual session revocation, `entity_type` is `auth_session`, entity ID is the target session ID, before/after contain only active/revoked state, and context contains only `current_session_preserved`. Token values, hashes, cookies, authorization headers, IP/device data, and user-agent strings are excluded.
+
+Team, ownership, completion, deletion, personal-account writes, and their AuditEvents share owning transactions. No-op writes create no event. Audit failure rolls back pending domain mutation.
+
+Audit payloads may include bounded entity/User/session IDs, display names, roles, state metadata, calculated counts, and document metadata. Phone numbers, social URLs, passwords, hashes, session tokens, cookies, credentials, authorization data, arbitrary request bodies, source CSV content, generated document content, provider secrets, and device/network metadata are excluded.
 
 Existing audit coverage for user access, Recipe lifecycle, Project preparation, Menu/MealSlot, System Settings/mail, invitations, catalogue/import, Shopping/Checklist, Equipment, and Documents remains implemented. Automatic ORM-wide auditing remains rejected.
 
@@ -210,7 +255,8 @@ MailSettings and invitation delivery retain existing boundaries. Project-team no
 - released `v0.1.0`: `h10021`;
 - optional User contact profile: `h10022`;
 - Project owner/team membership: `h10023` current head;
-- TH-0106 Audit CSV export: no migration.
+- TH-0106 Audit CSV export: no migration;
+- TH-0107 Session Administration: no migration.
 
 ## Future domains
 
