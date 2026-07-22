@@ -62,15 +62,12 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 - the header logout button is replaced by a responsive current-user control opening `/account`;
 - `Личный кабинет` is available in the sidebar to every authenticated active user;
 - existing `display_name` remains one FIO field and email remains read-only;
-- optional phone, Telegram, MAX, and VK fields persist through new Alembic head `h10022`;
+- optional phone, Telegram, MAX, and VK fields persist through Alembic head `h10022`;
 - phone and social values are normalized by Backend, with platform hosts restricted to approved HTTPS URLs;
-- all authenticated active users may view active club contacts;
-- contact cards expose email, `tel:`, Telegram/MAX/VK links, and downloadable vCard;
+- Project-scoped contact cards expose email, `tel:`, Telegram/MAX/VK links, and downloadable vCard;
 - password change verifies the current password, preserves the current login, and revokes all other active logins;
-- logout is available from the personal account page;
 - profile and password actions append safe semantic audit events without contact values, passwords, hashes, cookies, or tokens;
-- real-Chrome acceptance covers desktop/mobile layout, profile update, contacts, vCard, password change, navigation, and logout;
-- current post-release head is `h10022`; immutable `v0.1.0` remains at released head `h10021`.
+- real-Chrome acceptance covers desktop/mobile layout, profile update, contacts, vCard, password change, navigation, and logout.
 
 ### TH-0105 — Project ownership, team access, and project contacts
 
@@ -80,18 +77,20 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 - team contacts are Project-scoped and ownership transfer is audited transactionally;
 - current post-release Alembic head is `h10023`.
 
-## Active post-release selection
-
 ### TH-0106 — Audit CSV export
 
-- add one Administrator-only CSV export endpoint beside the existing Audit list;
-- reuse the same Backend-owned actor, entity, action, and date filters for list and export;
-- export only persisted sanitized AuditEvent snapshots with deterministic UTF-8 JSON columns;
-- neutralize spreadsheet formula cells and cap exports at 10,000 rows;
-- expose date filters and `Скачать CSV` on the Audit surface;
-- add Backend, Frontend, and real-Chrome acceptance;
-- keep retention UI, deletion/cleanup, SIEM, diagnostics, scheduling, and replay out of scope;
-- no migration is expected, so current Alembic head remains `h10023`.
+- one Administrator-only CSV export endpoint sits beside the existing Audit list;
+- list and export reuse the same Backend-owned actor, entity, action, and date filters;
+- only persisted sanitized AuditEvent snapshots are exported with deterministic UTF-8 JSON columns;
+- spreadsheet formula cells are neutralized and exports are capped at 10,000 rows;
+- the Audit surface exposes date filters and `Скачать CSV`;
+- Backend, Frontend, and real-Chrome acceptance cover policy and UX;
+- retention UI, deletion/cleanup, SIEM, diagnostics, scheduling, and replay remain out of scope;
+- no migration was added, so current Alembic head remains `h10023`.
+
+## Current post-release selection
+
+No new post-release capability is selected automatically after TH-0106. The next task requires an explicit Product Owner decision and must remain one cohesive branch/squash-merge unit.
 
 ## Explicit future task — Copy Project
 
@@ -102,6 +101,7 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 ### Audit and operations
 
 - retention UI, external SIEM integration, and operational diagnostics;
+- scheduled/background export delivery;
 - undo and event replay remain outside v0.1.0.
 
 ### Access and identity
