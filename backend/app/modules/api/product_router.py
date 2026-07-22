@@ -18,6 +18,11 @@ from app.schemas.recipe import (
     RecipeProductResponse,
 )
 from app.services.operational_audit_service import OperationalAuditService
+from app.services.product_archive_service import (
+    ProductArchiveNotFoundError,
+    ProductArchiveService,
+    ProductRestoreBlockedError,
+)
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -29,6 +34,8 @@ def _response(product: ProductORM) -> RecipeProductResponse:
         category=product.category,
         unit=product.unit,
         package_size=product.package_size,
+        is_archived=product.is_archived,
+        archived_by_alcohol_policy=product.archived_by_alcohol_policy,
     )
 
 
@@ -67,11 +74,42 @@ def _commit_product(
     return _response(product)
 
 
+def _archive_service_response(
+    operation: str,
+    product_id: str,
+    *,
+    session: Session,
+    actor: UserORM,
+) -> RecipeProductResponse:
+    service = ProductArchiveService(session, actor=actor)
+    try:
+        product = service.archive(product_id) if operation == "archive" else service.restore(product_id)
+    except ProductArchiveNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ProductRestoreBlockedError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    return _response(product)
+
+
 @router.get("", response_model=ProductListResponse)
 def list_products(session: Session = Depends(get_session)) -> ProductListResponse:
     products = session.scalars(
         select(ProductORM)
         .where(ProductORM.is_archived.is_(False))
+        .order_by(ProductORM.name)
+    ).all()
+    return ProductListResponse(items=[_response(product) for product in products])
+
+
+@router.get("/archive", response_model=ProductListResponse)
+def list_archived_products(
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> ProductListResponse:
+    del actor
+    products = session.scalars(
+        select(ProductORM)
+        .where(ProductORM.is_archived.is_(True))
         .order_by(ProductORM.name)
     ).all()
     return ProductListResponse(items=[_response(product) for product in products])
@@ -121,3 +159,31 @@ def update_product(
     if before == audit.product_snapshot(product):
         return _response(product)
     return _commit_product(session, product, actor=actor, before=before)
+
+
+@router.post("/{product_id}/archive", response_model=RecipeProductResponse)
+def archive_product(
+    product_id: str,
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> RecipeProductResponse:
+    return _archive_service_response(
+        "archive",
+        product_id,
+        session=session,
+        actor=actor,
+    )
+
+
+@router.post("/{product_id}/restore", response_model=RecipeProductResponse)
+def restore_product(
+    product_id: str,
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
+) -> RecipeProductResponse:
+    return _archive_service_response(
+        "restore",
+        product_id,
+        session=session,
+        actor=actor,
+    )
