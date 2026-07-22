@@ -16,6 +16,14 @@ export interface AccountProfile {
   updated_at: string;
 }
 
+export interface AccountSession {
+  id: number;
+  created_at: string;
+  last_seen_at: string;
+  expires_at: string;
+  is_current: boolean;
+}
+
 export interface AccountProfileUpdateInput {
   display_name: string;
   phone: string | null;
@@ -48,4 +56,13 @@ export async function changeAccountPassword(
 ): Promise<AccountProfile> {
   const response = await apiClient.post<AccountProfile>("/account/password", payload);
   return response.data;
+}
+
+export async function getAccountSessions(): Promise<AccountSession[]> {
+  const response = await apiClient.get<AccountSession[]>("/account/sessions");
+  return response.data;
+}
+
+export async function revokeAccountSession(sessionId: number): Promise<void> {
+  await apiClient.delete(`/account/sessions/${sessionId}`);
 }
