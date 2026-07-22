@@ -63,6 +63,7 @@ function runAttempt(scenario, attempt) {
     let settled = false;
     let successMarkerSeen = false;
     let teardownTimer;
+    let timeoutTimer;
 
     const finish = (result) => {
       if (settled) return;
@@ -99,7 +100,7 @@ function runAttempt(scenario, attempt) {
       });
     });
 
-    const timeoutTimer = setTimeout(() => {
+    timeoutTimer = setTimeout(() => {
       stopProcessGroup(child);
       finish({
         ok: false,
