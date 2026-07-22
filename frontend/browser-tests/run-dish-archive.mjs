@@ -23,6 +23,21 @@ const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5214/browser-tests/dish-archive.html";
 const profileDir = `/tmp/tourhub-dish-archive-${process.pid}`;
 
+async function captureScreenshot(client, filename) {
+  const screenshot = await Promise.race([
+    client.send("Page.captureScreenshot", {
+      format: "png",
+      captureBeyondViewport: false,
+    }),
+    sleep(5_000).then(() => null),
+  ]);
+  if (!screenshot?.data) {
+    console.warn(`Skipped ${filename}: Chrome screenshot timed out after assertions.`);
+    return;
+  }
+  await writeFile(path.join(artifactDir, filename), Buffer.from(screenshot.data, "base64"));
+}
+
 async function clickTextButton(client, text) {
   return client.evaluate(`(() => {
     const text = ${JSON.stringify(text)};
@@ -65,11 +80,7 @@ async function writeDiagnostics(client, name) {
     path.join(artifactDir, `${name}.json`),
     JSON.stringify({ page, dishArchiveRequests }, null, 2),
   );
-  const screenshot = await client.send("Page.captureScreenshot", {
-    format: "png",
-    captureBeyondViewport: false,
-  });
-  await writeFile(path.join(artifactDir, `${name}.png`), Buffer.from(screenshot.data, "base64"));
+  await captureScreenshot(client, `${name}.png`);
 }
 
 async function run() {
@@ -198,14 +209,7 @@ async function run() {
           layout.bodyScrollWidth <= layout.clientWidth + 1,
         `Horizontal overflow: ${JSON.stringify(layout)}`,
       );
-      const screenshot = await client.send("Page.captureScreenshot", {
-        format: "png",
-        captureBeyondViewport: false,
-      });
-      await writeFile(
-        path.join(artifactDir, "dish-archive-mobile.png"),
-        Buffer.from(screenshot.data, "base64"),
-      );
+      await captureScreenshot(client, "dish-archive-mobile.png");
     } catch (error) {
       await writeDiagnostics(client, "dish-archive-diagnostic");
       throw error;
