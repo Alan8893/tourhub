@@ -4,9 +4,9 @@ Status date: 2026-07-22
 
 ## Current phase
 
-TourHub v0.1.0 remains release-ready at released Alembic head `h10021`. Post-release development is complete through TH-0105 at current head `h10023`. TH-0106 is the single active implementation candidate.
+TourHub v0.1.0 remains release-ready at released Alembic head `h10021`. Post-release development is complete through TH-0106 at current Alembic head `h10023`. No next post-release capability is selected automatically.
 
-The feature-frozen first release is complete through TH-0093. Post-release work delivered routed Project UX (TH-0095), Product editing (TH-0097), published Recipe-to-Dish synchronization (TH-0098), semantic audit expansion (TH-0099 through TH-0103), personal accounts/contact profiles (TH-0104), and Project ownership/team-scoped access (TH-0105).
+The feature-frozen first release is complete through TH-0093. Post-release work delivered routed Project UX (TH-0095), Product editing (TH-0097), published Recipe-to-Dish synchronization (TH-0098), semantic audit expansion (TH-0099 through TH-0103), personal accounts/contact profiles (TH-0104), Project ownership/team-scoped access (TH-0105), and safe filtered Audit CSV export (TH-0106).
 
 ## Verified baseline
 
@@ -43,18 +43,18 @@ The feature-frozen first release is complete through TH-0093. Post-release work 
 - a no-op notification boundary is ready for later email, Telegram, and MAX integration without sending messages now;
 - Russian Audit UI labels cover instructor add/remove, ownership transfer, status change, and deletion.
 
-## Active TH-0106 candidate — Audit CSV export
+### Audit CSV export — TH-0106
 
-- `/api/v1/audit/events/export.csv` remains Administrator-only through the existing centralized router dependency;
+- `/api/v1/audit/events/export.csv` remains Administrator-only through the centralized router dependency;
 - list and export share Backend-owned filters for actor, entity type, entity ID, action, and created-at boundaries;
 - exports contain deterministic columns for actor snapshots, semantic action, entity identity, timestamp, and already-sanitized before/after/context JSON;
 - UTF-8 BOM supports Russian spreadsheet review, while formula-like cells are neutralized;
 - exports above 10,000 matching rows are rejected with a clear bounded error;
-- the Audit UI adds date filters and a filtered `Скачать CSV` action;
+- the Audit UI includes date filters and a filtered `Скачать CSV` action;
 - export is read-only, creates no recursive AuditEvent, and introduces no migration;
-- Backend, Frontend helper, and dedicated real-Chrome acceptance are included in the candidate.
+- Backend, Frontend helper, and dedicated real-Chrome acceptance cover authorization, safe payloads, bounded export, filter propagation, UTF-8 content, and mobile layout.
 
-## TH-0106 non-goals
+## TH-0106 non-goals retained
 
 Retention deletion/cleanup, retention-policy UI, external SIEM delivery, operational diagnostics, scheduled exports, background processing, undo, replay, session administration, Product/Dish archive-management UI, ownership-aware import UX, and Project copy remain separate work.
 
@@ -65,7 +65,7 @@ Retention deletion/cleanup, retention-policy UI, external SIEM delivery, operati
 ## Deferred non-blocking debt
 
 - Project-copy implementation and future Project-team notifications through email, Telegram, and MAX;
-- audit retention UI, external SIEM integration, operational diagnostics, undo, and event replay;
+- audit retention UI, external SIEM integration, operational diagnostics, scheduled delivery, undo, and event replay;
 - account recovery, verified contact changes, session administration, avatars, public profiles, asynchronous mail, and bounce handling;
 - richer Recipe metadata, per-meal switching, preference weights, and ownership-aware import UX;
 - Product/Dish archive-management UI;
@@ -74,4 +74,4 @@ Retention deletion/cleanup, retention-policy UI, external SIEM delivery, operati
 
 ## Next work
 
-TH-0106 is the only active task. It is complete only after all exact-head gates pass, review threads are clear, the branch matches current `main`, task state moves to `closed`, and the PR is squash-merged.
+No next post-release product task is selected. Any later slice must be explicitly chosen, scoped as one logical task, implemented from current `main`, and squash-merged independently.
