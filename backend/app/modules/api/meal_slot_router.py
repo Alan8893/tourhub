@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.auth import require_preparation_access
+from app.core.project_access import ProjectAccessPolicy
 from app.core.session import get_session
 from app.models.dish import DishORM
 from app.models.meal_slot import MealSlotORM
@@ -109,6 +110,17 @@ def _slot_context(slot: MealSlotORM) -> dict[str, object]:
     }
 
 
+def _require_slot_menu_write(
+    session: Session,
+    slot: MealSlotORM,
+    actor: UserORM,
+) -> None:
+    project_id = slot.day.meal_plan.project_id
+    if project_id is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    ProjectAccessPolicy.require_menu_write(session, project_id, actor)
+
+
 def _commit_recalculation(
     session: Session,
     operation: Callable[[], dict[str, str]],
@@ -133,6 +145,7 @@ def add_dish(
     slot = MealSlotRepository(session).get(slot_id)
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
+    _require_slot_menu_write(session, slot, actor)
     before = _slot_snapshot(slot)
 
     def operation() -> dict[str, str]:
@@ -173,6 +186,7 @@ def remove_dish(
     slot = MealSlotRepository(session).get(slot_id)
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
+    _require_slot_menu_write(session, slot, actor)
     before = _slot_snapshot(slot)
 
     def operation() -> dict[str, str]:
@@ -221,6 +235,7 @@ def replace_dish(
     slot = MealSlotRepository(session).get(slot_id)
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
+    _require_slot_menu_write(session, slot, actor)
     before = _slot_snapshot(slot)
 
     def operation() -> dict[str, str]:
