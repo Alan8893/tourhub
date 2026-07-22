@@ -111,7 +111,7 @@ def test_audit_csv_export_rejects_unbounded_result(client, db_session, monkeypat
     )
 
     assert response.status_code == 422
-    assert response.json()["detail"] == (
+    assert response.json()["error"] == (
         "Экспорт содержит слишком много записей: 2. "
         "Уточните фильтры; максимум 1."
     )
