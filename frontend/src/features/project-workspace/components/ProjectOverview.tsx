@@ -14,6 +14,7 @@ import { useModuleVisibility } from "@/features/system-settings/providers/Module
 
 import { buildProjectWorkspacePath } from "../model/projectWorkspaceNavigation";
 import NextWorkflowAction from "./NextWorkflowAction";
+import ProjectTeamPanel from "./ProjectTeamPanel";
 import ProjectWorkflowPanel from "./ProjectWorkflowPanel";
 
 interface SummaryCardProps {
@@ -53,7 +54,7 @@ export default function ProjectOverview() {
   const hasDocuments = hasShopping && hasChecklist && hasEquipment;
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       <Grid container spacing={2}>
         <Grid item xs={12} md={5}>
           <ProjectWorkflowPanel />
@@ -65,7 +66,7 @@ export default function ProjectOverview() {
                 title="Меню"
                 detail={
                   hasMenu
-                    ? "Меню сформировано и доступно для редактирования."
+                    ? "Меню сформировано и доступно для просмотра."
                     : "Сформируйте меню похода."
                 }
                 actionLabel="Открыть меню"
@@ -113,6 +114,7 @@ export default function ProjectOverview() {
         </Grid>
       </Grid>
 
+      <ProjectTeamPanel projectId={projectId} />
       <NextWorkflowAction />
     </Stack>
   );
