@@ -153,6 +153,14 @@ class AccountProfileResponse(BaseModel):
     updated_at: datetime
 
 
+class AccountSessionResponse(BaseModel):
+    id: int
+    created_at: datetime
+    last_seen_at: datetime
+    expires_at: datetime
+    is_current: bool
+
+
 class ClubContactResponse(BaseModel):
     id: int
     email: str

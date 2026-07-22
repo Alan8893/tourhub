@@ -8,7 +8,7 @@ This file contains task status and links. Detailed task descriptions are stored 
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
 
-No new post-release capability is selected automatically after TH-0106. Retention UI, session administration, archive-management UI, ownership-aware import UX, and `Копировать проект` remain separate future tasks requiring explicit selection.
+No post-release product task is active after TH-0107. Retention UI, global sign-out, Administrator session administration, session cleanup, archive-management UI, ownership-aware import UX, and `Копировать проект` require separate explicit selection.
 
 ## First-release sequence
 
@@ -80,6 +80,7 @@ The complete first-release sequence is delivered through TH-0093. The feature-fr
 | TH-0104 | Account Profile and Club Contacts | DONE |
 | TH-0105 | Project Ownership, Team Access and Project Contacts | DONE |
 | TH-0106 | Audit CSV Export | DONE |
+| TH-0107 | Session Administration and Individual Revocation | DONE |
 
 Details are stored in `./closed/` using the task ID and descriptive slug.
 

@@ -2,6 +2,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Divider,
   Paper,
@@ -15,8 +16,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   AccountProfile,
+  AccountSession,
   changeAccountPassword,
   getAccountProfile,
+  getAccountSessions,
+  revokeAccountSession,
   updateAccountProfile,
 } from "@/features/account/api/accountApi";
 import { useAuth } from "@/features/auth/providers/AuthProvider";
@@ -56,15 +60,28 @@ function profileDraft(profile: AccountProfile): ProfileDraft {
 }
 
 function errorMessage(error: unknown, fallback: string): string {
-  if (isAxiosError<{ detail?: string | Array<{ msg?: string }> }>(error)) {
-    const detail = error.response?.data?.detail;
-    if (typeof detail === "string") return detail;
-    if (Array.isArray(detail)) {
-      const message = detail.map((item) => item.msg).filter(Boolean).join(" ");
+  if (
+    isAxiosError<{
+      detail?: string | Array<{ msg?: string }>;
+      error?: string;
+    }>(error)
+  ) {
+    const payload = error.response?.data;
+    if (typeof payload?.error === "string") return payload.error;
+    if (typeof payload?.detail === "string") return payload.detail;
+    if (Array.isArray(payload?.detail)) {
+      const message = payload.detail.map((item) => item.msg).filter(Boolean).join(" ");
       if (message) return message;
     }
   }
   return error instanceof Error ? error.message : fallback;
+}
+
+function formatSessionTime(value: string): string {
+  return new Intl.DateTimeFormat("ru-RU", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 }
 
 export default function AccountPage() {
@@ -72,16 +89,22 @@ export default function AccountPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
+  const [sessions, setSessions] = useState<AccountSession[]>([]);
   const [draft, setDraft] = useState<ProfileDraft>(emptyProfile);
   const [passwords, setPasswords] = useState<PasswordDraft>(emptyPasswords);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSessionsLoading, setIsSessionsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [revokingSessionId, setRevokingSessionId] = useState<number | null>(null);
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [sessionMessage, setSessionMessage] = useState<string | null>(null);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [sessionLoadError, setSessionLoadError] = useState<string | null>(null);
 
   async function load() {
     setIsLoading(true);
@@ -97,8 +120,21 @@ export default function AccountPage() {
     }
   }
 
+  async function loadSessions() {
+    setIsSessionsLoading(true);
+    setSessionLoadError(null);
+    try {
+      setSessions(await getAccountSessions());
+    } catch (error) {
+      setSessionLoadError(errorMessage(error, "Не удалось загрузить активные сессии."));
+    } finally {
+      setIsSessionsLoading(false);
+    }
+  }
+
   useEffect(() => {
     void load();
+    void loadSessions();
   }, []);
 
   async function saveProfile(event: FormEvent) {
@@ -148,12 +184,27 @@ export default function AccountPage() {
       });
       setProfile(updated);
       setPasswords(emptyPasswords);
-      await refresh();
+      await Promise.all([refresh(), loadSessions()]);
       setPasswordMessage("Пароль изменён. Другие активные сессии завершены.");
     } catch (error) {
       setPasswordError(errorMessage(error, "Не удалось изменить пароль."));
     } finally {
       setIsChangingPassword(false);
+    }
+  }
+
+  async function revokeSession(sessionId: number) {
+    setSessionMessage(null);
+    setSessionError(null);
+    setRevokingSessionId(sessionId);
+    try {
+      await revokeAccountSession(sessionId);
+      setSessions((current) => current.filter((item) => item.id !== sessionId));
+      setSessionMessage("Сессия завершена.");
+    } catch (error) {
+      setSessionError(errorMessage(error, "Не удалось завершить сессию."));
+    } finally {
+      setRevokingSessionId(null);
     }
   }
 
@@ -179,7 +230,7 @@ export default function AccountPage() {
       <Box>
         <Typography variant="h3" component="h1">Личный кабинет</Typography>
         <Typography color="text.secondary">
-          Управление личными контактными данными, паролем и текущей сессией.
+          Управление личными контактными данными, паролем и активными сессиями.
         </Typography>
       </Box>
 
@@ -244,6 +295,80 @@ export default function AccountPage() {
           </Stack>
         </Paper>
       )}
+
+      <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
+        <Stack spacing={2.5}>
+          <Box>
+            <Typography variant="h5">Активные сессии</Typography>
+            <Typography color="text.secondary">
+              Здесь показаны только ваши действующие входы. Текущую сессию можно завершить кнопкой выхода ниже.
+            </Typography>
+          </Box>
+          {sessionLoadError && (
+            <Alert
+              severity="error"
+              action={<Button onClick={() => void loadSessions()}>Повторить</Button>}
+            >
+              {sessionLoadError}
+            </Alert>
+          )}
+          {isSessionsLoading ? (
+            <Box sx={{ minHeight: 96, display: "grid", placeItems: "center" }}>
+              <CircularProgress size={28} aria-label="Загрузка активных сессий" />
+            </Box>
+          ) : (
+            <Stack spacing={1.5}>
+              {sessions.map((session) => (
+                <Paper key={session.id} variant="outlined" sx={{ p: 2, minWidth: 0 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { xs: "flex-start", sm: "center" },
+                      justifyContent: "space-between",
+                      gap: 2,
+                      minWidth: 0,
+                    }}
+                  >
+                    <Stack spacing={0.5} sx={{ minWidth: 0 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                        <Typography variant="subtitle1">Сессия №{session.id}</Typography>
+                        {session.is_current && <Chip size="small" color="primary" label="Текущая" />}
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary">
+                        Создана: {formatSessionTime(session.created_at)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Последняя активность: {formatSessionTime(session.last_seen_at)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Истекает: {formatSessionTime(session.expires_at)}
+                      </Typography>
+                    </Stack>
+                    {!session.is_current && (
+                      <Button
+                        color="error"
+                        variant="outlined"
+                        disabled={revokingSessionId !== null}
+                        aria-label={`Завершить сессию ${session.id}`}
+                        onClick={() => void revokeSession(session.id)}
+                        sx={{ flexShrink: 0 }}
+                      >
+                        {revokingSessionId === session.id ? "Завершение…" : "Завершить"}
+                      </Button>
+                    )}
+                  </Box>
+                </Paper>
+              ))}
+              {sessions.length === 0 && (
+                <Typography color="text.secondary">Активные сессии не найдены.</Typography>
+              )}
+            </Stack>
+          )}
+          {sessionError && <Alert severity="error">{sessionError}</Alert>}
+          {sessionMessage && <Alert severity="success">{sessionMessage}</Alert>}
+        </Stack>
+      </Paper>
 
       <Paper component="form" onSubmit={changePassword} variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
         <Stack spacing={2.5}>

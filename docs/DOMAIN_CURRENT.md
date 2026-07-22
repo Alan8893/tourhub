@@ -24,28 +24,49 @@ Implemented identity model:
 - at least one active Administrator must always remain;
 - user/profile updates use optimistic versions.
 
-A User owns one editable personal contact profile:
-
-```text
-User
-  ├─ display_name: one FIO field
-  ├─ email: unique login, read-only in personal account
-  ├─ phone?
-  ├─ telegram_url?
-  ├─ max_url?
-  ├─ vk_url?
-  ├─ role
-  ├─ is_active
-  └─ version
-```
-
-Profile contact values are private from unauthenticated users and are exposed to another user only through shared access to a Project team. Account recovery, verified contact changes, deletion, avatars, public profiles, and general session administration remain future capabilities.
+A User owns one editable personal contact profile with one FIO field, read-only login email, optional phone/Telegram/MAX/VK, role, active state, and version. Profile contact values are exposed to another user only through shared access to a Project team.
 
 Only an active Administrator may read or export the club-wide AuditEvent journal.
 
-## Project ownership and team
+## AuthSession and own-session projection — TH-0107
 
-Project is the preparation root for one trip.
+`AuthSession` remains the persisted authentication boundary:
+
+```text
+AuthSession
+  ├─ id
+  ├─ user_id → User
+  ├─ token_hash
+  ├─ created_at
+  ├─ last_seen_at
+  ├─ expires_at
+  └─ revoked_at?
+```
+
+The personal-account projection exposes only:
+
+```text
+AccountSession
+  ├─ id
+  ├─ created_at
+  ├─ last_seen_at
+  ├─ expires_at
+  └─ is_current
+```
+
+Rules:
+
+- an active authenticated User receives only their own rows with no revocation timestamp and future expiry;
+- the current login is matched by hashing the existing HttpOnly cookie in Backend;
+- raw tokens, token hashes, cookies, authorization headers, IP, user-agent, device, fingerprint, and location are not projection fields;
+- another owned active session may be revoked by ID;
+- unrelated, revoked, expired, and unknown session IDs are indistinguishable as not found;
+- the current login cannot be revoked through this operation and remains controlled by logout;
+- individual revocation updates `revoked_at` and appends `account_session_revoked` in one transaction;
+- audit context is `current_login_preserved`, deliberately avoiding sanitizer-sensitive `session`, `token`, and `cookie` keys;
+- global sign-out, cross-user Administrator session management, cleanup, and physical deletion remain future capabilities.
+
+## Project ownership and team
 
 ```text
 Project
@@ -67,96 +88,43 @@ ProjectInstructor
 Rules:
 
 - every newly created Project belongs to the creating active user;
-- production Projects have exactly one owner;
-- a Project may have any number of additional instructors;
+- production Projects have exactly one owner and any number of additional instructors;
 - owner and additional-instructor membership are mutually exclusive;
 - Administrators may be additional instructors without changing their global role;
 - inactive users retain historical ownership/membership but cannot access the Project;
-- reactivation restores access from the retained relationship;
 - existing owners are backfilled by `h10023` from the earliest trustworthy `project_created` AuditEvent, with first-Administrator fallback.
 
-### Visibility
+An active User may view a Project when they are an Administrator, owner, or additional instructor. An unrelated User receives no catalogue item and HTTP 404 for direct or nested Project access.
 
-An active User may view a Project when at least one condition is true:
+Owner or Administrator may manage Project parameters, Menu, preparation, team, ownership, completion, deletion, and every operational module while open. Additional instructors may view Project/Menu and operate Shopping, Checklist, Equipment, Documents, and contacts, but may not write Menu or Project/team/settings/status/deletion state.
 
-- the User is an Administrator;
-- the User is the owner;
-- the User is an additional instructor.
+Ownership transfer removes the new owner from additional membership, retains the previous owner as an additional instructor, changes ownership, and records one semantic event in one transaction.
 
-An unrelated User receives no catalogue item and HTTP 404 for direct or nested Project access.
-
-### Capabilities
-
-Owner or Administrator, while the Project is open:
-
-- change Project parameters and recipe-generation mode;
-- generate/regenerate and manually edit Menu;
-- run full preparation;
-- operate Shopping, Checklist, Equipment, Documents, and contacts;
-- manage additional instructors;
-- transfer ownership;
-- complete or delete the Project.
-
-Additional instructor, while the Project is open:
-
-- view Project and Menu;
-- operate Shopping, Checklist, Equipment, Documents, and contacts;
-- cannot write Menu or Project/team/settings/status/deletion state.
-
-### Ownership transfer
-
-A new owner may be any active supported User. Transfer removes the new owner from additional membership, retains the previous owner as an additional instructor, changes ownership, and records one semantic event in one transaction.
-
-### Completion
-
-`completed` is terminal. A completed Project:
-
-- is hidden from the catalogue by default;
-- remains visible to authorized users when completed items are requested;
-- is read-only across Menu, settings, team, preparation, Shopping, Checklist, and Equipment;
-- retains document reads/downloads;
-- may be deleted by owner or Administrator;
-- cannot be reopened.
-
-Future `Копировать проект` will create a new Project identity from a completed template. It is not implemented.
+`completed` is terminal. Completed Projects are hidden by default, remain readable/downloadable to authorized users, reject operational writes, may be deleted by owner/Administrator, and cannot be reopened. Future `Копировать проект` creates a new identity and is not implemented.
 
 ## Project team contacts
 
-Project team projection contains:
+Project team projection contains the owner first and additional instructors in deterministic order, with global role, Project role, active state, and contact profile fields. Active authorized team viewers receive approved mail/phone/social/vCard actions; inactive historical members remain identifiable but have no contact actions. The former club-wide `/account/contacts` directory is removed.
 
-- the owner first;
-- additional instructors ordered deterministically;
-- global role, Project role, active state, and contact profile fields.
-
-Active authorized team viewers receive mail, `tel:`, Telegram, MAX, VK, and Project-scoped vCard actions. Inactive historical members remain identifiable but contact actions are unavailable. Administrators who are not explicitly owner/team members are not listed as contacts even though they may view the Project.
-
-The former club-wide `/account/contacts` directory is removed.
-
-## Project-team notification boundary
-
-`ProjectTeamNotificationService` defines callbacks for instructor add/remove and ownership transfer. The current implementation is no-op. No mail, Telegram, MAX, queue, retry, provider message, or delivery history is created.
+`ProjectTeamNotificationService` remains a no-op boundary. No mail, Telegram, MAX, queue, retry, provider message, or delivery history is created.
 
 ## AuditEvent
 
 AuditEvent is append-only and stores actor snapshots, semantic action, entity identity, safe before/after/context JSON, and timestamp.
 
-Current Project-team actions include:
+Current personal-account actions include:
 
-- `project_instructor_added`;
-- `project_instructor_removed`;
-- `project_owner_transferred`;
-- `project_status_updated`;
-- `project_deleted`.
+- `account_profile_updated`;
+- `account_password_changed`;
+- `account_session_revoked`.
 
-Team, ownership, completion, deletion, and their AuditEvents share owning transactions. No-op membership/ownership writes create no event. Audit failure rolls back pending domain mutation.
+For individual session revocation, `entity_type` is `auth_session`, entity ID is the target session ID, before/after contain only active/revoked state, and context contains only `current_login_preserved`. Token values, hashes, cookies, authorization headers, IP/device data, and user-agent strings are excluded.
 
-Audit payloads may include bounded entity/User IDs, display names, roles, state metadata, calculated counts, and document metadata. Phone numbers, social URLs, passwords, hashes, sessions, tokens, credentials, authorization data, arbitrary request bodies, source CSV content, generated document content, and provider secrets are excluded.
-
-Existing audit coverage for user access, Recipe lifecycle, Project preparation, Menu/MealSlot, System Settings/mail, invitations, catalogue/import, Shopping/Checklist, Equipment, and Documents remains implemented. Automatic ORM-wide auditing remains rejected.
+Team, ownership, completion, deletion, personal-account writes, and their AuditEvents share owning transactions. No-op writes create no event. Audit failure rolls back pending domain mutation. Automatic ORM-wide auditing remains rejected.
 
 ### Audit CSV projection — TH-0106
 
-The CSV export is a read projection over existing AuditEvent rows; it is not a new persisted entity.
+The CSV export is a read projection over existing AuditEvent rows, not a new persisted entity.
 
 ```text
 AuditCsvRow
@@ -173,53 +141,37 @@ Rules:
 
 - only an active Administrator may request the projection;
 - actor user ID, entity type, entity ID, action, created-from, and created-to filters have the same Backend semantics as the Audit list;
-- rows are ordered by descending AuditEvent ID;
-- JSON columns serialize only the already-sanitized persisted mappings with deterministic key ordering;
-- UTF-8 BOM supports Russian spreadsheet applications;
-- text that could begin a spreadsheet formula is neutralized before CSV serialization;
-- at most 10,000 matching rows may be exported in one request; larger sets require narrower filters;
-- export does not create an AuditEvent, alter an existing event, or participate in a domain mutation transaction;
-- retention deletion/cleanup, retention UI, SIEM delivery, diagnostics, scheduling, undo, and event replay are not part of this projection.
+- JSON columns serialize only already-sanitized persisted mappings with deterministic key ordering;
+- UTF-8 BOM supports Russian spreadsheet applications and formula-like text is neutralized;
+- at most 10,000 matching rows may be exported in one request;
+- export does not create an AuditEvent or alter domain state;
+- retention deletion/cleanup, retention UI, SIEM delivery, diagnostics, scheduling, undo, and replay are not part of this projection.
 
-## Menu and preparation
+## Menu, catalogue, documents, and mail
 
-MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only. MealSlotDish persists the exact selected Recipe.
-
-Supported Project Recipe generation modes remain:
-
-- `club_only`;
-- `club_and_personal`;
-- `personal_preferred`.
-
-Owner/Administrator may generate and edit Menu. Additional instructors receive read-only Menu projection. Full preparation is owner/Administrator-only because it may create or change Menu and downstream state.
-
-Shopping/Checklist and Equipment operational writes are available to additional instructors while the Project is open. All Project-scoped routes apply central visibility and completion checks.
-
-## Product, Recipe, Dish, and alcohol policy
+MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only. MealSlotDish persists the exact selected Recipe. Project Recipe generation modes remain `club_only`, `club_and_personal`, and `personal_preferred`.
 
 Product, Recipe ownership/lifecycle, Dish Recipe variants, exact assignment snapshots, archive state, and the central no-exceptions alcohol policy remain unchanged. Archived records remain readable historically and are excluded from new active use.
 
-## Documents and mail
-
 Consolidated Project documents remain non-persisted immutable snapshots. Authorized Project members may generate/download approved documents; completed Projects retain document access as read-only history. Audit stores only safe document metadata.
 
-MailSettings and invitation delivery retain existing boundaries. Project-team notifications are not yet connected to mail or messaging providers.
+MailSettings and invitation delivery retain existing boundaries. Project-team notifications are not connected to mail or messaging providers.
 
 ## Current migrations
 
 - released `v0.1.0`: `h10021`;
 - optional User contact profile: `h10022`;
 - Project owner/team membership: `h10023` current head;
-- TH-0106 Audit CSV export: no migration.
+- TH-0106 Audit CSV export: no migration;
+- TH-0107 Session Administration: no migration.
 
-## Future domains
+## Future domains and tasks
 
 - copy a completed Project into a new Project template instance;
+- audit retention policy/UI after required Product Owner decisions;
+- global sign-out, Administrator session administration, and session cleanup;
+- Product/Dish archive-management UI and ownership-aware CSV import UX;
 - Project-team notifications through email, Telegram, and MAX;
-- participant profiles;
-- routes and GPX;
-- logistics and load distribution;
-- warehouse balances;
-- procurement prices and aggregator integration.
+- participant profiles, routes/GPX, logistics, warehouse, and procurement integrations.
 
-Multi-tenant support remains prohibited.
+No post-release product task is active after TH-0107. Multi-tenant support remains prohibited.
