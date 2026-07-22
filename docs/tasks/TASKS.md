@@ -7,8 +7,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0108 | Product Archive Management | IN PROGRESS | ./active/TH-0108-product-archive-management.md |
 
-No post-release product task is active after TH-0107. Retention UI, global sign-out, Administrator session administration, session cleanup, archive-management UI, ownership-aware import UX, and `Копировать проект` require separate explicit selection.
+TH-0108 is the explicitly selected post-release capability. It delivers soft archive and restore management for Products only. Dish archive management, retention UI, global sign-out, Administrator session administration, session cleanup, ownership-aware import UX, and `Копировать проект` remain separate future tasks.
 
 ## First-release sequence
 
