@@ -2,31 +2,22 @@ import {
   Alert,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  MenuItem,
+  Chip,
   Paper,
   Stack,
   Tab,
   Tabs,
-  TextField,
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import {
-  RECIPE_GENERATION_MODE_OPTIONS,
-  type RecipeGenerationMode,
-  useProject,
-  useUpdateProjectRecipeGenerationMode,
-} from "@/features/project";
+import { useProject } from "@/features/project";
 import { ProjectWorkflowProvider } from "@/features/project-workflow";
 import { useModuleVisibility } from "@/features/system-settings/providers/ModuleVisibilityProvider";
 
 import ProjectOverview from "./components/ProjectOverview";
+import ProjectSettingsDialog from "./components/ProjectSettingsDialog";
 import WorkflowModules from "./components/WorkflowModules";
 import {
   buildProjectWorkspacePath,
@@ -42,6 +33,13 @@ const mealLabels: Record<string, string> = {
   dinner: "Ужин",
 };
 
+const statusLabels: Record<string, string> = {
+  draft: "Черновик",
+  prepared: "Подготовлен",
+  active: "Активный",
+  completed: "Завершён",
+};
+
 function ProjectWorkspaceContent({
   projectId,
   section,
@@ -49,17 +47,10 @@ function ProjectWorkspaceContent({
   projectId: number;
   section: ProjectWorkspaceSection;
 }) {
+  const navigate = useNavigate();
   const { data: project, isLoading, isError } = useProject(projectId);
-  const updateGenerationMode = useUpdateProjectRecipeGenerationMode(projectId);
   const { settings } = useModuleVisibility();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [generationMode, setGenerationMode] = useState<RecipeGenerationMode>(
-    "club_only",
-  );
-
-  useEffect(() => {
-    if (project) setGenerationMode(project.recipe_generation_mode);
-  }, [project]);
 
   const visibleSections = useMemo(
     () =>
@@ -77,8 +68,12 @@ function ProjectWorkspaceContent({
   }
 
   if (isError || !project) {
-    return <Alert severity="error">Не удалось загрузить проект.</Alert>;
+    return <Alert severity="error">Проект не найден или у вас нет к нему доступа.</Alert>;
   }
+
+  const settingsAvailable = Boolean(
+    project.capabilities?.can_manage_project || project.capabilities?.can_delete,
+  );
 
   return (
     <Stack spacing={2.5} sx={{ minWidth: 0, overflowX: "hidden" }}>
@@ -105,6 +100,7 @@ function ProjectWorkspaceContent({
               spacing={1}
               useFlexGap
               flexWrap="wrap"
+              alignItems="center"
               color="text.secondary"
             >
               <Typography variant="body2">{project.participants} участников</Typography>
@@ -116,9 +112,15 @@ function ProjectWorkspaceContent({
                   <Typography variant="body2">с {project.start_date}</Typography>
                 </>
               )}
-              <Typography variant="body2">•</Typography>
-              <Typography variant="body2">{project.status}</Typography>
+              <Chip
+                size="small"
+                label={statusLabels[project.status] ?? project.status}
+                variant={project.status === "completed" ? "outlined" : "filled"}
+              />
             </Stack>
+            <Typography variant="caption" color="text.secondary">
+              Владелец: {project.owner_display_name ?? "не назначен"}
+            </Typography>
             {project.first_meal && (
               <Typography variant="caption" color="text.secondary">
                 Первый приём пищи: {mealLabels[project.first_meal] ?? project.first_meal}
@@ -127,9 +129,11 @@ function ProjectWorkspaceContent({
           </Stack>
 
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            <Button variant="outlined" onClick={() => setSettingsOpen(true)}>
-              Настройки проекта
-            </Button>
+            {settingsAvailable && (
+              <Button variant="outlined" onClick={() => setSettingsOpen(true)}>
+                Настройки проекта
+              </Button>
+            )}
             {section !== "overview" && (
               <Button
                 component={Link}
@@ -142,6 +146,20 @@ function ProjectWorkspaceContent({
           </Stack>
         </Stack>
       </Box>
+
+      {project.status === "completed" && (
+        <Alert severity="info">
+          Проект завершён и доступен только для чтения. Функция «Копировать проект»
+          запланирована отдельной задачей.
+        </Alert>
+      )}
+
+      {!project.capabilities?.can_edit_menu && project.status !== "completed" && (
+        <Alert severity="info">
+          Вы приглашены в команду проекта. Меню и настройки доступны только для просмотра;
+          закупки, снаряжение и документы остаются рабочими.
+        </Alert>
+      )}
 
       <Paper
         variant="outlined"
@@ -173,67 +191,19 @@ function ProjectWorkspaceContent({
       </Paper>
 
       {section === "overview" ? (
-        <ProjectOverview />
+        <ProjectOverview project={project} />
       ) : (
-        <WorkflowModules section={section} />
+        <WorkflowModules section={section} project={project} />
       )}
 
-      <Dialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Настройки проекта</DialogTitle>
-        <DialogContent>
-          <Stack spacing={1.5} sx={{ pt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Режим определяет порядок выбора вариантов рецепта при следующей генерации меню. Ручные назначения не меняются.
-            </Typography>
-            {updateGenerationMode.isError && (
-              <Alert severity="error">
-                Не удалось изменить режим генерации рецептов.
-              </Alert>
-            )}
-            <TextField
-              select
-              label="Рецепты при генерации меню"
-              value={generationMode}
-              onChange={(event) =>
-                setGenerationMode(event.target.value as RecipeGenerationMode)
-              }
-            >
-              {RECIPE_GENERATION_MODE_OPTIONS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  <Stack spacing={0.25} sx={{ py: 0.5, whiteSpace: "normal" }}>
-                    <Typography fontWeight={600}>{option.label}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {option.description}
-                    </Typography>
-                  </Stack>
-                </MenuItem>
-              ))}
-            </TextField>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSettingsOpen(false)}>Отмена</Button>
-          <Button
-            variant="contained"
-            disabled={
-              updateGenerationMode.isPending ||
-              generationMode === project.recipe_generation_mode
-            }
-            onClick={() =>
-              updateGenerationMode.mutate(generationMode, {
-                onSuccess: () => setSettingsOpen(false),
-              })
-            }
-          >
-            {updateGenerationMode.isPending ? "Сохраняем…" : "Сохранить"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {settingsAvailable && (
+        <ProjectSettingsDialog
+          open={settingsOpen}
+          project={project}
+          onClose={() => setSettingsOpen(false)}
+          onDeleted={() => navigate("/projects", { replace: true })}
+        />
+      )}
     </Stack>
   );
 }
