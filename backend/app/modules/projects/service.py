@@ -19,6 +19,7 @@ class Project:
     last_meal: str | None
     recipe_generation_mode: str
     status: str
+    owner_user_id: int | None
 
 
 class ProjectService:
@@ -61,6 +62,7 @@ class ProjectService:
                     last_meal=last_meal,
                     recipe_generation_mode=recipe_generation_mode,
                     status="draft",
+                    owner_user_id=self.actor.id if self.actor is not None else None,
                 )
             )
             if self.actor is not None:
@@ -120,6 +122,57 @@ class ProjectService:
         session.refresh(project)
         return self._map(project)
 
+    def complete_project(self, project_id: int) -> Project:
+        project = self.repository.get_by_id(project_id)
+        if project is None:
+            raise ValueError("Project not found")
+        if project.status == "completed":
+            return self._map(project)
+
+        session = self.repository.session
+        before = self._snapshot(project)
+        try:
+            project.status = "completed"
+            if self.actor is not None:
+                AuditService(session).record(
+                    actor=self.actor,
+                    action="project_status_updated",
+                    entity_type="project",
+                    entity_id=project.id,
+                    before=before,
+                    after=self._snapshot(project),
+                    context={"changed_fields": ["status"]},
+                )
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+        session.refresh(project)
+        return self._map(project)
+
+    def delete_project(self, project_id: int) -> None:
+        project = self.repository.get_by_id(project_id)
+        if project is None:
+            raise ValueError("Project not found")
+        session = self.repository.session
+        snapshot = self._snapshot(project)
+        try:
+            self.repository.delete(project)
+            if self.actor is not None:
+                AuditService(session).record(
+                    actor=self.actor,
+                    action="project_deleted",
+                    entity_type="project",
+                    entity_id=project.id,
+                    before=snapshot,
+                    after=None,
+                    context={"project_name": project.name},
+                )
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
+
     def _validate_meal_boundaries(
         self,
         days: int,
@@ -154,6 +207,7 @@ class ProjectService:
             "last_meal": project.last_meal,
             "recipe_generation_mode": project.recipe_generation_mode,
             "status": project.status,
+            "owner_user_id": project.owner_user_id,
         }
 
     @staticmethod
@@ -172,4 +226,5 @@ class ProjectService:
                 RecipeGenerationMode.CLUB_ONLY.value,
             ),
             status=project.status,
+            owner_user_id=getattr(project, "owner_user_id", None),
         )
