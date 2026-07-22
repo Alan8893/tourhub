@@ -26,7 +26,7 @@ import {
 } from "../model/campItemState";
 import ProjectEquipmentItemRow from "./ProjectEquipmentItemRow";
 
-export default function CampInventoryWidget() {
+export default function CampInventoryWidget({ readOnly = false }: { readOnly?: boolean }) {
   const { projectId, preparationResult } = useProjectWorkflow();
   const query = useProjectEquipmentList(projectId, preparationResult?.equipment_list_id);
   const addMutation = useAddProjectEquipmentItem(projectId);
@@ -42,6 +42,7 @@ export default function CampInventoryWidget() {
   const valid = isCampItemInputValid(name, quantity);
 
   async function addItem() {
+    if (readOnly) return;
     const parsedQuantity = parseCampItemQuantity(quantity);
     if (!valid || parsedQuantity === null) return;
     setFeedback(undefined);
@@ -55,13 +56,14 @@ export default function CampInventoryWidget() {
   }
 
   async function saveItem(itemId: string, requiredQuantity: number) {
+    if (readOnly) return;
     setFeedback(undefined);
     await updateMutation.mutateAsync({ itemId, requiredQuantity });
     setFeedback("Количество сохранено.");
   }
 
   async function removeItem(itemId: string) {
-    if (!window.confirm("Удалить позицию из списка оборудования?")) return;
+    if (readOnly || !window.confirm("Удалить позицию из списка оборудования?")) return;
     setFeedback(undefined);
     await removeMutation.mutateAsync(itemId);
     setFeedback("Позиция удалена. Изменение сохранится при пересчёте.");
@@ -78,12 +80,15 @@ export default function CampInventoryWidget() {
           <Typography variant="body2" color="text.secondary">
             Максимальная одновременная потребность по меню. Итоговый список можно изменить вручную.
           </Typography>
+          {readOnly && (
+            <Alert severity="info">Завершённый проект доступен только для чтения.</Alert>
+          )}
           {query.isLoading ? <Typography>Загружаем список...</Typography> : null}
           {query.isError ? <Alert severity="error">Не удалось загрузить список.</Alert> : null}
-          {mutationError ? (
+          {!readOnly && mutationError ? (
             <Alert severity="error">Не удалось сохранить изменение оборудования.</Alert>
           ) : null}
-          {feedback ? <Alert severity="success">{feedback}</Alert> : null}
+          {!readOnly && feedback ? <Alert severity="success">{feedback}</Alert> : null}
           {!query.isLoading && !query.isError && !list ? (
             <Typography color="text.secondary">Список появится после подготовки проекта.</Typography>
           ) : null}
@@ -92,38 +97,40 @@ export default function CampInventoryWidget() {
               <Typography variant="body2" color="text.secondary">
                 Позиций: {summary.positions} · Всего единиц: {summary.totalUnits}
               </Typography>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1}
-                alignItems={{ sm: "center" }}
-              >
-                <TextField
-                  size="small"
-                  label="Новое оборудование"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  inputProps={{ "aria-label": "Новое оборудование проекта" }}
-                  fullWidth
-                />
-                <TextField
-                  size="small"
-                  label="Количество"
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                  inputProps={{
-                    inputMode: "numeric",
-                    "aria-label": "Количество нового оборудования проекта",
-                  }}
-                  sx={{ width: { xs: "100%", sm: 150 } }}
-                />
-                <Button
-                  variant="contained"
-                  disabled={!valid || pending}
-                  onClick={() => void addItem()}
+              {!readOnly && (
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ sm: "center" }}
                 >
-                  Добавить
-                </Button>
-              </Stack>
+                  <TextField
+                    size="small"
+                    label="Новое оборудование"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    inputProps={{ "aria-label": "Новое оборудование проекта" }}
+                    fullWidth
+                  />
+                  <TextField
+                    size="small"
+                    label="Количество"
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value)}
+                    inputProps={{
+                      inputMode: "numeric",
+                      "aria-label": "Количество нового оборудования проекта",
+                    }}
+                    sx={{ width: { xs: "100%", sm: 150 } }}
+                  />
+                  <Button
+                    variant="contained"
+                    disabled={!valid || pending}
+                    onClick={() => void addItem()}
+                  >
+                    Добавить
+                  </Button>
+                </Stack>
+              )}
               {list.items.length === 0 ? (
                 <Typography color="text.secondary">В списке пока нет позиций.</Typography>
               ) : (
@@ -133,6 +140,7 @@ export default function CampInventoryWidget() {
                       key={item.id}
                       item={item}
                       pending={pending}
+                      readOnly={readOnly}
                       onSave={saveItem}
                       onRemove={removeItem}
                     />
