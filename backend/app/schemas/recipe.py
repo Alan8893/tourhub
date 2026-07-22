@@ -46,6 +46,15 @@ class RecipeProductResponse(BaseModel):
     package_size: int | None
 
 
+class ProductArchiveResponse(RecipeProductResponse):
+    is_archived: bool
+    archived_by_alcohol_policy: bool
+
+
+class ProductArchiveListResponse(BaseModel):
+    items: list[ProductArchiveResponse]
+
+
 class ProductCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     category: str | None = Field(default=None, max_length=100)

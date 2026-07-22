@@ -26,46 +26,32 @@ Project workspace navigation, Product editing, published Recipe-to-Dish synchron
 
 ### TH-0104 — Personal account
 
-- editable FIO and optional normalized phone/Telegram/MAX/VK;
-- read-only login email;
-- password change preserving the current login and revoking other sessions;
-- header/sidebar access to `/account` and logout inside the account;
-- safe profile/password audit;
-- contact-profile migration `h10022`.
+Editable profile/contact fields, read-only login email, password change preserving the current login, Project-scoped contacts, safe account audit, and migration `h10022` are delivered.
 
 ### TH-0105 — Project ownership and team access
 
-- new Projects persist the creator as owner;
-- `h10023` backfills existing ownership from trustworthy audit history with first-Administrator fallback;
-- multiple additional instructors are supported while global User roles remain singular;
-- central Project access hides unrelated Projects as 404 and enforces capability/completion boundaries;
-- ownership transfer, team changes, completion, and deletion are audited transactionally;
-- completed Projects are terminal read-only records hidden by default;
-- Project overview owns team contacts and Project-scoped vCard;
-- a no-op notification boundary remains ready for future provider implementations.
+Project ownership/team persistence through `h10023`, central access masking, terminal completion, transactional team/ownership audit, Project-scoped contacts, and the future notification boundary are delivered.
 
 ### TH-0106 — Audit CSV export
 
-- Administrator-only filtered CSV projection beside the existing Audit list;
-- one Backend filter implementation for list and export;
-- deterministic UTF-8 actor/action/entity/timestamp and sanitized JSON columns;
-- formula-injection neutralization;
-- explicit 10,000-row bound requiring narrower filters for larger journals;
-- Audit UI date filters and download action;
-- Backend, Frontend, and real-Chrome acceptance;
-- no persistence change, retention mutation, or recursive export AuditEvent.
+Administrator-only filtered deterministic CSV export with shared Backend filters, UTF-8 BOM, formula neutralization, 10,000-row bound, date-filter UX, and Backend/Frontend/Chrome coverage is delivered without a migration or recursive event.
 
 ### TH-0107 — Session administration
 
-- authenticated list of the current User's active non-expired sessions;
-- server-side current-login matching through the existing HttpOnly cookie hash;
-- safe response fields limited to ID, timestamps, and current marker;
-- individual revocation of another owned active session;
-- 404 masking for unrelated/revoked/expired/unknown IDs and 409 protection for the current login;
-- transactional `account_session_revoked` audit using sanitizer-safe `current_login_preserved`;
-- no token, hash, cookie, IP, device, user-agent, fingerprint, or location data in API or audit;
-- responsive `/account` UX plus Backend, Frontend helper, Product Acceptance, and full real-Chrome coverage;
-- no migration, cleanup, global sign-out, cross-user administration, or new tracking data.
+Own active-session projection, server-side current-login matching, individual revocation, 404 ownership masking, 409 current-login protection, transactional safe audit, responsive `/account` UX, and real-Chrome coverage are delivered without tracking metadata, cleanup, or migration.
+
+### TH-0108 — Product archive management
+
+- active Product selection remains the stable default contract;
+- a protected archive projection exposes Product archive and policy-lock state;
+- preparation users can soft-archive and restore one Product;
+- archive preserves all historical Recipe, shopping, checklist, and document references;
+- restore re-runs the central alcohol policy;
+- alcohol-policy archived Products are permanently non-restorable through this capability;
+- archive/restore use row locks, idempotency, and transactional `product_archived` / `product_restored` events;
+- existing Recipe/Product response contracts remain stable through dedicated archive DTOs;
+- responsive active/archive UI, policy-lock explanation, Frontend helper tests, Backend policy tests, and real-Chrome acceptance are delivered;
+- existing Product archive columns were reused, so Alembic remains `h10023`.
 
 ## Explicit future product debt — Copy Project
 
@@ -77,9 +63,9 @@ Expected product intent:
 - action creates a new Project identity;
 - user receives the normal new-Project form for name, dates, duration, participant count, and meal boundaries;
 - approved Menu and preparation/settings structure is copied from the source;
-- copied data must be recalculated for the new parameters rather than reusing historical calculated quantities blindly.
+- copied data is recalculated for new parameters instead of blindly reusing historical quantities.
 
-Open design decisions include the exact copy matrix, team/owner handling, audit attribution, archived/prohibited dependencies, notifications, and policy-invalid historical snapshots. No placeholder button or endpoint is implemented.
+Open decisions include the exact copy matrix, team/owner handling, audit attribution, archived/prohibited dependencies, notifications, and policy-invalid historical snapshots. No placeholder button or endpoint is implemented.
 
 ## Remaining audit and operations debt
 
@@ -99,8 +85,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - IP/device/user-agent/location tracking remains unapproved and unimplemented;
 - avatars, public profiles, and account deletion;
 - invitation retention and cleanup;
-- asynchronous mail, scheduled retries, persisted delivery history, and bounce diagnostics;
-- approved mail templates and attachments;
+- asynchronous mail, retries, persisted delivery history, bounce diagnostics, templates, and attachments;
 - Project-team notification provider implementations.
 
 ## Remaining Project collaboration debt
@@ -114,7 +99,7 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Remaining Recipe, menu, and catalogue debt
 
-- Product/Dish archive-management UI;
+- Dish archive-management UI as a separate lifecycle task;
 - ownership-aware CSV import UX;
 - optional moderation notifications;
 - preparation technology, dietary/season metadata, and richer categories;
@@ -148,8 +133,8 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - when to start `Копировать проект` and its exact copy matrix;
 - Project-team notification channels and preferences;
 - global-sign-out, cross-user session administration, cleanup, and tracking policy;
-- Product/Dish archive behavior and ownership-aware import semantics;
+- Dish archive behavior and ownership-aware import semantics;
 - preference weighting and mandatory Recipe metadata;
 - encrypted settings archive format.
 
-No post-release product task is active after TH-0107. No deferred item becomes active merely because it appears here.
+No post-release product task is active after TH-0108. No deferred item becomes active merely because it appears here.
