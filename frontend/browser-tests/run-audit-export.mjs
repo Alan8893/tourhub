@@ -102,12 +102,18 @@ async function run() {
       "loaded audit CSV export surface",
     );
 
-    const clicked = await client.evaluate(`(() => {
+    const filterChanged = await client.evaluate(`(() => {
       const input = document.querySelector('input[placeholder="Например: document_generated"]');
       if (!input) return false;
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
       setter?.call(input, "document_generated");
       input.dispatchEvent(new Event("input", { bubbles: true }));
+      return true;
+    })()`);
+    assert.equal(filterChanged, true);
+    await sleep(150);
+
+    const clicked = await client.evaluate(`(() => {
       const button = [...document.querySelectorAll("button")].find(
         (item) => item.textContent?.trim() === "Скачать CSV",
       );
