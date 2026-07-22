@@ -26,7 +26,7 @@ const pageUrl = "http://127.0.0.1:5186/browser-tests/mail-settings.html";
 const profileDir = "/tmp/tourhub-mail-settings-profile";
 
 async function run() {
-  await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  await rm(profileDir, { recursive: true, force: true });
   await mkdir(artifactDir, { recursive: true });
   const api = startMailSettingsApi();
   await api.listen();
@@ -200,16 +200,14 @@ async function run() {
     console.log("Mail delivery browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
-    await Promise.race([api.close(), sleep(2_000)]);
-    await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    await api.close();
+    await rm(profileDir, { recursive: true, force: true });
   }
 }
 
-run()
-  .then(() => process.exit(0))
-  .catch(async (error) => {
-    console.error(error);
-    await mkdir(artifactDir, { recursive: true });
-    await writeFile(path.join(artifactDir, "mail-settings-error.txt"), `${error?.stack ?? error}\n`);
-    process.exit(1);
-  });
+run().catch(async (error) => {
+  console.error(error);
+  await mkdir(artifactDir, { recursive: true });
+  await writeFile(path.join(artifactDir, "mail-settings-error.txt"), `${error?.stack ?? error}\n`);
+  process.exitCode = 1;
+});
