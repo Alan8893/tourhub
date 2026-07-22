@@ -111,7 +111,7 @@ class SessionAdministrationService:
                 entity_id=target.id,
                 before={"status": "active"},
                 after={"status": "revoked"},
-                context={"current_session_preserved": True},
+                context={"current_login_preserved": True},
             )
             self.session.commit()
         except Exception:
