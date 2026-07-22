@@ -2,20 +2,9 @@ import importlib.util
 from pathlib import Path
 from types import ModuleType
 
+import sqlalchemy as sa
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    create_engine,
-    inspect,
-    text,
-)
 
 
 def _migration_module() -> ModuleType:
@@ -33,40 +22,40 @@ def _migration_module() -> ModuleType:
 
 
 def test_h10023_backfills_creator_then_first_administrator_and_is_reversible() -> None:
-    engine = create_engine("sqlite:///:memory:")
+    engine = sa.create_engine("sqlite:///:memory:")
     migration = _migration_module()
 
     with engine.begin() as connection:
-        metadata = MetaData()
-        Table(
+        metadata = sa.MetaData()
+        sa.Table(
             "users",
             metadata,
-            Column("id", Integer(), primary_key=True),
-            Column("email", String(320), nullable=False),
-            Column("display_name", String(120), nullable=False),
-            Column("role", String(32), nullable=False),
-            Column("password_hash", String(512), nullable=False),
-            Column("is_active", Boolean(), nullable=False),
+            sa.Column("id", sa.Integer(), primary_key=True),
+            sa.Column("email", sa.String(320), nullable=False),
+            sa.Column("display_name", sa.String(120), nullable=False),
+            sa.Column("role", sa.String(32), nullable=False),
+            sa.Column("password_hash", sa.String(512), nullable=False),
+            sa.Column("is_active", sa.Boolean(), nullable=False),
         )
-        Table(
+        sa.Table(
             "projects",
             metadata,
-            Column("id", Integer(), primary_key=True),
-            Column("name", String(255), nullable=False),
+            sa.Column("id", sa.Integer(), primary_key=True),
+            sa.Column("name", sa.String(255), nullable=False),
         )
-        Table(
+        sa.Table(
             "audit_events",
             metadata,
-            Column("id", Integer(), primary_key=True),
-            Column("actor_user_id", Integer(), nullable=True),
-            Column("action", String(64), nullable=False),
-            Column("entity_type", String(64), nullable=False),
-            Column("entity_id", String(255), nullable=True),
-            Column("created_at", DateTime(), nullable=False),
+            sa.Column("id", sa.Integer(), primary_key=True),
+            sa.Column("actor_user_id", sa.Integer(), nullable=True),
+            sa.Column("action", sa.String(64), nullable=False),
+            sa.Column("entity_type", sa.String(64), nullable=False),
+            sa.Column("entity_id", sa.String(255), nullable=True),
+            sa.Column("created_at", sa.DateTime(), nullable=False),
         )
         metadata.create_all(connection)
         connection.execute(
-            text(
+            sa.text(
                 """
                 INSERT INTO users
                     (id, email, display_name, role, password_hash, is_active)
@@ -77,12 +66,12 @@ def test_h10023_backfills_creator_then_first_administrator_and_is_reversible() -
             )
         )
         connection.execute(
-            text(
+            sa.text(
                 "INSERT INTO projects (id, name) VALUES (10, 'С аудитом'), (20, 'Без аудита')"
             )
         )
         connection.execute(
-            text(
+            sa.text(
                 """
                 INSERT INTO audit_events
                     (id, actor_user_id, action, entity_type, entity_id, created_at)
@@ -95,15 +84,15 @@ def test_h10023_backfills_creator_then_first_administrator_and_is_reversible() -
         migration.op = Operations(MigrationContext.configure(connection))
         migration.upgrade()
 
-        columns = {item["name"] for item in inspect(connection).get_columns("projects")}
+        columns = {item["name"] for item in sa.inspect(connection).get_columns("projects")}
         assert "owner_user_id" in columns
         owners = connection.execute(
-            text("SELECT id, owner_user_id FROM projects ORDER BY id")
+            sa.text("SELECT id, owner_user_id FROM projects ORDER BY id")
         ).all()
         assert owners == [(10, 2), (20, 1)]
-        assert "project_instructors" in inspect(connection).get_table_names()
+        assert "project_instructors" in sa.inspect(connection).get_table_names()
 
         migration.downgrade()
-        columns = {item["name"] for item in inspect(connection).get_columns("projects")}
+        columns = {item["name"] for item in sa.inspect(connection).get_columns("projects")}
         assert "owner_user_id" not in columns
-        assert "project_instructors" not in inspect(connection).get_table_names()
+        assert "project_instructors" not in sa.inspect(connection).get_table_names()
