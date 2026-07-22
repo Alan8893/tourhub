@@ -41,6 +41,8 @@ User
 
 Profile contact values are private from unauthenticated users and are exposed to another user only through shared access to a Project team. Account recovery, verified contact changes, deletion, avatars, public profiles, and general session administration remain future capabilities.
 
+Only an active Administrator may read or export the club-wide AuditEvent journal.
+
 ## Project ownership and team
 
 Project is the preparation root for one trip.
@@ -148,9 +150,36 @@ Current Project-team actions include:
 
 Team, ownership, completion, deletion, and their AuditEvents share owning transactions. No-op membership/ownership writes create no event. Audit failure rolls back pending domain mutation.
 
-Project-team payloads may include Project/User IDs, display names, global/project roles, and state metadata. Phone numbers, social URLs, passwords, hashes, sessions, tokens, credentials, request bodies, and provider details are excluded.
+Audit payloads may include bounded entity/User IDs, display names, roles, state metadata, calculated counts, and document metadata. Phone numbers, social URLs, passwords, hashes, sessions, tokens, credentials, authorization data, arbitrary request bodies, source CSV content, generated document content, and provider secrets are excluded.
 
 Existing audit coverage for user access, Recipe lifecycle, Project preparation, Menu/MealSlot, System Settings/mail, invitations, catalogue/import, Shopping/Checklist, Equipment, and Documents remains implemented. Automatic ORM-wide auditing remains rejected.
+
+### Audit CSV projection — TH-0106
+
+The CSV export is a read projection over existing AuditEvent rows; it is not a new persisted entity.
+
+```text
+AuditCsvRow
+  ├─ id, created_at
+  ├─ actor_user_id?, actor_display_name, actor_email, actor_role
+  ├─ action
+  ├─ entity_type, entity_id?
+  ├─ before_json?
+  ├─ after_json?
+  └─ context_json
+```
+
+Rules:
+
+- only an active Administrator may request the projection;
+- actor user ID, entity type, entity ID, action, created-from, and created-to filters have the same Backend semantics as the Audit list;
+- rows are ordered by descending AuditEvent ID;
+- JSON columns serialize only the already-sanitized persisted mappings with deterministic key ordering;
+- UTF-8 BOM supports Russian spreadsheet applications;
+- text that could begin a spreadsheet formula is neutralized before CSV serialization;
+- at most 10,000 matching rows may be exported in one request; larger sets require narrower filters;
+- export does not create an AuditEvent, alter an existing event, or participate in a domain mutation transaction;
+- retention deletion/cleanup, retention UI, SIEM delivery, diagnostics, scheduling, undo, and event replay are not part of this projection.
 
 ## Menu and preparation
 
@@ -180,7 +209,8 @@ MailSettings and invitation delivery retain existing boundaries. Project-team no
 
 - released `v0.1.0`: `h10021`;
 - optional User contact profile: `h10022`;
-- Project owner/team membership: `h10023` current head.
+- Project owner/team membership: `h10023` current head;
+- TH-0106 Audit CSV export: no migration.
 
 ## Future domains
 
