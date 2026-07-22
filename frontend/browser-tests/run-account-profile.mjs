@@ -111,12 +111,13 @@ async function run() {
       ).toLocaleLowerCase("ru-RU");
       for (const label of [
         "ирина инструктор",
-        "борис инструктор",
         "смена пароля",
-        "сохранить контакт",
+        "участники команды доступного им проекта",
       ]) {
         assert.ok(loadedText.includes(label), `Missing account label: ${label}\n${loadedText}`);
       }
+      assert.equal(loadedText.includes("контакты участников"), false);
+      assert.equal(loadedText.includes("борис инструктор"), false);
       const accountLabel = await client.evaluate(`document
         .querySelector('[aria-label^="Открыть личный кабинет"]')
         ?.getAttribute("aria-label") ?? null`);
@@ -156,32 +157,9 @@ async function run() {
     assert.equal(profileRequest?.body.display_name, "Ирина Новая");
     assert.equal(profileRequest?.body.phone, "+7 (999) 123-45-67");
     assert.equal("email" in (profileRequest?.body ?? {}), false);
-
-    const phoneLink = await client.evaluate(`(() => {
-      const link = [...document.querySelectorAll("a")].find(
-        (item) => item.textContent?.includes("+491234567890"),
-      );
-      return link?.getAttribute("href") ?? null;
-    })()`);
-    assert.equal(phoneLink, "tel:+491234567890");
-
-    const contactClicked = await client.evaluate(`(() => {
-      const heading = [...document.querySelectorAll("h6")].find(
-        (item) => item.textContent?.includes("Борис Инструктор"),
-      );
-      const card = heading?.closest(".MuiPaper-root");
-      const button = [...(card?.querySelectorAll("button") ?? [])].find(
-        (item) => item.textContent?.trim() === "Сохранить контакт",
-      );
-      button?.click();
-      return Boolean(button);
-    })()`);
-    assert.equal(contactClicked, true);
-    await sleep(250);
-    assert.ok(
-      accountRequests.some(
-        (item) => item.method === "GET" && item.path === "/api/v1/account/contacts/2/vcard",
-      ),
+    assert.equal(
+      accountRequests.some((item) => item.path.startsWith("/api/v1/account/contacts")),
+      false,
     );
 
     assert.equal(await setFieldByLabel(client, "Текущий пароль", currentPassword), true);
