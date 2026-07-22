@@ -14,7 +14,7 @@ import { useProjectPurchaseChecklist } from "../hooks/usePurchaseChecklist";
 import { getChecklistProgress } from "../model/purchaseChecklistState";
 import PurchaseChecklistItemRow from "./PurchaseChecklistItemRow";
 
-export default function PurchaseWidget() {
+export default function PurchaseWidget({ readOnly = false }: { readOnly?: boolean }) {
   const { projectId, preparationResult } = useProjectWorkflow();
   const checklistQuery = useProjectPurchaseChecklist(
     projectId,
@@ -31,6 +31,9 @@ export default function PurchaseWidget() {
       <CardContent>
         <Stack spacing={1.5}>
           <Typography variant="h6">Чек-лист покупок</Typography>
+          {readOnly && (
+            <Alert severity="info">Завершённый проект доступен только для чтения.</Alert>
+          )}
 
           {checklistQuery.isLoading ? (
             <Typography color="text.secondary">Загружаем позиции...</Typography>
@@ -67,6 +70,7 @@ export default function PurchaseWidget() {
                     key={item.id}
                     item={item}
                     projectId={projectId}
+                    readOnly={readOnly}
                   />
                 ))}
               </Stack>
