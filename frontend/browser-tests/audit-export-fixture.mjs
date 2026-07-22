@@ -107,7 +107,7 @@ export function startAuditExportApi() {
   });
 
   return {
-    listen: () => new Promise((resolve) => server.listen(18098, "127.0.0.1", resolve)),
+    listen: () => new Promise((resolve) => server.listen(18110, "127.0.0.1", resolve)),
     close: () =>
       new Promise((resolve) => {
         server.closeAllConnections();
