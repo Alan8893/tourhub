@@ -21,7 +21,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Module visibility is presentation-only and never grants access.
 - Audit CSV export is a Backend-owned read projection over sanitized AuditEvent persistence.
 - Own-session listing and revocation extend the existing server-session boundary without tracking or cross-user administration.
-- Product archive management is a Backend-owned soft-lifecycle boundary and does not extend to Dish records.
+- Product and Dish archive management are separate Backend-owned soft-lifecycle boundaries.
 
 ## Access runtime
 
@@ -55,6 +55,29 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - audit failure rolls back the state change;
 - existing Product and Recipe response shapes remain stable because archive state is isolated in dedicated DTOs.
 
+## Dish archive boundary — TH-0109
+
+`DishArchiveService` is authoritative for Dish soft archive and restoration.
+
+### Projection
+
+- the established `GET /api/v1/dishes` contract remains active-only and unchanged;
+- `GET /api/v1/dishes/archive` requires preparation access and uses a separate archive response schema;
+- the archive projection contains Dish identity/display fields, primary Recipe name, `is_archived`, and `archived_by_alcohol_policy`;
+- Dish selectors and catalogue readiness continue to consume only active rows;
+- Frontend displays Backend state and does not infer restore eligibility.
+
+### Mutation
+
+- archive and restore target the Dish by ID under `SELECT ... FOR UPDATE`;
+- archive changes only `is_archived` and never deletes the Dish, Recipe variants, roles, or historical MealSlot links;
+- repeated archive of an archived Dish and restore of an active Dish are idempotent no-ops;
+- restore re-validates the stored name through `AlcoholPolicy.require_dish_name_allowed`;
+- `archived_by_alcohol_policy=true` cannot be cleared or restored and returns HTTP 409;
+- `dish_archived` or `dish_restored` is appended in the same transaction as the Dish state change;
+- audit failure rolls back the state change;
+- existing Dish and Recipe response shapes remain stable because archive state is isolated in dedicated DTOs.
+
 ## Session administration boundary — TH-0107
 
 `SessionAdministrationService` remains authoritative for own-session projection and individual revocation.
@@ -85,7 +108,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - `AuditEvent` is append-only with actor snapshots and bounded safe JSON;
 - business mutation and AuditEvent share the owning transaction;
 - no-op writes create no event;
-- Product archive actions store bounded before/after Product snapshots and `policy_locked` context;
+- Product and Dish archive actions store bounded before/after snapshots and `policy_locked` context;
 - passwords, hashes, credentials, cookies, tokens, headers, contacts, request bodies, source CSV bodies, document contents, provider secrets, and device/network metadata are excluded;
 - automatic ORM-wide auditing remains rejected.
 
@@ -104,9 +127,9 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 Development starts with `docker compose up -d --build`; operators use `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally.
 
 - current post-release Alembic head: `h10023`;
-- TH-0106, TH-0107, and TH-0108 added no migrations;
+- TH-0106 through TH-0109 added no migrations;
 - immutable `v0.1.0` remains at SHA `8bcc2d2d9414d812d81634330034b15121c8442f` and released head `h10021`;
 - PostgreSQL backup/restore, clean release-stack startup, restart persistence, and exact-head gates verify candidates;
 - multi-tenancy and microservices remain prohibited.
 
-No post-release product task is active after TH-0108. Dish archive management, retention UI, ownership-aware import UX, and `Копировать проект` require separate explicit tasks. See `PRODUCT_SPEC.md` and ADR-012 through ADR-026.
+No post-release product task is active after TH-0109. Retention UI, ownership-aware import UX, session extensions, and `Копировать проект` require separate explicit tasks. See `PRODUCT_SPEC.md` and ADR-012 through ADR-026.

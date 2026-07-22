@@ -47,11 +47,24 @@ Own active-session projection, server-side current-login matching, individual re
 - preparation users can soft-archive and restore one Product;
 - archive preserves all historical Recipe, shopping, checklist, and document references;
 - restore re-runs the central alcohol policy;
-- alcohol-policy archived Products are permanently non-restorable through this capability;
+- policy-archived Products are permanently non-restorable through this capability;
 - archive/restore use row locks, idempotency, and transactional `product_archived` / `product_restored` events;
 - existing Recipe/Product response contracts remain stable through dedicated archive DTOs;
-- responsive active/archive UI, policy-lock explanation, Frontend helper tests, Backend policy tests, and real-Chrome acceptance are delivered;
+- responsive active/archive UI, policy-lock explanation, tests, and real-Chrome acceptance are delivered;
 - existing Product archive columns were reused, so Alembic remains `h10023`.
+
+### TH-0109 — Dish archive management
+
+- active Dish selection and catalogue readiness remain the stable default contract;
+- a protected archive projection exposes Dish archive and policy-lock state;
+- preparation users can soft-archive and restore one Dish;
+- archive preserves Recipe variants, meal roles, and historical MealSlot/project references;
+- restore re-runs the central Dish-name alcohol policy;
+- policy-archived Dishes are permanently non-restorable through this capability;
+- archive/restore use row locks, idempotency, and transactional `dish_archived` / `dish_restored` events;
+- existing Dish/Recipe response contracts remain stable through dedicated archive DTOs;
+- responsive active/archive UI, policy-lock explanation, tests, and real-Chrome acceptance are delivered;
+- existing Dish archive columns were reused, so Alembic remains `h10023`.
 
 ## Explicit future product debt — Copy Project
 
@@ -99,7 +112,6 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Remaining Recipe, menu, and catalogue debt
 
-- Dish archive-management UI as a separate lifecycle task;
 - ownership-aware CSV import UX;
 - optional moderation notifications;
 - preparation technology, dietary/season metadata, and richer categories;
@@ -133,8 +145,8 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - when to start `Копировать проект` and its exact copy matrix;
 - Project-team notification channels and preferences;
 - global-sign-out, cross-user session administration, cleanup, and tracking policy;
-- Dish archive behavior and ownership-aware import semantics;
+- ownership-aware import semantics;
 - preference weighting and mandatory Recipe metadata;
 - encrypted settings archive format.
 
-No post-release product task is active after TH-0108. No deferred item becomes active merely because it appears here.
+No post-release product task is active after TH-0109. No deferred item becomes active merely because it appears here.
