@@ -14,7 +14,7 @@ import { getPurchaseListSummary } from "../model/purchaseListState";
 import PurchaseListItemRow from "./PurchaseListItemRow";
 import PurchaseResponsiblePersonEditor from "./PurchaseResponsiblePersonEditor";
 
-export default function ShoppingWidget() {
+export default function ShoppingWidget({ readOnly = false }: { readOnly?: boolean }) {
   const { projectId, preparationResult } = useProjectWorkflow();
   const purchaseListQuery = useProjectPurchaseList(
     projectId,
@@ -30,6 +30,9 @@ export default function ShoppingWidget() {
       <CardContent>
         <Stack spacing={1.5}>
           <Typography variant="h6">Фасовка и объём закупки</Typography>
+          {readOnly && (
+            <Alert severity="info">Завершённый проект доступен только для чтения.</Alert>
+          )}
 
           {purchaseListQuery.isLoading ? (
             <Typography color="text.secondary">Загружаем расчёт упаковок...</Typography>
@@ -51,11 +54,17 @@ export default function ShoppingWidget() {
 
           {purchaseList && summary ? (
             <>
-              <PurchaseResponsiblePersonEditor
-                projectId={projectId}
-                purchaseListId={purchaseList.id}
-                responsiblePerson={purchaseList.responsible_person}
-              />
+              {readOnly ? (
+                <Typography variant="body2">
+                  Ответственный: {purchaseList.responsible_person || "не назначен"}
+                </Typography>
+              ) : (
+                <PurchaseResponsiblePersonEditor
+                  projectId={projectId}
+                  purchaseListId={purchaseList.id}
+                  responsiblePerson={purchaseList.responsible_person}
+                />
+              )}
 
               <Divider />
 

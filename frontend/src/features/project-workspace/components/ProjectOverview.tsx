@@ -9,11 +9,13 @@ import {
 import { Link } from "react-router-dom";
 
 import DocumentsDownloadCard from "@/features/documents/components/DocumentsDownloadCard";
+import type { Project } from "@/features/project/api/projectApi";
 import { useProjectWorkflow } from "@/features/project-workflow";
 import { useModuleVisibility } from "@/features/system-settings/providers/ModuleVisibilityProvider";
 
 import { buildProjectWorkspacePath } from "../model/projectWorkspaceNavigation";
 import NextWorkflowAction from "./NextWorkflowAction";
+import ProjectTeamPanel from "./ProjectTeamPanel";
 import ProjectWorkflowPanel from "./ProjectWorkflowPanel";
 
 interface SummaryCardProps {
@@ -43,7 +45,7 @@ function SummaryCard({ title, detail, actionLabel, to }: SummaryCardProps) {
   );
 }
 
-export default function ProjectOverview() {
+export default function ProjectOverview({ project }: { project: Project }) {
   const { projectId, preparationResult } = useProjectWorkflow();
   const { settings } = useModuleVisibility();
   const hasMenu = Boolean(preparationResult?.meal_plan_id);
@@ -53,7 +55,7 @@ export default function ProjectOverview() {
   const hasDocuments = hasShopping && hasChecklist && hasEquipment;
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       <Grid container spacing={2}>
         <Grid item xs={12} md={5}>
           <ProjectWorkflowPanel />
@@ -65,8 +67,8 @@ export default function ProjectOverview() {
                 title="Меню"
                 detail={
                   hasMenu
-                    ? "Меню сформировано и доступно для редактирования."
-                    : "Сформируйте меню похода."
+                    ? "Меню сформировано и доступно для просмотра."
+                    : "Меню пока не сформировано."
                 }
                 actionLabel="Открыть меню"
                 to={buildProjectWorkspacePath(projectId, "menu")}
@@ -113,7 +115,12 @@ export default function ProjectOverview() {
         </Grid>
       </Grid>
 
-      <NextWorkflowAction />
+      <ProjectTeamPanel projectId={projectId} />
+      <NextWorkflowAction
+        canEditMenu={Boolean(project.capabilities?.can_edit_menu)}
+        canManageProject={Boolean(project.capabilities?.can_manage_project)}
+        completed={project.status === "completed"}
+      />
     </Stack>
   );
 }

@@ -73,6 +73,7 @@ jobs:
             tests/api/test_recipe_publication_api.py \
             tests/api/test_catalog_import_api.py \
             tests/api/test_project_preparation_status_api.py \
+            tests/api/test_project_team_access_api.py \
             tests/api/test_audit_api.py \
             tests/api/test_project_audit_api.py \
             tests/api/test_project_meal_plan_regeneration_api.py \
@@ -82,6 +83,7 @@ jobs:
             tests/api/test_alcohol_prohibition_api.py \
             tests/migrations/test_h10021_alcohol_prohibition.py \
             tests/migrations/test_h10022_user_contact_profiles.py \
+            tests/migrations/test_h10023_project_ownership_and_team.py \
             2>&1 | tee product-acceptance-backend.txt
 
       - name: Upload Backend diagnostics
@@ -121,6 +123,9 @@ jobs:
 
       - name: Run personal account acceptance
         run: node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-account-profile.mjs
+
+      - name: Run Project team access acceptance
+        run: node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-project-team-access.mjs
 
       - name: Run user administration acceptance
         run: node --import ./browser-tests/retry-chrome-profile-cleanup.mjs browser-tests/run-account-admin.mjs

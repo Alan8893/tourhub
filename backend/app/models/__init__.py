@@ -36,6 +36,7 @@ from app.models.recipe_scope import RecipeScope
 from app.models.system_settings_history import SystemSettingsHistoryORM
 from app.models.user import UserORM
 from app.modules.projects.models.project import ProjectORM
+from app.modules.projects.models.project_instructor import ProjectInstructorORM
 
 
 __all__ = [
@@ -77,4 +78,5 @@ __all__ = [
     "EquipmentListORM",
     "EquipmentListItemORM",
     "ProjectORM",
+    "ProjectInstructorORM",
 ]

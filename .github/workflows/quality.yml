@@ -37,14 +37,18 @@ jobs:
           set -o pipefail
           python -m ruff check \
             app/core/exceptions.py \
+            app/core/project_access.py \
             app/engines/meal_composition_policy.py \
             app/engines/meal_plan_generator.py \
             app/models/equipment_list.py \
             app/models/equipment_list_item.py \
             app/models/recipe_equipment_requirement.py \
             app/models/user.py \
+            app/modules/projects/models/project.py \
+            app/modules/projects/models/project_instructor.py \
             app/modules/projects/repositories/project_repository.py \
             app/modules/projects/router.py \
+            app/modules/projects/schemas.py \
             app/modules/projects/service.py \
             app/repositories/equipment_list_repository.py \
             app/repositories/meal_plan_repository.py \
@@ -63,6 +67,8 @@ jobs:
             app/services/meal_slot_service.py \
             app/services/project_participant_recalculation_service.py \
             app/services/project_preparation_service.py \
+            app/services/project_team_notification_service.py \
+            app/services/project_team_service.py \
             app/services/published_recipe_dish_sync_service.py \
             app/services/purchase_list_service.py \
             app/services/purchase_checklist_service.py \
@@ -78,18 +84,24 @@ jobs:
             app/modules/api/meal_plan_router.py \
             app/modules/api/meal_slot_router.py \
             app/modules/api/personal_account_router.py \
+            app/modules/api/project_preparation_status_router.py \
+            app/modules/api/purchase_checklist_router.py \
+            app/modules/api/purchase_list_router.py \
             app/modules/api/recipe_equipment_router.py \
             app/modules/api/recipe_note_router.py \
             app/modules/api/recipe_router.py \
             app/modules/api/product_router.py \
             app/schemas/account_profile.py \
             app/schemas/equipment.py \
+            alembic/versions/h10023_add_project_ownership_and_team.py \
             tests/conftest.py \
             tests/api/test_account_profile_api.py \
             tests/api/test_project_audit_api.py \
+            tests/api/test_project_team_access_api.py \
             tests/api/test_meal_slot_purchasing_recalculation_api.py \
             tests/api/test_menu_meal_slot_audit_rollback_api.py \
             tests/migrations/test_h10022_user_contact_profiles.py \
+            tests/migrations/test_h10023_project_ownership_and_team.py \
             --select E,F,I,UP,B --ignore B008 2>&1 | tee ruff-diagnostics.txt
 
       - name: Upload Ruff diagnostics
@@ -104,14 +116,18 @@ jobs:
           set -o pipefail
           python -m mypy \
             app/core/exceptions.py \
+            app/core/project_access.py \
             app/engines/meal_composition_policy.py \
             app/engines/meal_plan_generator.py \
             app/models/equipment_list.py \
             app/models/equipment_list_item.py \
             app/models/recipe_equipment_requirement.py \
             app/models/user.py \
+            app/modules/projects/models/project.py \
+            app/modules/projects/models/project_instructor.py \
             app/modules/projects/repositories/project_repository.py \
             app/modules/projects/router.py \
+            app/modules/projects/schemas.py \
             app/modules/projects/service.py \
             app/repositories/equipment_list_repository.py \
             app/repositories/meal_plan_repository.py \
@@ -130,6 +146,8 @@ jobs:
             app/services/meal_slot_service.py \
             app/services/project_participant_recalculation_service.py \
             app/services/project_preparation_service.py \
+            app/services/project_team_notification_service.py \
+            app/services/project_team_service.py \
             app/services/published_recipe_dish_sync_service.py \
             app/services/purchase_list_service.py \
             app/services/purchase_checklist_service.py \
@@ -145,6 +163,9 @@ jobs:
             app/modules/api/meal_plan_router.py \
             app/modules/api/meal_slot_router.py \
             app/modules/api/personal_account_router.py \
+            app/modules/api/project_preparation_status_router.py \
+            app/modules/api/purchase_checklist_router.py \
+            app/modules/api/purchase_list_router.py \
             app/modules/api/recipe_equipment_router.py \
             app/modules/api/recipe_note_router.py \
             app/modules/api/recipe_router.py \

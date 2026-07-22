@@ -69,49 +69,6 @@ export function startAccountProfileApi() {
       return;
     }
 
-    if (url.pathname === "/api/v1/account/contacts" && request.method === "GET") {
-      response.setHeader("content-type", "application/json");
-      response.end(
-        JSON.stringify([
-          {
-            id: profile.id,
-            email: profile.email,
-            display_name: profile.display_name,
-            phone: profile.phone,
-            telegram_url: profile.telegram_url,
-            max_url: profile.max_url,
-            vk_url: profile.vk_url,
-            role: profile.role,
-            is_current: true,
-          },
-          {
-            id: 2,
-            email: "boris@club.example",
-            display_name: "Борис Инструктор",
-            phone: "+491234567890",
-            telegram_url: "https://t.me/boris_guide",
-            max_url: "https://max.ru/boris-guide",
-            vk_url: "https://vk.com/id12345",
-            role: "verified_instructor",
-            is_current: false,
-          },
-        ]),
-      );
-      return;
-    }
-
-    if (url.pathname === "/api/v1/account/contacts/2/vcard" && request.method === "GET") {
-      response.setHeader("content-type", "text/vcard; charset=utf-8");
-      response.setHeader(
-        "content-disposition",
-        'attachment; filename="tourhub-contact-2.vcf"',
-      );
-      response.end(
-        "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Борис Инструктор\r\nTEL;TYPE=CELL:+491234567890\r\nEND:VCARD\r\n",
-      );
-      return;
-    }
-
     if (url.pathname === "/api/v1/auth/logout" && request.method === "POST") {
       loggedOut = true;
       response.statusCode = 204;

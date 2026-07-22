@@ -2,13 +2,13 @@
 
 Status: Active
 
-Last updated: 2026-07-21
+Last updated: 2026-07-22
 
 ## Purpose
 
 This document describes the implemented domain baseline. `PRODUCT_SPEC.md` describes approved target scope. Deferred capabilities are not current implementation.
 
-## Club, identity, access, and contacts
+## Club, identity, and access
 
 One installation represents one tourist club. Multi-tenant support is prohibited.
 
@@ -16,220 +16,180 @@ Implemented identity model:
 
 - one-time bootstrap creates the first active Administrator;
 - later users are created only by accepting Administrator-issued one-time invitations;
-- approved roles are `administrator`, `instructor`, and `verified_instructor`;
+- one User has one global role: `administrator`, `instructor`, or `verified_instructor`;
 - one User may own multiple independent server sessions;
 - raw session and invitation values are never persisted;
-- Backend resolves the current User, role, and active state for every authorized request;
-- deactivation revokes every active session for the affected User;
+- active state is checked on every authorized request;
+- deactivation revokes sessions and removes runtime Project access;
 - at least one active Administrator must always remain;
-- User writes use optimistic versions and stale profile writes return HTTP 409.
+- user/profile updates use optimistic versions.
 
-Active users with any approved role may use preparation workflows, maintain their own personal account, and view contacts of other active users. System Settings, invitation management, user administration, SMTP operations, and audit reads are Administrator-only.
+A User owns one editable personal contact profile:
 
 ```text
 User
-  ├─ email: immutable login identifier
-  ├─ display_name: one required FIO value
-  ├─ phone: optional normalized phone
-  ├─ telegram_url: optional canonical HTTPS URL
-  ├─ max_url: optional canonical HTTPS URL
-  ├─ vk_url: optional canonical HTTPS URL
+  ├─ display_name: one FIO field
+  ├─ email: unique login, read-only in personal account
+  ├─ phone?
+  ├─ telegram_url?
+  ├─ max_url?
+  ├─ vk_url?
   ├─ role
-  ├─ password_hash
   ├─ is_active
-  ├─ version
-  └─ AuthSession[]
+  └─ version
 ```
 
-Personal-account rules:
+Profile contact values are private from unauthenticated users and are exposed to another user only through shared access to a Project team. Account recovery, verified contact changes, deletion, avatars, public profiles, and general session administration remain future capabilities.
 
-- email is visible but not editable through `/account`;
-- phone accepts a human-friendly representation and is normalized for `tel:` and vCard use;
-- Telegram, MAX, and VK accept either a handle or an approved HTTPS profile URL and persist one canonical URL;
-- empty contact values persist as `NULL`;
-- active contacts are visible only to authenticated active users;
-- inactive users are excluded from contact listing and vCard download;
-- vCard is generated on demand from bounded contact fields and is not persisted;
-- profile changes lock the current User, require the current version, and suppress no-op saves;
-- password change verifies the current password, preserves the current login, and revokes all other active logins in the same transaction.
+## Project ownership and team
 
-Public profiles, avatars, verified email/phone changes, account deletion, recovery, project ownership, row-level ACLs, and general session-administration UI remain future capabilities. Trip-participant profiles remain separate from User contact profiles; Project calculations continue to use participant count.
-
-## AuditEvent
-
-AuditEvent is the append-only history record introduced by TH-0089 / ADR-023.
+Project is the preparation root for one trip.
 
 ```text
-AuditEvent
-  ├─ actor_user_id: int?
-  ├─ actor_display_name
-  ├─ actor_email
-  ├─ actor_role
-  ├─ action
-  ├─ entity_type
-  ├─ entity_id?
-  ├─ before_data: JSON?
-  ├─ after_data: JSON?
-  ├─ context_data: JSON
+Project
+  ├─ owner_user_id → User
+  ├─ ProjectInstructor[]
+  ├─ name, participants, days, start_date
+  ├─ first_meal, last_meal
+  ├─ recipe_generation_mode
+  ├─ status
+  └─ preparation results
+
+ProjectInstructor
+  ├─ project_id → Project
+  ├─ user_id → User
+  ├─ added_by_user_id → User?
   └─ created_at
 ```
 
-Actor identity fields are snapshots. Safe JSON is recursively bounded and removes credential/session/secret keys. AuditEvent is added to the same transaction as its business mutation when the write is database-transactional. Normal update/delete operations are rejected.
+Rules:
 
-Current semantic actions cover:
+- every newly created Project belongs to the creating active user;
+- production Projects have exactly one owner;
+- a Project may have any number of additional instructors;
+- owner and additional-instructor membership are mutually exclusive;
+- Administrators may be additional instructors without changing their global role;
+- inactive users retain historical ownership/membership but cannot access the Project;
+- reactivation restores access from the retained relationship;
+- existing owners are backfilled by `h10023` from the earliest trustworthy `project_created` AuditEvent, with first-Administrator fallback.
 
-- user role and active-state administration;
-- personal profile updates and password changes;
-- Recipe submit, publish, and reject transitions;
-- Project creation, participant recalculation, generation-mode changes, and full preparation;
-- initial/regenerated MealPlan creation and manual MealSlot Dish add/remove/replace;
-- Club, Appearance, Document Appearance, Module, Invitation Policy, and Mail Settings changes;
-- Administrator SMTP connection checks and fixed test-message outcomes;
-- invitation creation, reissue, revocation, acceptance, and automatic delivery results;
-- Product creation/update and successful Product/Recipe catalogue import apply;
-- PurchaseList and PurchaseChecklist generation, responsible-person updates, and checklist item progress;
-- RecipeEquipmentRequirement create/update/delete;
-- EquipmentList generation and manual item add/update/delete;
-- successful Project and purchase-list document generation.
+### Visibility
 
-`account_profile_updated` uses entity type `user`, records previous/new version, and stores only the ordered names of changed fields. Contact values are excluded. No-op profile saves create no event.
+An active User may view a Project when at least one condition is true:
 
-`account_password_changed` uses entity type `user`, records previous/new version, whether the current login was preserved, and how many other logins were revoked. Passwords, password hashes, cookies, raw session values, and session hashes are excluded. Audit failure rolls back the pending password/hash/login-revocation changes.
+- the User is an Administrator;
+- the User is the owner;
+- the User is an additional instructor.
 
-Product events use entity type `product` and bounded catalogue fields. Successful CSV apply uses `catalog_import` and stores only import kind plus row/create/skip/component/note counts. CSV content, row values, and validation details are excluded.
+An unrelated User receives no catalogue item and HTTP 404 for direct or nested Project access.
 
-Purchase generation events snapshot Project/MealPlan IDs, workflow status, and bounded counts. Manual changes record semantic before/after state. Calls made with `commit=False` append events to the Project preparation transaction. Audit failure rolls back pending purchase/checklist/equipment writes, and unchanged values do not create events.
+### Capabilities
 
-Recipe equipment events use `recipe_equipment_requirement`; project equipment uses `equipment_list` and `equipment_list_item`. Snapshots contain names, quantities, calculated/manual/removed state, and parent IDs only. Recalculation and AuditEvent persistence share the existing write transaction.
+Owner or Administrator, while the Project is open:
 
-Document generation events use `project_document` or `purchase_list_document`. They are committed after successful generation and before response delivery. Payloads contain document kind, format, content type, and size only; generated content and filenames are not persisted.
+- change Project parameters and recipe-generation mode;
+- generate/regenerate and manually edit Menu;
+- run full preparation;
+- operate Shopping, Checklist, Equipment, Documents, and contacts;
+- manage additional instructors;
+- transfer ownership;
+- complete or delete the Project.
 
-Invitation lifecycle events use entity type `invitation` and the Invitation ID. Create, reissue, revoke, and accept events share the invitation/User/AuthSession transaction. Automatic delivery remains after create/reissue commit; its separate event contains only status, attempt count, recipient domain, operation kind, and role. Delivery or delivery-audit failure does not invalidate the invitation or remove the one-time manual link.
+Additional instructor, while the Project is open:
 
-Raw tokens, acceptance URLs, passwords and hashes, raw sessions and hashes, cookies, phone numbers, social URLs, SMTP secrets, provider messages, protocol transcripts, exception details, full recipient addresses, CSV bodies, generated document bytes/text, filenames, and arbitrary request bodies are excluded.
+- view Project and Menu;
+- operate Shopping, Checklist, Equipment, Documents, and contacts;
+- cannot write Menu or Project/team/settings/status/deletion state.
 
-Automatic ORM-wide auditing remains rejected.
+### Ownership transfer
 
-## Project and MealPlan
+A new owner may be any active supported User. Transfer removes the new owner from additional membership, retains the previous owner as an additional instructor, changes ownership, and records one semantic event in one transaction.
 
-Project is the preparation root for one trip. It stores name, participant count, duration, optional start date, first/last meals, Recipe generation mode, status, and preparation results.
+### Completion
 
-Supported Recipe generation modes:
+`completed` is terminal. A completed Project:
 
-- `club_only` — eligible published CLUB variants only;
-- `club_and_personal` — published CLUB variants followed by current-actor PERSONAL variants;
-- `personal_preferred` — current-actor PERSONAL variants followed by CLUB fallback.
+- is hidden from the catalogue by default;
+- remains visible to authorized users when completed items are requested;
+- is read-only across Menu, settings, team, preparation, Shopping, Checklist, and Equipment;
+- retains document reads/downloads;
+- may be deleted by owner or Administrator;
+- cannot be reopened.
 
-MealSlotDish persists the exact selected `recipe_id`. Generation, manual assignments, shopping, equipment, and exports use this snapshot rather than re-reading a mutable Dish default. Archived catalogue records remain available to historical assignments but are excluded from new generation.
+Future `Копировать проект` will create a new Project identity from a completed template. It is not implemented.
 
-## Dish and Recipe
+## Project team contacts
 
-Dish and Recipe are separate entities.
+Project team projection contains:
 
-```text
-Dish
-  ├─ recipe_id: published CLUB default
-  ├─ is_archived
-  ├─ archived_by_alcohol_policy
-  ├─ DishRecipeVariant[] ordered by position
-  └─ DishMealRole[]
-```
+- the owner first;
+- additional instructors ordered deterministically;
+- global role, Project role, active state, and contact profile fields.
 
-Dish rules:
+Active authorized team viewers receive mail, `tel:`, Telegram, MAX, VK, and Project-scoped vCard actions. Inactive historical members remain identifiable but contact actions are unavailable. Administrators who are not explicitly owner/team members are not listed as contacts even though they may view the Project.
 
-- the default Recipe is required, active, published, CLUB, policy-allowed, and included in the variant set;
-- the complete variant set is replaced atomically and preserves caller order;
-- additional variants may be active published CLUB Recipes or active PERSONAL Recipes owned by the current actor;
-- unrelated PERSONAL or archived/policy-prohibited Recipes are not accepted;
-- active Dish reads and preparation repositories exclude archived Dishes;
-- archived Dishes remain available through existing historical foreign-key relationships;
-- removing/reordering variants does not change existing assignment Recipe snapshots.
+The former club-wide `/account/contacts` directory is removed.
 
-```text
-Recipe
-  ├─ scope: club | personal
-  ├─ owner_user_id: User?
-  ├─ lifecycle_status: draft | submitted | rejected | published
-  ├─ submission and review metadata
-  ├─ is_archived
-  ├─ archived_by_alcohol_policy
-  ├─ RecipeComponent[]
-  ├─ RecipeNote[]
-  └─ RecipeEquipmentRequirement[]
-```
+## Project-team notification boundary
 
-Recipe rules:
+`ProjectTeamNotificationService` defines callbacks for instructor add/remove and ownership transfer. The current implementation is no-op. No mail, Telegram, MAX, queue, retry, provider message, or delivery history is created.
 
-- CLUB has no owner and is `published`;
-- PERSONAL has one owner and is `draft`, `submitted`, or `rejected`;
-- submitted recipes are locked against ordinary edits;
-- publication converts PERSONAL to CLUB while preserving submitter attribution;
-- policy validation applies to Recipe names and every Product component;
-- submit and publish revalidate current content before state transition;
-- restore rejects policy-archived Recipes and revalidates ordinary archived content;
-- policy-archived Recipes remain readable historically but cannot return to active selection;
-- lifecycle and equipment-requirement writes append immutable semantic AuditEvents.
+## AuditEvent
 
-Preparation technology, dietary/season metadata, richer categories, preference weights, per-meal manual Recipe switching, and moderation notifications remain incomplete.
+AuditEvent is append-only and stores actor snapshots, semantic action, entity identity, safe before/after/context JSON, and timestamp.
 
-## Product, import, and alcohol policy
+Current Project-team actions include:
 
-Product is independent of Recipes. Practical calculation modes include per-person, fixed-group, and package-per-people.
+- `project_instructor_added`;
+- `project_instructor_removed`;
+- `project_owner_transferred`;
+- `project_status_updated`;
+- `project_deleted`.
 
-```text
-Product
-  ├─ name
-  ├─ category
-  ├─ unit
-  ├─ package_size
-  ├─ is_archived
-  └─ archived_by_alcohol_policy
-```
+Team, ownership, completion, deletion, and their AuditEvents share owning transactions. No-op membership/ownership writes create no event. Audit failure rolls back pending domain mutation.
 
-The central no-exceptions alcohol policy is implemented through ADR-025:
+Project-team payloads may include Project/User IDs, display names, global/project roles, and state metadata. Phone numbers, social URLs, passwords, hashes, sessions, tokens, credentials, request bodies, and provider details are excluded.
 
-- Unicode NFKC, case-folding, `ё → е`, punctuation tokenization, and complete-word matching;
-- one explicit versioned Russian/English vocabulary;
-- Product creation/update validates name/category;
-- Recipe creation/rename and Product component writes validate the same rule;
-- Dish creation/update validates its name and every Recipe variant;
-- Recipe submit/publish/restore activation paths revalidate content;
-- Product and Recipe CSV preview/apply use the same policy wrapper;
-- runtime policy violations return HTTP 422;
-- active Product lists exclude archived Products;
-- fuzzy/external classification, exceptions, and allowlists are not implemented.
+Existing audit coverage for user access, Recipe lifecycle, Project preparation, Menu/MealSlot, System Settings/mail, invitations, catalogue/import, Shopping/Checklist, Equipment, and Documents remains implemented. Automatic ORM-wide auditing remains rejected.
 
-Alembic `h10021` archives prohibited Product/Recipe/Dish records in dependency order while preserving historical relationships. Alembic `h10022` adds nullable User contact fields without changing existing users. The current post-release head is `h10022`; immutable release tag `v0.1.0` remains at `h10021`.
+## Menu and preparation
 
-Products, Recipes, components, and notes can otherwise be loaded through CSV preview/apply. Invalid input does not create partial catalogue data.
+MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only. MealSlotDish persists the exact selected Recipe.
 
-## Shopping and equipment
+Supported Project Recipe generation modes remain:
 
-Products aggregate across exact Recipes stored on MealSlotDish and compatibility MealPlanItem assignments. Package count, purchase quantity, purchased quantity, surplus, checklist state, comments, responsible person, equipment quantities, overrides, and removals are persisted.
+- `club_only`;
+- `club_and_personal`;
+- `personal_preferred`.
 
-Participant-count changes, menu edits, assignment changes, and relevant Recipe changes refresh prepared outputs. Changing a Dish default or archiving a catalogue record does not reinterpret historical assignment snapshots.
+Owner/Administrator may generate and edit Menu. Additional instructors receive read-only Menu projection. Full preparation is owner/Administrator-only because it may create or change Menu and downstream state.
+
+Shopping/Checklist and Equipment operational writes are available to additional instructors while the Project is open. All Project-scoped routes apply central visibility and completion checks.
+
+## Product, Recipe, Dish, and alcohol policy
+
+Product, Recipe ownership/lifecycle, Dish Recipe variants, exact assignment snapshots, archive state, and the central no-exceptions alcohol policy remain unchanged. Archived records remain readable historically and are excluded from new active use.
 
 ## Documents and mail
 
-`ConsolidatedProjectDocumentDTO` is a non-persisted immutable export snapshot assembled from one prepared Project, MealPlan, exact MealSlotDish Recipes, PurchaseList, optional PurchaseChecklist, EquipmentList, warnings, comments, and responsible-person text.
+Consolidated Project documents remain non-persisted immutable snapshots. Authorized Project members may generate/download approved documents; completed Projects retain document access as read-only history. Audit stores only safe document metadata.
 
-Implemented document behavior:
+MailSettings and invitation delivery retain existing boundaries. Project-team notifications are not yet connected to mail or messaging providers.
 
-- complete Russian PDF sections for Project parameters, menu, loadout, shopping, equipment, warnings, and comments;
-- workbook sheets `Поход`, `Меню`, `Раскладка`, `Закупка`, and `Оборудование` in fixed order;
-- one immutable club/document appearance snapshot per package request;
-- focused purchase/equipment files remain compatible;
-- the coordinated ZIP includes complete and compatibility artifacts;
-- missing preparation prevents a partial complete export;
-- successful generation/download requests append safe actor-attributed metadata without persisting files.
+## Current migrations
 
-MailSettings owns non-secret SMTP metadata. The deployment-managed value remains external. Working delivery supports connection checks, a fixed Russian test message, and best-effort invitation delivery with manual fallback. Queues, scheduled retries, persisted delivery history, templates, attachments, and bounce handling are deferred.
+- released `v0.1.0`: `h10021`;
+- optional User contact profile: `h10022`;
+- Project owner/team membership: `h10023` current head.
 
 ## Future domains
 
-- trip-participant profiles and logistics/load distribution;
+- copy a completed Project into a new Project template instance;
+- Project-team notifications through email, Telegram, and MAX;
+- participant profiles;
 - routes and GPX;
-- warehouse balances and issue workflow;
+- logistics and load distribution;
+- warehouse balances;
 - procurement prices and aggregator integration.
 
 Multi-tenant support remains prohibited.

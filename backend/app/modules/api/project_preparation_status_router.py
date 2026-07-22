@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.core.auth import require_preparation_access
 from app.core.database import get_db
-from app.modules.projects.repositories.project_repository import ProjectRepository
+from app.core.project_access import ProjectAccessPolicy
+from app.models.user import UserORM
 from app.repositories.equipment_list_repository import EquipmentListRepository
 from app.repositories.meal_plan_repository import MealPlanRepository
 from app.repositories.purchase_checklist_repository import PurchaseChecklistRepository
@@ -17,10 +19,9 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 def get_project_preparation(
     project_id: int,
     db: Session = Depends(get_db),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> ProjectPreparationResult:
-    if ProjectRepository(db).get_by_id(project_id) is None:
-        raise HTTPException(status_code=404, detail="Project not found")
-
+    ProjectAccessPolicy.require_visible(db, project_id, actor)
     return ProjectPreparationStatusService(
         MealPlanRepository(db),
         PurchaseListRepository(db),

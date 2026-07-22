@@ -7,6 +7,7 @@ import { parseCampItemQuantity } from "../model/campItemState";
 interface Props {
   item: EquipmentListItem;
   pending: boolean;
+  readOnly?: boolean;
   onSave: (itemId: string, requiredQuantity: number) => Promise<void>;
   onRemove: (itemId: string) => Promise<void>;
 }
@@ -14,6 +15,7 @@ interface Props {
 export default function ProjectEquipmentItemRow({
   item,
   pending,
+  readOnly = false,
   onSave,
   onRemove,
 }: Props) {
@@ -47,28 +49,31 @@ export default function ProjectEquipmentItemRow({
         label="Количество"
         value={quantity}
         onChange={(event) => setQuantity(event.target.value)}
+        InputProps={{ readOnly }}
         inputProps={{
           inputMode: "numeric",
           "aria-label": `Количество: ${item.equipment_name}`,
         }}
         sx={{ width: { xs: "100%", sm: 150 } }}
       />
-      <Stack direction="row" spacing={1}>
-        <Button
-          variant="outlined"
-          disabled={pending || parsedQuantity === null || !changed}
-          onClick={() => parsedQuantity !== null && void onSave(item.id, parsedQuantity)}
-        >
-          Сохранить
-        </Button>
-        <Button
-          color="error"
-          disabled={pending}
-          onClick={() => void onRemove(item.id)}
-        >
-          Удалить
-        </Button>
-      </Stack>
+      {!readOnly && (
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            disabled={pending || parsedQuantity === null || !changed}
+            onClick={() => parsedQuantity !== null && void onSave(item.id, parsedQuantity)}
+          >
+            Сохранить
+          </Button>
+          <Button
+            color="error"
+            disabled={pending}
+            onClick={() => void onRemove(item.id)}
+          >
+            Удалить
+          </Button>
+        </Stack>
+      )}
     </Stack>
   );
 }

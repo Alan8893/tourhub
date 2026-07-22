@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-21
+Status date: 2026-07-22
 
 ## Product goal
 
@@ -22,6 +22,8 @@ First-release preparation and operations
   → Invitation lifecycle and delivery-result audit coverage (TH-0102)
   → Catalogue/import, shopping, equipment, and document audit coverage (TH-0103)
   → Personal accounts and active club contacts (TH-0104)
+  → Project ownership, team access, and project contacts (TH-0105)
+  → Copy Project from completed template (future explicit task)
 ```
 
 ## Released first-release sequence
@@ -69,9 +71,22 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 - real-Chrome acceptance covers desktop/mobile layout, profile update, contacts, vCard, password change, navigation, and logout;
 - current post-release head is `h10022`; immutable `v0.1.0` remains at released head `h10021`.
 
-## Next post-release selection
+## Active post-release selection
 
-No task after TH-0104 is selected automatically. Further work requires a separate Product Owner decision.
+### TH-0105 — Project ownership, team access, and project contacts
+
+- persist one owner and multiple additional instructors per Project;
+- restrict Project visibility to active Administrators, the active owner, and active additional instructors;
+- give additional instructors read-only Menu access and operational Shopping/Checklist/Equipment/Document access;
+- keep Project parameters, Menu writes, team management, ownership transfer, completion, and deletion owner/Administrator-only;
+- move contact cards from the personal account to the Project overview;
+- make completed Projects read-only and hidden by default;
+- preserve singular global User roles while adding Project-scoped responsibilities;
+- introduce a no-op future notification boundary for email, Telegram, and MAX.
+
+## Explicit future task — Copy Project
+
+`Копировать проект` is a required later capability and must not be lost from planning. From a completed Project, the owner or an Administrator will start a new Project using the old Project as a template. The flow will reuse the normal new-Project parameter form for name, dates, duration, participant count, and meal boundaries, then copy the approved menu and preparation/settings structure into a new identity without reopening or mutating the completed source Project. Exact copied domains, historical attribution, recalculation rules, and notification behavior require a separate Product Owner-approved task before implementation.
 
 ## Deferred non-blocking priorities
 

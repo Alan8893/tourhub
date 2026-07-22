@@ -15,14 +15,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   AccountProfile,
-  ClubContact,
   changeAccountPassword,
-  downloadContactVcard,
   getAccountProfile,
-  getClubContacts,
   updateAccountProfile,
 } from "@/features/account/api/accountApi";
-import { userRoleLabel } from "@/features/auth/model/roleLabels";
 import { useAuth } from "@/features/auth/providers/AuthProvider";
 
 interface ProfileDraft {
@@ -71,94 +67,11 @@ function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-function ContactCard({ contact }: { contact: ClubContact }) {
-  const [downloadError, setDownloadError] = useState<string | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-
-  async function saveContact() {
-    setDownloadError(null);
-    setIsDownloading(true);
-    try {
-      const blob = await downloadContactVcard(contact.id);
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `tourhub-contact-${contact.id}.vcf`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      setDownloadError(errorMessage(error, "Не удалось подготовить контакт."));
-    } finally {
-      setIsDownloading(false);
-    }
-  }
-
-  return (
-    <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
-      <Stack spacing={1.5}>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h6" sx={{ overflowWrap: "anywhere" }}>
-            {contact.display_name}{contact.is_current ? " · Вы" : ""}
-          </Typography>
-          <Typography color="text.secondary">{userRoleLabel(contact.role)}</Typography>
-        </Box>
-        <Button
-          component="a"
-          href={`mailto:${contact.email}`}
-          variant="text"
-          sx={{ alignSelf: "flex-start", p: 0, textTransform: "none", overflowWrap: "anywhere" }}
-        >
-          {contact.email}
-        </Button>
-        {contact.phone && (
-          <Button
-            component="a"
-            href={`tel:${contact.phone}`}
-            variant="outlined"
-            sx={{ alignSelf: "flex-start", maxWidth: "100%" }}
-          >
-            Позвонить: {contact.phone}
-          </Button>
-        )}
-        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-          {contact.telegram_url && (
-            <Button component="a" href={contact.telegram_url} target="_blank" rel="noreferrer">
-              Telegram
-            </Button>
-          )}
-          {contact.max_url && (
-            <Button component="a" href={contact.max_url} target="_blank" rel="noreferrer">
-              MAX
-            </Button>
-          )}
-          {contact.vk_url && (
-            <Button component="a" href={contact.vk_url} target="_blank" rel="noreferrer">
-              VK
-            </Button>
-          )}
-        </Stack>
-        <Button
-          variant="outlined"
-          onClick={() => void saveContact()}
-          disabled={isDownloading}
-          sx={{ alignSelf: "flex-start" }}
-        >
-          {isDownloading ? "Подготовка…" : "Сохранить контакт"}
-        </Button>
-        {downloadError && <Alert severity="error">{downloadError}</Alert>}
-      </Stack>
-    </Paper>
-  );
-}
-
 export default function AccountPage() {
   const { logout, refresh } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
-  const [contacts, setContacts] = useState<ClubContact[]>([]);
   const [draft, setDraft] = useState<ProfileDraft>(emptyProfile);
   const [passwords, setPasswords] = useState<PasswordDraft>(emptyPasswords);
   const [isLoading, setIsLoading] = useState(true);
@@ -174,13 +87,9 @@ export default function AccountPage() {
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [loadedProfile, loadedContacts] = await Promise.all([
-        getAccountProfile(),
-        getClubContacts(),
-      ]);
+      const loadedProfile = await getAccountProfile();
       setProfile(loadedProfile);
       setDraft(profileDraft(loadedProfile));
-      setContacts(loadedContacts);
     } catch (error) {
       setLoadError(errorMessage(error, "Не удалось загрузить личный кабинет."));
     } finally {
@@ -209,7 +118,6 @@ export default function AccountPage() {
       });
       setProfile(updated);
       setDraft(profileDraft(updated));
-      setContacts(await getClubContacts());
       await refresh();
       setProfileMessage("Профиль сохранён.");
     } catch (error) {
@@ -267,11 +175,11 @@ export default function AccountPage() {
   }
 
   return (
-    <Stack spacing={3} sx={{ maxWidth: 1100, mx: "auto", minWidth: 0 }}>
+    <Stack spacing={3} sx={{ maxWidth: 900, mx: "auto", minWidth: 0 }}>
       <Box>
         <Typography variant="h3" component="h1">Личный кабинет</Typography>
         <Typography color="text.secondary">
-          Ваши контактные данные и контакты активных участников клуба.
+          Управление личными контактными данными, паролем и текущей сессией.
         </Typography>
       </Box>
 
@@ -287,7 +195,7 @@ export default function AccountPage() {
             <Box>
               <Typography variant="h5">Мой профиль</Typography>
               <Typography color="text.secondary">
-                Почта используется для входа и доступна только для просмотра.
+                Эти контакты увидят только участники команды доступного им проекта.
               </Typography>
             </Box>
             <TextField
@@ -303,7 +211,7 @@ export default function AccountPage() {
               value={draft.phone}
               onChange={(event) => setDraft({ ...draft, phone: event.target.value })}
               placeholder="+7 999 123-45-67"
-              helperText="Необязательно. После сохранения номер можно открыть для звонка и добавить через vCard."
+              helperText="Необязательно. В проекте номер можно открыть для звонка и сохранить через vCard."
             />
             <Divider />
             <Typography variant="subtitle1">Социальные профили</Typography>
@@ -384,22 +292,6 @@ export default function AccountPage() {
           </Button>
         </Stack>
       </Paper>
-
-      <Box>
-        <Typography variant="h4" component="h2" gutterBottom>Контакты участников</Typography>
-        <Typography color="text.secondary" sx={{ mb: 2 }}>
-          Доступны всем вошедшим активным пользователям TourHub.
-        </Typography>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "minmax(0, 1fr)", md: "repeat(2, minmax(0, 1fr))" },
-            gap: 2,
-          }}
-        >
-          {contacts.map((contact) => <ContactCard key={contact.id} contact={contact} />)}
-        </Box>
-      </Box>
 
       <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
         <Stack spacing={1.5} alignItems="flex-start">

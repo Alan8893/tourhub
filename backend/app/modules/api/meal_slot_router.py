@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.auth import require_preparation_access
+from app.core.project_access import ProjectAccessPolicy
 from app.core.session import get_session
 from app.models.dish import DishORM
 from app.models.meal_slot import MealSlotORM
@@ -109,6 +110,31 @@ def _slot_context(slot: MealSlotORM) -> dict[str, object]:
     }
 
 
+def _find_slot_dish(slot: MealSlotORM, slot_dish_id: str) -> MealSlotDishORM:
+    item = next(
+        (
+            candidate
+            for candidate in cast(list[MealSlotDishORM], slot.dishes)
+            if candidate.id == slot_dish_id
+        ),
+        None,
+    )
+    if item is None:
+        raise HTTPException(status_code=404, detail="Meal slot dish not found")
+    return item
+
+
+def _require_slot_menu_write(
+    session: Session,
+    slot: MealSlotORM,
+    actor: UserORM,
+) -> None:
+    project_id = slot.day.meal_plan.project_id
+    if project_id is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+    ProjectAccessPolicy.require_menu_write(session, project_id, actor)
+
+
 def _commit_recalculation(
     session: Session,
     operation: Callable[[], dict[str, str]],
@@ -133,6 +159,7 @@ def add_dish(
     slot = MealSlotRepository(session).get(slot_id)
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
+    _require_slot_menu_write(session, slot, actor)
     before = _slot_snapshot(slot)
 
     def operation() -> dict[str, str]:
@@ -173,17 +200,11 @@ def remove_dish(
     slot = MealSlotRepository(session).get(slot_id)
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
+    removed = _find_slot_dish(slot, slot_dish_id)
+    _require_slot_menu_write(session, slot, actor)
     before = _slot_snapshot(slot)
 
     def operation() -> dict[str, str]:
-        removed = next(
-            (
-                item
-                for item in cast(list[MealSlotDishORM], slot.dishes)
-                if item.id == slot_dish_id
-            ),
-            None,
-        )
         try:
             service.remove_dish(slot, slot_dish_id)
         except ValueError as error:
@@ -200,8 +221,8 @@ def remove_dish(
             context={
                 **_slot_context(slot),
                 "slot_dish_id": slot_dish_id,
-                "dish_id": removed.dish_id if removed is not None else None,
-                "recipe_id": removed.recipe_id if removed is not None else None,
+                "dish_id": removed.dish_id,
+                "recipe_id": removed.recipe_id,
             },
         )
         return {"status": "ok"}
@@ -221,19 +242,13 @@ def replace_dish(
     slot = MealSlotRepository(session).get(slot_id)
     if slot is None:
         raise HTTPException(status_code=404, detail="Meal slot not found")
+    previous = _find_slot_dish(slot, slot_dish_id)
+    _require_slot_menu_write(session, slot, actor)
     before = _slot_snapshot(slot)
+    previous_dish_id = previous.dish_id
+    previous_recipe_id = previous.recipe_id
 
     def operation() -> dict[str, str]:
-        previous = next(
-            (
-                item
-                for item in cast(list[MealSlotDishORM], slot.dishes)
-                if item.id == slot_dish_id
-            ),
-            None,
-        )
-        previous_dish_id = previous.dish_id if previous is not None else None
-        previous_recipe_id = previous.recipe_id if previous is not None else None
         dish, recipe = _get_selectable_dish_and_recipe(session, slot, dish_id, actor)
         try:
             item = service.replace_dish(slot, slot_dish_id, dish.id, recipe.id)

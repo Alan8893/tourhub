@@ -8,4 +8,12 @@ export {
   useProject,
   useUpdateProjectRecipeGenerationMode,
 } from "./hooks/useProject";
+export {
+  useCompleteProject,
+  useDeleteProject,
+  useProjectTeam,
+  useProjectTeamCandidates,
+  useTransferProjectOwnership,
+  useUpdateProjectTeam,
+} from "./hooks/useProjectTeam";
 export { usePrepareProject } from "./hooks/usePrepareProject";

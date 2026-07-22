@@ -5,11 +5,14 @@ import {
   Card,
   CardActionArea,
   CardContent,
+  Checkbox,
   Chip,
   CircularProgress,
+  FormControlLabel,
   Stack,
   Typography,
 } from "@mui/material";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useProjects } from "@/features/project/hooks/useProjects";
@@ -24,7 +27,14 @@ const statusLabels: Record<string, string> = {
 export default function ProjectsPage() {
   const navigate = useNavigate();
   const projectsQuery = useProjects();
-  const projects = projectsQuery.data?.items ?? [];
+  const [showCompleted, setShowCompleted] = useState(false);
+  const availableProjects = projectsQuery.data?.items ?? [];
+  const projects = availableProjects.filter(
+    (project) => showCompleted || project.status !== "completed",
+  );
+  const completedCount = availableProjects.filter(
+    (project) => project.status === "completed",
+  ).length;
 
   return (
     <Stack spacing={3} sx={{ mt: 4 }}>
@@ -37,11 +47,22 @@ export default function ProjectsPage() {
         <Box>
           <Typography variant="h4" component="h1">Походы</Typography>
           <Typography color="text.secondary">
-            Все проекты походов клуба. Откройте карточку, чтобы продолжить подготовку.
+            Проекты, доступные вам как администратору, владельцу или приглашённому инструктору.
           </Typography>
         </Box>
         <Button variant="contained" onClick={() => navigate("/projects/new")}>Новый поход</Button>
       </Stack>
+
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={showCompleted}
+            onChange={(event) => setShowCompleted(event.target.checked)}
+          />
+        }
+        label={`Показывать завершённые${completedCount > 0 ? ` (${completedCount})` : ""}`}
+        sx={{ alignSelf: "flex-start" }}
+      />
 
       {projectsQuery.isLoading && (
         <Stack alignItems="center" py={6}><CircularProgress aria-label="Загрузка походов" /></Stack>
@@ -52,14 +73,22 @@ export default function ProjectsPage() {
       )}
 
       {!projectsQuery.isLoading && !projectsQuery.isError && projects.length === 0 && (
-        <Alert severity="info">Походов пока нет. Создайте первый проект.</Alert>
+        <Alert severity="info">
+          {availableProjects.length === 0
+            ? "Доступных походов пока нет. Создайте новый проект или дождитесь приглашения."
+            : "Активных походов нет. Включите показ завершённых проектов."}
+        </Alert>
       )}
 
       {projects.length > 0 && (
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))", lg: "repeat(3, minmax(0, 1fr))" },
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, minmax(0, 1fr))",
+              lg: "repeat(3, minmax(0, 1fr))",
+            },
             gap: 2,
           }}
         >
@@ -77,6 +106,9 @@ export default function ProjectsPage() {
                     </Typography>
                     <Typography variant="body2">
                       {project.days} дн. · {project.participants} участников
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Владелец: {project.owner_display_name ?? "не назначен"}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Приёмы пищи: {project.first_meal ?? "не указан"} — {project.last_meal ?? "не указан"}

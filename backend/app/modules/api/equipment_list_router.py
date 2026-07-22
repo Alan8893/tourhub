@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.auth import require_preparation_access
+from app.core.project_access import ProjectAccessPolicy
 from app.core.session import get_session
 from app.models.equipment_list import EquipmentListORM
 from app.models.equipment_list_item import EquipmentListItemORM
@@ -59,7 +60,10 @@ def _response(
 def get_project_equipment_list(
     project_id: int,
     service: EquipmentListService = Depends(get_service),
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> EquipmentListResponse:
+    ProjectAccessPolicy.require_visible(session, project_id, actor)
     equipment_list = service.get_by_project_id(project_id)
     if equipment_list is None:
         raise HTTPException(status_code=404, detail="Equipment list not found")
@@ -70,7 +74,10 @@ def get_project_equipment_list(
 def generate_project_equipment_list(
     project_id: int,
     service: EquipmentListService = Depends(get_service),
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> EquipmentListResponse:
+    ProjectAccessPolicy.require_operational_write(session, project_id, actor)
     meal_plan = service.meal_plan_repository.get_by_project_id(project_id)
     if meal_plan is None:
         raise HTTPException(status_code=404, detail="Meal plan not found")
@@ -90,7 +97,10 @@ def add_project_equipment_item(
     project_id: int,
     payload: EquipmentListItemWriteRequest,
     service: EquipmentListService = Depends(get_service),
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> EquipmentListItemResponse:
+    ProjectAccessPolicy.require_operational_write(session, project_id, actor)
     try:
         item = service.add_manual_item(
             project_id,
@@ -113,7 +123,10 @@ def update_project_equipment_item(
     item_id: str,
     payload: EquipmentListItemQuantityRequest,
     service: EquipmentListService = Depends(get_service),
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> EquipmentListItemResponse:
+    ProjectAccessPolicy.require_operational_write(session, project_id, actor)
     try:
         item = service.update_item_quantity(
             project_id,
@@ -133,7 +146,10 @@ def delete_project_equipment_item(
     project_id: int,
     item_id: str,
     service: EquipmentListService = Depends(get_service),
+    session: Session = Depends(get_session),
+    actor: UserORM = Depends(require_preparation_access),
 ) -> Response:
+    ProjectAccessPolicy.require_operational_write(session, project_id, actor)
     try:
         service.delete_item(project_id, item_id)
     except LookupError as error:

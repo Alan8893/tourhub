@@ -20,11 +20,13 @@ import {
 interface PurchaseChecklistItemRowProps {
   item: PurchaseChecklistItem;
   projectId: number;
+  readOnly?: boolean;
 }
 
 export default function PurchaseChecklistItemRow({
   item,
   projectId,
+  readOnly = false,
 }: PurchaseChecklistItemRowProps) {
   const updateItem = useUpdatePurchaseChecklistItem(projectId);
   const [purchasedValue, setPurchasedValue] = useState(
@@ -39,6 +41,7 @@ export default function PurchaseChecklistItemRow({
   }, [item.id, item.purchased_quantity]);
 
   const savePurchasedQuantity = () => {
+    if (readOnly) return;
     const purchasedQuantity = parsePurchasedQuantity(purchasedValue);
     if (purchasedQuantity === null) {
       setFeedback({
@@ -69,6 +72,7 @@ export default function PurchaseChecklistItemRow({
   };
 
   const setChecked = (checked: boolean) => {
+    if (readOnly) return;
     setFeedback(undefined);
     updateItem.mutate(
       {
@@ -123,6 +127,7 @@ export default function PurchaseChecklistItemRow({
             label="Куплено"
             value={purchasedValue}
             onChange={(event) => setPurchasedValue(event.target.value)}
+            InputProps={{ readOnly }}
             inputProps={{
               min: 0,
               step: "any",
@@ -131,13 +136,15 @@ export default function PurchaseChecklistItemRow({
             sx={{ width: { xs: "100%", sm: 170 } }}
           />
 
-          <Button
-            variant="outlined"
-            onClick={savePurchasedQuantity}
-            disabled={updateItem.isPending}
-          >
-            Сохранить
-          </Button>
+          {!readOnly && (
+            <Button
+              variant="outlined"
+              onClick={savePurchasedQuantity}
+              disabled={updateItem.isPending}
+            >
+              Сохранить
+            </Button>
+          )}
 
           <FormControlLabel
             sx={{ m: 0, whiteSpace: "nowrap" }}
@@ -145,7 +152,7 @@ export default function PurchaseChecklistItemRow({
               <Checkbox
                 checked={item.is_checked}
                 onChange={(event) => setChecked(event.target.checked)}
-                disabled={updateItem.isPending}
+                disabled={readOnly || updateItem.isPending}
                 inputProps={{
                   "aria-label": `Отметить ${item.product_name} купленным`,
                 }}
