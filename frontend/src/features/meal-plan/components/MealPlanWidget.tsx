@@ -29,7 +29,7 @@ const mealTypeLabels: Record<string, string> = {
   dinner: "Ужин",
 };
 
-export default function MealPlanWidget() {
+export default function MealPlanWidget({ readOnly = false }: { readOnly?: boolean }) {
   const { projectId } = useProjectWorkflow();
   const { data: mealPlan, isError, isLoading } = useProjectMealPlan(projectId);
   const viewState = getMealPlanViewState({
@@ -59,6 +59,12 @@ export default function MealPlanWidget() {
             </Typography>
           </Stack>
 
+          {readOnly && (
+            <Alert severity="info">
+              Меню доступно только для просмотра. Изменять его может владелец проекта или администратор.
+            </Alert>
+          )}
+
           {viewState === "loading" && <Typography>Загрузка меню…</Typography>}
 
           {viewState === "error" && (
@@ -69,7 +75,9 @@ export default function MealPlanWidget() {
 
           {viewState === "empty" && (
             <Typography variant="body2" color="text.secondary">
-              Меню ещё не сформировано. Нажмите «Сформировать меню» в блоке следующего действия.
+              {readOnly
+                ? "Меню ещё не сформировано владельцем проекта."
+                : "Меню ещё не сформировано. Нажмите «Сформировать меню» в блоке следующего действия."}
             </Typography>
           )}
 
@@ -162,15 +170,21 @@ export default function MealPlanWidget() {
                                   />
                                 ))}
                               </Stack>
-                              <MealSlotEditor
-                                slotId={slot.id}
-                                mealType={mealTypeLabels[slot.meal_type] ?? slot.meal_type}
-                                dishes={slot.dishes.map((dish) => ({
-                                  id: dish.id,
-                                  dish_id: dish.dish_id,
-                                  dish_name: dish.dish_name,
-                                }))}
-                              />
+                              {readOnly ? (
+                                <Typography variant="subtitle2">
+                                  {mealTypeLabels[slot.meal_type] ?? slot.meal_type}
+                                </Typography>
+                              ) : (
+                                <MealSlotEditor
+                                  slotId={slot.id}
+                                  mealType={mealTypeLabels[slot.meal_type] ?? slot.meal_type}
+                                  dishes={slot.dishes.map((dish) => ({
+                                    id: dish.id,
+                                    dish_id: dish.dish_id,
+                                    dish_name: dish.dish_name,
+                                  }))}
+                                />
+                              )}
                             </Stack>
                           ),
                         )}
