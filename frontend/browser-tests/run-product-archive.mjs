@@ -23,6 +23,21 @@ const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5213/browser-tests/product-archive.html";
 const profileDir = `/tmp/tourhub-product-archive-${process.pid}`;
 
+async function captureScreenshot(client, filename) {
+  const screenshot = await Promise.race([
+    client.send("Page.captureScreenshot", {
+      format: "png",
+      captureBeyondViewport: false,
+    }),
+    sleep(5_000).then(() => null),
+  ]);
+  if (!screenshot?.data) {
+    console.warn(`Skipped ${filename}: Chrome screenshot timed out after assertions.`);
+    return;
+  }
+  await writeFile(path.join(artifactDir, filename), Buffer.from(screenshot.data, "base64"));
+}
+
 async function clickTextButton(client, text) {
   return client.evaluate(`(() => {
     const text = ${JSON.stringify(text)};
@@ -65,11 +80,7 @@ async function writeDiagnostics(client, name) {
     path.join(artifactDir, `${name}.json`),
     JSON.stringify({ page, productArchiveRequests }, null, 2),
   );
-  const screenshot = await client.send("Page.captureScreenshot", {
-    format: "png",
-    captureBeyondViewport: false,
-  });
-  await writeFile(path.join(artifactDir, `${name}.png`), Buffer.from(screenshot.data, "base64"));
+  await captureScreenshot(client, `${name}.png`);
 }
 
 async function run() {
@@ -138,8 +149,7 @@ async function run() {
       assert.equal(await clickProductAction(client, "Гречка", "Архивировать"), true);
       await waitForExpression(
         client,
-        `document.body?.innerText?.includes("Продукт «Гречка» перемещён в архив.") &&
-         ${JSON.stringify(productArchiveRequests)} !== null`,
+        `document.body?.innerText?.includes("Продукт «Гречка» перемещён в архив.")`,
         "product archived",
       );
       assert.ok(
@@ -195,14 +205,7 @@ async function run() {
           layout.bodyScrollWidth <= layout.clientWidth + 1,
         `Horizontal overflow: ${JSON.stringify(layout)}`,
       );
-      const screenshot = await client.send("Page.captureScreenshot", {
-        format: "png",
-        captureBeyondViewport: false,
-      });
-      await writeFile(
-        path.join(artifactDir, "product-archive-mobile.png"),
-        Buffer.from(screenshot.data, "base64"),
-      );
+      await captureScreenshot(client, "product-archive-mobile.png");
     } catch (error) {
       await writeDiagnostics(client, "product-archive-diagnostic");
       throw error;
@@ -212,17 +215,19 @@ async function run() {
     console.log("Product archive browser acceptance passed.");
   } finally {
     await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
-    await api.close();
+    await Promise.race([api.close(), sleep(2_000)]);
     await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }
 
-run().catch(async (error) => {
-  console.error(error);
-  await mkdir(artifactDir, { recursive: true });
-  await writeFile(
-    path.join(artifactDir, "product-archive-error.txt"),
-    `${error?.stack ?? error}\n`,
-  );
-  process.exitCode = 1;
-});
+run()
+  .then(() => process.exit(0))
+  .catch(async (error) => {
+    console.error(error);
+    await mkdir(artifactDir, { recursive: true });
+    await writeFile(
+      path.join(artifactDir, "product-archive-error.txt"),
+      `${error?.stack ?? error}\n`,
+    );
+    process.exit(1);
+  });
