@@ -60,7 +60,7 @@ Administrator, owner, and additional-instructor capabilities are Backend-control
 
 ## Product archive lifecycle — TH-0108
 
-`Product` already persists the lifecycle fields required for soft archive:
+`Product` persists the lifecycle fields required for soft archive:
 
 ```text
 Product
@@ -82,8 +82,33 @@ Rules:
 - `archived_by_alcohol_policy = true` is a permanent restore lock for this capability;
 - archive and restore lock the Product row and append `product_archived` or `product_restored` in the same transaction;
 - repeated archive/restore calls are idempotent and create no duplicate event;
-- stable Recipe/Product response contracts remain separate from archive-management DTOs;
-- Dish archive lifecycle remains a separate future task.
+- stable Recipe/Product response contracts remain separate from archive-management DTOs.
+
+## Dish archive lifecycle — TH-0109
+
+`Dish` already persists the lifecycle fields required for soft archive:
+
+```text
+Dish
+  ├─ id
+  ├─ name
+  ├─ recipe_id → Recipe
+  ├─ RecipeVariant[]
+  ├─ MealRole[]
+  ├─ is_archived
+  └─ archived_by_alcohol_policy
+```
+
+Rules:
+
+- the active Dish projection contains only `is_archived = false` rows and remains the source for catalogue readiness, manual selection, and generation;
+- the explicit archive projection contains archived rows, primary Recipe display data, and policy-lock state;
+- archive sets `is_archived = true` and never deletes Dish, variants, roles, or historical MealSlot/project references;
+- manually archived Dish restore sets `is_archived = false` only after the stored name passes the central alcohol policy;
+- `archived_by_alcohol_policy = true` is a permanent restore lock for this capability;
+- archive and restore lock the Dish row and append `dish_archived` or `dish_restored` in the same transaction;
+- repeated archive/restore calls are idempotent and create no duplicate event;
+- stable Dish/Recipe response contracts remain separate from archive-management DTOs.
 
 ## Project team contacts
 
@@ -101,9 +126,11 @@ Current relevant actions include:
 - `product_created`;
 - `product_updated`;
 - `product_archived`;
-- `product_restored`.
+- `product_restored`;
+- `dish_archived`;
+- `dish_restored`.
 
-For Product archive actions, `entity_type` is `product`, entity ID is the Product ID, before/after use the bounded Product snapshot, and context contains only `policy_locked`. Product state and AuditEvent share one transaction; audit failure rolls back state. No-op writes create no event. Credentials, tokens, cookies, headers, raw request bodies, unrelated catalogue rows, source CSV bodies, and document contents are excluded. Automatic ORM-wide auditing remains rejected.
+For Product and Dish archive actions, entity type and ID identify the lifecycle row, before/after use bounded snapshots, and context contains only `policy_locked`. State and AuditEvent share one transaction; audit failure rolls back state. No-op writes create no event. Credentials, tokens, cookies, headers, raw request bodies, unrelated catalogue rows, source CSV bodies, and document contents are excluded. Automatic ORM-wide auditing remains rejected.
 
 ### Audit CSV projection — TH-0106
 
@@ -113,7 +140,7 @@ CSV export is a read projection over existing AuditEvent rows. It is Administrat
 
 MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only. MealSlotDish persists the exact selected Recipe. Project Recipe generation modes remain `club_only`, `club_and_personal`, and `personal_preferred`.
 
-Product, Recipe ownership/lifecycle, Dish Recipe variants, exact assignment snapshots, archive state, and the central no-exceptions alcohol policy remain Backend-owned. Archived Product rows remain readable through existing historical relationships while being excluded from new active selection.
+Product, Recipe ownership/lifecycle, Dish Recipe variants, exact assignment snapshots, archive state, and the central no-exceptions alcohol policy remain Backend-owned. Archived Product and Dish rows remain readable through existing historical relationships while being excluded from new active selection.
 
 Consolidated Project documents remain non-persisted immutable snapshots. Authorized members may generate/download approved documents; completed Projects retain read-only document access. MailSettings and invitation delivery retain existing boundaries. Project-team notifications remain a no-op boundary.
 
@@ -122,17 +149,18 @@ Consolidated Project documents remain non-persisted immutable snapshots. Authori
 - released `v0.1.0`: `h10021`;
 - optional User contact profile: `h10022`;
 - Project owner/team membership: `h10023` current single head;
-- TH-0106 Audit CSV export: no migration;
+- TH-0106 Audit CSV Export: no migration;
 - TH-0107 Session Administration: no migration;
-- TH-0108 Product Archive Management: no migration because Product archive columns already existed.
+- TH-0108 Product Archive Management: no migration because Product archive columns already existed;
+- TH-0109 Dish Archive Management: no migration because Dish archive columns already existed.
 
 ## Future domains and tasks
 
 - copy a completed Project into a new Project template instance;
 - audit retention policy/UI after required Product Owner decisions;
 - global sign-out, Administrator session administration, and session cleanup;
-- Dish archive-management UI and ownership-aware CSV import UX;
+- ownership-aware CSV import UX;
 - Project-team notifications through email, Telegram, and MAX;
 - participant profiles, routes/GPX, logistics, warehouse, and procurement integrations.
 
-No post-release product task is active after TH-0108. Multi-tenant support and microservices remain prohibited.
+No post-release product task is active after TH-0109. Multi-tenant support and microservices remain prohibited.

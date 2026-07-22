@@ -26,6 +26,7 @@ First-release preparation and operations
   → Safe filtered audit CSV export (TH-0106)
   → Own session administration and individual revocation (TH-0107)
   → Product archive management (TH-0108)
+  → Dish archive management (TH-0109)
   → next post-release task requires explicit selection
   → Copy Project from completed template remains required future work
 ```
@@ -87,15 +88,26 @@ Responsive Project workspace navigation, Product editing, published Recipe-to-Di
 - the normal Product list and Recipe component selector remain active-only;
 - archived Products are visible only through an explicit protected archive-management read;
 - Product rows and historical Recipe, purchase, checklist, and document references are preserved;
-- `archived_by_alcohol_policy` Products cannot be restored, and restore re-runs the central alcohol policy;
-- archive/restore are row-locked, idempotent, and audited transactionally as `product_archived` and `product_restored`;
-- existing Recipe/Product API response contracts remain stable through separate archive DTOs;
-- responsive Frontend and real-Chrome acceptance cover active/archive views, policy lock, restore, and mobile overflow;
+- policy-locked Products cannot be restored, and restore re-runs the central alcohol policy;
+- archive/restore are row-locked, idempotent, and audited transactionally;
+- existing Recipe/Product contracts remain stable through separate archive DTOs;
+- responsive Frontend and real-Chrome acceptance cover the lifecycle;
 - no migration was required, so Alembic remains `h10023`.
+
+### TH-0109 — Dish archive management
+
+- the normal Dish catalogue and new Dish selection remain active-only with the stable `DishResponse` contract;
+- an explicit protected archive projection exposes archived Dish identity, recipe display data, and policy-lock state;
+- preparation users can soft-archive one Dish and restore a manually archived Dish;
+- Dish rows, Recipe variants, meal-role assignments, and historical MealSlot/project references are preserved;
+- restore re-runs the central Dish-name alcohol policy and policy-locked Dishes remain non-restorable;
+- archive/restore use row locks, idempotency, and transactional `dish_archived` / `dish_restored` events;
+- responsive active/archive UI and real-Chrome acceptance cover state transitions, policy lock, and mobile overflow;
+- existing Dish archive columns were reused, so Alembic remains `h10023`.
 
 ## Current post-release selection
 
-No product task is active after TH-0108. Deferred items do not become active merely because they appear below.
+No product task is active after TH-0109. Deferred items do not become active merely because they appear below.
 
 ## Explicit future task — Copy Project
 
@@ -120,7 +132,6 @@ No product task is active after TH-0108. Deferred items do not become active mer
 
 ### Product and operations
 
-- Dish archive-management UI as a separate task from delivered Product archive management;
 - ownership-aware CSV import UX;
 - richer Recipe metadata, per-meal switching, and preference weights;
 - trip-participant profiles, routes/GPX, warehouse, procurement, and external aggregation domains;
