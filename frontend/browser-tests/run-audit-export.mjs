@@ -20,7 +20,8 @@ import {
 
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
-const pageUrl = "http://127.0.0.1:5195/browser-tests/audit-log.html";
+const pageUrl = "http://127.0.0.1:5207/browser-tests/audit-log.html";
+const chromeDebugUrl = "http://127.0.0.1:9259";
 const profileDir = `/tmp/tourhub-audit-export-profile-${process.pid}`;
 const removeProfile = () =>
   rm(profileDir, {
@@ -53,12 +54,12 @@ async function run() {
       "--host",
       "127.0.0.1",
       "--port",
-      "5195",
+      "5207",
       "--strictPort",
     ],
     {
       cwd: frontendRoot,
-      env: { ...process.env, VITE_PROXY_TARGET: "http://127.0.0.1:18098" },
+      env: { ...process.env, VITE_PROXY_TARGET: "http://127.0.0.1:18110" },
       stdio: "ignore",
     },
   );
@@ -70,7 +71,7 @@ async function run() {
       "--no-sandbox",
       "--disable-dev-shm-usage",
       "--disable-gpu",
-      "--remote-debugging-port=9247",
+      "--remote-debugging-port=9259",
       `--user-data-dir=${profileDir}`,
       pageUrl,
     ],
@@ -78,8 +79,8 @@ async function run() {
   );
 
   try {
-    await waitForHttp("http://127.0.0.1:9247/json/version");
-    const targets = await fetch("http://127.0.0.1:9247/json/list").then((response) =>
+    await waitForHttp(`${chromeDebugUrl}/json/version`);
+    const targets = await fetch(`${chromeDebugUrl}/json/list`).then((response) =>
       response.json(),
     );
     const target = targets.find((item) => item.url.includes("audit-log.html"));
