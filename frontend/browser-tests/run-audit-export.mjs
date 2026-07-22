@@ -120,7 +120,9 @@ async function run() {
     await waitForExpression(
       client,
       `document.body?.innerText?.includes("Аудит действий") &&
-       document.body?.innerText?.includes("Скачать CSV") &&
+       [...document.querySelectorAll("button")].some(
+         (item) => item.textContent?.trim() === "Скачать CSV",
+       ) &&
        document.body?.innerText?.includes("Анна Администратор")`,
       "loaded audit CSV export surface",
     );
