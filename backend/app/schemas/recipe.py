@@ -44,6 +44,8 @@ class RecipeProductResponse(BaseModel):
     category: str | None
     unit: str
     package_size: int | None
+    is_archived: bool = False
+    archived_by_alcohol_policy: bool = False
 
 
 class ProductCreateRequest(BaseModel):
