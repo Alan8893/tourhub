@@ -25,7 +25,8 @@ First-release preparation and operations
   → Project ownership, team access, and project contacts (TH-0105)
   → Safe filtered audit CSV export (TH-0106)
   → Own session administration and individual revocation (TH-0107)
-  → Copy Project from completed template (future explicit task)
+  → next post-release task requires explicit selection
+  → Copy Project from completed template remains required future work
 ```
 
 ## Released first-release sequence
@@ -60,15 +61,11 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 
 ### TH-0104 — Personal account and club contacts
 
-- the header logout button is replaced by a responsive current-user control opening `/account`;
-- `Личный кабинет` is available in the sidebar to every authenticated active user;
-- existing `display_name` remains one FIO field and email remains read-only;
+- `/account` contains the editable personal profile, read-only email, password change, and logout;
 - optional phone, Telegram, MAX, and VK fields persist through Alembic head `h10022`;
-- phone and social values are normalized by Backend, with platform hosts restricted to approved HTTPS URLs;
-- Project-scoped contact cards expose email, `tel:`, Telegram/MAX/VK links, and downloadable vCard;
-- password change verifies the current password, preserves the current login, and revokes all other active logins;
-- profile and password actions append safe semantic audit events without contact values, passwords, hashes, cookies, or tokens;
-- real-Chrome acceptance covers desktop/mobile layout, profile update, contacts, vCard, password change, navigation, and logout.
+- Project-scoped contact cards expose approved contact actions and vCard;
+- password change preserves the current login and revokes all other active logins;
+- profile and password actions append safe semantic audit events.
 
 ### TH-0105 — Project ownership, team access, and project contacts
 
@@ -84,25 +81,25 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 - list and export reuse the same Backend-owned actor, entity, action, and date filters;
 - only persisted sanitized AuditEvent snapshots are exported with deterministic UTF-8 JSON columns;
 - spreadsheet formula cells are neutralized and exports are capped at 10,000 rows;
-- the Audit surface exposes date filters and `Скачать CSV`;
 - Backend, Frontend, and real-Chrome acceptance cover policy and UX;
-- retention UI, deletion/cleanup, SIEM, diagnostics, scheduling, and replay remain out of scope;
 - no migration was added, so current Alembic head remains `h10023`.
-
-## Current post-release selection
 
 ### TH-0107 — Session administration and individual revocation
 
-- every active authenticated user may list only their own active non-expired sessions;
-- Backend identifies the current session from the existing HttpOnly cookie and never returns raw tokens or token hashes;
-- one other owned session may be revoked individually;
-- the current session remains protected and is terminated only through ordinary logout;
-- revocation and safe `account_session_revoked` audit append share one transaction;
-- `/account` shows session timestamps, current marker, revoke progress, success, and error feedback;
+- every active authenticated user can list only their own active non-expired sessions;
+- Backend identifies the current login from the existing HttpOnly cookie without returning raw tokens or token hashes;
+- one other owned active session can be revoked individually;
+- current-session revocation is blocked and ordinary logout remains its termination path;
+- unrelated, revoked, expired, and unknown IDs return the same not-found result;
+- revocation and the safe `account_session_revoked` AuditEvent share one transaction;
+- audit context stores `current_login_preserved` and excludes session/token/cookie, IP, device, user-agent, and location data;
+- `/account` includes responsive session timestamps, current marker, revoke progress, success, and error feedback;
 - Backend, Frontend, and real-Chrome acceptance cover ownership, immediate invalidation, rollback, and mobile layout;
-- no migration is expected, so Alembic remains `h10023`.
+- no migration was required, so Alembic remains `h10023`.
 
-Global sign-out, Administrator access to other users' sessions, device/IP tracking, physical cleanup, and account retention policy remain separate future work.
+## Current post-release selection
+
+No product task is active after TH-0107. Deferred items do not become active merely because they appear below.
 
 ## Explicit future task — Copy Project
 
@@ -112,7 +109,8 @@ Global sign-out, Administrator access to other users' sessions, device/IP tracki
 
 ### Audit and operations
 
-- retention UI, external SIEM integration, and operational diagnostics;
+- retention UI after duration, deletion eligibility, safeguards, and rollback policy are approved;
+- external SIEM integration and operational diagnostics;
 - scheduled/background export delivery;
 - undo and event replay remain outside v0.1.0.
 
@@ -121,12 +119,14 @@ Global sign-out, Administrator access to other users' sessions, device/IP tracki
 - verified email change and phone/email verification;
 - account recovery, deletion, retention policy, and avatars;
 - public member profiles, global sign-out, Administrator session administration, and session cleanup;
+- IP/device/user-agent/location tracking remains unapproved and unimplemented;
 - invitation cleanup, asynchronous mail, bounce handling, and advanced templates.
 
 ### Product and operations
 
+- Product/Dish archive-management UI;
+- ownership-aware CSV import UX;
 - richer Recipe metadata, per-meal switching, and preference weights;
-- Product/Dish archive-management UI and ownership-aware import UX;
 - trip-participant profiles, routes/GPX, warehouse, procurement, and external aggregation domains;
 - scheduled/emailed documents, persisted versions, signatures, and encrypted configuration archives.
 
