@@ -23,6 +23,7 @@ First-release preparation and operations
   → Catalogue/import, shopping, equipment, and document audit coverage (TH-0103)
   → Personal accounts and active club contacts (TH-0104)
   → Project ownership, team access, and project contacts (TH-0105)
+  → Safe filtered audit CSV export (TH-0106)
   → Copy Project from completed template (future explicit task)
 ```
 
@@ -61,28 +62,35 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 - the header logout button is replaced by a responsive current-user control opening `/account`;
 - `Личный кабинет` is available in the sidebar to every authenticated active user;
 - existing `display_name` remains one FIO field and email remains read-only;
-- optional phone, Telegram, MAX, and VK fields persist through new Alembic head `h10022`;
+- optional phone, Telegram, MAX, and VK fields persist through Alembic head `h10022`;
 - phone and social values are normalized by Backend, with platform hosts restricted to approved HTTPS URLs;
-- all authenticated active users may view active club contacts;
-- contact cards expose email, `tel:`, Telegram/MAX/VK links, and downloadable vCard;
+- Project-scoped contact cards expose email, `tel:`, Telegram/MAX/VK links, and downloadable vCard;
 - password change verifies the current password, preserves the current login, and revokes all other active logins;
-- logout is available from the personal account page;
 - profile and password actions append safe semantic audit events without contact values, passwords, hashes, cookies, or tokens;
-- real-Chrome acceptance covers desktop/mobile layout, profile update, contacts, vCard, password change, navigation, and logout;
-- current post-release head is `h10022`; immutable `v0.1.0` remains at released head `h10021`.
-
-## Active post-release selection
+- real-Chrome acceptance covers desktop/mobile layout, profile update, contacts, vCard, password change, navigation, and logout.
 
 ### TH-0105 — Project ownership, team access, and project contacts
 
-- persist one owner and multiple additional instructors per Project;
-- restrict Project visibility to active Administrators, the active owner, and active additional instructors;
-- give additional instructors read-only Menu access and operational Shopping/Checklist/Equipment/Document access;
-- keep Project parameters, Menu writes, team management, ownership transfer, completion, and deletion owner/Administrator-only;
-- move contact cards from the personal account to the Project overview;
-- make completed Projects read-only and hidden by default;
-- preserve singular global User roles while adding Project-scoped responsibilities;
-- introduce a no-op future notification boundary for email, Telegram, and MAX.
+- every Project has one owner and may have multiple additional instructors;
+- Project visibility and direct routes are controlled by centralized `ProjectAccessPolicy`;
+- completed Projects are hidden by default and remain terminal read-only history;
+- team contacts are Project-scoped and ownership transfer is audited transactionally;
+- current post-release Alembic head is `h10023`.
+
+### TH-0106 — Audit CSV export
+
+- one Administrator-only CSV export endpoint sits beside the existing Audit list;
+- list and export reuse the same Backend-owned actor, entity, action, and date filters;
+- only persisted sanitized AuditEvent snapshots are exported with deterministic UTF-8 JSON columns;
+- spreadsheet formula cells are neutralized and exports are capped at 10,000 rows;
+- the Audit surface exposes date filters and `Скачать CSV`;
+- Backend, Frontend, and real-Chrome acceptance cover policy and UX;
+- retention UI, deletion/cleanup, SIEM, diagnostics, scheduling, and replay remain out of scope;
+- no migration was added, so current Alembic head remains `h10023`.
+
+## Current post-release selection
+
+No new post-release capability is selected automatically after TH-0106. The next task requires an explicit Product Owner decision and must remain one cohesive branch/squash-merge unit.
 
 ## Explicit future task — Copy Project
 
@@ -92,7 +100,8 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 
 ### Audit and operations
 
-- audit export, retention UI, external SIEM integration, and operational diagnostics;
+- retention UI, external SIEM integration, and operational diagnostics;
+- scheduled/background export delivery;
 - undo and event replay remain outside v0.1.0.
 
 ### Access and identity

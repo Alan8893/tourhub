@@ -5,6 +5,7 @@ from enum import Enum
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.audit_event import AuditEventORM
 from app.models.user import UserORM
@@ -22,6 +23,13 @@ _SENSITIVE_KEY_PARTS = (
 _MAX_DEPTH = 4
 _MAX_ITEMS = 50
 _MAX_STRING_LENGTH = 500
+
+
+class AuditExportLimitExceededError(ValueError):
+    def __init__(self, *, total: int, max_rows: int) -> None:
+        self.total = total
+        self.max_rows = max_rows
+        super().__init__(f"Audit export contains {total} rows; maximum is {max_rows}")
 
 
 class AuditService:
@@ -70,7 +78,68 @@ class AuditService:
         limit: int = 50,
         offset: int = 0,
     ) -> tuple[list[AuditEventORM], int]:
-        filters = []
+        filters = self._event_filters(
+            actor_user_id=actor_user_id,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            action=action,
+            created_from=created_from,
+            created_to=created_to,
+        )
+        statement = (
+            select(AuditEventORM)
+            .where(*filters)
+            .order_by(AuditEventORM.id.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        items = list(self.session.scalars(statement).all())
+        return items, self._count_events(filters)
+
+    def export_events(
+        self,
+        *,
+        actor_user_id: int | None = None,
+        entity_type: str | None = None,
+        entity_id: str | None = None,
+        action: str | None = None,
+        created_from: datetime | None = None,
+        created_to: datetime | None = None,
+        max_rows: int,
+    ) -> tuple[list[AuditEventORM], int]:
+        filters = self._event_filters(
+            actor_user_id=actor_user_id,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            action=action,
+            created_from=created_from,
+            created_to=created_to,
+        )
+        total = self._count_events(filters)
+        if total > max_rows:
+            raise AuditExportLimitExceededError(total=total, max_rows=max_rows)
+        statement = (
+            select(AuditEventORM)
+            .where(*filters)
+            .order_by(AuditEventORM.id.desc())
+        )
+        return list(self.session.scalars(statement).all()), total
+
+    def _count_events(self, filters: tuple[ColumnElement[bool], ...]) -> int:
+        statement = select(func.count()).select_from(AuditEventORM).where(*filters)
+        return int(self.session.scalar(statement) or 0)
+
+    @staticmethod
+    def _event_filters(
+        *,
+        actor_user_id: int | None,
+        entity_type: str | None,
+        entity_id: str | None,
+        action: str | None,
+        created_from: datetime | None,
+        created_to: datetime | None,
+    ) -> tuple[ColumnElement[bool], ...]:
+        filters: list[ColumnElement[bool]] = []
         if actor_user_id is not None:
             filters.append(AuditEventORM.actor_user_id == actor_user_id)
         if entity_type is not None:
@@ -83,18 +152,7 @@ class AuditService:
             filters.append(AuditEventORM.created_at >= created_from)
         if created_to is not None:
             filters.append(AuditEventORM.created_at <= created_to)
-
-        statement = (
-            select(AuditEventORM)
-            .where(*filters)
-            .order_by(AuditEventORM.id.desc())
-            .offset(offset)
-            .limit(limit)
-        )
-        count_statement = select(func.count()).select_from(AuditEventORM).where(*filters)
-        items = list(self.session.scalars(statement).all())
-        total = int(self.session.scalar(count_statement) or 0)
-        return items, total
+        return tuple(filters)
 
     @classmethod
     def _sanitize_mapping(

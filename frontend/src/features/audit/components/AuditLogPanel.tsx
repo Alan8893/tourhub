@@ -15,7 +15,13 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 
-import { AuditEvent, getAuditEvents } from "../api/auditApi";
+import {
+  AuditEvent,
+  AuditEventFilters,
+  getAuditEvents,
+  getAuditEventsCsv,
+} from "../api/auditApi";
+import { toAuditIsoTimestamp } from "../model/auditExport";
 
 const ACTION_LABELS: Record<string, string> = {
   user_access_updated: "Доступ пользователя изменён",
@@ -126,7 +132,9 @@ function AuditEventCard({ event }: { event: AuditEvent }) {
             size="small"
             label={ENTITY_LABELS[event.entity_type] ?? event.entity_type}
           />
-          {event.entity_id && <Chip size="small" variant="outlined" label={`ID: ${event.entity_id}`} />}
+          {event.entity_id && (
+            <Chip size="small" variant="outlined" label={`ID: ${event.entity_id}`} />
+          )}
         </Stack>
 
         <Box>
@@ -134,7 +142,8 @@ function AuditEventCard({ event }: { event: AuditEvent }) {
             {event.actor_display_name} · {event.actor_email}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Роль: {event.actor_role} · Actor ID: {event.actor_user_id ?? "—"} · {formatDate(event.created_at)}
+            Роль: {event.actor_role} · Actor ID: {event.actor_user_id ?? "—"} ·{" "}
+            {formatDate(event.created_at)}
           </Typography>
         </Box>
 
@@ -146,7 +155,8 @@ function AuditEventCard({ event }: { event: AuditEvent }) {
                   {field}
                 </Typography>
                 <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>
-                  {displayValue(event.before_data?.[field])} → {displayValue(event.after_data?.[field])}
+                  {displayValue(event.before_data?.[field])} →{" "}
+                  {displayValue(event.after_data?.[field])}
                 </Typography>
               </Box>
             ))}
@@ -168,18 +178,31 @@ export default function AuditLogPanel() {
   const [action, setAction] = useState("");
   const [entityId, setEntityId] = useState("");
   const [actorUserId, setActorUserId] = useState("");
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const currentFilters = useCallback(
+    (): AuditEventFilters => ({
+      entity_type: entityType || undefined,
+      action: action.trim() || undefined,
+      entity_id: entityId.trim() || undefined,
+      actor_user_id: actorUserId ? Number(actorUserId) : undefined,
+      created_from: toAuditIsoTimestamp(createdFrom),
+      created_to: toAuditIsoTimestamp(createdTo),
+    }),
+    [action, actorUserId, createdFrom, createdTo, entityId, entityType],
+  );
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await getAuditEvents({
-        entity_type: entityType || undefined,
-        action: action.trim() || undefined,
-        entity_id: entityId.trim() || undefined,
-        actor_user_id: actorUserId ? Number(actorUserId) : undefined,
+        ...currentFilters(),
         limit: 100,
       });
       setEvents(response.items);
@@ -189,7 +212,29 @@ export default function AuditLogPanel() {
     } finally {
       setIsLoading(false);
     }
-  }, [action, actorUserId, entityId, entityType]);
+  }, [currentFilters]);
+
+  const exportCsv = useCallback(async () => {
+    setIsExporting(true);
+    setExportError(null);
+    try {
+      const result = await getAuditEventsCsv(currentFilters());
+      const url = URL.createObjectURL(result.blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = result.filename;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch {
+      setExportError(
+        "Не удалось выгрузить CSV. Уточните фильтры или повторите попытку.",
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [currentFilters]);
 
   useEffect(() => {
     void load();
@@ -209,8 +254,9 @@ export default function AuditLogPanel() {
           </Box>
 
           <Alert severity="info">
-            Журнал не содержит пароли, токены, SMTP-секреты, CSV-файлы или содержимое
-            сформированных документов.
+            Журнал не содержит пароли, токены, SMTP-секреты, исходные CSV-файлы или
+            содержимое сформированных документов. CSV-экспорт использует только эти
+            безопасные записи.
           </Alert>
 
           <Box
@@ -241,7 +287,9 @@ export default function AuditLogPanel() {
                 <MenuItem value="catalog_import">Импорт каталога</MenuItem>
                 <MenuItem value="purchase_list">Список закупок</MenuItem>
                 <MenuItem value="purchase_checklist">Чек-лист закупок</MenuItem>
-                <MenuItem value="purchase_checklist_item">Позиция чек-листа</MenuItem>
+                <MenuItem value="purchase_checklist_item">
+                  Позиция чек-листа
+                </MenuItem>
                 <MenuItem value="recipe_equipment_requirement">
                   Требование к снаряжению
                 </MenuItem>
@@ -272,6 +320,20 @@ export default function AuditLogPanel() {
               onChange={(event) => setActorUserId(event.target.value)}
               inputProps={{ min: 1 }}
             />
+            <TextField
+              label="С даты"
+              type="datetime-local"
+              value={createdFrom}
+              onChange={(event) => setCreatedFrom(event.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="По дату"
+              type="datetime-local"
+              value={createdTo}
+              onChange={(event) => setCreatedTo(event.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
           </Box>
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
@@ -280,12 +342,21 @@ export default function AuditLogPanel() {
             </Button>
             <Button
               variant="outlined"
-              disabled={isLoading}
+              onClick={() => void exportCsv()}
+              disabled={isLoading || isExporting}
+            >
+              {isExporting ? "Готовим CSV…" : "Скачать CSV"}
+            </Button>
+            <Button
+              variant="outlined"
+              disabled={isLoading || isExporting}
               onClick={() => {
                 setEntityType("");
                 setAction("");
                 setEntityId("");
                 setActorUserId("");
+                setCreatedFrom("");
+                setCreatedTo("");
               }}
             >
               Сбросить
@@ -296,6 +367,7 @@ export default function AuditLogPanel() {
             Найдено записей: {total}. Показаны последние {events.length}.
           </Typography>
           {error && <Alert severity="error">{error}</Alert>}
+          {exportError && <Alert severity="error">{exportError}</Alert>}
         </Stack>
       </Paper>
 

@@ -16,7 +16,7 @@ Status date: 2026-07-22
 
 ## Release-blocking debt
 
-None. The approved first-release scope remains feature frozen and release-ready. Current post-release head is `h10023`; immutable `v0.1.0` remains at `h10021`.
+None. The approved first-release scope remains feature frozen and release-ready. Current post-release head is `h10023`; immutable `v0.1.0` remains at release SHA `8bcc2d2d9414d812d81634330034b15121c8442f` and released Alembic head `h10021`.
 
 ## Resolved post-release improvements
 
@@ -50,7 +50,20 @@ Project workspace navigation, Product editing, published Recipe-to-Dish synchron
 - a no-op notification boundary is ready for future email, Telegram, and MAX integration;
 - dedicated Backend, migration, Frontend, and real-Chrome tests verify the capability matrix and mobile layout.
 
-## Explicit next product debt — Copy Project
+### TH-0106 — Audit CSV export
+
+TH-0106 resolves the bounded audit-export portion of operational debt:
+
+- Administrator-only filtered CSV projection beside the existing Audit list;
+- one Backend filter implementation for list and export;
+- deterministic UTF-8 actor/action/entity/timestamp and sanitized JSON columns;
+- formula-injection neutralization;
+- explicit 10,000-row bound requiring narrower filters for larger journals;
+- Audit UI date filters and download action;
+- Backend, Frontend, and real-Chrome acceptance;
+- no persistence change, retention mutation, or recursive export AuditEvent.
+
+## Explicit future product debt — Copy Project
 
 `Копировать проект` is a required future Product Owner-selected task.
 
@@ -71,7 +84,7 @@ Open design decisions for that future task:
 - notifications for the newly created team;
 - behavior when source snapshots are no longer valid under current policies.
 
-No placeholder button or endpoint is implemented in TH-0105.
+No placeholder button or endpoint is implemented in TH-0106.
 
 ## Remaining Project collaboration debt
 
@@ -82,12 +95,14 @@ No placeholder button or endpoint is implemented in TH-0105.
 - Project retention/archive policy beyond terminal completion and explicit deletion;
 - bulk team changes or reusable team templates.
 
-## Remaining audit debt
+## Remaining audit and operations debt after TH-0106
 
-1. Audit export, retention UI, external SIEM integration, and operational diagnostics.
-2. Undo and event replay remain outside v0.1.0.
+1. Audit retention policy and retention-management UI.
+2. External SIEM integration and operational diagnostics.
+3. Scheduled/background exports and delivery are not implemented.
+4. Undo and event replay remain outside v0.1.0.
 
-Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and explicit transaction ownership.
+Automatic ORM-wide auditing remains rejected; later coverage must use semantic actions and explicit transaction ownership. Retention work must define legal/product policy before any deletion path is introduced.
 
 ## Remaining Access and mail debt
 
@@ -134,9 +149,11 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 ## Product Owner decisions required for later work
 
+- audit retention duration, deletion eligibility, legal/operational safeguards, and UI;
+- external SIEM/diagnostics scope;
 - when to start `Копировать проект` and its exact copy matrix;
 - Project-team notification channels and preferences;
-- whether audit export/retention/diagnostics belongs in the next release;
+- session-administration and global-sign-out policy;
 - preference weighting and mandatory Recipe metadata;
 - encrypted settings archive format.
 
