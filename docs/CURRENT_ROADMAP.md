@@ -23,6 +23,7 @@ First-release preparation and operations
   → Catalogue/import, shopping, equipment, and document audit coverage (TH-0103)
   → Personal accounts and active club contacts (TH-0104)
   → Project ownership, team access, and project contacts (TH-0105)
+  → Safe filtered audit CSV export (TH-0106)
   → Copy Project from completed template (future explicit task)
 ```
 
@@ -71,18 +72,26 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 - real-Chrome acceptance covers desktop/mobile layout, profile update, contacts, vCard, password change, navigation, and logout;
 - current post-release head is `h10022`; immutable `v0.1.0` remains at released head `h10021`.
 
-## Active post-release selection
-
 ### TH-0105 — Project ownership, team access, and project contacts
 
-- persist one owner and multiple additional instructors per Project;
-- restrict Project visibility to active Administrators, the active owner, and active additional instructors;
-- give additional instructors read-only Menu access and operational Shopping/Checklist/Equipment/Document access;
-- keep Project parameters, Menu writes, team management, ownership transfer, completion, and deletion owner/Administrator-only;
-- move contact cards from the personal account to the Project overview;
-- make completed Projects read-only and hidden by default;
-- preserve singular global User roles while adding Project-scoped responsibilities;
-- introduce a no-op future notification boundary for email, Telegram, and MAX.
+- every Project has one owner and may have multiple additional instructors;
+- Project visibility and direct routes are controlled by centralized `ProjectAccessPolicy`;
+- completed Projects are hidden by default and remain terminal read-only history;
+- team contacts are Project-scoped and ownership transfer is audited transactionally;
+- current post-release Alembic head is `h10023`.
+
+## Active post-release selection
+
+### TH-0106 — Audit CSV export
+
+- add one Administrator-only CSV export endpoint beside the existing Audit list;
+- reuse the same Backend-owned actor, entity, action, and date filters for list and export;
+- export only persisted sanitized AuditEvent snapshots with deterministic UTF-8 JSON columns;
+- neutralize spreadsheet formula cells and cap exports at 10,000 rows;
+- expose date filters and `Скачать CSV` on the Audit surface;
+- add Backend, Frontend, and real-Chrome acceptance;
+- keep retention UI, deletion/cleanup, SIEM, diagnostics, scheduling, and replay out of scope;
+- no migration is expected, so current Alembic head remains `h10023`.
 
 ## Explicit future task — Copy Project
 
@@ -92,7 +101,7 @@ Project, Menu/MealSlot, System Settings/mail, invitation lifecycle/delivery, cat
 
 ### Audit and operations
 
-- audit export, retention UI, external SIEM integration, and operational diagnostics;
+- retention UI, external SIEM integration, and operational diagnostics;
 - undo and event replay remain outside v0.1.0.
 
 ### Access and identity
