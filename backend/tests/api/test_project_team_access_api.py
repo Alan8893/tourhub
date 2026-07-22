@@ -237,11 +237,12 @@ def test_completed_project_is_read_only_but_remains_visible_and_deletable(
     owner = _user(41, "Владелец")
     collaborator = _user(42, "Инструктор")
     project = _project(401, owner.id)
+    project_id = project.id
     db_session.add_all([owner, collaborator, project])
     db_session.flush()
     db_session.add(
         ProjectInstructorORM(
-            project_id=project.id,
+            project_id=project_id,
             user_id=collaborator.id,
             added_by_user_id=owner.id,
         )
@@ -251,7 +252,7 @@ def test_completed_project_is_read_only_but_remains_visible_and_deletable(
     _act_as(collaborator)
     assert (
         client.patch(
-            f"/api/v1/projects/{project.id}/status",
+            f"/api/v1/projects/{project_id}/status",
             json={"status": "completed"},
         ).status_code
         == 403
@@ -259,7 +260,7 @@ def test_completed_project_is_read_only_but_remains_visible_and_deletable(
 
     _act_as(owner)
     complete = client.patch(
-        f"/api/v1/projects/{project.id}/status",
+        f"/api/v1/projects/{project_id}/status",
         json={"status": "completed"},
     )
     assert complete.status_code == 200, complete.text
@@ -267,37 +268,37 @@ def test_completed_project_is_read_only_but_remains_visible_and_deletable(
     assert complete.json()["capabilities"]["can_manage_project"] is False
     assert complete.json()["capabilities"]["can_delete"] is True
 
-    assert client.get(f"/api/v1/projects/{project.id}").status_code == 200
+    assert client.get(f"/api/v1/projects/{project_id}").status_code == 200
     assert (
         client.patch(
-            f"/api/v1/projects/{project.id}/participants",
+            f"/api/v1/projects/{project_id}/participants",
             json={"participants": 20},
         ).status_code
         == 409
     )
     assert (
         client.put(
-            f"/api/v1/projects/{project.id}/team",
+            f"/api/v1/projects/{project_id}/team",
             json={"instructor_user_ids": []},
         ).status_code
         == 409
     )
     assert (
-        client.post(f"/api/v1/meal-plans/project/{project.id}/generate").status_code
+        client.post(f"/api/v1/meal-plans/project/{project_id}/generate").status_code
         == 409
     )
     assert (
         client.post(
-            f"/api/v1/equipment-lists/project/{project.id}/items",
+            f"/api/v1/equipment-lists/project/{project_id}/items",
             json={"equipment_name": "Тент", "required_quantity": 1},
         ).status_code
         == 409
     )
 
-    deleted = client.delete(f"/api/v1/projects/{project.id}")
+    deleted = client.delete(f"/api/v1/projects/{project_id}")
     assert deleted.status_code == 204
     actions = _actions(db_session)
-    assert db_session.get(ProjectORM, project.id) is None
+    assert db_session.get(ProjectORM, project_id) is None
     assert actions[-2:] == ["project_status_updated", "project_deleted"]
 
 
