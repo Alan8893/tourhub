@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.models.product import ProductORM
 from app.models.user import UserORM
 from app.policies.alcohol_policy import AlcoholPolicy, AlcoholPolicyViolation
+from app.services.audit_service import AuditService
 from app.services.operational_audit_service import OperationalAuditService
 
 
@@ -26,11 +27,10 @@ class ProductArchiveService:
             if product.is_archived:
                 return product
 
-            audit = OperationalAuditService(self.session)
-            before = audit.product_snapshot(product)
+            before = OperationalAuditService.product_snapshot(product)
             product.is_archived = True
-            audit.record_product_archived(
-                actor=self.actor,
+            self._record_lifecycle(
+                action="product_archived",
                 product=product,
                 before=before,
             )
@@ -61,11 +61,10 @@ class ProductArchiveService:
                     "Product cannot be restored because it is blocked by the central alcohol policy"
                 ) from error
 
-            audit = OperationalAuditService(self.session)
-            before = audit.product_snapshot(product)
+            before = OperationalAuditService.product_snapshot(product)
             product.is_archived = False
-            audit.record_product_restored(
-                actor=self.actor,
+            self._record_lifecycle(
+                action="product_restored",
                 product=product,
                 before=before,
             )
@@ -83,3 +82,22 @@ class ProductArchiveService:
         if product is None:
             raise ProductArchiveNotFoundError("Product not found")
         return product
+
+    def _record_lifecycle(
+        self,
+        *,
+        action: str,
+        product: ProductORM,
+        before: dict[str, object],
+    ) -> None:
+        AuditService(self.session).record(
+            actor=self.actor,
+            action=action,
+            entity_type="product",
+            entity_id=product.id,
+            before=before,
+            after=OperationalAuditService.product_snapshot(product),
+            context={
+                "policy_locked": product.archived_by_alcohol_policy,
+            },
+        )
