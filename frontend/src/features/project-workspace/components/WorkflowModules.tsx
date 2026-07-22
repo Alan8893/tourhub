@@ -4,13 +4,14 @@ import { useState } from "react";
 import { DocumentsWidget } from "@/features/documents";
 import CampInventoryWidget from "@/features/equipment/components/CampInventoryWidget";
 import { MealPlanWidget } from "@/features/meal-plan";
+import type { Project } from "@/features/project/api/projectApi";
 import { PurchaseWidget } from "@/features/purchase";
 import { ShoppingWidget } from "@/features/shopping";
 import { useModuleVisibility } from "@/features/system-settings/providers/ModuleVisibilityProvider";
 
 import type { ProjectWorkspaceSection } from "../model/projectWorkspaceNavigation";
 
-function ShoppingWorkspace() {
+function ShoppingWorkspace({ readOnly }: { readOnly: boolean }) {
   const [activeView, setActiveView] = useState<"calculation" | "checklist">(
     "calculation",
   );
@@ -31,25 +32,30 @@ function ShoppingWorkspace() {
         </Tabs>
       </Paper>
 
-      {activeView === "calculation" ? <ShoppingWidget /> : <PurchaseWidget />}
+      {activeView === "calculation" ? (
+        <ShoppingWidget readOnly={readOnly} />
+      ) : (
+        <PurchaseWidget readOnly={readOnly} />
+      )}
     </Box>
   );
 }
 
 interface WorkflowModulesProps {
   section: Exclude<ProjectWorkspaceSection, "overview">;
+  project: Project;
 }
 
-export default function WorkflowModules({ section }: WorkflowModulesProps) {
+export default function WorkflowModules({ section, project }: WorkflowModulesProps) {
   const { settings } = useModuleVisibility();
 
   if (section === "menu") {
-    return <MealPlanWidget />;
+    return <MealPlanWidget readOnly={!project.capabilities?.can_edit_menu} />;
   }
 
   if (section === "shopping") {
     return settings.shopping_visible ? (
-      <ShoppingWorkspace />
+      <ShoppingWorkspace readOnly={!project.capabilities?.can_operate_shopping} />
     ) : (
       <Alert severity="info">Раздел закупки отключён в настройках модулей.</Alert>
     );
@@ -57,7 +63,7 @@ export default function WorkflowModules({ section }: WorkflowModulesProps) {
 
   if (section === "equipment") {
     return settings.equipment_visible ? (
-      <CampInventoryWidget />
+      <CampInventoryWidget readOnly={!project.capabilities?.can_operate_equipment} />
     ) : (
       <Alert severity="info">Раздел оборудования отключён в настройках модулей.</Alert>
     );
