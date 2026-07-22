@@ -21,6 +21,7 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Owner and additional instructor are Project-scoped responsibilities.
 - Module visibility remains presentation-only and never grants access.
 - Audit CSV export is a Backend-owned read projection over sanitized AuditEvent persistence.
+- Own-session listing and individual revocation extend the existing server-session boundary without adding device tracking or Administrator access to another user's sessions.
 
 ## Access runtime
 
@@ -30,7 +31,30 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - deactivation revokes sessions and removes runtime Project access without deleting historical membership;
 - protected HTTP 401 responses clear stale frontend identity centrally;
 - the header exposes the current user and opens `/account`;
-- account recovery and general session administration remain future capabilities.
+- `/account` may project only the current User's active sessions;
+- account recovery, global sign-out, Administrator session administration, and session cleanup remain future capabilities.
+
+## Session administration boundary — TH-0107
+
+`SessionAdministrationService` is authoritative for own-session projection and individual revocation.
+
+### Projection
+
+- routes remain under authenticated `/api/v1/account`;
+- the current session is matched by hashing the existing HttpOnly cookie server-side;
+- only rows with matching `user_id`, `revoked_at IS NULL`, and future `expires_at` are returned;
+- response fields are session ID, created-at, last-seen-at, expires-at, and current marker;
+- raw tokens, token hashes, cookies, authorization headers, IP addresses, user agents, device names, fingerprints, and locations are never serialized;
+- Frontend renders the Backend projection and makes no ownership/current-session decision.
+
+### Individual revocation
+
+- target selection is constrained by current `user_id`, active state, and non-expiry before row locking;
+- unrelated, revoked, expired, and unknown IDs share the same HTTP 404 result;
+- current-session revocation returns HTTP 409 and ordinary logout remains its termination path;
+- the target row's `revoked_at` and semantic `account_session_revoked` AuditEvent commit or roll back together;
+- the event contains only target session ID, active/revoked state, and `current_session_preserved`;
+- no cleanup, deletion, background task, device inference, global revoke-all, or cross-user administration is introduced.
 
 ## Project ownership and access boundary
 
@@ -66,7 +90,7 @@ Ownership transfer locks the Project and involved users, removes the new owner f
 
 ## Project contact boundary
 
-- `/account` owns only the current user's profile, password change, and logout;
+- `/account` owns only the current user's profile, sessions, password change, and logout;
 - the club-wide contact API is removed;
 - Project team reads expose owner and additional instructors only after Project visibility is established;
 - Project-scoped vCard download repeats the same access and membership checks;
@@ -92,8 +116,8 @@ Ownership transfer locks the Project and involved users, removes the new owner f
 - `AuditEvent` remains append-only with actor snapshots and bounded safe JSON;
 - business mutation and AuditEvent share the owning transaction for audited writes;
 - no-op writes create no event;
-- audit failure rolls back pending domain mutations;
-- passwords, hashes, credentials, cookies, sessions, tokens, authorization data, phone/social contacts, request bodies, source CSV bodies, generated document contents, and provider secrets are excluded;
+- audit failure rolls back pending domain mutations, including individual session revocation;
+- passwords, hashes, credentials, cookies, sessions tokens, authorization data, phone/social contacts, request bodies, source CSV bodies, generated document contents, provider secrets, and device/network metadata are excluded;
 - automatic ORM-wide auditing remains rejected.
 
 ## Audit CSV export boundary — TH-0106
@@ -122,6 +146,7 @@ Document generation remains non-persisted. Authorized Project members may downlo
 Development starts with `docker compose up -d --build`; operators use `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally.
 
 - current post-release Alembic head: `h10023`;
+- TH-0107 adds no migration;
 - immutable `v0.1.0` tag remains at release SHA `8bcc2d2d9414d812d81634330034b15121c8442f` and released head `h10021`;
 - PostgreSQL backup/restore, clean release-stack startup, restart persistence, and exact-head gates verify the current candidate;
 - multi-tenancy and microservices remain prohibited.
