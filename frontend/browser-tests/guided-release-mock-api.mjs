@@ -13,6 +13,18 @@ async function readBody(request) {
   return payload ? JSON.parse(payload) : undefined;
 }
 
+const ownerCapabilities = {
+  can_view: true,
+  can_manage_project: true,
+  can_manage_team: true,
+  can_transfer_ownership: true,
+  can_edit_menu: true,
+  can_operate_shopping: true,
+  can_operate_equipment: true,
+  can_generate_documents: true,
+  can_delete: true,
+};
+
 export function createGuidedReleaseMockApi(port) {
   const requests = [];
   let mealGenerated = false;
@@ -25,7 +37,11 @@ export function createGuidedReleaseMockApi(port) {
     start_date: null,
     first_meal: "dinner",
     last_meal: "dinner",
+    recipe_generation_mode: "club_only",
     status: "draft",
+    owner_user_id: 1,
+    owner_display_name: "Тестовый инструктор",
+    capabilities: ownerCapabilities,
   };
   const currentUser = {
     id: 1,
@@ -34,6 +50,21 @@ export function createGuidedReleaseMockApi(port) {
     role: "instructor",
     is_active: true,
     created_at: "2026-07-18T00:00:00",
+  };
+  const projectTeam = {
+    owner: {
+      id: 1,
+      email: "instructor@tourhub.local",
+      display_name: "Тестовый инструктор",
+      phone: "+79991234567",
+      telegram_url: "https://t.me/test_guide",
+      max_url: "https://max.ru/test-guide",
+      vk_url: "https://vk.com/test-guide",
+      role: "instructor",
+      is_active: true,
+      project_role: "owner",
+    },
+    instructors: [],
   };
   const mealPlan = {
     id: "meal-plan-77",
@@ -52,6 +83,8 @@ export function createGuidedReleaseMockApi(port) {
             id: "legacy-dish-1",
             dish_id: "dish-1",
             dish_name: "Плов",
+            recipe_id: "recipe-1",
+            recipe_name: "Плов походный",
           },
         ],
       },
@@ -73,11 +106,27 @@ export function createGuidedReleaseMockApi(port) {
       return json(response, 200, { user: currentUser });
     }
     if (request.method === "POST" && url.pathname === "/api/v1/projects") {
-      project = { ...project, ...body, start_date: body.start_date ?? null };
+      project = {
+        ...project,
+        ...body,
+        start_date: body.start_date ?? null,
+        owner_user_id: currentUser.id,
+        owner_display_name: currentUser.display_name,
+        capabilities: ownerCapabilities,
+      };
       return json(response, 200, project);
     }
     if (request.method === "GET" && url.pathname === "/api/v1/projects/77") {
       return json(response, 200, project);
+    }
+    if (request.method === "GET" && url.pathname === "/api/v1/projects/77/team") {
+      return json(response, 200, projectTeam);
+    }
+    if (
+      request.method === "GET" &&
+      url.pathname === "/api/v1/projects/77/team/candidates"
+    ) {
+      return json(response, 200, []);
     }
     if (request.method === "GET" && url.pathname === "/api/v1/projects/77/preparation") {
       return json(response, 200, {
