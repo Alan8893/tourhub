@@ -103,6 +103,8 @@ async function run() {
         client,
         `document.body?.innerText?.includes("Личный кабинет") &&
          document.body?.innerText?.includes("Мой профиль") &&
+         document.body?.innerText?.includes("Активные сессии") &&
+         document.body?.innerText?.includes("Сессия №202") &&
          !document.body?.innerText?.includes("Загрузка личного кабинета")`,
         "loaded personal account shell",
       );
@@ -111,6 +113,8 @@ async function run() {
       ).toLocaleLowerCase("ru-RU");
       for (const label of [
         "ирина инструктор",
+        "активные сессии",
+        "текущая",
         "смена пароля",
         "участники команды доступного им проекта",
       ]) {
@@ -129,6 +133,25 @@ async function run() {
       await writeDiagnostics(client, "account-profile-load-diagnostic");
       throw error;
     }
+
+    const sessionActionCount = await client.evaluate(`[
+      ...document.querySelectorAll("button"),
+    ].filter((item) => item.textContent?.trim() === "Завершить").length`);
+    assert.equal(sessionActionCount, 1);
+    assert.equal(await clickButton(client, "Завершить"), true);
+    await waitForExpression(
+      client,
+      `document.body?.innerText?.includes("Сессия завершена.") &&
+       !document.body?.innerText?.includes("Сессия №202") &&
+       document.body?.innerText?.includes("Сессия №101") &&
+       document.body?.innerText?.includes("Текущая")`,
+      "revoked another account session",
+    );
+    assert.ok(
+      accountRequests.some(
+        (item) => item.method === "DELETE" && item.path === "/api/v1/account/sessions/202",
+      ),
+    );
 
     const emailReadOnly = await client.evaluate(`(() => {
       const label = [...document.querySelectorAll("label")].find((item) => item.textContent?.includes("Почта"));
