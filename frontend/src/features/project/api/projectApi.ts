@@ -42,6 +42,15 @@ export interface CreateProjectRequest {
   recipe_generation_mode?: RecipeGenerationMode;
 }
 
+export interface ProjectCopyResponse {
+  project_id: number;
+  meal_plan_id: string;
+  copied_slot_count: number;
+  copied_assignment_count: number;
+  skipped_assignment_count: number;
+  warnings: string[];
+}
+
 export interface ProjectPreparationResponse {
   project_id: number;
   meal_plan_id: string;
@@ -78,6 +87,15 @@ export interface ProjectTeam {
 
 export async function createProject(data: CreateProjectRequest): Promise<Project> {
   return (await apiClient.post<Project>("/projects", data)).data;
+}
+
+export async function copyProject(
+  projectId: number,
+  data: CreateProjectRequest,
+): Promise<ProjectCopyResponse> {
+  return (
+    await apiClient.post<ProjectCopyResponse>(`/projects/${projectId}/copy`, data)
+  ).data;
 }
 
 export async function getProjects(): Promise<ProjectListResponse> {
