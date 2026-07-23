@@ -21,7 +21,14 @@ import {
   previewCatalogImport,
   type CatalogImportKind,
   type CatalogImportResult,
+  type RecipeImportOwnership,
 } from "@/features/catalog-import/api/catalogImportApi";
+import {
+  buildCatalogImportApplyRequest,
+  buildCatalogImportPreviewRequest,
+  recipeImportOwnershipDescription,
+  recipeImportOwnershipLabel,
+} from "@/features/catalog-import/model/catalogImportOwnership";
 import {
   getCatalogImportFilename,
   getCatalogImportTemplate,
@@ -36,6 +43,8 @@ function getErrorMessage(error: unknown): string {
 
 export default function CatalogImportPage() {
   const [kind, setKind] = useState<CatalogImportKind>("products");
+  const [ownershipScope, setOwnershipScope] =
+    useState<RecipeImportOwnership>("club");
   const [content, setContent] = useState("");
   const [result, setResult] = useState<CatalogImportResult | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -52,6 +61,11 @@ export default function CatalogImportPage() {
   const selectKind = (nextKind: CatalogImportKind) => {
     setKind(nextKind);
     setContent("");
+    resetResult();
+  };
+
+  const selectOwnership = (nextScope: RecipeImportOwnership) => {
+    setOwnershipScope(nextScope);
     resetResult();
   };
 
@@ -80,7 +94,11 @@ export default function CatalogImportPage() {
     setSuccess(null);
     setIsPreviewing(true);
     try {
-      setResult(await previewCatalogImport({ kind, content }));
+      setResult(
+        await previewCatalogImport(
+          buildCatalogImportPreviewRequest(kind, content, ownershipScope),
+        ),
+      );
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -89,17 +107,27 @@ export default function CatalogImportPage() {
   };
 
   const apply = async () => {
+    if (!result) return;
     setError(null);
     setSuccess(null);
     setIsApplying(true);
     try {
-      const applied = await applyCatalogImport({ kind, content });
+      const applied = await applyCatalogImport(
+        buildCatalogImportApplyRequest(
+          kind,
+          content,
+          ownershipScope,
+          result,
+        ),
+      );
       setResult(applied);
       if (applied.valid) {
         setSuccess(
           kind === "products"
             ? `Импорт завершён: создано ${applied.create_count}, пропущено ${applied.skip_count}.`
-            : `Импорт завершён: создано рецептов ${applied.create_count}, компонентов ${applied.component_count}, заметок ${applied.note_count}.`,
+            : ownershipScope === "personal"
+              ? `Импорт завершён: создано личных черновиков ${applied.create_count}, компонентов ${applied.component_count}, заметок ${applied.note_count}.`
+              : `Импорт завершён: создано клубных рецептов ${applied.create_count}, компонентов ${applied.component_count}, заметок ${applied.note_count}.`,
         );
       }
     } catch (requestError) {
@@ -109,12 +137,21 @@ export default function CatalogImportPage() {
     }
   };
 
+  const canApply = Boolean(
+    result?.valid &&
+      (kind === "products" ||
+        (result.preview_token && result.ownership_scope === ownershipScope)),
+  );
+
   return (
     <Stack spacing={3} sx={{ mt: 4 }}>
       <Box>
-        <Typography variant="h4" component="h1">Массовый импорт</Typography>
+        <Typography variant="h4" component="h1">
+          Массовый импорт
+        </Typography>
         <Typography color="text.secondary">
-          Загрузите CSV, сначала проверьте данные, затем примените импорт одной транзакцией.
+          Загрузите CSV, сначала проверьте данные, затем примените импорт одной
+          транзакцией.
         </Typography>
       </Box>
 
@@ -126,19 +163,56 @@ export default function CatalogImportPage() {
               labelId="catalog-import-kind-label"
               label="Тип данных"
               value={kind}
-              onChange={(event) => selectKind(event.target.value as CatalogImportKind)}
+              onChange={(event) =>
+                selectKind(event.target.value as CatalogImportKind)
+              }
             >
               <MenuItem value="products">Продукты</MenuItem>
-              <MenuItem value="recipes">Рецепты, компоненты и заметки</MenuItem>
+              <MenuItem value="recipes">
+                Рецепты, компоненты и заметки
+              </MenuItem>
             </Select>
           </FormControl>
+
+          {kind === "recipes" && (
+            <Stack spacing={1.5}>
+              <FormControl fullWidth>
+                <InputLabel id="catalog-import-ownership-label">
+                  Область владения
+                </InputLabel>
+                <Select
+                  labelId="catalog-import-ownership-label"
+                  label="Область владения"
+                  value={ownershipScope}
+                  onChange={(event) =>
+                    selectOwnership(
+                      event.target.value as RecipeImportOwnership,
+                    )
+                  }
+                >
+                  <MenuItem value="club">Клубные рецепты</MenuItem>
+                  <MenuItem value="personal">Личные рецепты</MenuItem>
+                </Select>
+              </FormControl>
+              <Alert severity={ownershipScope === "personal" ? "info" : "success"}>
+                {recipeImportOwnershipDescription(ownershipScope)}
+              </Alert>
+            </Stack>
+          )}
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
             <Button component="label" variant="contained">
               Выбрать CSV
-              <input hidden type="file" accept=".csv,text/csv" onChange={(event) => void readFile(event)} />
+              <input
+                hidden
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(event) => void readFile(event)}
+              />
             </Button>
-            <Button variant="outlined" onClick={downloadTemplate}>Скачать шаблон</Button>
+            <Button variant="outlined" onClick={downloadTemplate}>
+              Скачать шаблон
+            </Button>
           </Stack>
 
           <TextField
@@ -164,7 +238,7 @@ export default function CatalogImportPage() {
             </Button>
             <Button
               variant="contained"
-              disabled={!result?.valid || isPreviewing || isApplying}
+              disabled={!canApply || isPreviewing || isApplying}
               onClick={() => void apply()}
             >
               {isApplying ? "Импорт…" : "Импортировать"}
@@ -182,20 +256,53 @@ export default function CatalogImportPage() {
           <Stack spacing={2}>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               <Chip label={`Строк: ${result.row_count}`} />
-              <Chip color="success" variant="outlined" label={`Будет создано: ${result.create_count}`} />
-              <Chip variant="outlined" label={`Будет пропущено: ${result.skip_count}`} />
-              {kind === "recipes" && <Chip variant="outlined" label={`Компонентов: ${result.component_count}`} />}
-              {kind === "recipes" && <Chip variant="outlined" label={`Заметок: ${result.note_count}`} />}
+              <Chip
+                color="success"
+                variant="outlined"
+                label={`Будет создано: ${result.create_count}`}
+              />
+              <Chip
+                variant="outlined"
+                label={`Будет пропущено: ${result.skip_count}`}
+              />
+              {kind === "recipes" && (
+                <Chip
+                  color="primary"
+                  variant="outlined"
+                  label={recipeImportOwnershipLabel(
+                    result.ownership_scope ?? ownershipScope,
+                  )}
+                />
+              )}
+              {kind === "recipes" && (
+                <Chip
+                  variant="outlined"
+                  label={`Компонентов: ${result.component_count}`}
+                />
+              )}
+              {kind === "recipes" && (
+                <Chip
+                  variant="outlined"
+                  label={`Заметок: ${result.note_count}`}
+                />
+              )}
             </Stack>
 
             {result.valid ? (
-              <Alert severity="success">Файл прошёл проверку и готов к импорту.</Alert>
+              <Alert severity="success">
+                Файл прошёл проверку и готов к импорту.
+              </Alert>
             ) : (
-              <Alert severity="error">Исправьте ошибки и повторите проверку. Ничего не импортировано.</Alert>
+              <Alert severity="error">
+                Исправьте ошибки и повторите проверку. Ничего не импортировано.
+              </Alert>
             )}
 
             {result.errors.map((item, index) => (
-              <Alert key={`${item.row}-${item.field ?? "general"}-${index}`} severity="error">
+              <Alert
+                key={`${item.row}-${item.field ?? "general"}-${index}`}
+                severity="error"
+              >
                 {item.row > 0 ? `Строка ${item.row}` : "Файл"}
                 {item.field ? `, поле ${item.field}` : ""}: {item.message}
               </Alert>

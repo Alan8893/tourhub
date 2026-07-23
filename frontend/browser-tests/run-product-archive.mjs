@@ -14,7 +14,6 @@ import {
   findChromeExecutable,
   sleep,
   stopProcess,
-  waitForExpression,
   waitForHttp,
 } from "./club-settings-cdp.mjs";
 
@@ -22,62 +21,58 @@ const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const artifactDir = path.join(frontendRoot, "browser-test-artifacts");
 const pageUrl = "http://127.0.0.1:5213/browser-tests/product-archive.html";
 const profileDir = `/tmp/tourhub-product-archive-${process.pid}`;
+const scenarioTimeoutMs = 75_000;
+const cdpTimeoutMs = 20_000;
 
-async function clickTextButton(client, text) {
-  return client.evaluate(`(() => {
-    const text = ${JSON.stringify(text)};
-    const button = [...document.querySelectorAll("button")]
-      .find((item) => item.textContent?.trim() === text && !item.disabled);
-    if (!button) return false;
-    button.click();
-    return true;
-  })()`);
+let activeApi;
+let activeVite;
+let activeChrome;
+let activeClient;
+let cleanupStarted = false;
+
+async function bounded(promise, description, timeoutMs = cdpTimeoutMs) {
+  return Promise.race([
+    promise,
+    sleep(timeoutMs).then(() => {
+      throw new Error(`Timed out during ${description}`);
+    }),
+  ]);
 }
 
-async function clickProductAction(client, productName, actionText) {
-  return client.evaluate(`(() => {
-    const productName = ${JSON.stringify(productName)};
-    const actionText = ${JSON.stringify(actionText)};
-    const candidates = [...document.querySelectorAll(".MuiPaper-root")];
-    const card = candidates.find((item) => {
-      const hasProduct = item.textContent?.includes(productName);
-      const hasAction = [...item.querySelectorAll("button")]
-        .some((button) => button.textContent?.trim() === actionText && !button.disabled);
-      return hasProduct && hasAction;
-    });
-    const button = card
-      ? [...card.querySelectorAll("button")]
-          .find((item) => item.textContent?.trim() === actionText && !item.disabled)
-      : null;
-    if (!button) return false;
-    button.click();
-    return true;
-  })()`);
-}
-
-async function writeDiagnostics(client, name) {
-  const page = await client.evaluate(`({
-    href: location.href,
-    bodyText: document.body?.innerText ?? "",
-    bodyHtml: document.body?.innerHTML?.slice(0, 30000) ?? "",
-  })`);
-  await writeFile(
-    path.join(artifactDir, `${name}.json`),
-    JSON.stringify({ page, productArchiveRequests }, null, 2),
-  );
-  const screenshot = await client.send("Page.captureScreenshot", {
-    format: "png",
-    captureBeyondViewport: false,
+async function cleanup() {
+  if (cleanupStarted) return;
+  cleanupStarted = true;
+  activeClient?.close();
+  activeClient = undefined;
+  await Promise.allSettled([
+    activeChrome ? stopProcess(activeChrome) : Promise.resolve(),
+    activeVite ? stopProcess(activeVite) : Promise.resolve(),
+  ]);
+  if (activeApi) {
+    await Promise.race([activeApi.close(), sleep(2_000)]);
+  }
+  await rm(profileDir, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
   });
-  await writeFile(path.join(artifactDir, `${name}.png`), Buffer.from(screenshot.data, "base64"));
+  activeApi = undefined;
+  activeVite = undefined;
+  activeChrome = undefined;
 }
 
 async function run() {
-  await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  await rm(profileDir, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
   await mkdir(artifactDir, { recursive: true });
-  const api = startProductArchiveApi();
-  await api.listen();
-  const vite = spawn(
+  activeApi = startProductArchiveApi();
+  await activeApi.listen();
+  activeVite = spawn(
     process.execPath,
     [
       path.join(frontendRoot, "node_modules", "vite", "bin", "vite.js"),
@@ -94,7 +89,7 @@ async function run() {
     },
   );
   await waitForHttp(pageUrl);
-  const chrome = spawn(
+  activeChrome = spawn(
     findChromeExecutable(),
     [
       "--headless=new",
@@ -109,120 +104,195 @@ async function run() {
   );
 
   try {
+    console.log("Product archive acceptance: connecting to Chrome.");
     await waitForHttp("http://127.0.0.1:9265/json/version");
     const targets = await fetch("http://127.0.0.1:9265/json/list").then((response) =>
       response.json(),
     );
     const target = targets.find((item) => item.url.includes("product-archive.html"));
     assert.ok(target?.webSocketDebuggerUrl);
-    const client = await CdpClient.connect(target.webSocketDebuggerUrl);
-    await client.send("Runtime.enable");
-    await client.send("Page.enable");
-    await client.send("Emulation.setDeviceMetricsOverride", {
-      width: 1280,
-      height: 900,
-      deviceScaleFactor: 1,
-      mobile: false,
-    });
-    await client.evaluate("window.confirm = () => true");
+    activeClient = await bounded(
+      CdpClient.connect(target.webSocketDebuggerUrl),
+      "CDP connection",
+    );
+    await bounded(activeClient.send("Runtime.enable"), "Runtime.enable");
+    await bounded(activeClient.send("Page.enable"), "Page.enable");
+    await bounded(
+      activeClient.send("Emulation.setDeviceMetricsOverride", {
+        width: 1280,
+        height: 900,
+        deviceScaleFactor: 1,
+        mobile: false,
+      }),
+      "desktop metrics",
+    );
 
-    try {
-      await waitForExpression(
-        client,
-        `document.body?.innerText?.includes("Архив продуктов") &&
-         document.body?.innerText?.includes("Гречка") &&
-         document.body?.innerText?.includes("Рис") &&
-         !document.body?.innerText?.includes("Загрузка каталога продуктов")`,
-        "loaded active product catalogue",
-      );
-      assert.equal(await clickProductAction(client, "Гречка", "Архивировать"), true);
-      await waitForExpression(
-        client,
-        `document.body?.innerText?.includes("Продукт «Гречка» перемещён в архив.") &&
-         ${JSON.stringify(productArchiveRequests)} !== null`,
-        "product archived",
-      );
-      assert.ok(
-        productArchiveRequests.some(
-          (item) => item.method === "POST" && item.path === "/api/v1/products/buckwheat/archive",
-        ),
-      );
+    console.log("Product archive acceptance: running browser workflow.");
+    const workflow = await bounded(
+      activeClient.evaluate(`(async () => {
+        const sleep = (milliseconds) =>
+          new Promise((resolve) => setTimeout(resolve, milliseconds));
+        const waitFor = async (predicate, description) => {
+          const deadline = Date.now() + 15000;
+          while (Date.now() < deadline) {
+            if (predicate()) return;
+            await sleep(100);
+          }
+          throw new Error("Timed out waiting for " + description);
+        };
+        const clickButton = (text) => {
+          const button = [...document.querySelectorAll("button")]
+            .find((item) => item.textContent?.trim() === text && !item.disabled);
+          if (!button) throw new Error("Button not found: " + text);
+          button.click();
+        };
+        const clickProductAction = (productName, actionText) => {
+          const card = [...document.querySelectorAll(".MuiPaper-root")]
+            .find((item) => {
+              const hasProduct = item.textContent?.includes(productName);
+              const hasAction = [...item.querySelectorAll("button")]
+                .some((button) =>
+                  button.textContent?.trim() === actionText && !button.disabled
+                );
+              return hasProduct && hasAction;
+            });
+          const button = card
+            ? [...card.querySelectorAll("button")]
+                .find((item) =>
+                  item.textContent?.trim() === actionText && !item.disabled
+                )
+            : null;
+          if (!button) {
+            throw new Error("Product action not found: " + productName + " / " + actionText);
+          }
+          button.click();
+        };
 
-      assert.equal(await clickTextButton(client, "Архив"), true);
-      await waitForExpression(
-        client,
-        `document.body?.innerText?.includes("Заблокирован политикой") &&
-         document.body?.innerText?.includes("алкогольные позиции") &&
-         document.body?.innerText?.includes("Гречка")`,
-        "loaded archived products",
-      );
-      const lockedState = await client.evaluate(`(() => {
-        const card = [...document.querySelectorAll(".MuiPaper-root")]
-          .find((item) => item.textContent?.includes("Вино") && item.textContent?.includes("Заблокирован политикой"));
-        const restore = card
-          ? [...card.querySelectorAll("button")].find((button) => button.textContent?.trim() === "Восстановить")
+        window.confirm = () => true;
+        await waitFor(
+          () => document.body?.innerText?.includes("Архив продуктов") &&
+            document.body?.innerText?.includes("Гречка") &&
+            document.body?.innerText?.includes("Рис") &&
+            !document.body?.innerText?.includes("Загрузка каталога продуктов"),
+          "active product catalogue",
+        );
+
+        clickProductAction("Гречка", "Архивировать");
+        await waitFor(
+          () => document.body?.innerText?.includes("Продукт «Гречка» перемещён в архив."),
+          "archive success",
+        );
+
+        clickButton("Архив");
+        await waitFor(
+          () => document.body?.innerText?.includes("Заблокирован политикой") &&
+            document.body?.innerText?.includes("алкогольные позиции") &&
+            document.body?.innerText?.includes("Гречка"),
+          "archived product catalogue",
+        );
+
+        const policyCard = [...document.querySelectorAll(".MuiPaper-root")]
+          .find((item) =>
+            item.textContent?.includes("Вино") &&
+            item.textContent?.includes("Заблокирован политикой")
+          );
+        const policyRestore = policyCard
+          ? [...policyCard.querySelectorAll("button")]
+              .find((button) => button.textContent?.trim() === "Восстановить")
           : null;
-        return Boolean(card && restore?.disabled);
-      })()`);
-      assert.equal(lockedState, true);
+        if (!policyCard || !policyRestore?.disabled) {
+          throw new Error("Policy-locked Product restore is not disabled");
+        }
 
-      assert.equal(await clickProductAction(client, "Гречка", "Восстановить"), true);
-      await waitForExpression(
-        client,
-        `document.body?.innerText?.includes("Продукт «Гречка» восстановлен.")`,
-        "product restored",
-      );
-      assert.ok(
-        productArchiveRequests.some(
-          (item) => item.method === "POST" && item.path === "/api/v1/products/buckwheat/restore",
-        ),
-      );
+        clickProductAction("Гречка", "Восстановить");
+        await waitFor(
+          () => document.body?.innerText?.includes("Продукт «Гречка» восстановлен."),
+          "restore success",
+        );
 
-      await client.send("Emulation.setDeviceMetricsOverride", {
+        return {
+          policyLocked: true,
+          bodyText: document.body?.innerText ?? "",
+        };
+      })()`),
+      "Product archive browser workflow",
+      55_000,
+    );
+    assert.equal(workflow.policyLocked, true);
+    assert.ok(
+      productArchiveRequests.some(
+        (item) => item.method === "POST" && item.path === "/api/v1/products/buckwheat/archive",
+      ),
+    );
+    assert.ok(
+      productArchiveRequests.some(
+        (item) => item.method === "POST" && item.path === "/api/v1/products/buckwheat/restore",
+      ),
+    );
+
+    await bounded(
+      activeClient.send("Emulation.setDeviceMetricsOverride", {
         width: 360,
         height: 900,
         deviceScaleFactor: 1,
         mobile: true,
-      });
-      await sleep(350);
-      const layout = await client.evaluate(`({
+      }),
+      "mobile metrics",
+    );
+    await sleep(350);
+    const layout = await bounded(
+      activeClient.evaluate(`({
         clientWidth: document.documentElement.clientWidth,
         scrollWidth: document.documentElement.scrollWidth,
         bodyScrollWidth: document.body.scrollWidth,
-      })`);
-      assert.ok(
-        layout.scrollWidth <= layout.clientWidth + 1 &&
-          layout.bodyScrollWidth <= layout.clientWidth + 1,
-        `Horizontal overflow: ${JSON.stringify(layout)}`,
-      );
-      const screenshot = await client.send("Page.captureScreenshot", {
-        format: "png",
-        captureBeyondViewport: false,
-      });
-      await writeFile(
-        path.join(artifactDir, "product-archive-mobile.png"),
-        Buffer.from(screenshot.data, "base64"),
-      );
-    } catch (error) {
-      await writeDiagnostics(client, "product-archive-diagnostic");
-      throw error;
-    }
+      })`),
+      "mobile layout",
+    );
+    assert.ok(
+      layout.scrollWidth <= layout.clientWidth + 1 &&
+        layout.bodyScrollWidth <= layout.clientWidth + 1,
+      `Horizontal overflow: ${JSON.stringify(layout)}`,
+    );
 
-    client.close();
+    await writeFile(
+      path.join(artifactDir, "product-archive.json"),
+      JSON.stringify(
+        { workflow, requests: productArchiveRequests, layout },
+        null,
+        2,
+      ),
+    );
     console.log("Product archive browser acceptance passed.");
+  } catch (error) {
+    await writeFile(
+      path.join(artifactDir, "product-archive-error.txt"),
+      `${error?.stack ?? error}\n`,
+    );
+    throw error;
   } finally {
-    await Promise.allSettled([stopProcess(chrome), stopProcess(vite)]);
-    await api.close();
-    await rm(profileDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    await cleanup();
   }
 }
 
-run().catch(async (error) => {
-  console.error(error);
+const watchdog = setTimeout(async () => {
+  console.error("Product archive browser acceptance timed out.");
   await mkdir(artifactDir, { recursive: true });
   await writeFile(
     path.join(artifactDir, "product-archive-error.txt"),
-    `${error?.stack ?? error}\n`,
+    "Product archive browser acceptance timed out before completion.\n",
   );
-  process.exitCode = 1;
-});
+  await cleanup();
+  process.exit(1);
+}, scenarioTimeoutMs);
+
+run()
+  .then(() => {
+    clearTimeout(watchdog);
+    process.exit(0);
+  })
+  .catch(async (error) => {
+    clearTimeout(watchdog);
+    console.error(error);
+    await cleanup();
+    process.exit(1);
+  });

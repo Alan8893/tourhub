@@ -1,6 +1,7 @@
 import { apiClient } from "@/shared/api/client";
 
 export type CatalogImportKind = "products" | "recipes";
+export type RecipeImportOwnership = "club" | "personal";
 
 export interface CatalogImportError {
   row: number;
@@ -16,12 +17,16 @@ export interface CatalogImportResult {
   skip_count: number;
   component_count: number;
   note_count: number;
+  ownership_scope: RecipeImportOwnership | null;
+  preview_token: string | null;
   errors: CatalogImportError[];
 }
 
-interface CatalogImportRequest {
+export interface CatalogImportRequest {
   kind: CatalogImportKind;
   content: string;
+  ownership_scope?: RecipeImportOwnership;
+  preview_token?: string;
 }
 
 export async function previewCatalogImport(
