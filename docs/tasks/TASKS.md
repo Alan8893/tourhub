@@ -7,8 +7,9 @@ This file contains task status and links. Detailed task descriptions are stored 
 | ID | Task | Status | Details |
 |---|---|---|---|
 | TH-0061.5 | Meal Composition Rules Engine | OPERATIONAL MAINTENANCE | ./active/TH-0061.5-menu-rules.md |
+| TH-0111 | Copy Project | IN PROGRESS | ./TH-0111-copy-project.md |
 
-No post-release product task is active after TH-0110. Retention UI, global sign-out, Administrator session administration, session cleanup, Project-team notifications, and `Копировать проект` require separate explicit selection.
+TH-0111 is the explicitly selected post-release product task. Retention UI, global sign-out, Administrator session administration, session cleanup, and Project-team notifications remain deferred.
 
 ## First-release sequence
 
