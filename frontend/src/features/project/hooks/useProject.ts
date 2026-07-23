@@ -6,10 +6,11 @@ import {
 } from "../api/projectApi";
 import type { RecipeGenerationMode } from "../model/recipeGenerationMode";
 
-export function useProject(projectId: number) {
+export function useProject(projectId: number, enabled = true) {
   return useQuery({
     queryKey: ["project", projectId],
     queryFn: () => getProject(projectId),
+    enabled,
   });
 }
 
