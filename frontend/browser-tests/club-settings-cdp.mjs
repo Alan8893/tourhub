@@ -54,7 +54,36 @@ export class CdpClient {
       socket.addEventListener("open", resolve, { once: true });
       socket.addEventListener("error", reject, { once: true });
     });
-    return new CdpClient(socket);
+    const client = new CdpClient(socket);
+    const deadline = Date.now() + 8_000;
+    let stableChecks = 0;
+    let lastError;
+    while (Date.now() < deadline) {
+      try {
+        const result = await client.send("Runtime.evaluate", {
+          expression: "document.readyState",
+          returnByValue: true,
+        });
+        if (result.result?.value === "complete") {
+          stableChecks += 1;
+          if (stableChecks >= 2) return client;
+        } else {
+          stableChecks = 0;
+        }
+      } catch (error) {
+        lastError = error;
+        stableChecks = 0;
+        if (!String(error).includes("Execution context was destroyed")) {
+          client.close();
+          throw error;
+        }
+      }
+      await sleep(150);
+    }
+    client.close();
+    throw new Error(
+      `Timed out waiting for stable browser execution context. ${lastError ?? ""}`,
+    );
   }
 
   send(method, params = {}) {
