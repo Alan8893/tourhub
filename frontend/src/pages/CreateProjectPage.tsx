@@ -17,10 +17,7 @@ import {
 import { useCopyProject } from "../features/project/hooks/useCopyProject";
 import { useCreateProject } from "../features/project/hooks/useCreateProject";
 import { useProject } from "../features/project/hooks/useProject";
-import {
-  buildProjectCopyDefaults,
-  projectCopySummary,
-} from "../features/project/model/projectCopy";
+import { buildProjectCopyDefaults } from "../features/project/model/projectCopy";
 import {
   RECIPE_GENERATION_MODE_OPTIONS,
   type RecipeGenerationMode,
@@ -59,7 +56,6 @@ export default function CreateProjectPage() {
   const [recipeGenerationMode, setRecipeGenerationMode] =
     useState<RecipeGenerationMode>("club_only");
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [copySummary, setCopySummary] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isCopyMode || !sourceQuery.data || initializedFromSource.current) return;
@@ -89,7 +85,6 @@ export default function CreateProjectPage() {
     }
 
     setValidationError(null);
-    setCopySummary(null);
     const payload = {
       name,
       participants,
@@ -102,8 +97,9 @@ export default function CreateProjectPage() {
 
     if (isCopyMode && copySourceId !== null) {
       const result = await copyProject.mutateAsync(payload);
-      setCopySummary(projectCopySummary(result));
-      navigate(`/projects/${result.project_id}`);
+      navigate(`/projects/${result.project_id}`, {
+        state: { projectCopyResult: result },
+      });
       return;
     }
 
@@ -128,7 +124,6 @@ export default function CreateProjectPage() {
 
       <Box component="form" onSubmit={submit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {validationError && <Alert severity="error">{validationError}</Alert>}
-        {copySummary && <Alert severity="success">{copySummary}</Alert>}
         {isCopyMode && sourceQuery.isLoading && (
           <Alert severity="info">Загружаем завершённый проект-источник…</Alert>
         )}
