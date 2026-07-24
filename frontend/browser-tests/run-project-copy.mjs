@@ -58,7 +58,6 @@ async function run() {
   await mkdir(artifactDir, { recursive: true });
   activeApi = startProjectCopyApi(apiPort);
   await activeApi.listen();
-
   activeVite = spawn(
     process.execPath,
     [
@@ -76,7 +75,6 @@ async function run() {
     },
   );
   await waitForHttp(pageUrl);
-
   activeChrome = spawn(
     findChromeExecutable(),
     [
@@ -113,19 +111,37 @@ async function run() {
       20_000,
     );
 
-    const defaults = await activeClient.evaluate(`(() => {
-      const inputFor = (text) => {
-        const label = [...document.querySelectorAll("label")]
-          .find((item) => item.textContent?.trim() === text && item.htmlFor);
-        return label ? document.getElementById(label.htmlFor) : null;
-      };
-      return {
-        name: inputFor("Название похода")?.value,
-        participants: inputFor("Количество участников")?.value,
-        days: inputFor("Количество дней")?.value,
-        startDate: inputFor("Дата начала похода")?.value,
+    await activeClient.evaluate(`(() => {
+      window.__projectCopyTest = {
+        inputFor(text) {
+          const label = [...document.querySelectorAll("label")]
+            .find((item) => item.textContent?.trim().startsWith(text) && item.htmlFor);
+          return label ? document.getElementById(label.htmlFor) : null;
+        },
+        setValue(text, value) {
+          const input = this.inputFor(text);
+          if (!input) throw new Error("Input not found: " + text);
+          const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+          setter?.call(input, value);
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+        },
+        choose(groupText, value) {
+          const control = [...document.querySelectorAll(".MuiFormControl-root")]
+            .find((item) => item.textContent?.includes(groupText));
+          const input = control?.querySelector('input[type="radio"][value="' + value + '"]');
+          if (!input) throw new Error("Radio not found: " + groupText + " / " + value);
+          input.click();
+        },
       };
     })()`);
+
+    const defaults = await activeClient.evaluate(`({
+      name: window.__projectCopyTest.inputFor("Название похода")?.value,
+      participants: window.__projectCopyTest.inputFor("Количество участников")?.value,
+      days: window.__projectCopyTest.inputFor("Количество дней")?.value,
+      startDate: window.__projectCopyTest.inputFor("Дата начала похода")?.value,
+    })`);
     assert.deepEqual(defaults, {
       name: "Кольский маршрут — копия",
       participants: "12",
@@ -133,56 +149,30 @@ async function run() {
       startDate: "2026-08-01",
     });
 
-    const edited = await activeClient.evaluate(`(() => {
-      const inputFor = (text) => {
-        const label = [...document.querySelectorAll("label")]
-          .find((item) => item.textContent?.trim() === text && item.htmlFor);
-        return label ? document.getElementById(label.htmlFor) : null;
-      };
-      const setValue = (input, value) => {
-        if (!input) throw new Error("Input not found");
-        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-        setter?.call(input, value);
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-      };
-      const choose = (groupText, value) => {
-        const control = [...document.querySelectorAll(".MuiFormControl-root")]
-          .find((item) => item.textContent?.includes(groupText));
-        const input = control?.querySelector('input[type="radio"][value="' + value + '"]');
-        if (!input) throw new Error("Radio not found: " + groupText + " / " + value);
-        input.click();
-      };
-      setValue(inputFor("Название похода"), "Кольский маршрут 2027");
-      setValue(inputFor("Количество участников"), "18");
-      setValue(inputFor("Количество дней"), "5");
-      setValue(inputFor("Дата начала похода"), "2027-08-10");
-      choose("Первый приём пищи", "breakfast");
-      choose("Последний приём пищи", "lunch");
-      choose("Какие рецепты использовать", "personal_preferred");
-      return true;
+    await activeClient.evaluate(`(() => {
+      const helper = window.__projectCopyTest;
+      helper.setValue("Название похода", "Кольский маршрут 2027");
+      helper.setValue("Количество участников", "18");
+      helper.setValue("Количество дней", "5");
+      helper.setValue("Дата начала похода", "2027-08-10");
+      helper.choose("Первый приём пищи", "breakfast");
+      helper.choose("Последний приём пищи", "lunch");
+      helper.choose("Какие рецепты использовать", "personal_preferred");
     })()`);
-    assert.equal(edited, true);
-
     await waitForExpression(
       activeClient,
-      `(() => {
-        const label = [...document.querySelectorAll("label")]
-          .find((item) => item.textContent?.trim() === "Название похода" && item.htmlFor);
-        return label && document.getElementById(label.htmlFor)?.value === "Кольский маршрут 2027";
-      })()`,
+      `window.__projectCopyTest.inputFor("Название похода")?.value === "Кольский маршрут 2027" &&
+       window.__projectCopyTest.inputFor("Количество участников")?.value === "18"`,
       "editable destination parameters",
     );
 
     const submitted = await activeClient.evaluate(`(() => {
       const button = [...document.querySelectorAll("button")]
         .find((item) => item.textContent?.trim() === "Скопировать поход" && !item.disabled);
-      if (!button) return false;
-      button.click();
-      return true;
+      button?.click();
+      return Boolean(button);
     })()`);
     assert.equal(submitted, true);
-
     await waitForExpression(
       activeClient,
       `[...document.querySelectorAll("button")].some((item) =>
@@ -220,11 +210,7 @@ async function run() {
       last_meal: "lunch",
       recipe_generation_mode: "personal_preferred",
     });
-    assert.equal(
-      JSON.stringify(projectCopySource),
-      projectCopySourceSnapshot,
-      "Completed source fixture changed during copy",
-    );
+    assert.equal(JSON.stringify(projectCopySource), projectCopySourceSnapshot);
     assert.equal(
       projectCopyRequests.some(
         (item) => ["PATCH", "PUT", "DELETE"].includes(item.method) && item.path.includes("/projects/88"),
@@ -250,7 +236,6 @@ async function run() {
         layout.bodyScrollWidth <= layout.clientWidth + 1,
       `Horizontal overflow at 360px: ${JSON.stringify(layout)}`,
     );
-
     const screenshot = await activeClient.send("Page.captureScreenshot", {
       format: "png",
       captureBeyondViewport: false,
