@@ -1,6 +1,6 @@
 # TourHub Current Roadmap
 
-Status date: 2026-07-22
+Status date: 2026-07-24
 
 ## Product goal
 
@@ -28,8 +28,8 @@ First-release preparation and operations
   → Product archive management (TH-0108)
   → Dish archive management (TH-0109)
   → Ownership-aware Recipe CSV import (TH-0110)
+  → Copy Project from completed template (TH-0111)
   → next post-release task requires explicit selection
-  → Copy Project from completed template remains required future work
 ```
 
 ## Released first-release sequence
@@ -54,42 +54,25 @@ Responsive Project workspace navigation, Product editing, published Recipe-to-Di
 
 Personal account/contact profiles, Project ownership and team-scoped access, safe filtered Audit CSV export, and own-session administration with individual revocation are delivered. Current post-release Alembic head is `h10023`.
 
-### TH-0108 — Product archive management
+### TH-0108 through TH-0110
 
-- normal Product selection remains active-only;
-- preparation users can soft-archive and restore manually archived Products;
-- policy-locked Products remain non-restorable;
-- history is preserved and state plus semantic audit share one transaction;
-- no migration was required.
+Product and Dish archive management preserve history and policy lock while keeping active projections stable. Recipe CSV import supports actor/content/scope-bound CLUB/PERSONAL creation without changing Product CSV or legacy Recipe CLUB compatibility. These tasks required no migration.
 
-### TH-0109 — Dish archive management
+### TH-0111 — Copy Project
 
-- normal Dish selection and catalogue readiness remain active-only;
-- preparation users can soft-archive and restore manually archived Dishes;
-- Recipe variants, meal roles, and historical MealSlot/project links are preserved;
-- policy-locked Dishes remain non-restorable;
-- no migration was required.
-
-### TH-0110 — Ownership-aware Recipe CSV import
-
-- Product CSV import remains club-wide and keeps its established CSV/API contract;
-- Recipe import UI requires one CLUB or PERSONAL target for the whole operation;
-- PERSONAL imports create current-user-owned drafts;
-- CLUB imports create published club Recipes;
-- preview issues an actor/content/scope-bound token and ownership-aware apply must return the matching token;
-- changing CSV or scope invalidates preview and mismatch is rejected atomically;
-- legacy Recipe apply without new fields remains compatible as fully validated CLUB import;
-- existing duplicate/reference/alcohol validation, components, notes, transaction-owned audit, and rollback remain intact;
-- responsive UI and real-Chrome acceptance cover token propagation, preview invalidation, and mobile layout;
-- existing Recipe ownership columns were reused, so Alembic remains `h10023`.
+- a completed Project may be copied only by its owner or an Administrator;
+- the ordinary Project parameter form supplies editable destination values;
+- the destination is a new actor-owned draft with a recreated MealSlot schedule;
+- only matching assignments with currently usable Dish and Recipe dependencies are copied;
+- skipped assignments are reported as bounded warnings;
+- source identity, team, completion state, derived shopping/equipment/document state, and history remain unchanged;
+- destination state and `project_copied` audit share one transaction;
+- responsive UI and real-Chrome acceptance cover edited request mapping, duplicate submission protection, result navigation, warnings, source immutability, and mobile layout;
+- no migration was required and Alembic remains `h10023`.
 
 ## Current post-release selection
 
-No product task is active after TH-0110. Deferred items do not become active merely because they appear below.
-
-## Explicit future task — Copy Project
-
-`Копировать проект` is a required later capability and must not be lost from planning. From a completed Project, the owner or an Administrator will start a new Project using the old Project as a template. The flow will reuse the normal new-Project parameter form for name, dates, duration, participant count, and meal boundaries, then copy the approved menu and preparation/settings structure into a new identity without reopening or mutating the completed source Project. Exact copied domains, historical attribution, recalculation rules, and notification behavior require a separate Product Owner-approved task before implementation.
+No product task is active after TH-0111. Deferred items do not become active merely because they appear below.
 
 ## Deferred non-blocking priorities
 
@@ -110,6 +93,7 @@ No product task is active after TH-0110. Deferred items do not become active mer
 
 ### Product and operations
 
+- Project-team notifications and reusable team templates;
 - richer Recipe metadata, per-meal switching, and preference weights;
 - trip-participant profiles, routes/GPX, warehouse, procurement, and external aggregation domains;
 - scheduled/emailed documents, persisted versions, signatures, and encrypted configuration archives.
