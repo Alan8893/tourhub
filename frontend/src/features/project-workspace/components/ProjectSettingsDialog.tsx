@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { userRoleLabel } from "@/features/auth/model/roleLabels";
 import {
@@ -40,10 +41,12 @@ interface Props {
 }
 
 export default function ProjectSettingsDialog({ open, project, onClose, onDeleted }: Props) {
+  const navigate = useNavigate();
   const canManage = Boolean(project.capabilities?.can_manage_project);
   const canManageTeam = Boolean(project.capabilities?.can_manage_team);
   const canTransfer = Boolean(project.capabilities?.can_transfer_ownership);
   const canDelete = Boolean(project.capabilities?.can_delete);
+  const canCopy = project.status === "completed" && canDelete;
   const teamQuery = useProjectTeam(project.id);
   const candidatesQuery = useProjectTeamCandidates(project.id, open && canManageTeam);
   const updateMode = useUpdateProjectRecipeGenerationMode(project.id);
@@ -90,6 +93,11 @@ export default function ProjectSettingsDialog({ open, project, onClose, onDelete
 
   const selectedOptions = options.filter((option) => selectedIds.includes(option.id));
   const isSaving = updateMode.isPending || updateTeam.isPending;
+
+  function openCopyForm() {
+    onClose();
+    navigate(`/projects/new?copyFrom=${project.id}`);
+  }
 
   async function save() {
     setError(null);
@@ -148,9 +156,15 @@ export default function ProjectSettingsDialog({ open, project, onClose, onDelete
         <DialogContent>
           <Stack spacing={2.5} sx={{ pt: 1 }}>
             {project.status === "completed" && (
-              <Alert severity="info">
-                Завершённый проект доступен только для чтения. Копирование проекта будет
-                реализовано отдельной задачей.
+              <Alert
+                severity="info"
+                action={canCopy ? (
+                  <Button color="inherit" size="small" onClick={openCopyForm}>
+                    Копировать
+                  </Button>
+                ) : undefined}
+              >
+                Завершённый проект доступен только для чтения. Владелец или администратор может создать новый поход по его шаблону.
               </Alert>
             )}
             {error && <Alert severity="error">{error}</Alert>}

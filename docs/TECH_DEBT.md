@@ -1,6 +1,6 @@
 # TourHub Technical Debt
 
-Status date: 2026-07-22
+Status date: 2026-07-24
 
 ## Released through TH-0093 / v0.1.0
 
@@ -28,39 +28,22 @@ Project workspace navigation, Product editing, published Recipe-to-Dish synchron
 
 Personal account/contact profiles, Project ownership/team access, safe filtered Audit CSV export, and own-session administration with individual revocation are delivered through current head `h10023`.
 
-### TH-0108 — Product archive management
+### TH-0108 through TH-0110
 
-Active Product selection remains stable; explicit protected archive management preserves history, re-runs central alcohol policy, respects permanent policy lock, and uses row locks, idempotency, responsive UI, real-Chrome acceptance, and transaction-owned semantic audit without a migration.
+Product and Dish archive management preserve active contracts, history, policy lock, and transaction-owned audit. Ownership-aware Recipe CSV import adds operation-level CLUB/PERSONAL creation and actor/content/scope preview binding while preserving Product CSV and legacy CLUB compatibility. No migration was required.
 
-### TH-0109 — Dish archive management
+### TH-0111 — Copy Project
 
-Active Dish selection/readiness remains stable; explicit protected archive management preserves variants, roles, and historical MealSlot/project links while enforcing central policy, row locks, idempotency, responsive UI, real-Chrome acceptance, and transaction-owned semantic audit without a migration.
+The previously explicit Copy Project debt is resolved.
 
-### TH-0110 — Ownership-aware CSV import
-
-- Product CSV import remains club-wide with unchanged CSV/API behavior;
-- Recipe import supports one operation-level CLUB or PERSONAL target;
-- PERSONAL creates current-user-owned drafts; CLUB creates published ownerless club Recipes;
-- ownership-aware preview/apply is bound by an actor/content/scope fingerprint;
-- stale content/scope/token is rejected before writes or audit;
-- legacy Recipe apply without new fields remains compatible as validated CLUB import;
-- existing parser, duplicate/reference checks, central alcohol policy, components, notes, and all-or-nothing transaction are reused;
-- responsive ownership selector, preview invalidation, frontend tests, backend policy tests, and real-Chrome acceptance are delivered;
-- existing Recipe ownership columns were reused, so Alembic remains `h10023`.
-
-## Explicit future product debt — Copy Project
-
-`Копировать проект` is a required future Product Owner-selected task.
-
-Expected intent:
-
-- source is a completed Project and remains unchanged;
-- action creates a new Project identity;
-- user receives the normal new-Project form for name, dates, duration, participant count, and meal boundaries;
-- approved Menu and preparation/settings structure is copied from the source;
-- copied data is recalculated for new parameters instead of blindly reusing historical quantities.
-
-Open decisions include the exact copy matrix, team/owner handling, audit attribution, archived/prohibited dependencies, notifications, and policy-invalid historical snapshots. No placeholder button or endpoint is implemented.
+- a completed source may be copied only by its owner or an Administrator;
+- ordinary editable destination parameters create a new actor-owned draft identity;
+- a new schedule is built and only matching currently usable Dish/Recipe assignments are projected;
+- invalid dependencies are skipped with bounded warnings;
+- source owner/team, completion, history, timestamps, shopping/checklist/equipment/readiness/document state, and notifications are excluded;
+- destination state and bounded `project_copied` audit share one transaction;
+- duplicate-submit protection, destination result/warning presentation, unit coverage, and real-Chrome mobile acceptance are delivered;
+- existing persistence was reused, so Alembic remains `h10023`.
 
 ## Remaining audit and operations debt
 
@@ -90,7 +73,8 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 - richer Project search/sorting beyond completed visibility;
 - participant profiles and participant-to-Project membership;
 - Project retention/archive policy beyond terminal completion and explicit deletion;
-- bulk team changes or reusable team templates.
+- bulk team changes or reusable team templates;
+- reusable named copy templates beyond one completed source operation.
 
 ## Remaining Recipe, menu, and catalogue debt
 
@@ -123,10 +107,9 @@ Automatic ORM-wide auditing remains rejected; later coverage must use semantic a
 
 - audit retention duration, deletion eligibility, safeguards, and UI;
 - external SIEM/diagnostics scope;
-- when to start `Копировать проект` and its exact copy matrix;
 - Project-team notification channels and preferences;
 - global-sign-out, cross-user session administration, cleanup, and tracking policy;
 - preference weighting and mandatory Recipe metadata;
 - encrypted settings archive format.
 
-No post-release product task is active after TH-0110. No deferred item becomes active merely because it appears here.
+No post-release product task is active after TH-0111. No deferred item becomes active merely because it appears here.

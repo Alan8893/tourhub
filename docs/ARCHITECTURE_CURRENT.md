@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-07-22
+Last updated: 2026-07-24
 
 TourHub is a single-club modular monolith with PostgreSQL in production.
 
@@ -22,44 +22,50 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 - Audit CSV export is a Backend-owned read projection over sanitized AuditEvent persistence.
 - Own-session listing and revocation extend the existing server-session boundary without tracking or cross-user administration.
 - Product and Dish archive management are separate Backend-owned soft-lifecycle boundaries.
-- Ownership-aware Recipe CSV import is a Backend-owned orchestration over the existing parser, alcohol validation, Recipe ownership fields, and transaction-owned audit.
+- Ownership-aware Recipe CSV import is Backend-owned orchestration over existing parser, alcohol validation, ownership fields, and transaction-owned audit.
+- Copy Project is a dedicated Backend-owned transaction that creates a new identity from completed history without reopening the source.
 
-## Ownership-aware CSV import boundary — TH-0110
+## Copy Project boundary — TH-0111
 
-`OwnershipAwareCatalogImportService` is authoritative for Recipe ownership selection and preview/apply binding.
+`ProjectCopyService` is authoritative for source eligibility, destination identity, copy matrix, dependency checks, warnings, and audit.
 
-### Stable compatibility
+### Source and authorization
 
-- Product preview/apply remain club-wide and continue through the established alcohol-aware import service;
-- CSV headers and row format remain unchanged;
-- legacy Recipe apply without ownership/token remains a fully validated CLUB import;
-- existing duplicate, existing-name, Product reference, component, note, and alcohol-policy rules are reused rather than duplicated.
+- the source is loaded through centralized Project visibility masking;
+- only the source owner or an Administrator may copy it;
+- source status must be `completed`;
+- additional instructors receive role-forbidden behavior and unrelated users retain existence masking;
+- the source Project and its relationships are read-only inputs to the operation.
 
-### Preview
+### Destination transaction
 
-- `/api/v1/catalog-import/preview` requires preparation access;
-- Recipe preview accepts one optional API ownership scope, resolved as CLUB for compatibility;
-- the current UI always sends explicit `club` or `personal`;
-- response includes resolved ownership scope and a SHA-256 fingerprint bound to actor ID, import kind, ownership scope, and exact CSV content;
-- preview creates no Recipe and no AuditEvent.
-
-### Apply
-
-- ownership-aware Recipe apply re-runs full validation before any write;
-- explicit scope requires the matching preview token;
-- changed content/scope/token returns HTTP 409 before persistence or audit;
-- PERSONAL creates current-user-owned draft Recipes;
-- CLUB creates published club Recipes with no owner;
-- components and deduplicated notes are persisted under the new Recipe identities;
-- state and `catalog_import_applied` audit share one commit/rollback boundary;
-- source CSV bodies and preview tokens are never persisted in audit.
+- ordinary Project creation values are validated again in Backend;
+- destination receives a new Project ID, `draft` status, and the authenticated actor as owner;
+- a new MealPlan/day/MealSlot graph is built from destination parameters;
+- matching source slot assignments are copied only when Dish is active and selected Recipe remains eligible for the destination generation mode/current actor;
+- invalid assignments become bounded warnings rather than source mutations;
+- owner/team membership, derived purchasing/checklist/equipment/readiness/document state, timestamps, and history are excluded;
+- destination persistence and `project_copied` AuditEvent commit or roll back together.
 
 ### Frontend
 
-- ownership selection and explanation are presentation of Backend-supported targets, not authorization;
-- changing kind, CSV content, or scope clears preview;
-- apply is enabled only for a valid matching preview;
-- real-Chrome acceptance verifies payloads, invalidation, success state, and mobile overflow.
+- copy entry is shown only for completed Projects with projected owner/Administrator capability;
+- the ordinary Project form is reused with source values as editable defaults;
+- the UI prevents a second submission while the first non-idempotent request is pending;
+- successful navigation carries only the bounded Backend result for presentation on the destination page;
+- real-Chrome acceptance verifies edited payloads, one POST, source immutability, destination navigation, warnings, and mobile overflow.
+
+## Ownership-aware CSV import boundary — TH-0110
+
+`OwnershipAwareCatalogImportService` remains authoritative for Recipe ownership selection and preview/apply binding.
+
+- Product preview/apply remain club-wide and CSV headers remain unchanged;
+- legacy Recipe apply without ownership/token remains a fully validated CLUB import;
+- preview returns a fingerprint bound to actor ID, kind, scope, and exact CSV content;
+- apply re-runs validation and rejects changed content/scope/token before persistence;
+- PERSONAL creates current-user-owned draft Recipes and CLUB creates published ownerless Recipes;
+- components/notes and `catalog_import_applied` audit share one transaction;
+- source CSV bodies and preview tokens are never persisted in audit.
 
 ## Product and Dish archive boundaries
 
@@ -79,21 +85,21 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 
 ## Project ownership and access boundary
 
-`ProjectAccessPolicy` remains authoritative for Project, Menu/MealSlot, preparation, Shopping, Checklist, Equipment, Documents, contacts, settings, status, and deletion routes.
+`ProjectAccessPolicy` remains authoritative for Project, Menu/MealSlot, preparation, Shopping, Checklist, Equipment, Documents, contacts, settings, status, deletion, and copy visibility.
 
 - `Project.owner_user_id` identifies one owner;
 - `ProjectInstructor(project_id, user_id)` stores additional instructors;
 - unrelated users receive HTTP 404 for direct and nested paths;
 - visible users receive HTTP 403 for role-forbidden actions;
-- completed-Project writes receive HTTP 409;
-- Frontend capability projection guides controls but never replaces Backend checks;
-- future `Копировать проект` creates a new identity from completed history and remains separate.
+- completed-Project mutation routes receive HTTP 409, while the separate copy operation creates a new identity;
+- Frontend capability projection guides controls but never replaces Backend checks.
 
 ## Actor-aware audit boundary
 
 - `AuditEvent` is append-only with actor snapshots and bounded safe JSON;
 - business mutation and AuditEvent share the owning transaction;
 - no-op writes create no event;
+- `project_copied` stores bounded source/destination IDs and copied/skipped counts, not a full menu snapshot;
 - Product/Dish archive actions store bounded lifecycle snapshots;
 - catalogue import audit stores kind/count summaries and excludes source CSV body and preview token;
 - passwords, hashes, credentials, cookies, tokens, headers, contacts, request bodies, document contents, provider secrets, and device/network metadata are excluded;
@@ -104,9 +110,9 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 Development starts with `docker compose up -d --build`; operators use `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally.
 
 - current post-release Alembic head: `h10023`;
-- TH-0106 through TH-0110 added no migrations;
+- TH-0106 through TH-0111 added no migrations;
 - immutable `v0.1.0` remains at SHA `8bcc2d2d9414d812d81634330034b15121c8442f` and released head `h10021`;
 - PostgreSQL backup/restore, clean release-stack startup, restart persistence, and exact-head gates verify candidates;
 - multi-tenancy and microservices remain prohibited.
 
-No post-release product task is active after TH-0110. Retention UI, session extensions, notification providers, richer Recipe metadata, and `Копировать проект` require separate explicit tasks. See `PRODUCT_SPEC.md` and ADR-012 through ADR-026.
+No post-release product task is active after TH-0111. Retention UI, session extensions, notification providers, richer Recipe metadata, and reusable team templates require separate explicit tasks. See `PRODUCT_SPEC.md` and ADR-012 through ADR-026.

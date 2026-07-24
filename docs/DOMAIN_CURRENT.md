@@ -2,7 +2,7 @@
 
 Status: Active
 
-Last updated: 2026-07-22
+Last updated: 2026-07-24
 
 ## Purpose
 
@@ -35,31 +35,25 @@ Recipe
   └─ is_archived
 ```
 
-Rules:
-
 - CLUB Recipes have no owner and are published;
-- PERSONAL Recipes have one owner and use draft/submitted/rejected lifecycle until moderation publishes the approved club result through the established lifecycle;
-- visible library projection contains CLUB Recipes and personal Recipes owned by the current user, while Administrators retain site-wide visibility;
-- MealSlotDish persists the exact selected Recipe snapshot/identity used by the menu.
+- PERSONAL Recipes have one owner and use draft/submitted/rejected lifecycle until moderation;
+- visible projection contains CLUB Recipes and personal Recipes owned by the current user, while Administrators retain site-wide visibility;
+- MealSlotDish persists the exact selected Recipe identity used by the menu.
 
 ## Ownership-aware Recipe CSV import — TH-0110
 
 Recipe CSV rows do not contain ownership columns. Ownership is one operation-level target.
 
-- `club` target creates one published CLUB Recipe per new recipe name with `owner_user_id = null`;
-- `personal` target creates one current-user-owned PERSONAL draft per new recipe name;
-- every component row references an existing Product and belongs to the new Recipe;
-- repeated identical note tuples are deduplicated per Recipe;
-- existing Recipe names, missing Products, invalid units/calculation types/counts, malformed rows, duplicate constraints, and alcohol policy remain validation errors;
-- preview creates no state and returns resolved scope plus a token bound to actor, exact CSV content, and scope;
-- explicit apply requires that matching token and re-runs all validation;
-- content/scope/token mismatch returns HTTP 409 with no Recipe, component, note, or AuditEvent write;
-- a successful import and bounded `catalog_import_applied` event commit together;
-- audit excludes source CSV body and preview token;
-- legacy Recipe apply without the new fields remains compatible as validated CLUB import;
-- Product import remains club-wide and unchanged.
+- `club` creates published ownerless Recipes and `personal` creates current-user-owned drafts;
+- every component row references an existing Product and repeated note tuples are deduplicated;
+- existing names, missing Products, malformed values, duplicate constraints, and alcohol policy remain validation errors;
+- preview creates no state and returns a token bound to actor, exact content, and scope;
+- explicit apply requires the matching token and re-runs validation;
+- mismatch returns HTTP 409 with no Recipe/component/note/AuditEvent write;
+- successful state and bounded `catalog_import_applied` audit commit together;
+- Product import and legacy validated Recipe CLUB apply remain compatible.
 
-## Project ownership and team
+## Project ownership, team, and copy
 
 ```text
 Project
@@ -72,37 +66,41 @@ Project
   └─ preparation results
 ```
 
-Every production Project has one owner and any number of additional instructors. Owner and additional membership are mutually exclusive. Administrators may participate as additional instructors without changing global role. `completed` is terminal read-only history and cannot be reopened. Future `Копировать проект` creates a new identity and is not implemented.
+Every production Project has one owner and any number of additional instructors. Owner and additional membership are mutually exclusive. Administrators may participate without changing global role. `completed` is terminal read-only history and cannot be reopened.
 
-## Product archive lifecycle — TH-0108
+### Copy Project — TH-0111
+
+Copy is a command over completed Project history, not a lifecycle transition on the source.
 
 ```text
-Product
-  ├─ id
-  ├─ name
-  ├─ category?
-  ├─ unit
-  ├─ package_size?
-  ├─ is_archived
-  └─ archived_by_alcohol_policy
+completed source Project
+  + destination creation parameters
+  + owner/Administrator actor
+  → new draft Project identity owned by actor
+  → new MealPlan/Day/MealSlot identities
+  → matching usable MealSlotDish assignments
+  → bounded project_copied AuditEvent
 ```
+
+Rules:
+
+- source must be completed, visible, and owned by the actor unless the actor is an Administrator;
+- destination fields use the ordinary Project creation contract;
+- destination schedule is generated from destination `days`, `first_meal`, and `last_meal`;
+- source assignments match by `(day_number, meal_type)`;
+- archived Dish or Recipe identity not eligible under current actor/generation mode is skipped with a warning;
+- source owner/team, completion, timestamps, purchase/checklist/equipment/readiness/document state, delivery history, and AuditEvents are not copied;
+- copied assignments receive new association IDs while retaining selected Dish/Recipe identities;
+- repeating the command creates another independent Project;
+- destination state and audit roll back together on any failure.
+
+## Product archive lifecycle — TH-0108
 
 Active projection is used for new Recipe components. Explicit archive projection exposes policy-lock state. Archive is soft, restore re-runs central alcohol policy, policy-locked rows remain non-restorable, and state plus `product_archived` / `product_restored` share one transaction.
 
 ## Dish archive lifecycle — TH-0109
 
-```text
-Dish
-  ├─ id
-  ├─ name
-  ├─ recipe_id → Recipe
-  ├─ RecipeVariant[]
-  ├─ MealRole[]
-  ├─ is_archived
-  └─ archived_by_alcohol_policy
-```
-
-Active projection remains the source for catalogue readiness, manual selection, and generation. Archive preserves variants, roles, and historical MealSlot/project references. Restore re-runs central policy and state plus `dish_archived` / `dish_restored` share one transaction.
+Active projection remains the source for catalogue readiness, manual selection, generation, and Project-copy dependency checks. Archive preserves variants, roles, and historical MealSlot/project references. Restore re-runs central policy and state plus `dish_archived` / `dish_restored` share one transaction.
 
 ## AuthSession and own-session projection
 
@@ -112,9 +110,9 @@ A User receives only their own active non-expired sessions; the current login is
 
 AuditEvent is append-only and stores actor snapshots, semantic action, entity identity, safe before/after/context JSON, and timestamp.
 
-Relevant actions include account/profile/session, Product/Dish lifecycle, Project/team/preparation, shopping/checklist/equipment/documents, and `catalog_import_applied`.
+Relevant actions include account/profile/session, Product/Dish lifecycle, Project/team/preparation/copy, shopping/checklist/equipment/documents, and `catalog_import_applied`.
 
-State and AuditEvent share the owning transaction; audit failure rolls back state. No-op writes create no event. Credentials, tokens, cookies, headers, raw request bodies, unrelated catalogue rows, source CSV bodies, preview tokens, and document contents are excluded. Automatic ORM-wide auditing remains rejected.
+State and AuditEvent share the owning transaction; audit failure rolls back state. `project_copied` contains bounded source/destination and copied/skipped counts rather than full menu snapshots. Credentials, tokens, cookies, headers, raw request bodies, unrelated catalogue rows, source CSV bodies, preview tokens, and document contents are excluded. Automatic ORM-wide auditing remains rejected.
 
 ### Audit CSV projection — TH-0106
 
@@ -124,7 +122,7 @@ CSV export is an Administrator-only read projection over existing AuditEvent row
 
 MealSlot and MealSlotDish remain primary; MealPlanItem remains compatibility-only. Project Recipe generation modes remain `club_only`, `club_and_personal`, and `personal_preferred`.
 
-Product, Recipe ownership/lifecycle, Dish Recipe variants, exact assignment snapshots, archive state, import ownership, and central no-exceptions alcohol policy remain Backend-owned. Archived Product and Dish rows remain readable through historical relationships while being excluded from new active selection.
+Product, Recipe ownership/lifecycle, Dish Recipe variants, exact assignment identities, archive state, import ownership, Project-copy dependency eligibility, and central no-exceptions alcohol policy remain Backend-owned. Archived rows remain readable through historical relationships while being excluded from new active selection and copy projection.
 
 Consolidated Project documents remain non-persisted immutable snapshots. MailSettings and invitation delivery retain existing boundaries. Project-team notifications remain a no-op boundary.
 
@@ -137,14 +135,14 @@ Consolidated Project documents remain non-persisted immutable snapshots. MailSet
 - TH-0107 Session Administration: no migration;
 - TH-0108 Product Archive Management: no migration;
 - TH-0109 Dish Archive Management: no migration;
-- TH-0110 Ownership-Aware CSV Import: no migration because Recipe ownership fields already existed.
+- TH-0110 Ownership-Aware CSV Import: no migration;
+- TH-0111 Copy Project: no migration because existing Project/MealPlan/MealSlot/Audit persistence is reused.
 
 ## Future domains and tasks
 
-- copy a completed Project into a new Project template instance;
 - audit retention policy/UI after required Product Owner decisions;
 - global sign-out, Administrator session administration, and session cleanup;
-- Project-team notifications through email, Telegram, and MAX;
+- Project-team notifications and reusable team templates;
 - richer Recipe metadata, participant profiles, routes/GPX, logistics, warehouse, and procurement integrations.
 
-No post-release product task is active after TH-0110. Multi-tenant support and microservices remain prohibited.
+No post-release product task is active after TH-0111. Multi-tenant support and microservices remain prohibited.

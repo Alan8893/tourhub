@@ -4,10 +4,12 @@ export {
   getRecipeGenerationModeLabel,
   type RecipeGenerationMode,
 } from "./model/recipeGenerationMode";
+export { buildProjectCopyDefaults, projectCopySummary } from "./model/projectCopy";
 export {
   useProject,
   useUpdateProjectRecipeGenerationMode,
 } from "./hooks/useProject";
+export { useCopyProject } from "./hooks/useCopyProject";
 export {
   useCompleteProject,
   useDeleteProject,
