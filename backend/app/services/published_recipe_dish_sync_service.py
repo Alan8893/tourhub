@@ -55,17 +55,23 @@ class PublishedRecipeDishSyncService:
         return dish
 
     def _find_attached_dish(self, recipe_id: str) -> DishORM | None:
+        # PostgreSQL rejects FOR UPDATE on the nullable side of an outer join,
+        # so variant membership is checked through EXISTS and only dishes are locked.
+        has_variant = (
+            select(DishRecipeVariantORM.dish_id)
+            .where(
+                DishRecipeVariantORM.dish_id == DishORM.id,
+                DishRecipeVariantORM.recipe_id == recipe_id,
+            )
+            .exists()
+        )
         statement = (
             select(DishORM)
-            .outerjoin(
-                DishRecipeVariantORM,
-                DishRecipeVariantORM.dish_id == DishORM.id,
-            )
             .options(selectinload(DishORM.recipe_variants))
             .where(
                 or_(
                     DishORM.recipe_id == recipe_id,
-                    DishRecipeVariantORM.recipe_id == recipe_id,
+                    has_variant,
                 )
             )
             .order_by(DishORM.is_archived, DishORM.name, DishORM.id)
