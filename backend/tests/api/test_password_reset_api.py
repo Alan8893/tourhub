@@ -3,10 +3,10 @@ from urllib.parse import urlparse, parse_qs
 
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.models.auth_session import AuthSessionORM
 from app.models.password_reset import PasswordResetAttemptORM, PasswordResetTokenORM
 from app.models.user import UserORM
-from app.core.config import settings
 from app.services.auth_service import hash_password, token_hash, utc_now
 from app.services.mail_delivery_service import MailDeliveryService
 
