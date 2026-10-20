@@ -37,6 +37,7 @@ services:
       REDIS__URL: redis://redis:6379/0
       AUTH__COOKIE_SECURE: ${TOURHUB_AUTH_COOKIE_SECURE:-false}
       AUTH__SESSION_TTL_DAYS: ${TOURHUB_AUTH_SESSION_TTL_DAYS:-14}
+      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-http://localhost:5173}
       TOURHUB_SMTP_SECRET: ${TOURHUB_SMTP_SECRET:-}
     depends_on:
       postgres:
