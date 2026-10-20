@@ -31,7 +31,12 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name="pk_password_reset_tokens"),
     )
     op.create_index("ix_password_reset_tokens_user_id", "password_reset_tokens", ["user_id"])
-    op.create_index("ix_password_reset_tokens_token_hash", "password_reset_tokens", ["token_hash"], unique=True)
+    op.create_index(
+        "ix_password_reset_tokens_token_hash",
+        "password_reset_tokens",
+        ["token_hash"],
+        unique=True,
+    )
     op.create_index("ix_password_reset_tokens_expires_at", "password_reset_tokens", ["expires_at"])
 
     op.create_table(
@@ -42,9 +47,13 @@ def upgrade() -> None:
         sa.Column("requested_at", sa.DateTime(), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint("id", name="pk_password_reset_attempts"),
     )
-    op.create_index("ix_password_reset_attempts_email_hash", "password_reset_attempts", ["email_hash"])
+    op.create_index(
+        "ix_password_reset_attempts_email_hash", "password_reset_attempts", ["email_hash"]
+    )
     op.create_index("ix_password_reset_attempts_ip_hash", "password_reset_attempts", ["ip_hash"])
-    op.create_index("ix_password_reset_attempts_requested_at", "password_reset_attempts", ["requested_at"])
+    op.create_index(
+        "ix_password_reset_attempts_requested_at", "password_reset_attempts", ["requested_at"]
+    )
 
 
 def downgrade() -> None:
