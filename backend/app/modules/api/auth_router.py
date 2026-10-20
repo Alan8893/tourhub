@@ -16,8 +16,8 @@ from app.schemas.auth import (
 from app.schemas.password_reset import (
     PasswordResetConfirmRequest,
     PasswordResetConfirmResponse,
-    PasswordResetRequest as PasswordResetRequestSchema,
     PasswordResetRequestResponse,
+    PasswordResetRequest as PasswordResetRequestSchema,
 )
 from app.services import auth_service, mail_delivery_service, password_reset_service
 
