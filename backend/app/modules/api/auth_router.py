@@ -1,3 +1,4 @@
+# ruff: noqa: I001
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
