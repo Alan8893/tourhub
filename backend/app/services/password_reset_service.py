@@ -40,6 +40,8 @@ class PasswordResetService:
         self, request: PasswordResetRequest, *, client_ip: str
     ) -> tuple[str, str] | None:
         now = utc_now()
+        base_url = settings.frontend_public_url.strip().rstrip("/")
+        public_url_configured = base_url.startswith(("https://", "http://"))
         email_hash = _digest(request.email)
         ip_hash = _digest(client_ip or "unknown")
         try:
@@ -62,7 +64,8 @@ class PasswordResetService:
                 .select_from(PasswordResetAttemptORM)
                 .where(
                     PasswordResetAttemptORM.ip_hash == ip_hash,
-                    PasswordResetAttemptORM.requested_at >= now - timedelta(minutes=IP_WINDOW_MINUTES),
+                    PasswordResetAttemptORM.requested_at
+                    >= now - timedelta(minutes=IP_WINDOW_MINUTES),
                 )
             ) or 0
             throttled = email_count >= EMAIL_LIMIT or ip_count >= IP_LIMIT
@@ -77,7 +80,7 @@ class PasswordResetService:
                 select(UserORM).where(UserORM.email == request.email, UserORM.is_active.is_(True))
             )
             raw_token: str | None = None
-            if user is not None and not throttled:
+            if user is not None and not throttled and public_url_configured:
                 self.session.execute(
                     update(PasswordResetTokenORM)
                     .where(
@@ -102,9 +105,6 @@ class PasswordResetService:
         if user is None or throttled or raw_token is None:
             return None
 
-        base_url = settings.frontend_public_url.strip().rstrip("/")
-        if not base_url.startswith(("https://", "http://")):
-            return None
         reset_url = f"{base_url}/reset-password#token={raw_token}"
         return user.email, reset_url
 
