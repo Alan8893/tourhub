@@ -19,7 +19,9 @@ from app.schemas.password_reset import (
     PasswordResetRequest as PasswordResetRequestSchema,
     PasswordResetRequestResponse,
 )
-from app.services import auth_service, mail_delivery_service, password_reset_service
+import app.services.auth_service as auth_service
+import app.services.mail_delivery_service as mail_delivery_service
+import app.services.password_reset_service as password_reset_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
