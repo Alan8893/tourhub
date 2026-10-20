@@ -6,6 +6,7 @@ from sqlalchemy import select
 from app.models.auth_session import AuthSessionORM
 from app.models.password_reset import PasswordResetAttemptORM, PasswordResetTokenORM
 from app.models.user import UserORM
+from app.core.config import settings
 from app.services.auth_service import hash_password, token_hash, utc_now
 from app.services.mail_delivery_service import MailDeliveryService
 
@@ -32,6 +33,7 @@ def test_request_reset_response_does_not_reveal_account_existence(
     auth_client, db_session, monkeypatch
 ) -> None:
     user = _create_user(db_session)
+    monkeypatch.setattr(settings, "frontend_public_url", "https://tourhub.example.org")
     sent_urls: list[str] = []
 
     def fake_send(self, *, recipient: str, reset_url: str, expires_in_minutes: int):
@@ -148,10 +150,31 @@ def test_expired_and_reused_reset_tokens_are_rejected(auth_client, db_session) -
     assert second.status_code == 400
 
 
+def test_smtp_failure_keeps_generic_request_response(
+    auth_client, db_session, monkeypatch
+) -> None:
+    user = _create_user(db_session)
+    monkeypatch.setattr(settings, "frontend_public_url", "https://tourhub.example.org")
+
+    def fail_send(self, *, recipient: str, reset_url: str, expires_in_minutes: int):
+        raise RuntimeError("SMTP internal failure")
+
+    monkeypatch.setattr(MailDeliveryService, "send_password_reset_best_effort", fail_send)
+    response = auth_client.post(
+        "/api/v1/auth/password-reset/request",
+        json={"email": user.email},
+    )
+
+    assert response.status_code == 202
+    assert response.json() == {"message": GENERIC_MESSAGE}
+    assert "SMTP" not in response.text
+
+
 def test_request_reset_is_throttled_persistently_per_email(
     auth_client, db_session, monkeypatch
 ) -> None:
     user = _create_user(db_session)
+    monkeypatch.setattr(settings, "frontend_public_url", "https://tourhub.example.org")
     sent: list[str] = []
 
     def fake_send(self, *, recipient: str, reset_url: str, expires_in_minutes: int):
