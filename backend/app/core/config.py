@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 
     app_name: str = "TourHub"
     environment: str = "dev"
-    frontend_public_url: str = "http://localhost:5173"
+    frontend_public_url: str = ""
 
     cors_origins: list[str] = [
         "http://localhost:5173",
