@@ -155,6 +155,55 @@ class MailDeliveryService:
             recipient=recipient,
         )
 
+    def send_password_reset_best_effort(
+        self,
+        *,
+        recipient: str,
+        reset_url: str,
+        expires_in_minutes: int,
+    ) -> MailDeliveryResult:
+        settings = MailSettingsService(self.session).get()
+        if not self.configuration_available(settings):
+            return MailDeliveryResult(
+                status=MailDeliveryStatus.UNAVAILABLE,
+                message="SMTP-доставка восстановления пароля недоступна.",
+                attempts=0,
+                recipient=recipient,
+            )
+        message = self._message(
+            settings,
+            recipient=recipient,
+            subject="Восстановление пароля TourHub",
+            body=(
+                "Получен запрос на восстановление пароля TourHub.\\n\\n"
+                f"Чтобы задать новый пароль, откройте ссылку:\\n{reset_url}\\n\\n"
+                f"Ссылка действует {expires_in_minutes} минут и может быть использована один раз.\\n"
+                "Если вы не запрашивали восстановление, просто проигнорируйте это письмо."
+            ),
+        )
+        try:
+            attempts = self._run_with_retries(
+                settings,
+                lambda client: client.send_message(message),
+            )
+        except (MailDeliveryUnavailableError, MailDeliveryFailedError) as error:
+            return MailDeliveryResult(
+                status=(
+                    MailDeliveryStatus.UNAVAILABLE
+                    if isinstance(error, MailDeliveryUnavailableError)
+                    else MailDeliveryStatus.FAILED
+                ),
+                message="SMTP-доставка восстановления пароля не удалась.",
+                attempts=getattr(error, "attempts", 0),
+                recipient=recipient,
+            )
+        return MailDeliveryResult(
+            status=MailDeliveryStatus.SENT,
+            message="Письмо восстановления пароля отправлено.",
+            attempts=attempts,
+            recipient=recipient,
+        )
+
     def _run_with_retries(
         self,
         settings: MailSettingsORM,
