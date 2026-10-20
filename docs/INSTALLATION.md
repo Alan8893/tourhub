@@ -125,13 +125,13 @@ After creation, verify that the header shows the Administrator name, `/settings`
 
 ### Password recovery links
 
-Set the public URL of the Frontend before starting the release stack. It must be the exact origin users open in their browser (use HTTPS when a public TLS reverse proxy is configured):
+To enable password recovery, set the public URL of the Frontend before starting the release stack. It must be the exact origin users open in their browser (use HTTPS when a public TLS reverse proxy is configured):
 
 ```bash
 export FRONTEND_PUBLIC_URL='https://tourhub.example.org'
 ```
 
-For a private LAN installation, use the server's reachable URL instead, for example `http://192.168.1.20:5173`. The release Compose configuration requires this setting so password-reset emails cannot silently contain a localhost link. The development Compose stack defaults to `http://localhost:5173`.
+For a private LAN installation, use the server's reachable URL instead, for example `http://192.168.1.20:5173`. If the setting is missing or invalid, TourHub does not issue a reset token or send a reset email; the public response remains generic. The development Compose stack defaults to `http://localhost:5173`.
 
 Password recovery is available from **«Забыли пароль?»** on the login page. The email link expires after 30 minutes and can be used once. After a successful reset, all active sessions for that account are revoked, so the user must sign in again. The public request response intentionally does not confirm whether the email belongs to an account.
 
