@@ -18,7 +18,7 @@ TourHub has server-owned sessions, scrypt password hashing, and configured SMTP 
 - Request throttling is persistent in PostgreSQL: at most three requests per normalized email in 15 minutes and ten requests per source IP in one hour. Old attempt records are removed during request handling.
 - The email link uses the configured `FRONTEND_PUBLIC_URL` and places the raw token in the URL fragment. The API never trusts the incoming Host header to build a reset URL.
 - The request endpoint schedules SMTP delivery after returning the generic response. Delivery failures do not change the public response.
-- Production Compose requires `FRONTEND_PUBLIC_URL`; the development Compose stack defaults to `http://localhost:5173`.
+- Production deployments must configure `FRONTEND_PUBLIC_URL` to enable recovery delivery; without a valid URL, no token is issued and no email is sent. The development Compose stack defaults to `http://localhost:5173`.
 
 ## Consequences
 
