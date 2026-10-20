@@ -5,6 +5,12 @@ from app.core.auth import get_current_user
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import UserORM
+from app.schemas.password_reset import (
+    PasswordResetConfirmRequest,
+    PasswordResetConfirmResponse,
+    PasswordResetRequest as PasswordResetRequestSchema,
+    PasswordResetRequestResponse,
+)
 from app.schemas.auth import (
     AuthResponse,
     BootstrapRequest,
@@ -12,6 +18,11 @@ from app.schemas.auth import (
     LoginRequest,
     UserResponse,
     UserRole,
+)
+from app.services.password_reset_service import (
+    GENERIC_REQUEST_MESSAGE,
+    InvalidPasswordResetTokenError,
+    PasswordResetService,
 )
 from app.services.auth_service import (
     AuthService,
@@ -80,6 +91,39 @@ def login(
     token, _ = service.create_session(user)
     _set_session_cookie(response, token)
     return AuthResponse(user=_user_response(user))
+
+
+@router.post(
+    "/password-reset/request",
+    response_model=PasswordResetRequestResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def request_password_reset(
+    payload: PasswordResetRequestSchema,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> PasswordResetRequestResponse:
+    client_ip = request.client.host if request.client is not None else "unknown"
+    PasswordResetService(db).request_reset(payload, client_ip=client_ip)
+    return PasswordResetRequestResponse(message=GENERIC_REQUEST_MESSAGE)
+
+
+@router.post(
+    "/password-reset/confirm",
+    response_model=PasswordResetConfirmResponse,
+)
+def confirm_password_reset(
+    payload: PasswordResetConfirmRequest,
+    db: Session = Depends(get_db),
+) -> PasswordResetConfirmResponse:
+    try:
+        PasswordResetService(db).confirm_reset(
+            raw_token=payload.token,
+            password=payload.password,
+        )
+    except InvalidPasswordResetTokenError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    return PasswordResetConfirmResponse(message="Пароль успешно изменён. Войдите с новым паролем.")
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
