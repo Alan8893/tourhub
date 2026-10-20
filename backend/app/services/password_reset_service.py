@@ -77,7 +77,9 @@ class PasswordResetService:
                 )
             )
             user = self.session.scalar(
-                select(UserORM).where(UserORM.email == request.email, UserORM.is_active.is_(True))
+                select(UserORM)
+                .where(UserORM.email == request.email, UserORM.is_active.is_(True))
+                .with_for_update()
             )
             raw_token: str | None = None
             if user is not None and not throttled and public_url_configured:
