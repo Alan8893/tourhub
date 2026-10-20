@@ -130,7 +130,8 @@ Consolidated Project documents remain non-persisted immutable snapshots. MailSet
 
 - released `v0.1.0`: `h10021`;
 - optional User contact profile: `h10022`;
-- Project owner/team membership: `h10023` current single head;
+- Project owner/team membership: `h10023`;
+- Password reset tokens and persistent request throttling: `h10024` current single head;
 - TH-0106 Audit CSV Export: no migration;
 - TH-0107 Session Administration: no migration;
 - TH-0108 Product Archive Management: no migration;
