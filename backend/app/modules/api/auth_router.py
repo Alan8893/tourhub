@@ -49,7 +49,9 @@ def _set_session_cookie(response: Response, token: str) -> None:
 
 @router.get("/bootstrap-status", response_model=BootstrapStatusResponse)
 def get_bootstrap_status(db: Session = Depends(get_db)) -> BootstrapStatusResponse:
-    return BootstrapStatusResponse(bootstrap_required=auth_service.AuthService(db).bootstrap_required())
+    return BootstrapStatusResponse(
+        bootstrap_required=auth_service.AuthService(db).bootstrap_required()
+    )
 
 
 @router.post("/bootstrap", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -58,7 +60,7 @@ def bootstrap_administrator(
     response: Response,
     db: Session = Depends(get_db),
 ) -> AuthResponse:
-    service = AuthService(db)
+    service = auth_service.AuthService(db)
     try:
         user = service.bootstrap_administrator(request)
     except auth_service.BootstrapUnavailableError as error:
@@ -117,7 +119,9 @@ def request_password_reset(
     client_ip = request.headers.get("x-real-ip") or (
         request.client.host if request.client is not None else "unknown"
     )
-    delivery = password_reset_service.PasswordResetService(db).request_reset(payload, client_ip=client_ip)
+    delivery = password_reset_service.PasswordResetService(db).request_reset(
+        payload, client_ip=client_ip
+    )
     if delivery is not None:
         recipient, reset_url = delivery
         background_tasks.add_task(
@@ -126,7 +130,9 @@ def request_password_reset(
             recipient=recipient,
             reset_url=reset_url,
         )
-    return PasswordResetRequestResponse(message=password_reset_service.GENERIC_REQUEST_MESSAGE)
+    return PasswordResetRequestResponse(
+        message=password_reset_service.GENERIC_REQUEST_MESSAGE
+    )
 
 
 @router.post(
@@ -138,7 +144,7 @@ def confirm_password_reset(
     db: Session = Depends(get_db),
 ) -> PasswordResetConfirmResponse:
     try:
-        PasswordResetService(db).confirm_reset(
+        password_reset_service.PasswordResetService(db).confirm_reset(
             raw_token=payload.token,
             password=payload.password,
         )
@@ -155,7 +161,7 @@ def logout(
     response: Response,
     db: Session = Depends(get_db),
 ) -> None:
-    AuthService(db).revoke_session(request.cookies.get(settings.auth.session_cookie_name))
+    auth_service.AuthService(db).revoke_session(request.cookies.get(settings.auth.session_cookie_name))
     response.delete_cookie(
         key=settings.auth.session_cookie_name,
         path="/",
