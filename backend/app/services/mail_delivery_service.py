@@ -4,13 +4,12 @@ import os
 import smtplib
 import ssl
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from email.message import EmailMessage
 from email.utils import formataddr
-from typing import Iterator
 
 from sqlalchemy.orm import Session
 
