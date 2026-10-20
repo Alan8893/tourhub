@@ -13,7 +13,6 @@ from app.models.password_reset import PasswordResetAttemptORM, PasswordResetToke
 from app.models.user import UserORM
 from app.schemas.password_reset import PasswordResetRequest
 from app.services.auth_service import hash_password, token_hash, utc_now
-from app.services.mail_delivery_service import MailDeliveryService
 
 TOKEN_TTL_MINUTES = 30
 EMAIL_LIMIT = 3
@@ -37,7 +36,9 @@ class PasswordResetService:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def request_reset(self, request: PasswordResetRequest, *, client_ip: str) -> None:
+    def request_reset(
+        self, request: PasswordResetRequest, *, client_ip: str
+    ) -> tuple[str, str] | None:
         now = utc_now()
         email_hash = _digest(request.email)
         ip_hash = _digest(client_ip or "unknown")
@@ -99,21 +100,13 @@ class PasswordResetService:
             raise
 
         if user is None or throttled or raw_token is None:
-            return
+            return None
 
         base_url = settings.frontend_public_url.strip().rstrip("/")
         if not base_url.startswith(("https://", "http://")):
-            return
+            return None
         reset_url = f"{base_url}/reset-password#token={raw_token}"
-        try:
-            MailDeliveryService(self.session).send_password_reset_best_effort(
-                recipient=user.email,
-                reset_url=reset_url,
-                expires_in_minutes=TOKEN_TTL_MINUTES,
-            )
-        except Exception:
-            # The public endpoint deliberately does not expose delivery outcomes.
-            return
+        return user.email, reset_url
 
     def confirm_reset(self, *, raw_token: str, password: str) -> None:
         now = utc_now()
