@@ -1,6 +1,6 @@
 # TH-0112 — Password Reset and Account Recovery
 
-Status: Implementation in progress
+Status: Implementation validated; PR #123 open, review and merge pending
 
 ## Goal
 
@@ -24,8 +24,8 @@ Allow existing users to recover account access through the configured SMTP servi
 - [x] Persistent request throttling is implemented.
 - [x] Reset links use `FRONTEND_PUBLIC_URL`, not the request Host header.
 - [x] Frontend request/reset routes are registered.
-- [ ] Backend and frontend tests executed successfully.
-- [ ] Migration cycle and Alembic single-head validation executed.
+- [x] Backend tests and frontend browser acceptance executed successfully in GitHub Actions.
+- [x] PostgreSQL migration cycle and Alembic single-head validation passed in GitHub Actions.
 - [ ] Final review and pull-request checks complete.
 
 ## Deployment configuration
