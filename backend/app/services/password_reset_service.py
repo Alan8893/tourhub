@@ -4,7 +4,7 @@ import hashlib
 import secrets
 from datetime import timedelta
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -48,25 +48,23 @@ class PasswordResetService:
                 )
             )
             email_count = self.session.scalar(
-                select(PasswordResetAttemptORM.id)
+                select(func.count())
+                .select_from(PasswordResetAttemptORM)
                 .where(
                     PasswordResetAttemptORM.email_hash == email_hash,
                     PasswordResetAttemptORM.requested_at
                     >= now - timedelta(minutes=EMAIL_WINDOW_MINUTES),
                 )
-                .limit(EMAIL_LIMIT)
-            )
-            email_count_reached = email_count is not None
+            ) or 0
             ip_count = self.session.scalar(
-                select(PasswordResetAttemptORM.id)
+                select(func.count())
+                .select_from(PasswordResetAttemptORM)
                 .where(
                     PasswordResetAttemptORM.ip_hash == ip_hash,
-                    PasswordResetAttemptORM.requested_at >= now - timedelta(hours=IP_WINDOW_MINUTES // 60),
+                    PasswordResetAttemptORM.requested_at >= now - timedelta(hours=1),
                 )
-                .offset(IP_LIMIT - 1)
-                .limit(1)
-            )
-            throttled = email_count_reached or ip_count is not None
+            ) or 0
+            throttled = email_count >= EMAIL_LIMIT or ip_count >= IP_LIMIT
             self.session.add(
                 PasswordResetAttemptORM(
                     email_hash=email_hash,
