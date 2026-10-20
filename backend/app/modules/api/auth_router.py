@@ -1,6 +1,10 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
+import app.services.auth_service as auth_service
+import app.services.mail_delivery_service as mail_delivery_service
+import app.services.password_reset_service as password_reset_service
+
 from app.core.auth import get_current_user
 from app.core.config import settings
 from app.core.database import get_db
@@ -19,9 +23,6 @@ from app.schemas.password_reset import (
     PasswordResetRequest as PasswordResetRequestSchema,
     PasswordResetRequestResponse,
 )
-import app.services.auth_service as auth_service
-import app.services.mail_delivery_service as mail_delivery_service
-import app.services.password_reset_service as password_reset_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
