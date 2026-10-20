@@ -112,9 +112,9 @@ class PasswordResetService:
         now = utc_now()
         try:
             token = self.session.scalar(
-                select(PasswordResetTokenORM)
-                .where(PasswordResetTokenORM.token_hash == token_hash(raw_token))
-                .with_for_update()
+                select(PasswordResetTokenORM).where(
+                    PasswordResetTokenORM.token_hash == token_hash(raw_token)
+                )
             )
             if (
                 token is None
@@ -132,9 +132,22 @@ class PasswordResetService:
                     "Ссылка восстановления недействительна или устарела."
                 )
 
+            consumed = self.session.execute(
+                update(PasswordResetTokenORM)
+                .where(
+                    PasswordResetTokenORM.id == token.id,
+                    PasswordResetTokenORM.consumed_at.is_(None),
+                    PasswordResetTokenORM.expires_at > now,
+                )
+                .values(consumed_at=now)
+            )
+            if consumed.rowcount != 1:
+                raise InvalidPasswordResetTokenError(
+                    "Ссылка восстановления недействительна или устарела."
+                )
+
             user.password_hash = hash_password(password)
             user.updated_at = now
-            token.consumed_at = now
             self.session.execute(
                 update(PasswordResetTokenORM)
                 .where(
