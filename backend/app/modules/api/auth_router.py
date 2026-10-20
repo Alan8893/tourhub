@@ -122,7 +122,11 @@ def request_password_reset(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ) -> PasswordResetRequestResponse:
-    client_ip = request.client.host if request.client is not None else "unknown"
+    # The release Nginx proxy overwrites X-Real-IP with the browser's address.
+    # Email throttling remains in place for direct API callers that can spoof headers.
+    client_ip = request.headers.get("x-real-ip") or (
+        request.client.host if request.client is not None else "unknown"
+    )
     delivery = PasswordResetService(db).request_reset(payload, client_ip=client_ip)
     if delivery is not None:
         recipient, reset_url = delivery
