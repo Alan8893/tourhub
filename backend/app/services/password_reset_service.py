@@ -61,7 +61,7 @@ class PasswordResetService:
                 .select_from(PasswordResetAttemptORM)
                 .where(
                     PasswordResetAttemptORM.ip_hash == ip_hash,
-                    PasswordResetAttemptORM.requested_at >= now - timedelta(hours=1),
+                    PasswordResetAttemptORM.requested_at >= now - timedelta(minutes=IP_WINDOW_MINUTES),
                 )
             ) or 0
             throttled = email_count >= EMAIL_LIMIT or ip_count >= IP_LIMIT
@@ -128,12 +128,16 @@ class PasswordResetService:
                 or token.consumed_at is not None
                 or token.expires_at <= now
             ):
-                raise InvalidPasswordResetTokenError("Ссылка восстановления недействительна или устарела.")
+                raise InvalidPasswordResetTokenError(
+                    "Ссылка восстановления недействительна или устарела."
+                )
             user = self.session.scalar(
                 select(UserORM).where(UserORM.id == token.user_id).with_for_update()
             )
             if user is None or not user.is_active:
-                raise InvalidPasswordResetTokenError("Ссылка восстановления недействительна или устарела.")
+                raise InvalidPasswordResetTokenError(
+                    "Ссылка восстановления недействительна или устарела."
+                )
 
             user.password_hash = hash_password(password)
             user.updated_at = now
