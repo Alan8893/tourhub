@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FRONTEND_PUBLIC_URL: http://localhost:15173
+
 jobs:
   contract:
     name: Validate release Compose contract
