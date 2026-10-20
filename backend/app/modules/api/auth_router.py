@@ -24,12 +24,13 @@ from app.services.auth_service import (
     AuthService,
     BootstrapUnavailableError,
     InvalidCredentialsError,
-)from app.services.password_reset_service import (
+)
+from app.services.mail_delivery_service import MailDeliveryService
+from app.services.password_reset_service import (
     GENERIC_REQUEST_MESSAGE,
     InvalidPasswordResetTokenError,
     PasswordResetService,
 )
-
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
