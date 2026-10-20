@@ -19,7 +19,6 @@ from app.schemas.password_reset import (
     PasswordResetRequest as PasswordResetRequestSchema,
     PasswordResetRequestResponse,
 )
-from app.services.mail_delivery_service import MailDeliveryService
 from app.services.auth_service import (
     AuthService,
     BootstrapUnavailableError,
