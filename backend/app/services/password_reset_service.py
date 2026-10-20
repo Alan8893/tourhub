@@ -101,7 +101,9 @@ class PasswordResetService:
         if user is None or throttled or raw_token is None:
             return
 
-        base_url = settings.frontend_public_url.rstrip("/")
+        base_url = settings.frontend_public_url.strip().rstrip("/")
+        if not base_url.startswith(("https://", "http://")):
+            return
         reset_url = f"{base_url}/reset-password#token={raw_token}"
         try:
             MailDeliveryService(self.session).send_password_reset_best_effort(
