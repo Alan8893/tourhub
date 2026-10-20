@@ -234,12 +234,12 @@ jobs:
           git fetch origin "$GITHUB_HEAD_REF"
           git checkout -B "$GITHUB_HEAD_REF" "origin/$GITHUB_HEAD_REF"
           cp "$RUNNER_TEMP/package-lock.json" package-lock.json
-          if ! git diff --quiet -- frontend/package-lock.json; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add frontend/package-lock.json
-            git commit -m "fix(frontend): update vulnerable dependencies"
-            git push origin "$GITHUB_HEAD_REF"
+          if ! git -C "$GITHUB_WORKSPACE" diff --quiet -- frontend/package-lock.json; then
+            git -C "$GITHUB_WORKSPACE" config user.name "github-actions[bot]"
+            git -C "$GITHUB_WORKSPACE" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git -C "$GITHUB_WORKSPACE" add frontend/package-lock.json
+            git -C "$GITHUB_WORKSPACE" commit -m "fix(frontend): update vulnerable dependencies"
+            git -C "$GITHUB_WORKSPACE" push origin "$GITHUB_HEAD_REF"
           fi
 
       - name: Install frontend
