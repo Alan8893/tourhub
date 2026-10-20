@@ -233,7 +233,7 @@ jobs:
           cp package-lock.json "$RUNNER_TEMP/package-lock.json"
           git fetch origin "$GITHUB_HEAD_REF"
           git checkout -B "$GITHUB_HEAD_REF" "origin/$GITHUB_HEAD_REF"
-          cp "$RUNNER_TEMP/package-lock.json" frontend/package-lock.json
+          cp "$RUNNER_TEMP/package-lock.json" package-lock.json
           if ! git diff --quiet -- frontend/package-lock.json; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
