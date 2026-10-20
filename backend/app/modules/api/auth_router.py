@@ -5,12 +5,6 @@ from app.core.auth import get_current_user
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import UserORM
-from app.schemas.password_reset import (
-    PasswordResetConfirmRequest,
-    PasswordResetConfirmResponse,
-    PasswordResetRequest as PasswordResetRequestSchema,
-    PasswordResetRequestResponse,
-)
 from app.schemas.auth import (
     AuthResponse,
     BootstrapRequest,
@@ -19,16 +13,22 @@ from app.schemas.auth import (
     UserResponse,
     UserRole,
 )
-from app.services.password_reset_service import (
-    GENERIC_REQUEST_MESSAGE,
-    InvalidPasswordResetTokenError,
-    PasswordResetService,
+from app.schemas.password_reset import (
+    PasswordResetConfirmRequest,
+    PasswordResetConfirmResponse,
+    PasswordResetRequest as PasswordResetRequestSchema,
+    PasswordResetRequestResponse,
 )
 from app.services.auth_service import (
     AuthService,
     BootstrapUnavailableError,
     InvalidCredentialsError,
+)from app.services.password_reset_service import (
+    GENERIC_REQUEST_MESSAGE,
+    InvalidPasswordResetTokenError,
+    PasswordResetService,
 )
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -123,7 +123,9 @@ def confirm_password_reset(
         )
     except InvalidPasswordResetTokenError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-    return PasswordResetConfirmResponse(message="Пароль успешно изменён. Войдите с новым паролем.")
+    return PasswordResetConfirmResponse(
+        message="Пароль успешно изменён. Войдите с новым паролем."
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
