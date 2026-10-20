@@ -161,7 +161,9 @@ def logout(
     response: Response,
     db: Session = Depends(get_db),
 ) -> None:
-    auth_service.AuthService(db).revoke_session(request.cookies.get(settings.auth.session_cookie_name))
+    auth_service.AuthService(db).revoke_session(
+        request.cookies.get(settings.auth.session_cookie_name)
+    )
     response.delete_cookie(
         key=settings.auth.session_cookie_name,
         path="/",
