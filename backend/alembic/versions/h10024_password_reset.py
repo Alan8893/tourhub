@@ -29,10 +29,9 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name="pk_password_reset_tokens"),
-        sa.UniqueConstraint("token_hash", name="uq_password_reset_tokens_token_hash"),
     )
     op.create_index("ix_password_reset_tokens_user_id", "password_reset_tokens", ["user_id"])
-    op.create_index("ix_password_reset_tokens_token_hash", "password_reset_tokens", ["token_hash"])
+    op.create_index("ix_password_reset_tokens_token_hash", "password_reset_tokens", ["token_hash"], unique=True)
     op.create_index("ix_password_reset_tokens_expires_at", "password_reset_tokens", ["expires_at"])
 
     op.create_table(
