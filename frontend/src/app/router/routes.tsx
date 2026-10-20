@@ -8,6 +8,8 @@ import CatalogImportPage from "../../pages/CatalogImportPage";
 import CreateProjectPage from "../../pages/CreateProjectPage";
 import DishesWorkspacePage from "../../pages/DishesWorkspacePage";
 import LoginPage from "../../pages/LoginPage";
+import ForgotPasswordPage from "../../pages/ForgotPasswordPage";
+import ResetPasswordPage from "../../pages/ResetPasswordPage";
 import ProjectsPage from "../../pages/ProjectsPage";
 import ProjectWorkspacePage from "../../pages/ProjectWorkspacePage";
 import RecipesPage from "../../pages/RecipesPage";
@@ -16,6 +18,8 @@ import AppLayout from "../layout/AppLayout";
 
 export const routes: RouteObject[] = [
   { path: "/login", element: <LoginPage /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  { path: "/reset-password", element: <ResetPasswordPage /> },
   { path: "/accept-invitation", element: <AcceptInvitationPage /> },
   {
     element: (

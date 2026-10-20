@@ -21,6 +21,7 @@ from app.models.meal_plan_item import MealPlanItemORM
 from app.models.meal_slot import MealSlotORM
 from app.models.meal_slot_dish import MealSlotDishORM
 from app.models.module_settings import ModuleSettingsORM
+from app.models.password_reset import PasswordResetAttemptORM, PasswordResetTokenORM
 from app.models.product import ProductORM
 from app.models.purchase_checklist import PurchaseChecklistORM
 from app.models.purchase_checklist_item import PurchaseChecklistItemORM
@@ -44,6 +45,8 @@ __all__ = [
     "AppearanceSettingsORM",
     "AuditEventORM",
     "AuthSessionORM",
+    "PasswordResetTokenORM",
+    "PasswordResetAttemptORM",
     "ClubSettingsORM",
     "DocumentAppearanceSettingsORM",
     "IdentityStateORM",

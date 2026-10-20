@@ -69,7 +69,7 @@ docker compose -f docker-compose.release.yml \
   up -d --build --wait --wait-timeout 180
 ```
 
-The Backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head is `h10021`. During this migration, existing catalogue records classified by the central alcohol policy are archived rather than deleted; historical Project assignments remain available. The Frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
+The Backend entrypoint waits for healthy PostgreSQL and Redis services, applies `alembic upgrade head`, and then starts the API. The current migration head on this branch is `h10024`. During this migration, existing catalogue records classified by the central alcohol policy are archived rather than deleted; historical Project assignments remain available. The Frontend image contains a compiled Vite bundle served by Nginx; it does not mount application source code.
 
 ## Verify the installation
 
@@ -122,6 +122,18 @@ On a new installation TourHub opens the one-time **«Создание перво
 - do not place the application password in Compose files, `.env` committed to Git, logs, screenshots, or support messages.
 
 After creation, verify that the header shows the Administrator name, `/settings` opens, logout returns to the login form, and the same account can sign in again.
+
+### Password recovery links
+
+To enable password recovery, set the public URL of the Frontend before starting the release stack. It must be the exact origin users open in their browser (use HTTPS when a public TLS reverse proxy is configured):
+
+```bash
+export FRONTEND_PUBLIC_URL='https://tourhub.example.org'
+```
+
+For a private LAN installation, use the server's reachable URL instead, for example `http://192.168.1.20:5173`. If the setting is missing or invalid, TourHub does not issue a reset token or send a reset email; the public response remains generic. The development Compose stack defaults to `http://localhost:5173`.
+
+Password recovery is available from **«Забыли пароль?»** on the login page. The email link expires after 30 minutes and can be used once. After a successful reset, all active sessions for that account are revoked, so the user must sign in again. The public request response intentionally does not confirm whether the email belongs to an account.
 
 ### Verify mail delivery
 

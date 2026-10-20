@@ -109,8 +109,8 @@ TourHub is a single-club modular monolith with PostgreSQL in production.
 
 Development starts with `docker compose up -d --build`; operators use `docker-compose.release.yml`. Frontend, Backend, PostgreSQL, and Redis run locally.
 
-- current post-release Alembic head: `h10023`;
-- TH-0106 through TH-0111 added no migrations;
+- current post-release Alembic head on the TH-0112 branch: `h10024`;
+- TH-0106 through TH-0111 added no migrations; TH-0112 adds password reset persistence and request throttling;
 - immutable `v0.1.0` remains at SHA `8bcc2d2d9414d812d81634330034b15121c8442f` and released head `h10021`;
 - PostgreSQL backup/restore, clean release-stack startup, restart persistence, and exact-head gates verify candidates;
 - multi-tenancy and microservices remain prohibited.

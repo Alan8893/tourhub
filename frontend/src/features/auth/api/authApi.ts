@@ -51,3 +51,22 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 export async function logout(): Promise<void> {
   await apiClient.post("/auth/logout");
 }
+
+export async function requestPasswordReset(payload: { email: string }): Promise<string> {
+  const response = await apiClient.post<{ message: string }>(
+    "/auth/password-reset/request",
+    payload,
+  );
+  return response.data.message;
+}
+
+export async function confirmPasswordReset(payload: {
+  token: string;
+  password: string;
+}): Promise<string> {
+  const response = await apiClient.post<{ message: string }>(
+    "/auth/password-reset/confirm",
+    payload,
+  );
+  return response.data.message;
+}

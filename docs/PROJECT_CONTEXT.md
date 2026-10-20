@@ -116,7 +116,8 @@ TourHub remains a modular monolith using React/TypeScript/Vite/Material UI/TanSt
 
 - released `v0.1.0`: Alembic `h10021`, SHA `8bcc2d2d9414d812d81634330034b15121c8442f`;
 - `h10022` adds optional User contact fields;
-- `h10023` adds Project ownership and team membership and remains the single current head;
+- `h10023` adds Project ownership and team membership;
+- `h10024` adds password reset tokens and persistent request throttling and is the current single head on the TH-0112 branch;
 - Product/Dish archive, Recipe ownership, and Project/MealPlan persistence already supported TH-0108 through TH-0111, so no new migration was required;
 - immutable `v0.1.0` remains fixed and is not moved by post-release work.
 

@@ -1,10 +1,10 @@
 # TourHub Project Status
 
-Status date: 2026-07-24
+Status date: 2026-10-20
 
 ## Current phase
 
-TourHub v0.1.0 remains release-ready at released Alembic head `h10021`. Post-release development is complete through TH-0111 at current Alembic head `h10023`. No subsequent post-release product task is selected.
+TourHub v0.1.0 remains release-ready at released Alembic head `h10021`. Post-release development through TH-0111 is delivered at Alembic head `h10023`. TH-0112 password recovery is implemented on `feature/th-0112-password-reset` at migration head `h10024`. Backend tests, Frontend tests and browser acceptance, Quality (including npm audit with 0 vulnerabilities), Product Acceptance, Docker release runtime, PostgreSQL migration cycle, and documentation checks pass on the validated branch revision. PR #123 is open; merge is pending review.
 
 The feature-frozen first release is complete through TH-0093. Post-release work delivered routed Project UX (TH-0095), Product editing (TH-0097), published Recipe-to-Dish synchronization (TH-0098), semantic audit expansion (TH-0099 through TH-0103), personal accounts/contact profiles (TH-0104), Project ownership/team-scoped access (TH-0105), safe filtered Audit CSV export (TH-0106), own-session administration with individual revocation (TH-0107), Product archive management (TH-0108), Dish archive management (TH-0109), ownership-aware Recipe CSV import (TH-0110), and completed-Project copying into a new draft identity (TH-0111).
 

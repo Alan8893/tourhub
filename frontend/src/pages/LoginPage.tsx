@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { FormEvent, useMemo, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link as RouterLink, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/features/auth/providers/AuthProvider";
 
@@ -164,6 +164,11 @@ export default function LoginPage() {
                   ? "Создать администратора"
                   : "Войти"}
             </Button>
+            {!bootstrapRequired && (
+              <Button component={RouterLink} to="/forgot-password" variant="text">
+                Забыли пароль?
+              </Button>
+            )}
           </Stack>
         </Paper>
       </Container>
