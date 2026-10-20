@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
@@ -19,6 +19,7 @@ from app.schemas.password_reset import (
     PasswordResetRequest as PasswordResetRequestSchema,
     PasswordResetRequestResponse,
 )
+from app.services.mail_delivery_service import MailDeliveryService
 from app.services.auth_service import (
     AuthService,
     BootstrapUnavailableError,
@@ -93,6 +94,23 @@ def login(
     return AuthResponse(user=_user_response(user))
 
 
+def _deliver_password_reset_email(
+    db: Session,
+    *,
+    recipient: str,
+    reset_url: str,
+) -> None:
+    try:
+        MailDeliveryService(db).send_password_reset_best_effort(
+            recipient=recipient,
+            reset_url=reset_url,
+            expires_in_minutes=30,
+        )
+    except Exception:
+        # Delivery failure must not change the generic public response.
+        return
+
+
 @router.post(
     "/password-reset/request",
     response_model=PasswordResetRequestResponse,
@@ -101,10 +119,19 @@ def login(
 def request_password_reset(
     payload: PasswordResetRequestSchema,
     request: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ) -> PasswordResetRequestResponse:
     client_ip = request.client.host if request.client is not None else "unknown"
-    PasswordResetService(db).request_reset(payload, client_ip=client_ip)
+    delivery = PasswordResetService(db).request_reset(payload, client_ip=client_ip)
+    if delivery is not None:
+        recipient, reset_url = delivery
+        background_tasks.add_task(
+            _deliver_password_reset_email,
+            db,
+            recipient=recipient,
+            reset_url=reset_url,
+        )
     return PasswordResetRequestResponse(message=GENERIC_REQUEST_MESSAGE)
 
 
