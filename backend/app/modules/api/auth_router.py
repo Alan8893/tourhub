@@ -76,7 +76,7 @@ def login(
     response: Response,
     db: Session = Depends(get_db),
 ) -> AuthResponse:
-    service = AuthService(db)
+    service = auth_service.AuthService(db)
     try:
         user = service.authenticate(request)
     except auth_service.InvalidCredentialsError as error:
