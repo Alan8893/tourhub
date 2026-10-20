@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   backend:
@@ -221,6 +221,26 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+
+      - name: Refresh patched frontend lockfile
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feature/th-0112-password-reset'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm audit fix --package-lock-only --ignore-scripts --no-fund
+          npm audit --audit-level=moderate
+          cp package-lock.json "$RUNNER_TEMP/package-lock.json"
+          git fetch origin "$GITHUB_HEAD_REF"
+          git checkout -B "$GITHUB_HEAD_REF" "origin/$GITHUB_HEAD_REF"
+          cp "$RUNNER_TEMP/package-lock.json" frontend/package-lock.json
+          if ! git diff --quiet -- frontend/package-lock.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add frontend/package-lock.json
+            git commit -m "fix(frontend): update vulnerable dependencies"
+            git push origin "$GITHUB_HEAD_REF"
+          fi
 
       - name: Install frontend
         run: npm ci --no-audit --no-fund
