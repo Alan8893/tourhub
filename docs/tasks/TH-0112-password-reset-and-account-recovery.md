@@ -30,6 +30,6 @@ Allow existing users to recover account access through the configured SMTP servi
 
 ## Deployment configuration
 
-Set `FRONTEND_PUBLIC_URL` to the public origin that users open in their browser. Production Compose requires this value. The development Compose stack defaults to `http://localhost:5173`.
+Set `FRONTEND_PUBLIC_URL` to the public origin that users open in their browser to enable recovery email delivery. Without a valid value, no reset token is issued and no email is sent. The development Compose stack defaults to `http://localhost:5173`.
 
 SMTP authentication continues to use the deployment-managed `TOURHUB_SMTP_SECRET` when the saved SMTP settings specify a username.
