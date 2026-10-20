@@ -40,6 +40,9 @@ export default function ResetPasswordPage() {
     const fragment = window.location.hash.slice(1);
     const value = new URLSearchParams(fragment).get("token")?.trim() ?? "";
     setToken(value);
+    if (!value) {
+      setError("В ссылке отсутствует код восстановления. Запросите новую ссылку.");
+    }
     if (value) {
       window.history.replaceState(
         null,
@@ -131,6 +134,11 @@ export default function ResetPasswordPage() {
                   {isSubmitting ? "Сохранение…" : "Изменить пароль"}
                 </Button>
               </>
+            )}
+            {!message && (
+              <Button component={RouterLink} to="/forgot-password" variant="text">
+                Запросить новую ссылку
+              </Button>
             )}
             <Button component={RouterLink} to="/login" variant="text">
               Перейти ко входу
