@@ -19,17 +19,7 @@ from app.schemas.password_reset import (
     PasswordResetRequest as PasswordResetRequestSchema,
     PasswordResetRequestResponse,
 )
-from app.services.auth_service import (
-    AuthService,
-    BootstrapUnavailableError,
-    InvalidCredentialsError,
-)
-from app.services.mail_delivery_service import MailDeliveryService
-from app.services.password_reset_service import (
-    GENERIC_REQUEST_MESSAGE,
-    InvalidPasswordResetTokenError,
-    PasswordResetService,
-)
+from app.services import auth_service, mail_delivery_service, password_reset_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -59,7 +49,7 @@ def _set_session_cookie(response: Response, token: str) -> None:
 
 @router.get("/bootstrap-status", response_model=BootstrapStatusResponse)
 def get_bootstrap_status(db: Session = Depends(get_db)) -> BootstrapStatusResponse:
-    return BootstrapStatusResponse(bootstrap_required=AuthService(db).bootstrap_required())
+    return BootstrapStatusResponse(bootstrap_required=auth_service.AuthService(db).bootstrap_required())
 
 
 @router.post("/bootstrap", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -71,7 +61,7 @@ def bootstrap_administrator(
     service = AuthService(db)
     try:
         user = service.bootstrap_administrator(request)
-    except BootstrapUnavailableError as error:
+    except auth_service.BootstrapUnavailableError as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     token, _ = service.create_session(user)
     _set_session_cookie(response, token)
@@ -87,7 +77,7 @@ def login(
     service = AuthService(db)
     try:
         user = service.authenticate(request)
-    except InvalidCredentialsError as error:
+    except auth_service.InvalidCredentialsError as error:
         raise HTTPException(status_code=401, detail=str(error)) from error
     token, _ = service.create_session(user)
     _set_session_cookie(response, token)
@@ -101,7 +91,7 @@ def _deliver_password_reset_email(
     reset_url: str,
 ) -> None:
     try:
-        MailDeliveryService(db).send_password_reset_best_effort(
+        mail_delivery_service.MailDeliveryService(db).send_password_reset_best_effort(
             recipient=recipient,
             reset_url=reset_url,
             expires_in_minutes=30,
@@ -127,7 +117,7 @@ def request_password_reset(
     client_ip = request.headers.get("x-real-ip") or (
         request.client.host if request.client is not None else "unknown"
     )
-    delivery = PasswordResetService(db).request_reset(payload, client_ip=client_ip)
+    delivery = password_reset_service.PasswordResetService(db).request_reset(payload, client_ip=client_ip)
     if delivery is not None:
         recipient, reset_url = delivery
         background_tasks.add_task(
@@ -136,7 +126,7 @@ def request_password_reset(
             recipient=recipient,
             reset_url=reset_url,
         )
-    return PasswordResetRequestResponse(message=GENERIC_REQUEST_MESSAGE)
+    return PasswordResetRequestResponse(message=password_reset_service.GENERIC_REQUEST_MESSAGE)
 
 
 @router.post(
@@ -152,7 +142,7 @@ def confirm_password_reset(
             raw_token=payload.token,
             password=payload.password,
         )
-    except InvalidPasswordResetTokenError as error:
+    except password_reset_service.InvalidPasswordResetTokenError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
     return PasswordResetConfirmResponse(
         message="Пароль успешно изменён. Войдите с новым паролем."
